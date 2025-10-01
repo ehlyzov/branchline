@@ -9,3 +9,5 @@ build
 .jqwik-database*
 /kotlin-js-store/
 /playground/node_modules/
+/docs/assets/
+/docs/playground/

@@ -1,0 +1,85 @@
+name: Build and Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: playground/package-lock.json
+
+      - name: Install playground dependencies
+        run: npm ci
+        working-directory: ./playground
+
+      - name: Build interpreter for JavaScript
+        run: ./gradlew :interpreter:jsBrowserProductionLibraryDistribution
+
+      - name: Build playground assets
+        run: npm run build
+        working-directory: ./playground
+
+      - name: Prepare deployment directory
+        run: |
+          # Create deployment structure
+          mkdir -p deploy
+          
+          # Copy docs directory (contains existing documentation)
+          cp -r docs/* deploy/
+          
+          # Copy playground to deployment root for direct access
+          cp -r playground deploy/playground
+          
+          # Ensure playground demo uses correct asset paths (../docs/assets/)
+          echo "Playground demo will be available at /playground/demo.html"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './deploy'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
