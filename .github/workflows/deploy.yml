@@ -32,12 +32,21 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
           cache-dependency-path: playground/package-lock.json
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
 
       - name: Install playground dependencies
         run: npm ci
@@ -50,19 +59,32 @@ jobs:
         run: npm run build
         working-directory: ./playground
 
+      - name: Build documentation with MkDocs
+        run: mkdocs build --site-dir site
+
       - name: Prepare deployment directory
         run: |
           # Create deployment structure
           mkdir -p deploy
           
-          # Copy docs directory (contains existing documentation)
-          cp -r docs/* deploy/
+          # Copy built documentation site
+          cp -r site/* deploy/
           
-          # Copy playground to deployment root for direct access
+          # Copy playground assets to assets directory (where demo.html expects them)
+          mkdir -p deploy/assets
+          # The playground build puts assets in docs/assets/, copy them to deploy/assets/
+          if [ -d "docs/assets" ]; then
+            cp -r docs/assets/* deploy/assets/
+            echo "Copied playground assets to deploy/assets/"
+          else
+            echo "No assets directory found"
+          fi
+          
+          # Copy playground to deployment root for direct access  
           cp -r playground deploy/playground
           
-          # Ensure playground demo uses correct asset paths (../docs/assets/)
-          echo "Playground demo will be available at /playground/demo.html"
+          echo "Deployment structure:"
+          find deploy -maxdepth 2 -type f | head -10
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
