@@ -7,7 +7,7 @@ description: Try Branchline in your browser with the interactive playground.
 
 Try Branchline in your browser with the interactive playground!
 
-[**🚀 Launch Interactive Playground →**](playground/demo.html){ .md-button .md-button--primary target="_blank" }
+[**🚀 Launch Interactive Playground →**](../playground/demo.html){ .md-button .md-button--primary target="_blank" }
 
 The playground lets you:
 

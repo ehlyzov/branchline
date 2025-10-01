@@ -1,14 +1,14 @@
 .branchline-playground {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
   padding: 32px 40px 48px;
   box-sizing: border-box;
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  color: #0f172a;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--md-typeset-color, #1f2937);
+  font-family: 'Roboto', 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 .playground-header {
@@ -23,12 +23,13 @@
   margin: 0 0 8px;
   font-size: 28px;
   line-height: 1.2;
+  color: var(--md-typeset-color, #1f2937);
 }
 
 .playground-title p {
   margin: 0;
   max-width: 560px;
-  color: #475569;
+  color: var(--md-default-fg-color--light, #475569);
   line-height: 1.5;
 }
 
@@ -44,7 +45,7 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #475569;
+  color: var(--md-default-fg-color--light, #475569);
 }
 
 .playground-toggle input {
@@ -58,23 +59,23 @@
   flex-direction: column;
   gap: 6px;
   font-size: 14px;
-  color: #475569;
+  color: var(--md-default-fg-color--light, #475569);
 }
 
 .playground-select select {
   min-width: 240px;
   padding: 10px 12px;
   font-size: 15px;
-  color: #0f172a;
-  background-color: #f8fafc;
-  border: 1px solid #cbd5f5;
+  color: var(--md-typeset-color, #1f2937);
+  background-color: var(--md-default-bg-color, #f8fafc);
+  border: 1px solid rgba(37, 99, 235, 0.35);
   border-radius: 8px;
   box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
 .playground-select select:focus {
   outline: 3px solid rgba(37, 99, 235, 0.25);
-  border-color: #2563eb;
+  border-color: var(--md-primary-fg-color, #2563eb);
 }
 
 .playground-button {
@@ -84,7 +85,7 @@
   border: none;
   border-radius: 999px;
   cursor: pointer;
-  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  background: linear-gradient(135deg, var(--md-primary-fg-color, #2563eb), #1d4ed8);
   color: #ffffff;
   box-shadow: 0 8px 16px rgba(37, 99, 235, 0.24);
   transition: transform 120ms ease, box-shadow 120ms ease;
@@ -112,43 +113,49 @@
 
 .playground-note {
   padding: 12px 18px;
-  border-left: 4px solid #2563eb;
+  border-left: 4px solid var(--md-primary-fg-color, #2563eb);
   border-radius: 8px;
-  background-color: #eff6ff;
-  color: #1e3a8a;
+  background-color: rgba(37, 99, 235, 0.08);
+  color: var(--md-primary-fg-color, #2563eb);
   font-size: 14px;
 }
 
 .playground-note code {
-  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-family: 'Roboto Mono', 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   font-size: 13px;
   padding: 2px 6px;
   border-radius: 6px;
-  background-color: rgba(37, 99, 235, 0.1);
+  background-color: rgba(37, 99, 235, 0.12);
 }
 
 .playground-main {
   display: grid;
-  grid-template-columns: minmax(0, 2.1fr) minmax(0, 1.2fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
   align-items: start;
 }
 
-.playground-column {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+.playground-main__program {
+  grid-column: 1;
+}
+
+.playground-main__input {
+  grid-column: 2;
+}
+
+.playground-main__output {
+  grid-column: 1 / -1;
 }
 
 .panel {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  background-color: var(--md-default-bg-color, #ffffff);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: 16px;
-  padding: 20px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
 }
 
 .panel--editor .editor-surface {
@@ -158,18 +165,19 @@
 .panel-header h3 {
   margin: 0 0 4px;
   font-size: 18px;
+  color: var(--md-typeset-color, #1f2937);
 }
 
 .panel-header p {
   margin: 0;
   font-size: 14px;
-  color: #64748b;
+  color: var(--md-default-fg-color--light, #64748b);
 }
 
 .panel-header code {
-  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-family: 'Roboto Mono', 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   font-size: 13px;
-  color: #1d4ed8;
+  color: var(--md-primary-fg-color, #1d4ed8);
 }
 
 .editor-surface {
@@ -180,26 +188,20 @@
   background-color: #0f172a;
 }
 
-.panel-output {
-  margin: 0;
-  padding: 16px;
-  border-radius: 12px;
-  background-color: #0f172a;
-  color: #f8fafc;
-  font-size: 14px;
-  line-height: 1.5;
-  font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  min-height: 140px;
-  overflow-x: auto;
+.results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.panel-output--trace {
-  min-height: 0;
-  background-color: #111827;
-  color: #e2e8f0;
+.results-grid--with-trace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px 24px;
+  align-items: stretch;
 }
 
-.panel-trace {
+.results-pane {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -208,12 +210,35 @@
 .panel-subheader {
   font-size: 14px;
   font-weight: 600;
-  color: #2563eb;
+  color: var(--md-primary-fg-color, #2563eb);
+}
+
+.panel-output {
+  margin: 0;
+  padding: 16px;
+  border-radius: 12px;
+  background-color: var(--md-code-bg-color, #0f172a);
+  color: var(--md-code-fg-color, #f8fafc);
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: 'Roboto Mono', 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  min-height: 180px;
+  overflow: auto;
+}
+
+.panel-output--trace {
+  min-height: 0;
+  background-color: var(--md-code-bg-color, #111827);
+  color: var(--md-code-fg-color, #e2e8f0);
+}
+
+.results-pane--trace {
+  gap: 16px;
 }
 
 .panel-trace-structured summary {
   font-size: 13px;
-  color: #60a5fa;
+  color: #1d4ed8;
   cursor: pointer;
 }
 
@@ -244,8 +269,20 @@
     grid-template-columns: 1fr;
   }
 
+  .playground-main__program,
+  .playground-main__input,
+  .playground-main__output {
+    grid-column: 1;
+  }
+
   .panel--editor .editor-surface {
     min-height: 360px;
+  }
+}
+
+@media (max-width: 900px) {
+  .results-grid--with-trace {
+    grid-template-columns: 1fr;
   }
 }
 

@@ -5,7 +5,7 @@ title: Language Overview
 # Language Overview
 
 Branchline is a DSL for connecting data sources with outputs and transformations. The
-language specification is defined in an [EBNF grammar](../../language/src/test/kotlin/v2/ebnf.txt).
+language specification is defined in an [EBNF grammar](../../interpreter/src/jvmTest/resources/v2/ebnf.txt).
 
 ## Table of contents
 

@@ -42,5 +42,9 @@ items:
         href: guides/array-comprehension.md
       - name: TRY/CATCH
         href: guides/try-catch.md
+  - name: Architecture
+    items:
+      - name: VM Overview
+        href: vm.md
   - name: Playground
     href: playground.md

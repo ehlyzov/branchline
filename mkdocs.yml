@@ -59,6 +59,8 @@ nav:
       - Debug Utilities: language/std-debug.md
   - Guides: 
     - guides/index.md
+  - Architecture:
+    - VM Overview: vm.md
 
 plugins:
   - search

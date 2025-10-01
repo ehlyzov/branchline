@@ -6,6 +6,98 @@ title: Statements
 
 Statements control execution and side effects within blocks.
 
+## Overview {#source}
+
+The `SOURCE` statement declares a data source for the pipeline.
+
+## Output {#output}
+
+The `OUTPUT` statement specifies how results are emitted from the pipeline.
+
+## Using {#using}
+
+The `USING` clause references adapters and external modules.
+
+## Transform {#transform}
+
+The `TRANSFORM` statement defines transformation steps in the pipeline.
+
+## Stream {#stream}
+
+The `STREAM` mode processes data as a continuous flow.
+
+## Buffer {#buffer}
+
+The `BUFFER` mode collects data before processing.
+
+## For Loops {#for}
+
+The `FOR` and `FOR EACH` statements provide iteration over collections.
+
+## If Statements {#if}
+
+The `IF` statement provides conditional branching.
+
+## Enumerations {#enum}
+
+The `ENUM` statement defines enumerated types.
+
+## For Each {#foreach}
+
+The `FOREACH` statement provides a shortcut for iteration.
+
+## Input {#input}
+
+The `INPUT` keyword references the pipeline input data.
+
+## Parallel {#parallel}
+
+The `PARALLEL` statement enables concurrent execution.
+
+## Abort {#abort}
+
+The `ABORT` statement terminates execution immediately.
+
+## Throw {#throw}
+
+The `THROW` statement raises an exception.
+
+## Try {#try}
+
+The `TRY` statement handles errors and exceptions.
+
+## Shared {#shared}
+
+The `SHARED` statement declares shared memory resources.
+
+## Functions {#func}
+
+The `FUNC` statement declares functions.
+
+## Types {#type}
+
+The `TYPE` statement declares custom types.
+
+## Return {#return}
+
+The `RETURN` statement exits from functions.
+
+## Modify {#modify}
+
+The `MODIFY` statement changes existing values.
+
+## Where {#where}
+
+The `WHERE` clause provides filtering conditions.
+
+## Set {#set}
+
+The `SET` statement performs assignments.
+
+## Init {#init}
+
+The `INIT` statement provides initial values.
+
 ```
 statement ::= letStmt | ifStmt | forStmt | tryStmt | callStmt
             | sharedWrite | suspendStmt | abortStmt | throwStmt

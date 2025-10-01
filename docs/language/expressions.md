@@ -7,6 +7,34 @@ title: Expressions
 Expressions compute values and support operators, function calls, and data
 construction.
 
+## As {#as}
+
+The `AS` keyword provides aliasing and casting functionality.
+
+## Let {#let}
+
+The `LET` keyword creates local variable bindings within expressions.
+
+## Await {#await}
+
+The `AWAIT` keyword suspends execution until an asynchronous operation completes.
+
+## Suspend {#suspend}
+
+The `SUSPEND` keyword creates suspension points in execution.
+
+## Call {#call}
+
+The `CALL` keyword invokes host functions and external procedures.
+
+## Literals {#literals}
+
+Literals represent constant values like numbers, strings, booleans, and null.
+
+## Union {#union}
+
+The `UNION` keyword creates union type expressions.
+
 ## Operator hierarchy
 
 ```

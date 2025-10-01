@@ -2,12 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Branchline Playground Demo</title>
+    <title>Branchline Playground</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../assets/playground.css" />
@@ -18,17 +18,13 @@
         box-sizing: border-box;
       }
 
-      :root {
-        color-scheme: light dark;
-      }
-
       html,
       body {
         height: 100%;
         margin: 0;
-        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        background: radial-gradient(circle at top, #f8fafc 0%, #e2e8f0 45%, #dbeafe 100%);
-        color: #0f172a;
+        font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        background-color: #f6f7fb;
+        color: #1f2937;
       }
 
       body {
@@ -41,6 +37,8 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        background-color: #ffffff;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
       }
 
       .site-title {
@@ -48,6 +46,7 @@
         font-size: 24px;
         font-weight: 600;
         letter-spacing: -0.01em;
+        color: #1d4ed8;
       }
 
       .site-header a {
@@ -59,6 +58,7 @@
         display: flex;
         gap: 16px;
         font-size: 14px;
+        color: #1d4ed8;
       }
 
       .page-body {
@@ -72,29 +72,29 @@
       .hero {
         max-width: 760px;
         text-align: center;
-        margin-bottom: 32px;
+        margin: 48px 0 32px;
       }
 
       .hero h1 {
         margin: 0 0 16px;
         font-size: clamp(32px, 6vw, 44px);
         letter-spacing: -0.015em;
+        color: #0f172a;
       }
 
       .hero p {
         margin: 0;
         font-size: 18px;
         line-height: 1.6;
-        color: #334155;
+        color: #475569;
       }
 
       .demo-card {
         width: min(1180px, 100%);
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(14px);
+        background: #ffffff;
         border-radius: 24px;
-        border: 1px solid rgba(148, 163, 184, 0.35);
-        box-shadow: 0 32px 80px rgba(15, 23, 42, 0.18);
+        border: 1px solid rgba(15, 23, 42, 0.08);
+        box-shadow: 0 32px 64px rgba(15, 23, 42, 0.1);
         padding: 32px;
         display: flex;
         flex-direction: column;
@@ -111,6 +111,7 @@
         margin: 0;
         font-size: 22px;
         font-weight: 600;
+        color: #0f172a;
       }
 
       .demo-card header p {
@@ -123,7 +124,7 @@
       .demo-note {
         font-size: 14px;
         color: #1d4ed8;
-        background: rgba(59, 130, 246, 0.08);
+        background: rgba(59, 130, 246, 0.12);
         padding: 12px 16px;
         border-radius: 12px;
         display: inline-flex;
@@ -132,8 +133,8 @@
       }
 
       .demo-note code {
-        font-family: 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-        background: rgba(59, 130, 246, 0.12);
+        font-family: 'Roboto Mono', 'JetBrains Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+        background: rgba(59, 130, 246, 0.1);
         color: #1d4ed8;
         padding: 2px 6px;
         border-radius: 6px;
@@ -182,7 +183,7 @@
         }
 
         .hero {
-          margin-bottom: 24px;
+          margin: 32px 0 24px;
         }
       }
     </style>
@@ -198,32 +199,32 @@
 
     <main class="page-body">
       <section class="hero">
-        <h1>Explore Branchline in the Browser</h1>
+        <h1>Interactive Branchline Playground</h1>
         <p>
-          Load curated examples, edit the Branchline program and its input JSON, then execute the transform directly in
-          your browser. The interface below mirrors the developer playground bundled with the docs site.
+          Experiment with Branchline directly in your browser, explore curated samples, and inspect provenance traces using a
+          visual style that matches the documentation site.
         </p>
       </section>
 
       <section class="demo-card">
         <header>
-          <h2>Interactive Playground</h2>
+          <h2>Playground</h2>
           <p>
-            Use the dropdown to switch scenarios, modify either editor, and press <strong>Run</strong> or hit
-            <strong>⌘/Ctrl&nbsp;+&nbsp;Enter</strong> to execute.
+            Launches the client-side Branchline VM bundled with editor tooling, JSON helpers, and tracing controls.
           </p>
-          <div class="demo-note">
-            <span>Assets built automatically via GitHub Actions. View source at 
-            <a href="https://github.com/ehlyzov/branchline-public" target="_blank">ehlyzov/branchline-public</a>.</span>
-          </div>
         </header>
+        <div class="demo-note">
+          <span>Tip:</span>
+          <code>Cmd/Ctrl + Enter</code>
+          <span>runs the current program.</span>
+        </div>
         <div class="playground-frame">
           <div class="bl-playground" role="region" aria-label="Branchline playground"></div>
         </div>
       </section>
     </main>
 
-    <footer class="site-footer">© Eugene Hlyzov · <a href="https://github.com/ehlyzov/branchline-public" target="_blank">Branchline Public</a> playground demo</footer>
+    <footer class="site-footer">© Branchline Project · Powered by the Kotlin/JS Branchline runtime.</footer>
 
     <script type="module" src="../assets/playground.js"></script>
   </body>

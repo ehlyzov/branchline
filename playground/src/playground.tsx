@@ -245,6 +245,8 @@ export function BranchlinePlayground() {
     tracingRef.current = isTracingEnabled;
   }, [isTracingEnabled]);
 
+  const hasTrace = Boolean(traceHuman || traceJson);
+
   return (
     <div className="branchline-playground">
       <header className="playground-header">
@@ -294,59 +296,62 @@ export function BranchlinePlayground() {
       </div>
 
       <main className="playground-main">
-        <div className="playground-column">
-          <section className="panel panel--editor">
-            <header className="panel-header">
-              <div>
-                <h3>Branchline Program</h3>
-                <p>Use ⌘/Ctrl + Enter to run the playground.</p>
-              </div>
-            </header>
-            <div ref={programContainerRef} className="editor-surface" />
-          </section>
-        </div>
-        <div className="playground-column">
-          <section className="panel panel--editor">
-            <header className="panel-header">
-              <div>
-                <h3>Input JSON</h3>
-                <p>Provide the object bound to <code>msg</code>.</p>
-              </div>
-            </header>
-            <div ref={inputContainerRef} className="editor-surface" />
-          </section>
-          <section className="panel">
-            <header className="panel-header">
-              <div>
-                <h3>Output</h3>
-                <p>The result of executing your Branchline program.</p>
-              </div>
-            </header>
-            {error ? (
-              <div className="panel-error">{error}</div>
-            ) : (
-              <>
+        <section className="panel panel--editor playground-main__program">
+          <header className="panel-header">
+            <div>
+              <h3>Branchline Program</h3>
+              <p>Use ⌘/Ctrl + Enter to run the playground.</p>
+            </div>
+          </header>
+          <div ref={programContainerRef} className="editor-surface" />
+        </section>
+
+        <section className="panel panel--editor playground-main__input">
+          <header className="panel-header">
+            <div>
+              <h3>Input JSON</h3>
+              <p>
+                Provide the object bound to <code>msg</code>.
+              </p>
+            </div>
+          </header>
+          <div ref={inputContainerRef} className="editor-surface" />
+        </section>
+
+        <section className="panel playground-main__output">
+          <header className="panel-header">
+            <div>
+              <h3>Output &amp; Trace</h3>
+              <p>The result of executing your Branchline program.</p>
+            </div>
+          </header>
+          {error ? (
+            <div className="panel-error">{error}</div>
+          ) : (
+            <div className={`results-grid${hasTrace ? ' results-grid--with-trace' : ''}`}>
+              <div className="results-pane">
+                <div className="panel-subheader">Program output</div>
                 <pre ref={outputRef} className="panel-output">
                   {output || 'Run the playground to view JSON output.'}
                 </pre>
-                {traceHuman || traceJson ? (
-                  <div className="panel-trace">
-                    <div className="panel-subheader">Trace explanations</div>
-                    {traceHuman ? (
-                      <pre className="panel-output panel-output--trace">{traceHuman}</pre>
-                    ) : null}
-                    {traceJson ? (
-                      <details className="panel-trace-structured">
-                        <summary>View structured provenance JSON</summary>
-                        <pre className="panel-output panel-output--trace">{traceJson}</pre>
-                      </details>
-                    ) : null}
-                  </div>
-                ) : null}
-              </>
-            )}
-          </section>
-        </div>
+              </div>
+              {hasTrace ? (
+                <div className="results-pane results-pane--trace">
+                  <div className="panel-subheader">Trace explanations</div>
+                  {traceHuman ? (
+                    <pre className="panel-output panel-output--trace">{traceHuman}</pre>
+                  ) : null}
+                  {traceJson ? (
+                    <details className="panel-trace-structured">
+                      <summary>View structured provenance JSON</summary>
+                      <pre className="panel-output panel-output--trace">{traceJson}</pre>
+                    </details>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );
