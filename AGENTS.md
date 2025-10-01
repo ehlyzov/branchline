@@ -1,19 +1,34 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-The repository centers on Kotlin/JVM components. Domain logic lives in `language/`, platform adapters in `platform/`, and internal integrations in `platform-private/`. Execution pipelines reside under `interpreter/` and `vm/`, while shared fixtures sit in `test-fixtures/`. Docs live in `docs/` (source) and `docs-compiled/` (compiled). Experimental work belongs in `research/` and `playground/`. Add new modules beneath these roots and register them in `settings.gradle`.
+- `language/` contains domain logic; `platform/` and `platform-private/` host adapters and internal integrations.
+- Execution pipelines live in `interpreter/` and `vm/`; shared fixtures stay in `test-fixtures/`.
+- Documentation sources sit in `docs/` with generated assets in `docs-compiled/`; experiments belong in `research/` or `playground/`.
+- Keep tests beside sources under `src/test/kotlin` and register any new module root in `settings.gradle`.
 
 ## Build, Test, and Development Commands
-Initialize the Gradle wrapper once with `gradle wrapper`, then rely exclusively on `./gradlew`. Use `./gradlew build` for a full compile plus static analysis, and `./gradlew test` to execute the Kotlin/JUnit suite (append `--info` when triaging flakes). Run `./gradlew detekt` before submitting style-sensitive work, and prefer scoped tasks such as `./gradlew :compiler:run` or `./gradlew :language:compileKotlin` for module iterations. Never invoke a system Gradle binary.
+- Run `gradle wrapper` once, then rely on `./gradlew` for every task.
+- `./gradlew build` performs a full compile plus static analysis; `./gradlew test` executes the JUnit 5 suite (`--info` helps debug flakes).
+- `./gradlew detekt` enforces style; prefer scoped tasks like `./gradlew :language:compileKotlin` or `./gradlew :compiler:run` for module work.
+- Avoid system Gradle binaries and keep builds reproducible inside the wrapper.
 
 ## Coding Style & Naming Conventions
-Follow standard Kotlin conventions with four-space indents, explicit visibility, and trailing commas where allowed. Import only what you use—wildcard imports are prohibited. Local functions are disallowed; lift helpers to private top-level declarations or companion objects for clarity. Favor descriptive names such as `parseResult` or `JvmRuntimeConfig`, prefer immutable data in public APIs, and rely on Kotlin collection extensions. Keep Detekt adjustments documented in `detekt.yml` when rules change.
+- Use four-space indents, explicit visibility, and trailing commas where Kotlin allows them.
+- Import only what you use; wildcard imports are disallowed. Lift helpers to private top-level declarations or companion objects—local functions are not permitted.
+- Choose descriptive identifiers (e.g., `parseResult`, `JvmRuntimeConfig`) and favor immutable data in public APIs.
+- Document any Detekt rule adjustments in `detekt.yml` with a short justification.
 
 ## Testing Guidelines
-Tests live beside sources in each module’s `src/test/kotlin`. Name unit tests with the `*Test` suffix and integration scenarios with `*IT`. Use JUnit 5 and Kotlin test utilities; place shared fixtures in `test-fixtures/`. Run `./gradlew test` locally before every push; fix or quarantine failures with clear TODO annotations. When addressing bugs, add focused regression coverage and cross-link supporting notes in `docs/`.
+- Tests live in each module’s `src/test/kotlin`; name unit tests `*Test` and integration scenarios `*IT`.
+- Use JUnit 5 with Kotlin test utilities and place reusable fixtures in `test-fixtures/`.
+- Run `./gradlew test` before pushing; add focused regression cases for bug fixes and annotate quarantined tests with TODOs referencing owners.
 
 ## Commit & Pull Request Guidelines
-Write commits in imperative present tense (e.g., `Add parser guard`). Group related changes, keep messages concise, and explain rationale in the body. Pull requests should summarize scope with inline file references (`language/parser/...`) and list the commands executed (e.g., `./gradlew test`). Link Jira tickets, issues, or RFCs when available, and include screenshots for any UI-affecting assets. Confirm wrapper-based builds in the description and note any follow-up tasks explicitly.
+- Write commit messages in imperative present (e.g., `Add parser guard`) and group related changes.
+- Pull requests should summarize scope with inline path references such as `language/parser/...`, list executed commands (e.g., `./gradlew test`), and link Jira tickets or issues.
+- Include screenshots for UI-affecting assets, confirm wrapper-based builds, and call out any follow-up tasks explicitly.
 
 ## Agent Workflow Tips
-Respect any pre-existing worktree changes and avoid reverting edits you did not author. Prefer readable, well-commented solutions over clever tricks. When uncertain about follow-up actions, leave TODOs with handles and file references to keep work traceable.
+- Respect pre-existing worktree changes and never revert edits you did not author.
+- Prefer clear, maintainable solutions over clever shortcuts; add concise comments only where logic is non-obvious.
+- When uncertain about next steps, leave TODOs with handles and file references to keep progress traceable.
