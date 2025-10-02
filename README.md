@@ -38,8 +38,8 @@ Branchline aims to provide several qualities that are often missing in industria
 
 ## Resources
 
-- 📚 Documentation: https://ehlyzov.github.io/branchline-public/
-- 🧪 Playground: https://ehlyzov.github.io/branchline-public/playground/
+- 📚 Documentation (WIP): https://ehlyzov.github.io/branchline-public/
+- 🧪 Playground (WIP): https://ehlyzov.github.io/branchline-public/playground/
 
 ## License
 
