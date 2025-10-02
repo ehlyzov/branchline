@@ -1,4 +1,4 @@
-# Branchline
+# Branchline: speed, clarity, and tracing for structured data
 
 Branchline is an experimental data transformation language for building efficient pipelines in low-code environments. It focuses on converting one JSON-like document into another while offering tooling to make the process observable, predictable, and fast. Comparisons with JSONATA, JOLT, and similar technologies are planned for the future.
 
