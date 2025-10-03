@@ -9,7 +9,8 @@ class StdRegistry internal constructor() {
 
     fun fn(name: String, impl: StdFn) {
         require(name.isNotBlank()) { "Std fn name must be non-blank" }
-        require(map.putIfAbsent(name, impl) == null) { "Std fn '$name' already defined" }
+        require(!map.containsKey(name)) { "Std fn '$name' already defined" }
+        map[name] = impl
     }
 
     internal fun build(): Map<String, StdFn> = map.toMap()
@@ -28,4 +29,3 @@ object StdLib {
 
     val names: Set<String> get() = fns.keys
 }
-
