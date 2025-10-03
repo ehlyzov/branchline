@@ -4,17 +4,19 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import v2.ir.buildRunnerFromProgramMP
 
-class ConformComputedKeysTest {
+class ConformJoinTest {
     @Test
-    fun computed_string_key_in_object() {
+    fun join_strings_with_separator() {
         val program = """
             SOURCE row;
             TRANSFORM T { stream } {
-                OUTPUT { obj: { [row.key] : 1 } }
+                OUTPUT { v: JOIN(["a", "b", "c"], "-") }
             }
         """.trimIndent()
+
         val runner = buildRunnerFromProgramMP(program)
-        val out = runner(mapOf("key" to "a")) as Map<String, Any?>
-        assertEquals(mapOf("a" to 1), out["obj"])
+        val out = runner(emptyMap()) as Map<String, Any?>
+        assertEquals("a-b-c", out["v"])
     }
 }
+
