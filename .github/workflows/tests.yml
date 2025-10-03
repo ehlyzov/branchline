@@ -37,10 +37,11 @@ jobs:
         run: |
           cat <<'SCRIPT' > chrome-with-flags.sh
           #!/usr/bin/env bash
-          exec "${{ steps.setup-chrome.outputs.chrome-path }}" --no-sandbox --disable-dev-shm-usage --disable-gpu "$@"
+          exec "${{ steps.setup-chrome.outputs.chrome-path }}" --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu "$@"
           SCRIPT
           chmod +x chrome-with-flags.sh
           echo "CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
+          echo "KARMA_CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -74,10 +75,11 @@ jobs:
         run: |
           cat <<'SCRIPT' > chrome-with-flags.sh
           #!/usr/bin/env bash
-          exec "${{ steps.setup-chrome.outputs.chrome-path }}" --no-sandbox --disable-dev-shm-usage --disable-gpu "$@"
+          exec "${{ steps.setup-chrome.outputs.chrome-path }}" --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu "$@"
           SCRIPT
           chmod +x chrome-with-flags.sh
           echo "CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
+          echo "KARMA_CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
@@ -111,10 +113,11 @@ jobs:
         run: |
           cat <<'SCRIPT' > chrome-with-flags.sh
           #!/usr/bin/env bash
-          exec "${{ steps.setup-chrome.outputs.chrome-path }}" --no-sandbox --disable-dev-shm-usage --disable-gpu "$@"
+          exec "${{ steps.setup-chrome.outputs.chrome-path }}" --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu "$@"
           SCRIPT
           chmod +x chrome-with-flags.sh
           echo "CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
+          echo "KARMA_CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
