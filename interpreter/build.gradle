@@ -60,10 +60,5 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-test'
             }
         }
-        jsNodeTest {
-            dependencies {
-                implementation 'org.jetbrains.kotlin:kotlin-test'
-            }
-        }
     }
 }
