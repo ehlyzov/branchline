@@ -66,7 +66,6 @@ internal fun asObjectKey(x: Any?): Any = when (x) {
         require(x <= Long.MAX_VALUE.toULong()) { "Object key must be non-negative" }
         x.toLong()
     }
-    is String -> x
     else -> error("Object key must be string or non-negative integer")
 }
 

@@ -4,8 +4,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import v2.ir.buildRunnerFromProgramMP
 
-private fun tk(t: TokenType) = Token(t, t.name, 1, 1)
-
 class ConformNumericTest {
 
     private fun programOf(body: String) = """
