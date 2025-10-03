@@ -28,7 +28,7 @@ class ConformPathsTest {
             SOURCE row;
             TRANSFORM T { stream } {
                 LET o = { a: 1, b: 2 };
-                MODIFY o { b: 3, c: 4 };
+                MODIFY o { b: 3, c: 4 }
                 OUTPUT { o: o }
             }
         """.trimIndent()

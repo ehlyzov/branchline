@@ -95,9 +95,9 @@ private fun fnSPLIT(args: List<Any?>): Any {
 }
 
 private fun fnJOIN(args: List<Any?>): Any {
-    require(setOf(1, 2).contains(args.size)) { "JOIN(list, sep) or JOIN(list)" }
+    require(args.size == 1 || args.size == 2) { "JOIN(list, sep) or JOIN(list)" }
     val xs = args[0] as? List<*> ?: error("JOIN: first arg must be list")
-    val sep = args[1]?.toString() ?: ""
+    val sep = if (args.size >= 2) args[1]?.toString() ?: "" else ""
     return xs.joinToString(sep) { it?.toString() ?: "" }
 }
 
