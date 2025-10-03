@@ -14,3 +14,6 @@ interface SharedStore {
 
 enum class SharedResourceKind { SINGLE, MANY }
 
+expect object SharedStoreProvider {
+    var store: SharedStore?
+}

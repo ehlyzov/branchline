@@ -1,4 +1,3 @@
-// v2/std/StdDebugModule.kt
 package v2.std
 
 import v2.debug.Debug
@@ -36,3 +35,4 @@ private fun fnEXPLAIN(args: List<Any?>): Any? {
     require(args.size == 1 && args[0] is String) { "EXPLAIN(varName)" }
     return Debug.explain(args[0] as String) ?: mapOf("var" to args[0], "info" to "no provenance")
 }
+

@@ -1,6 +1,7 @@
 package v2.std
 
-import java.math.BigInteger
+import kotlin.collections.ArrayDeque
+import v2.runtime.bignum.BLBigInt
 
 class StdCoreModule : StdModule {
     override fun register(r: StdRegistry) {
@@ -50,11 +51,11 @@ private fun fnPUT(args: List<Any?>): Any {
             val i = asIndex(key)
             when {
                 i < coll.size -> ArrayList<Any?>(coll.size).apply {
-                    addAll(coll);
+                    addAll(coll)
                     this[i] = value
                 }
                 i == coll.size -> ArrayList<Any?>(coll.size + 1).apply {
-                    addAll(coll);
+                    addAll(coll)
                     add(value)
                 }
                 else -> error("PUT: index $i out of bounds 0..${coll.size}")
@@ -74,7 +75,7 @@ private fun fnDELETE(args: List<Any?>): Any {
             val i = asIndex(key)
             require(i in 0 until coll.size) { "DELETE: index $i out of bounds 0..${coll.size - 1}" }
             ArrayList<Any?>(coll.size - 1).apply {
-                addAll(coll.subList(0, i));
+                addAll(coll.subList(0, i))
                 addAll(coll.subList(i + 1, coll.size))
             }
         }
@@ -110,14 +111,14 @@ private fun fnWALK(args: List<Any?>): Any {
                 val top = stack.last()
                 val it = top.it
                 if (!it.hasNext()) {
-                    stack.removeLast();
+                    stack.removeLast()
                     continue
                 }
                 when (val ch = it.next()) {
                     is Map.Entry<*, *> -> {
                         val k = ch.key ?: error("WALK: null object key")
-                        require(k is String || k is Int || k is Long || k is BigInteger) {
-                            "WALK: object key must be String|Int|Long|BigInteger, got ${k::class.simpleName}"
+                        require(k is String || k is Int || k is Long || k is BLBigInt) {
+                            "WALK: object key must be String|Int|Long|BigInt, got ${k::class.simpleName}"
                         }
                         val v = ch.value
                         val newPath = top.path + k
@@ -125,7 +126,7 @@ private fun fnWALK(args: List<Any?>): Any {
                         if (cit == null || !cit.hasNext()) {
                             yield(entry(newPath, k, v, newPath.size, true))
                         } else {
-                            stack.addLast(Frame(v, cit, newPath));
+                            stack.addLast(Frame(v, cit, newPath))
                             yield(entry(newPath, k, v, newPath.size, false))
                         }
                     }
@@ -140,7 +141,7 @@ private fun fnWALK(args: List<Any?>): Any {
                         if (cit == null || !cit.hasNext()) {
                             yield(entry(newPath, idx, v, newPath.size, true))
                         } else {
-                            stack.addLast(Frame(v, cit, newPath));
+                            stack.addLast(Frame(v, cit, newPath))
                             yield(entry(newPath, idx, v, newPath.size, false))
                         }
                     }
@@ -155,7 +156,7 @@ private fun fnAPPEND(args: List<Any?>): Any {
     require(args.size == 2) { "APPEND(list, value)" }
     val src = args[0] as? List<*> ?: error("APPEND: first arg must be list")
     return ArrayList<Any?>(src.size + 1).apply {
-        addAll(src);
+        addAll(src)
         add(args[1])
     }
 }
@@ -164,7 +165,7 @@ private fun fnPREPEND(args: List<Any?>): Any {
     require(args.size == 2) { "PREPEND(list, value)" }
     val src = args[0] as? List<*> ?: error("PREPEND: first arg must be list")
     return ArrayList<Any?>(src.size + 1).apply {
-        add(args[1]);
+        add(args[1])
         addAll(src)
     }
 }
@@ -193,3 +194,4 @@ private fun fnIS_OBJECT(args: List<Any?>): Boolean {
     val x = args.getOrNull(0)
     return x is Map<*, *>
 }
+

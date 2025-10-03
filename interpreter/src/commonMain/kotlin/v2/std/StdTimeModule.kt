@@ -12,3 +12,4 @@ private fun fnNOW(args: List<Any?>): Any {
     require(args.isEmpty()) { "NOW()" }
     return Clock.System.now().toString()
 }
+

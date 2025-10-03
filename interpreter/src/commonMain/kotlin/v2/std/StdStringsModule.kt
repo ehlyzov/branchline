@@ -1,5 +1,7 @@
 package v2.std
 
+import v2.runtime.bignum.blBigDecParse
+
 class StdStringsModule : StdModule {
     override fun register(r: StdRegistry) {
         r.fn("STRING", ::fnSTRING)
@@ -28,7 +30,13 @@ private fun fnNUMBER(args: List<Any?>): Any? {
     val v = args[0] ?: return null
     return when (v) {
         is Number -> v
-        is String -> v.toBigDecimalOrNull() ?: error("NUMBER: cannot parse '$v'")
+        is String -> try {
+            blBigDecParse(v)
+        } catch (_: IllegalArgumentException) {
+            error("NUMBER: cannot parse '$v'")
+        } catch (_: NumberFormatException) {
+            error("NUMBER: cannot parse '$v'")
+        }
         is Boolean -> if (v) 1 else 0
         else -> error("NUMBER: unsupported type ${v::class.simpleName}")
     }

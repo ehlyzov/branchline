@@ -91,3 +91,4 @@ private fun fnIS_FUNCTION(args: List<Any?>): Boolean {
     require(args.size == 1) { "IS_FUNCTION(x)" }
     return args[0] is Function1<*, *>
 }
+

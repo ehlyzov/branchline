@@ -17,6 +17,7 @@
 - Import only what you use; wildcard imports are disallowed. Lift helpers to private top-level declarations or companion objects—local functions are not permitted.
 - Choose descriptive identifiers (e.g., `parseResult`, `JvmRuntimeConfig`) and favor immutable data in public APIs.
 - Document any Detekt rule adjustments in `detekt.yml` with a short justification.
+- Do not use `runCatching` in production code; prefer explicit error handling.
 
 ## Testing Guidelines
 - Tests live in each module’s `src/test/kotlin`; name unit tests `*Test` and integration scenarios `*IT`.

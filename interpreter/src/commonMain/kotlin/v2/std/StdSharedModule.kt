@@ -1,7 +1,5 @@
 package v2.std
 
-import kotlinx.coroutines.runBlocking
-
 class StdSharedModule : StdModule {
     override fun register(r: StdRegistry) {
         r.fn("AWAIT_SHARED") { args ->
@@ -9,7 +7,7 @@ class StdSharedModule : StdModule {
             val resource = args[0] as? String ?: error("AWAIT_SHARED: resource must be string")
             val key = args[1] as? String ?: error("AWAIT_SHARED: key must be string")
             val store = SharedStoreProvider.store ?: error("SharedStore is not configured")
-            runBlocking { store.await(resource, key) }
+            blockingAwait(store, resource, key)
         }
     }
 }

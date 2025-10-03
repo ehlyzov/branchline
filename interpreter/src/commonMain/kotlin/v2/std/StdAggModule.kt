@@ -1,6 +1,9 @@
 package v2.std
 
-import java.math.BigDecimal
+import v2.runtime.bignum.BLBigDec
+import v2.runtime.bignum.blBigDecOfLong
+import v2.runtime.bignum.div
+import v2.runtime.bignum.plus
 
 class StdAggModule : StdModule {
     override fun register(r: StdRegistry) {
@@ -24,13 +27,15 @@ private fun fnLENGTH(args: List<Any?>): Any {
     }
 }
 
+private fun requireBigDec(value: Any?, name: String): BLBigDec =
+    toBigDecOrNull(value) ?: error("$name: all elements must be numbers")
+
 private fun fnSUM(args: List<Any?>): Any {
     require(args.size == 1) { "SUM(listOfNumbers)" }
     val xs = args[0] as? List<*> ?: error("SUM: arg must be list")
-    var acc = BigDecimal.ZERO
-    xs.forEach {
-        require(it is Number) { "SUM: all elements must be numbers" }
-        acc = acc.add(toBigDecimalSafe(it))
+    var acc = blBigDecOfLong(0)
+    xs.forEach { value ->
+        acc = acc + requireBigDec(value, "SUM")
     }
     return acc
 }
@@ -39,12 +44,11 @@ private fun fnAVG(args: List<Any?>): Any? {
     require(args.size == 1) { "AVG(listOfNumbers)" }
     val xs = args[0] as? List<*> ?: error("AVG: arg must be list")
     if (xs.isEmpty()) return null
-    var acc = BigDecimal.ZERO
-    xs.forEach {
-        require(it is Number) { "AVG: all elements must be numbers" }
-        acc = acc.add(toBigDecimalSafe(it))
+    var acc = blBigDecOfLong(0)
+    xs.forEach { value ->
+        acc = acc + requireBigDec(value, "AVG")
     }
-    return acc.divide(BigDecimal.valueOf(xs.size.toLong()))
+    return acc / blBigDecOfLong(xs.size.toLong())
 }
 
 private fun fnMIN(args: List<Any?>): Any? {

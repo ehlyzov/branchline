@@ -1,5 +1,7 @@
 package v2.std
 
+import kotlin.collections.LinkedHashSet
+
 class StdArraysModule : StdModule {
     override fun register(r: StdRegistry) {
         r.fn("DISTINCT", ::fnDISTINCT)
@@ -63,3 +65,4 @@ private fun fnZIP(args: List<Any?>): Any {
     val n = minOf(a.size, b.size)
     return (0 until n).map { i -> listOf(a[i], b[i]) }
 }
+
