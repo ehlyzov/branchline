@@ -1,0 +1,126 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  interpreter:
+    name: Interpreter Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Configure Chrome launcher
+        run: |
+          cat <<'SCRIPT' > chrome-with-flags.sh
+          #!/usr/bin/env bash
+          exec "${{ steps.setup-chrome.outputs.chrome-path }}" --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu "$@"
+          SCRIPT
+          chmod +x chrome-with-flags.sh
+          echo "CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
+          echo "KARMA_CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run interpreter tests
+        run: ./gradlew --no-daemon :interpreter:clean :interpreter:allTests
+
+  vm:
+    name: VM Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Configure Chrome launcher
+        run: |
+          cat <<'SCRIPT' > chrome-with-flags.sh
+          #!/usr/bin/env bash
+          exec "${{ steps.setup-chrome.outputs.chrome-path }}" --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu "$@"
+          SCRIPT
+          chmod +x chrome-with-flags.sh
+          echo "CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
+          echo "KARMA_CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run VM tests
+        run: ./gradlew --no-daemon :vm:clean :vm:allTests
+
+  conformance:
+    name: Conformance Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+
+      - name: Configure Chrome launcher
+        run: |
+          cat <<'SCRIPT' > chrome-with-flags.sh
+          #!/usr/bin/env bash
+          exec "${{ steps.setup-chrome.outputs.chrome-path }}" --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu "$@"
+          SCRIPT
+          chmod +x chrome-with-flags.sh
+          echo "CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
+          echo "KARMA_CHROME_BIN=$PWD/chrome-with-flags.sh" >> $GITHUB_ENV
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run conformance tests
+        run: ./gradlew --no-daemon :conformance-tests:clean :conformance-tests:allTests

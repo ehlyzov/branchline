@@ -1,5 +1,9 @@
 # Branchline: speed, clarity, and tracing for structured data
 
+[![Interpreter Tests](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml/badge.svg?branch=main&job=Interpreter%20Tests)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
+[![VM Tests](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml/badge.svg?branch=main&job=VM%20Tests)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
+[![Conformance Tests](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml/badge.svg?branch=main&job=Conformance%20Tests)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
+
 Branchline is an experimental data transformation language for building efficient pipelines in low-code environments. It focuses on converting one JSON-like document into another while offering tooling to make the process observable, predictable, and fast. Comparisons with JSONATA, JOLT, and similar technologies are planned for the future.
 
 In a practical case (a program of several thousand lines originally written in JSONata), Branchline showed a performance improvement of roughly 30× compared to the excellent [dashjoin/jsonata-java](https://github.com/dashjoin/jsonata-java) implementation. However, this result comes from a single test case; comprehensive benchmarks have not been conducted, so it is difficult to make general statements about overall performance. Theoretically, Branchline should be faster by design, but practical numbers will be published once systematic measurements are carried out.
