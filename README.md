@@ -8,6 +8,18 @@ Branchline is an experimental data transformation language for building efficien
 
 In a practical case (a program of several thousand lines originally written in JSONata), Branchline showed a performance improvement of roughly 30× compared to the excellent [dashjoin/jsonata-java](https://github.com/dashjoin/jsonata-java) implementation. However, this result comes from a single test case; comprehensive benchmarks have not been conducted, so it is difficult to make general statements about overall performance. Theoretically, Branchline should be faster by design, but practical numbers will be published once systematic measurements are carried out.
 
+## Quick Example
+
+```branchline
+LET key = "Hello";
+LET loud = (x) -> UPPER(JOIN(x));
+LET world = ["w", "o", "r", "l", "d", "!"];
+
+OUTPUT {
+    [key]: loud(world)
+}
+```
+
 ## Project Status
 
 > **Alpha:** the language is evolving quickly and backwards compatibility is not guaranteed yet.
