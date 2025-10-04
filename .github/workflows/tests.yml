@@ -57,44 +57,8 @@ jobs:
 
       - name: Summarize interpreter tests
         id: summary
-        if: always()
-        run: |
-          python <<'PY'
-import os
-import pathlib
-import xml.etree.ElementTree as ET
-
-reports_root = pathlib.Path('.').resolve()
-total = 0
-failed = 0
-
-for report in reports_root.rglob('TEST-*.xml'):
-    path_posix = report.as_posix()
-    if 'build/test-results' not in path_posix:
-        continue
-    try:
-        tree = ET.parse(report)
-    except ET.ParseError:
-        continue
-    suite = tree.getroot()
-    total += int(suite.attrib.get('tests', 0))
-    failed += int(suite.attrib.get('failures', 0))
-    failed += int(suite.attrib.get('errors', 0))
-
-gradle_outcome = os.environ.get('GRADLE_OUTCOME', 'success')
-status = 'passing'
-if failed > 0 or gradle_outcome != 'success':
-    status = 'failing'
-color = 'brightgreen' if status == 'passing' else 'red'
-
-output_file = os.environ['GITHUB_OUTPUT']
-with open(output_file, 'a', encoding='utf-8') as fh:
-    fh.write(f"tests={total}\n")
-    fh.write(f"status={status}\n")
-    fh.write(f"color={color}\n")
-PY
-        env:
-          GRADLE_OUTCOME: ${{ steps.run-tests.outcome }}
+        if: ${{ always() }}
+        run: node .github/scripts/junit-summary.mjs interpreter
 
       - name: Update interpreter badge
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -157,44 +121,8 @@ PY
 
       - name: Summarize VM tests
         id: summary
-        if: always()
-        run: |
-          python <<'PY'
-import os
-import pathlib
-import xml.etree.ElementTree as ET
-
-reports_root = pathlib.Path('.').resolve()
-total = 0
-failed = 0
-
-for report in reports_root.rglob('TEST-*.xml'):
-    path_posix = report.as_posix()
-    if 'build/test-results' not in path_posix:
-        continue
-    try:
-        tree = ET.parse(report)
-    except ET.ParseError:
-        continue
-    suite = tree.getroot()
-    total += int(suite.attrib.get('tests', 0))
-    failed += int(suite.attrib.get('failures', 0))
-    failed += int(suite.attrib.get('errors', 0))
-
-gradle_outcome = os.environ.get('GRADLE_OUTCOME', 'success')
-status = 'passing'
-if failed > 0 or gradle_outcome != 'success':
-    status = 'failing'
-color = 'brightgreen' if status == 'passing' else 'red'
-
-output_file = os.environ['GITHUB_OUTPUT']
-with open(output_file, 'a', encoding='utf-8') as fh:
-    fh.write(f"tests={total}\n")
-    fh.write(f"status={status}\n")
-    fh.write(f"color={color}\n")
-PY
-        env:
-          GRADLE_OUTCOME: ${{ steps.run-tests.outcome }}
+        if: ${{ always() }}
+        run: node .github/scripts/junit-summary.mjs vm
 
       - name: Update VM badge
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -257,44 +185,8 @@ PY
 
       - name: Summarize conformance tests
         id: summary
-        if: always()
-        run: |
-          python <<'PY'
-import os
-import pathlib
-import xml.etree.ElementTree as ET
-
-reports_root = pathlib.Path('.').resolve()
-total = 0
-failed = 0
-
-for report in reports_root.rglob('TEST-*.xml'):
-    path_posix = report.as_posix()
-    if 'build/test-results' not in path_posix:
-        continue
-    try:
-        tree = ET.parse(report)
-    except ET.ParseError:
-        continue
-    suite = tree.getroot()
-    total += int(suite.attrib.get('tests', 0))
-    failed += int(suite.attrib.get('failures', 0))
-    failed += int(suite.attrib.get('errors', 0))
-
-gradle_outcome = os.environ.get('GRADLE_OUTCOME', 'success')
-status = 'passing'
-if failed > 0 or gradle_outcome != 'success':
-    status = 'failing'
-color = 'brightgreen' if status == 'passing' else 'red'
-
-output_file = os.environ['GITHUB_OUTPUT']
-with open(output_file, 'a', encoding='utf-8') as fh:
-    fh.write(f"tests={total}\n")
-    fh.write(f"status={status}\n")
-    fh.write(f"color={color}\n")
-PY
-        env:
-          GRADLE_OUTCOME: ${{ steps.run-tests.outcome }}
+        if: ${{ always() }}
+        run: node .github/scripts/junit-summary.mjs conformance-tests
 
       - name: Update conformance badge
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
