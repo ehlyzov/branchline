@@ -2,6 +2,10 @@ package v2.vm
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
+import v2.vm.BytecodeIO
+import v2.vm.BytecodeIO.SerializedBytecode
+import v2.vm.BytecodeIO.SerializedInstruction
+import v2.vm.BytecodeIO.SerializedValue
 import v2.*
 import v2.ir.*
 import v2.debug.CollectingTracer
@@ -1281,30 +1285,6 @@ class VM(
     )
 
     @Serializable
-    data class SerializedBytecode(
-        val instructions: List<SerializedInstruction>
-    )
-
-    @Serializable
-    data class SerializedInstruction(
-        val op: String,
-        val s: String? = null,
-        val i: Int? = null,
-        val n: Int? = null,
-        val key: String? = null,
-        val value: SerializedValue? = null
-    )
-
-    @Serializable
-    data class SerializedValue(
-        val t: String, // null, bool, str, i64, f64, obj, arr
-        val s: String? = null,
-        val b: Boolean? = null,
-        val arr: List<SerializedValue>? = null,
-        val obj: Map<String, SerializedValue>? = null
-    )
-
-    @Serializable
     data class SerializedCall(
         val returnPc: Int,
         val env: Map<String, SerializedValue>,
@@ -1331,18 +1311,18 @@ class VM(
     /** Convert current VM state to JSON string. */
     fun snapshotJson(): String {
         val snap = Snapshot(
-            serializeBytecode(bytecode),
+            BytecodeIO.serializeBytecode(bytecode),
             pc,
-            environment.mapValues { (_, v) -> serializeValue(v) },
-            stack.toList().map { serializeValue(it) },
-            locals = locals.take(locals.size).map { serializeValue(it) },
+            environment.mapValues { (_, v) -> BytecodeIO.serializeValue(v) },
+            stack.toList().map { BytecodeIO.serializeValue(it) },
+            locals = locals.take(locals.size).map { BytecodeIO.serializeValue(it) },
             calls = callStack.map { c ->
                 SerializedCall(
                     c.returnAddress,
-                    c.environment.mapValues { (_, v) -> serializeValue(v) },
-                    serializeBytecode(c.outerBytecode),
+                    c.environment.mapValues { (_, v) -> BytecodeIO.serializeValue(v) },
+                    BytecodeIO.serializeBytecode(c.outerBytecode),
                     c.stackSize,
-                    locals = c.locals.map { serializeValue(it) },
+                    locals = c.locals.map { BytecodeIO.serializeValue(it) },
                     traceKind = c.traceKind,
                     traceName = c.traceName,
                     emitTraceReturn = c.emitTraceReturn,
@@ -1352,10 +1332,10 @@ class VM(
             loops = loopStack.map { l ->
                 SerializedLoop(
                     l.varName,
-                    l.list.map { serializeValue(it) },
+                    l.list.map { BytecodeIO.serializeValue(it) },
                     l.idx,
                     l.hadOuter,
-                    l.outerValue?.let { serializeValue(it) },
+                    l.outerValue?.let { BytecodeIO.serializeValue(it) },
                 )
             },
         )
@@ -1364,18 +1344,18 @@ class VM(
 
     private fun buildSnapshotJson(pcAt: Int): String {
         val snap = Snapshot(
-            serializeBytecode(bytecode),
+            BytecodeIO.serializeBytecode(bytecode),
             pcAt,
-            environment.mapValues { (_, v) -> serializeValue(v) },
-            stack.toList().map { serializeValue(it) },
-            locals = locals.take(locals.size).map { serializeValue(it) },
+            environment.mapValues { (_, v) -> BytecodeIO.serializeValue(v) },
+            stack.toList().map { BytecodeIO.serializeValue(it) },
+            locals = locals.take(locals.size).map { BytecodeIO.serializeValue(it) },
             calls = callStack.map { c ->
                 SerializedCall(
                     c.returnAddress,
-                    c.environment.mapValues { (_, v) -> serializeValue(v) },
-                    serializeBytecode(c.outerBytecode),
+                    c.environment.mapValues { (_, v) -> BytecodeIO.serializeValue(v) },
+                    BytecodeIO.serializeBytecode(c.outerBytecode),
                     c.stackSize,
-                    locals = c.locals.map { serializeValue(it) },
+                    locals = c.locals.map { BytecodeIO.serializeValue(it) },
                     traceKind = c.traceKind,
                     traceName = c.traceName,
                     emitTraceReturn = c.emitTraceReturn,
@@ -1385,10 +1365,10 @@ class VM(
             loops = loopStack.map { l ->
                 SerializedLoop(
                     l.varName,
-                    l.list.map { serializeValue(it) },
+                    l.list.map { BytecodeIO.serializeValue(it) },
                     l.idx,
                     l.hadOuter,
-                    l.outerValue?.let { serializeValue(it) },
+                    l.outerValue?.let { BytecodeIO.serializeValue(it) },
                 )
             },
         )
@@ -1411,25 +1391,25 @@ class VM(
         ): VM {
             val snap = Json.decodeFromString(Snapshot.serializer(), snapshotJson)
             val vm = VM(hostFns, funcs, tracer)
-            val bc = deserializeBytecode(snap.bytecode)
-            val env = snap.env.mapValues { (_, v) -> deserializeValue(v) }.toMutableMap()
+            val bc = BytecodeIO.deserializeBytecode(snap.bytecode)
+            val env = snap.env.mapValues { (_, v) -> BytecodeIO.deserializeValue(v) }.toMutableMap()
             vm.begin(bc, env)
             vm.pc = snap.pc
             // Rebuild operand stack
             vm.stack.clear()
-            for (v in snap.stack) vm.stack.push(deserializeValue(v))
+            for (v in snap.stack) vm.stack.push(BytecodeIO.deserializeValue(v))
             // Restore locals
             vm.locals = arrayOf()
             if (snap.locals.isNotEmpty()) {
                 vm.ensureLocals(snap.locals.size)
-                for ((i, sv) in snap.locals.withIndex()) vm.locals[i] = deserializeValue(sv)
+                for ((i, sv) in snap.locals.withIndex()) vm.locals[i] = BytecodeIO.deserializeValue(sv)
             }
             // Restore call stack
             vm.callStack.clear()
             for (c in snap.calls) {
-                val cenv = HashMap(c.env.mapValues { (_, v) -> deserializeValue(v) })
-                val outer = deserializeBytecode(c.outer)
-                val localsArray = Array(c.locals.size) { idx -> deserializeValue(c.locals[idx]) }
+                val cenv = HashMap(c.env.mapValues { (_, v) -> BytecodeIO.deserializeValue(v) })
+                val outer = BytecodeIO.deserializeBytecode(c.outer)
+                val localsArray = Array(c.locals.size) { idx -> BytecodeIO.deserializeValue(c.locals[idx]) }
                 vm.callStack.push(
                     CallFrame(
                         c.returnPc,
@@ -1449,8 +1429,8 @@ class VM(
             // Restore loop stack
             vm.loopStack.clear()
             for (l in snap.loops) {
-                val li = l.list.map { deserializeValue(it) }
-                val outer = l.outer?.let { deserializeValue(it) }
+                val li = l.list.map { BytecodeIO.deserializeValue(it) }
+                val outer = l.outer?.let { BytecodeIO.deserializeValue(it) }
                 vm.loopStack.push(LoopState(l.varName, li, l.idx, l.hadOuter, outer))
             }
             return vm
@@ -1472,7 +1452,7 @@ class VM(
             )
             b.appendLine("- bytecode:")
             snap.bytecode.instructions.forEachIndexed { idx, ins ->
-                val valStr = ins.value?.let { v -> "value=${deserializeValue(v)}" }
+                val valStr = ins.value?.let { v -> "value=${BytecodeIO.deserializeValue(v)}" }
                 val args = listOfNotNull(
                     ins.op,
                     ins.s?.let { "s=$it" },
@@ -1485,174 +1465,6 @@ class VM(
                 b.appendLine("    $idxStr: $args")
             }
             return b.toString()
-        }
-
-        private fun unwrapKeyConst(key: ObjKey): Any = when (key) {
-            is ObjKey.Name -> key.v
-            is I32 -> key.v
-            is I64 -> key.v
-            is IBig -> key.v
-        }
-
-        private fun serializeBytecode(b: Bytecode): SerializedBytecode =
-            SerializedBytecode(b.instructions.map { serializeInstruction(it) })
-
-        private fun deserializeBytecode(s: SerializedBytecode): Bytecode =
-            Bytecode.fromInstructions(s.instructions.map { deserializeInstruction(it) })
-
-        private fun serializeInstruction(i: Instruction): SerializedInstruction = when (i) {
-            is Instruction.PUSH -> SerializedInstruction("PUSH", value = serializeValue(i.value))
-            Instruction.DUP -> SerializedInstruction("DUP")
-            Instruction.POP -> SerializedInstruction("POP")
-            Instruction.SWAP -> SerializedInstruction("SWAP")
-            is Instruction.LOAD_VAR -> SerializedInstruction("LOAD_VAR", s = i.name)
-            is Instruction.STORE_VAR -> SerializedInstruction("STORE_VAR", s = i.name)
-            is Instruction.LOAD_SCOPE -> SerializedInstruction("LOAD_SCOPE", s = i.name)
-            is Instruction.LOAD_LOCAL -> SerializedInstruction("LOAD_LOCAL", i = i.index)
-            is Instruction.STORE_LOCAL -> SerializedInstruction("STORE_LOCAL", i = i.index)
-            Instruction.ADD -> SerializedInstruction("ADD")
-            Instruction.SUB -> SerializedInstruction("SUB")
-            Instruction.MUL -> SerializedInstruction("MUL")
-            Instruction.DIV -> SerializedInstruction("DIV")
-            Instruction.MOD -> SerializedInstruction("MOD")
-            Instruction.NEG -> SerializedInstruction("NEG")
-            Instruction.EQ -> SerializedInstruction("EQ")
-            Instruction.NEQ -> SerializedInstruction("NEQ")
-            Instruction.LT -> SerializedInstruction("LT")
-            Instruction.LE -> SerializedInstruction("LE")
-            Instruction.GT -> SerializedInstruction("GT")
-            Instruction.GE -> SerializedInstruction("GE")
-            Instruction.AND -> SerializedInstruction("AND")
-            Instruction.OR -> SerializedInstruction("OR")
-            Instruction.NOT -> SerializedInstruction("NOT")
-            Instruction.COALESCE -> SerializedInstruction("COALESCE")
-            is Instruction.MAKE_OBJECT -> SerializedInstruction("MAKE_OBJECT", n = i.fieldCount)
-            is Instruction.MAKE_ARRAY -> SerializedInstruction("MAKE_ARRAY", n = i.elementCount)
-            is Instruction.ACCESS_STATIC -> SerializedInstruction(
-                "ACCESS_STATIC",
-                key = unwrapKeyConst(i.key).toString()
-            )
-            Instruction.ACCESS_DYNAMIC -> SerializedInstruction("ACCESS_DYNAMIC")
-            is Instruction.SET_STATIC -> SerializedInstruction("SET_STATIC", key = unwrapKeyConst(i.key).toString())
-            Instruction.SET_DYNAMIC -> SerializedInstruction("SET_DYNAMIC")
-            Instruction.APPEND -> SerializedInstruction("APPEND")
-            Instruction.CONCAT -> SerializedInstruction("CONCAT")
-            is Instruction.JUMP -> SerializedInstruction("JUMP", i = i.address)
-            is Instruction.JUMP_IF_TRUE -> SerializedInstruction("JUMP_IF_TRUE", i = i.address)
-            is Instruction.JUMP_IF_FALSE -> SerializedInstruction("JUMP_IF_FALSE", i = i.address)
-            is Instruction.JUMP_IF_NULL -> SerializedInstruction("JUMP_IF_NULL", i = i.address)
-            is Instruction.CALL -> SerializedInstruction("CALL", s = i.name, n = i.argCount)
-            is Instruction.CALL_HOST -> SerializedInstruction("CALL_HOST", s = i.name, i = i.index, n = i.argCount)
-            is Instruction.CALL_FN -> SerializedInstruction("CALL_FN", s = i.name, n = i.argCount)
-            is Instruction.CALL_LAMBDA -> SerializedInstruction("CALL_LAMBDA", n = i.argCount)
-            Instruction.RETURN -> SerializedInstruction("RETURN")
-            Instruction.RETURN_VALUE -> SerializedInstruction("RETURN_VALUE")
-            is Instruction.OUTPUT -> SerializedInstruction("OUTPUT", n = i.fieldCount)
-            Instruction.OUTPUT_1 -> SerializedInstruction("OUTPUT_1")
-            Instruction.OUTPUT_2 -> SerializedInstruction("OUTPUT_2")
-            is Instruction.MODIFY -> SerializedInstruction("MODIFY", n = i.updateCount)
-            is Instruction.INIT_FOREACH -> SerializedInstruction("INIT_FOREACH", s = i.varName, i = i.jumpToEnd)
-            is Instruction.NEXT_FOREACH -> SerializedInstruction("NEXT_FOREACH", i = i.jumpToStart, n = i.jumpToEnd)
-            is Instruction.TRY_START -> SerializedInstruction("TRY_START", i = i.catchAddress)
-            Instruction.TRY_END -> SerializedInstruction("TRY_END")
-            is Instruction.CATCH -> SerializedInstruction("CATCH", s = i.exceptionVar, n = i.retryCount)
-            Instruction.ABORT -> SerializedInstruction("ABORT")
-            is Instruction.TRACE -> SerializedInstruction("TRACE", s = i.event)
-            is Instruction.BREAKPOINT -> SerializedInstruction("BREAKPOINT", s = i.info)
-            is Instruction.LINE -> SerializedInstruction("LINE", i = i.lineNumber)
-            Instruction.SUSPEND -> SerializedInstruction("SUSPEND")
-            else -> throw IllegalArgumentException("Unsupported instruction for serialization: $i")
-        }
-
-        private fun deserializeInstruction(s: SerializedInstruction): Instruction = when (s.op) {
-            "PUSH" -> Instruction.PUSH(deserializeValue(s.value!!))
-            "DUP" -> Instruction.DUP
-            "POP" -> Instruction.POP
-            "SWAP" -> Instruction.SWAP
-            "LOAD_VAR" -> Instruction.LOAD_VAR(s.s!!)
-            "STORE_VAR" -> Instruction.STORE_VAR(s.s!!)
-            "LOAD_SCOPE" -> Instruction.LOAD_SCOPE(s.s!!)
-            "LOAD_LOCAL" -> Instruction.LOAD_LOCAL(s.i!!)
-            "STORE_LOCAL" -> Instruction.STORE_LOCAL(s.i!!)
-            "ADD" -> Instruction.ADD
-            "SUB" -> Instruction.SUB
-            "MUL" -> Instruction.MUL
-            "DIV" -> Instruction.DIV
-            "MOD" -> Instruction.MOD
-            "NEG" -> Instruction.NEG
-            "EQ" -> Instruction.EQ
-            "NEQ" -> Instruction.NEQ
-            "LT" -> Instruction.LT
-            "LE" -> Instruction.LE
-            "GT" -> Instruction.GT
-            "GE" -> Instruction.GE
-            "AND" -> Instruction.AND
-            "OR" -> Instruction.OR
-            "NOT" -> Instruction.NOT
-            "COALESCE" -> Instruction.COALESCE
-            "MAKE_OBJECT" -> Instruction.MAKE_OBJECT(s.n!!)
-            "MAKE_ARRAY" -> Instruction.MAKE_ARRAY(s.n!!)
-            "ACCESS_STATIC" -> Instruction.ACCESS_STATIC(ObjKey.Name(s.key!!))
-            "ACCESS_DYNAMIC" -> Instruction.ACCESS_DYNAMIC
-            "SET_STATIC" -> Instruction.SET_STATIC(ObjKey.Name(s.key!!))
-            "SET_DYNAMIC" -> Instruction.SET_DYNAMIC
-            "APPEND" -> Instruction.APPEND
-            "CONCAT" -> Instruction.CONCAT
-            "JUMP" -> Instruction.JUMP(s.i!!)
-            "JUMP_IF_TRUE" -> Instruction.JUMP_IF_TRUE(s.i!!)
-            "JUMP_IF_FALSE" -> Instruction.JUMP_IF_FALSE(s.i!!)
-            "JUMP_IF_NULL" -> Instruction.JUMP_IF_NULL(s.i!!)
-            "CALL" -> Instruction.CALL(s.s!!, s.n!!)
-            "CALL_HOST" -> Instruction.CALL_HOST(s.i!!, s.s!!, s.n!!)
-            "CALL_FN" -> Instruction.CALL_FN(s.s!!, s.n!!)
-            "CALL_LAMBDA" -> Instruction.CALL_LAMBDA(s.n!!)
-            "RETURN" -> Instruction.RETURN
-            "RETURN_VALUE" -> Instruction.RETURN_VALUE
-            "OUTPUT" -> Instruction.OUTPUT(s.n!!)
-            "OUTPUT_1" -> Instruction.OUTPUT_1
-            "OUTPUT_2" -> Instruction.OUTPUT_2
-            "MODIFY" -> Instruction.MODIFY(s.n!!)
-            "INIT_FOREACH" -> Instruction.INIT_FOREACH(s.s!!, s.i!!)
-            "NEXT_FOREACH" -> Instruction.NEXT_FOREACH(s.i!!, s.n!!)
-            "TRY_START" -> Instruction.TRY_START(s.i!!)
-            "TRY_END" -> Instruction.TRY_END
-            "CATCH" -> Instruction.CATCH(s.s!!, s.n!!)
-            "ABORT" -> Instruction.ABORT
-            "TRACE" -> Instruction.TRACE(s.s!!)
-            "BREAKPOINT" -> Instruction.BREAKPOINT(s.s!!)
-            "LINE" -> Instruction.LINE(s.i!!)
-            "SUSPEND" -> Instruction.SUSPEND
-            else -> throw IllegalArgumentException("Unknown op ${s.op}")
-        }
-
-        private fun serializeValue(v: Any?): SerializedValue = when (v) {
-            null -> SerializedValue("null")
-            is Boolean -> SerializedValue("bool", b = v)
-            is String -> SerializedValue("str", s = v)
-            is Int, is Long -> SerializedValue("i64", s = v.toString())
-            is Double, is Float -> SerializedValue("f64", s = v.toString())
-            is BLBigInt -> SerializedValue("i64", s = v.toString())
-            is BLBigDec -> SerializedValue("f64", s = v.toPlainString())
-            is List<*> -> SerializedValue("arr", arr = v.map { serializeValue(it) })
-            is Array<*> -> SerializedValue("arr", arr = v.map { serializeValue(it) })
-            is Map<*, *> -> {
-                // Stringify keys for portability
-                val m = LinkedHashMap<String, SerializedValue>()
-                for ((k, vv) in v) m[k.toString()] = serializeValue(vv)
-                SerializedValue("obj", obj = m)
-            }
-            else -> SerializedValue("str", s = v.toString()) // Fallback
-        }
-
-        private fun deserializeValue(v: SerializedValue): Any? = when (v.t) {
-            "null" -> null
-            "bool" -> v.b
-            "str" -> v.s
-            "i64" -> v.s!!.toLong()
-            "f64" -> v.s!!.toDouble()
-            "arr" -> v.arr!!.map { deserializeValue(it) }
-            "obj" -> v.obj!!.mapValues { (_, vv) -> deserializeValue(vv) }
-            else -> v.s
         }
     }
 
