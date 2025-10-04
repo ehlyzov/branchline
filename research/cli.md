@@ -41,7 +41,17 @@ This document tracks the plan for introducing dedicated command-line tools that 
 
 7. **Documentation & CI updates**
    - Update README/docs with usage examples.
-   - Teach GitHub Actions to invoke `bl run` once the CLI is stable.
+   - Teach GitHub Actions to invoke `bl run` or the CLI tests once the toolchain is stable.
+
+## Usage Notes (WIP)
+
+- JVM entry points:
+  - `./gradlew :cli:runBl --args "path/to/script.bl --input sample.json"`
+  - `./gradlew :cli:runBlc --args "path/to/script.bl --output build/program.blc"`
+  - `./gradlew :cli:runBlvm --args "build/program.blc --input sample.json"`
+- JS entry point: `./gradlew :cli:jsNodeProductionRun --args="path/to/script.bl --input sample.json"`
+- Tests: `./gradlew :cli:jvmTest :cli:jsNodeTest`
+- XML input is supported on JVM/JS through `--input-format xml` (JS parser uses `fast-xml-parser`).
 
 ## Current Status
 
@@ -50,7 +60,7 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - [x] JVM binaries implemented (`bl`, `blc`, `blvm`)
 - [ ] JS binaries implemented
 - [x] XML input handler (JVM)
-- [ ] XML input handler (JS)
+- [x] XML input handler (JS)
 - [x] Tests in place
 - [ ] CI migrated to CLI
 
@@ -58,5 +68,4 @@ This document tracks the plan for introducing dedicated command-line tools that 
 
 - Evaluate distributing the CLI as a separate artifact (e.g., via GitHub Releases).
 - Consider packaging JS CLI via npm for easier consumption.
-- Investigate a shared XML parser that works seamlessly across JVM/JS targets.
-- Implement XML parsing for the Node/JS CLI once a portable parser is selected.
+- Investigate a shared XML parser that works seamlessly across JVM/JS targets (current JS implementation uses `fast-xml-parser`).

@@ -60,7 +60,7 @@ object BytecodeIO {
         is Int, is Long -> SerializedValue("i64", s = value.toString())
         is Double, is Float -> SerializedValue("f64", s = value.toString())
         is BLBigInt -> SerializedValue("i64", s = value.toString())
-        is BLBigDec -> SerializedValue("f64", s = value.toPlainString())
+        is BLBigDec -> SerializedValue("f64", s = value.toString())
         is List<*> -> SerializedValue("arr", arr = value.map { serializeValue(it) })
         is Array<*> -> SerializedValue("arr", arr = value.map { serializeValue(it) })
         is Map<*, *> -> LinkedHashMap<String, SerializedValue>(value.size).let { mapped ->
