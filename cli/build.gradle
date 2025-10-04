@@ -57,7 +57,50 @@ kotlin {
 }
 
 // JVM run helpers for local development
- def jvmCompilation = kotlin.targets.jvm.compilations.main
+def jvmCompilation = kotlin.targets.jvm.compilations.main
+
+def jsProductionKotlinDir = layout.buildDirectory.dir("compileSync/js/main/productionExecutable/kotlin")
+def jsCliPackageDir = layout.buildDirectory.dir("cliJsPackage")
+
+tasks.register('prepareJsCliPackage') {
+    group = 'build'
+    description = 'Assemble the Node.js Branchline CLI bundle contents.'
+    dependsOn 'jsProductionExecutableCompileSync'
+    doLast {
+        def targetRoot = jsCliPackageDir.get().asFile
+        project.delete(targetRoot)
+
+        // Copy compiled Kotlin JS artifacts
+        copy {
+            from(jsProductionKotlinDir.get().asFile)
+            into(new File(targetRoot, 'kotlin'))
+        }
+
+        // Copy launcher script (ensure executable bit)
+        copy {
+            from("${projectDir}/js-package/bin/bl.cjs")
+            into(new File(targetRoot, 'bin'))
+            fileMode = 0755
+        }
+
+        // Generate package.json from template with current version
+        def template = file("${projectDir}/js-package/package.json.tpl").text
+        def resolved = template.replace('__VERSION__', project.version.toString())
+        def pkgFile = new File(targetRoot, 'package.json')
+        pkgFile.text = resolved
+    }
+}
+
+tasks.register('packageJsCli', org.gradle.api.tasks.bundling.Tar) {
+    group = 'distribution'
+    description = 'Create a distributable tarball containing the Node.js Branchline CLI.'
+    dependsOn 'prepareJsCliPackage'
+    archiveBaseName.set('branchline-cli-js')
+    archiveVersion.set(project.version.toString())
+    archiveExtension.set('tgz')
+    compression = org.gradle.api.tasks.bundling.Compression.GZIP
+    from(jsCliPackageDir)
+}
 
 tasks.register('runBl', JavaExec) {
     group = 'application'

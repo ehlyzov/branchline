@@ -22,7 +22,7 @@ This document tracks the plan for introducing dedicated command-line tools that 
      - `blc`/`blvm` as JVM-only binaries living in the same module for now.
 
 3. **Implement command dispatch**
-   - Introduce a lightweight argument parser (e.g., `kotlinx-cli`) with a shared `BranchlineCli` runner.
+   - Introduce a lightweight argument parser (custom for now; consider `kotlinx-cli` later) with a shared `BranchlineCli` runner.
    - Support subcommands: `run` (default), `compile`, `exec-bytecode`.
 
 4. **Hook into interpreter/compiler/VM**
@@ -40,8 +40,8 @@ This document tracks the plan for introducing dedicated command-line tools that 
    - Add Gradle integration tests (`:cli:jvmTest` + Node tests) with sample programs under `test-fixtures/`.
 
 7. **Documentation & CI updates**
-   - Update README/docs with usage examples.
-   - Teach GitHub Actions to invoke `bl run` or the CLI tests once the toolchain is stable.
+   - Update README/docs with usage examples (**TODO**).
+   - Teach GitHub Actions to invoke `bl run` or the CLI tests once the toolchain is stable (CLI job added; monitor & expand coverage).
 
 ## Usage Notes (WIP)
 
@@ -58,14 +58,22 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - [x] Module scaffolded
 - [x] Shared CLI utilities extracted
 - [x] JVM binaries implemented (`bl`, `blc`, `blvm`)
-- [ ] JS binaries implemented
+- [x] JS binaries implemented (package Node executable / npm distribution via `:cli:packageJsCli`)
 - [x] XML input handler (JVM)
 - [x] XML input handler (JS)
 - [x] Tests in place
-- [ ] CI migrated to CLI
+- [ ] CI migrated to CLI (CLI job exists; interpreter/vm jobs still using Gradle tasks)
 
 ## Follow-ups
 
 - Evaluate distributing the CLI as a separate artifact (e.g., via GitHub Releases).
 - Consider packaging JS CLI via npm for easier consumption.
 - Investigate a shared XML parser that works seamlessly across JVM/JS targets (current JS implementation uses `fast-xml-parser`).
+- Document CLI usage in README and developer guides.
+- Decide when to switch interpreter/vm CI jobs to call the CLI instead of module-specific Gradle tasks.
+
+## CI Migration Roadmap (draft)
+
+1. Add a smoke test matrix that runs `bl run` against representative `.bl` fixtures to supplement interpreter/vm module suites.
+2. Once stable, replace the interpreter/vm Gradle invocations in `.github/workflows/tests.yml` with CLI equivalents (or keep Gradle as a fallback invoked by the CLI).
+3. Track CLI badge trends to ensure coverage parity before removing legacy steps.
