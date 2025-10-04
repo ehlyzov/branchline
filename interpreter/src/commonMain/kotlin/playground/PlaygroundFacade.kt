@@ -30,6 +30,7 @@ import v2.ir.makeEval
 import v2.runtime.bignum.BLBigDec
 import v2.runtime.bignum.BLBigInt
 import v2.sema.SemanticAnalyzer
+import v2.std.StdLib
 import kotlin.collections.buildMap
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
@@ -51,6 +52,10 @@ object PlaygroundFacade {
             )
         }
     )
+
+    private val playgroundHostFns: Map<String, (List<Any?>) -> Any?> by lazy {
+        StdLib.fns + debugHostFns
+    }
 
     fun run(program: String, inputJson: String, enableTracing: Boolean = false): PlaygroundResult {
         val tracer = if (enableTracing) {
@@ -84,7 +89,7 @@ object PlaygroundFacade {
                     explainHuman = null
                 )
 
-            val hostFns = debugHostFns
+            val hostFns = playgroundHostFns
             val funcs: Map<String, FuncDecl> = parsed.decls
                 .filterIsInstance<FuncDecl>()
                 .associateBy { it.name }
