@@ -15,13 +15,13 @@ async function main() {
   try {
     xmlFiles = await collectXmlFiles(reportsRoot);
   } catch (error) {
-    await setOutputs({ status: 'error', tests: 'no test reports directory', color: 'orange' });
+    await setOutputs({ status: 'error', tests: 'no test reports directory', color: colorFor('error') });
     console.error(`Failed to read reports from ${reportsRoot}:`, error.message);
     return;
   }
 
   if (xmlFiles.length === 0) {
-    await setOutputs({ status: 'error', tests: 'no test reports found', color: 'orange' });
+    await setOutputs({ status: 'error', tests: 'no test reports found', color: colorFor('error') });
     console.warn(`No test reports found under ${reportsRoot}`);
     return;
   }
@@ -51,7 +51,7 @@ async function main() {
 
   const failedCount = totalFailures + totalErrors;
   const status = failedCount === 0 && totalTests > 0 ? 'passing' : failedCount > 0 ? 'failing' : 'unknown';
-  const color = status === 'passing' ? 'brightgreen' : status === 'failing' ? 'red' : 'lightgrey';
+  const color = colorFor(status);
 
   const details = formatDetails({ totalTests, failedCount, totalSkipped });
   await setOutputs({ status, tests: details, color });
@@ -96,6 +96,19 @@ function formatDetails({ totalTests, failedCount, totalSkipped }) {
     parts.push(`${totalSkipped} skipped`);
   }
   return parts.join(', ');
+}
+
+function colorFor(status) {
+  switch (status) {
+    case 'passing':
+      return '44cc11';
+    case 'failing':
+      return 'e05d44';
+    case 'error':
+      return 'f39c12';
+    default:
+      return '9f9f9f';
+  }
 }
 
 async function setOutputs(outputs) {

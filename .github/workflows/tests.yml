@@ -62,13 +62,14 @@ jobs:
 
       - name: Update interpreter badge
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: flowernifty/bring-your-own-badge@v2
+        uses: RubbaBoy/BYOB@v1.3.0
         with:
+          name: interpreter-test
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: badges
           path: badges/interpreter-test.svg
           label: 'Interpreter Test'
-          message: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
+          status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
           color: '${{ steps.summary.outputs.color }}'
 
       - name: Fail if interpreter tests failed
@@ -126,13 +127,14 @@ jobs:
 
       - name: Update VM badge
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: flowernifty/bring-your-own-badge@v2
+        uses: RubbaBoy/BYOB@v1.3.0
         with:
+          name: vm-test
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: badges
           path: badges/vm-test.svg
           label: 'VM Test'
-          message: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
+          status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
           color: '${{ steps.summary.outputs.color }}'
 
       - name: Fail if VM tests failed
@@ -190,13 +192,14 @@ jobs:
 
       - name: Update conformance badge
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: flowernifty/bring-your-own-badge@v2
+        uses: RubbaBoy/BYOB@v1.3.0
         with:
+          name: conformance-test
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: badges
           path: badges/conformance-test.svg
           label: 'Conformance Test'
-          message: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
+          status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
           color: '${{ steps.summary.outputs.color }}'
 
       - name: Fail if conformance tests failed
