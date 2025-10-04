@@ -8,12 +8,16 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   interpreter:
     name: Interpreter Tests
     runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.summary.outputs.status }}
+      tests: ${{ steps.summary.outputs.tests }}
+      color: ${{ steps.summary.outputs.color }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,11 +51,73 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run interpreter tests
+        id: run-tests
         run: ./gradlew --no-daemon :interpreter:clean :interpreter:allTests
+        continue-on-error: true
+
+      - name: Summarize interpreter tests
+        id: summary
+        if: always()
+        run: |
+          python <<'PY'
+import os
+import pathlib
+import xml.etree.ElementTree as ET
+
+reports_root = pathlib.Path('.').resolve()
+total = 0
+failed = 0
+
+for report in reports_root.rglob('TEST-*.xml'):
+    path_posix = report.as_posix()
+    if 'build/test-results' not in path_posix:
+        continue
+    try:
+        tree = ET.parse(report)
+    except ET.ParseError:
+        continue
+    suite = tree.getroot()
+    total += int(suite.attrib.get('tests', 0))
+    failed += int(suite.attrib.get('failures', 0))
+    failed += int(suite.attrib.get('errors', 0))
+
+gradle_outcome = os.environ.get('GRADLE_OUTCOME', 'success')
+status = 'passing'
+if failed > 0 or gradle_outcome != 'success':
+    status = 'failing'
+color = 'brightgreen' if status == 'passing' else 'red'
+
+output_file = os.environ['GITHUB_OUTPUT']
+with open(output_file, 'a', encoding='utf-8') as fh:
+    fh.write(f"tests={total}\n")
+    fh.write(f"status={status}\n")
+    fh.write(f"color={color}\n")
+PY
+        env:
+          GRADLE_OUTCOME: ${{ steps.run-tests.outcome }}
+
+      - name: Update interpreter badge
+        if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: flowernifty/bring-your-own-badge@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: badges
+          path: badges/interpreter-test.svg
+          label: 'Interpreter Test'
+          message: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
+          color: '${{ steps.summary.outputs.color }}'
+
+      - name: Fail if interpreter tests failed
+        if: ${{ steps.summary.outputs.status != 'passing' }}
+        run: exit 1
 
   vm:
     name: VM Tests
     runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.summary.outputs.status }}
+      tests: ${{ steps.summary.outputs.tests }}
+      color: ${{ steps.summary.outputs.color }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -85,11 +151,73 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run VM tests
+        id: run-tests
         run: ./gradlew --no-daemon :vm:clean :vm:allTests
+        continue-on-error: true
+
+      - name: Summarize VM tests
+        id: summary
+        if: always()
+        run: |
+          python <<'PY'
+import os
+import pathlib
+import xml.etree.ElementTree as ET
+
+reports_root = pathlib.Path('.').resolve()
+total = 0
+failed = 0
+
+for report in reports_root.rglob('TEST-*.xml'):
+    path_posix = report.as_posix()
+    if 'build/test-results' not in path_posix:
+        continue
+    try:
+        tree = ET.parse(report)
+    except ET.ParseError:
+        continue
+    suite = tree.getroot()
+    total += int(suite.attrib.get('tests', 0))
+    failed += int(suite.attrib.get('failures', 0))
+    failed += int(suite.attrib.get('errors', 0))
+
+gradle_outcome = os.environ.get('GRADLE_OUTCOME', 'success')
+status = 'passing'
+if failed > 0 or gradle_outcome != 'success':
+    status = 'failing'
+color = 'brightgreen' if status == 'passing' else 'red'
+
+output_file = os.environ['GITHUB_OUTPUT']
+with open(output_file, 'a', encoding='utf-8') as fh:
+    fh.write(f"tests={total}\n")
+    fh.write(f"status={status}\n")
+    fh.write(f"color={color}\n")
+PY
+        env:
+          GRADLE_OUTCOME: ${{ steps.run-tests.outcome }}
+
+      - name: Update VM badge
+        if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: flowernifty/bring-your-own-badge@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: badges
+          path: badges/vm-test.svg
+          label: 'VM Test'
+          message: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
+          color: '${{ steps.summary.outputs.color }}'
+
+      - name: Fail if VM tests failed
+        if: ${{ steps.summary.outputs.status != 'passing' }}
+        run: exit 1
 
   conformance:
     name: Conformance Tests
     runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.summary.outputs.status }}
+      tests: ${{ steps.summary.outputs.tests }}
+      color: ${{ steps.summary.outputs.color }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -123,4 +251,62 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run conformance tests
+        id: run-tests
         run: ./gradlew --no-daemon :conformance-tests:clean :conformance-tests:allTests
+        continue-on-error: true
+
+      - name: Summarize conformance tests
+        id: summary
+        if: always()
+        run: |
+          python <<'PY'
+import os
+import pathlib
+import xml.etree.ElementTree as ET
+
+reports_root = pathlib.Path('.').resolve()
+total = 0
+failed = 0
+
+for report in reports_root.rglob('TEST-*.xml'):
+    path_posix = report.as_posix()
+    if 'build/test-results' not in path_posix:
+        continue
+    try:
+        tree = ET.parse(report)
+    except ET.ParseError:
+        continue
+    suite = tree.getroot()
+    total += int(suite.attrib.get('tests', 0))
+    failed += int(suite.attrib.get('failures', 0))
+    failed += int(suite.attrib.get('errors', 0))
+
+gradle_outcome = os.environ.get('GRADLE_OUTCOME', 'success')
+status = 'passing'
+if failed > 0 or gradle_outcome != 'success':
+    status = 'failing'
+color = 'brightgreen' if status == 'passing' else 'red'
+
+output_file = os.environ['GITHUB_OUTPUT']
+with open(output_file, 'a', encoding='utf-8') as fh:
+    fh.write(f"tests={total}\n")
+    fh.write(f"status={status}\n")
+    fh.write(f"color={color}\n")
+PY
+        env:
+          GRADLE_OUTCOME: ${{ steps.run-tests.outcome }}
+
+      - name: Update conformance badge
+        if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: flowernifty/bring-your-own-badge@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: badges
+          path: badges/conformance-test.svg
+          label: 'Conformance Test'
+          message: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
+          color: '${{ steps.summary.outputs.color }}'
+
+      - name: Fail if conformance tests failed
+        if: ${{ steps.summary.outputs.status != 'passing' }}
+        run: exit 1
