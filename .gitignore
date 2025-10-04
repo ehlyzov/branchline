@@ -11,3 +11,5 @@ build
 /playground/node_modules/
 /docs/assets/
 /docs/playground/
+site
+.java-version
