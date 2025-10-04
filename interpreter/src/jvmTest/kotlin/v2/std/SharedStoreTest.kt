@@ -13,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.collections.buildMap
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
@@ -266,7 +267,7 @@ class SharedStoreTest {
                 } else {
                     // Wait for parent
                     val parentKey = "$treeId:$fromId"
-                    val parentInfo = store.await("nodeParents", parentKey) as Map<String, Any>
+                    val parentInfo = store.await("nodeParents", parentKey).requireStringMap("parent[$parentKey]")
                     (parentInfo["level"] as Int) + 1
                 }
 
@@ -301,6 +302,16 @@ class SharedStoreTest {
             val color = result["color"] as String
             val expectedColor = if (level % 2 == 1) "RED" else "BLACK"
             assertEquals(expectedColor, color, "Wrong color for level $level")
+        }
+    }
+}
+
+private fun Any?.requireStringMap(context: String): Map<String, Any?> {
+    val map = this as? Map<*, *> ?: error("$context expected object")
+    return buildMap(map.size) {
+        for ((k, v) in map) {
+            require(k is String) { "$context keys must be strings" }
+            put(k, v)
         }
     }
 }

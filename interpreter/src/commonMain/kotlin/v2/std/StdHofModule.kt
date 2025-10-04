@@ -28,7 +28,7 @@ private fun asList(name: String, args: List<Any?>, idx: Int): List<*> =
     args.getOrNull(idx) as? List<*> ?: error("$name: arg ${idx + 1} must be list")
 
 private fun asFn(name: String, args: List<Any?>, idx: Int): FnValue =
-    args.getOrNull(idx) as? FnValue ?: error("$name: arg ${idx + 1} must be function")
+    args.getOrNull(idx).toFnValue(name, idx)
 
 private fun fnMAP(args: List<Any?>): Any {
     require(args.size == 2) { "MAP(list, fn)" }
@@ -83,7 +83,7 @@ private fun fnREDUCE(args: List<Any?>): Any? {
 
 private fun fnAPPLY(args: List<Any?>): Any? {
     require(args.isNotEmpty()) { "APPLY(fn, ...)" }
-    val fn = args[0] as? FnValue ?: error("APPLY: first arg must be function")
+    val fn = args[0].toFnValue("APPLY", 0)
     return fn(args.drop(1))
 }
 
@@ -92,3 +92,12 @@ private fun fnIS_FUNCTION(args: List<Any?>): Boolean {
     return args[0] is Function1<*, *>
 }
 
+private fun Any?.toFnValue(name: String, idx: Int): FnValue {
+    return when (this) {
+        is Function1<*, *> -> {
+            @Suppress("UNCHECKED_CAST")
+            this as FnValue
+        }
+        else -> null
+    } ?: error("$name: arg ${idx + 1} must be function")
+}

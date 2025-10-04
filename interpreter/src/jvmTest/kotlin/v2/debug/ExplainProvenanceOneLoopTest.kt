@@ -3,6 +3,7 @@ package v2.debug
 import v2.testutils.compileAndRun
 import java.math.BigDecimal
 import java.math.RoundingMode
+import kotlin.collections.buildMap
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -143,13 +144,11 @@ class ExplainProvenanceOneLoopTest {
         """.trimIndent()
 
         val (out, _) = runWithTracer(program, row)
-        @Suppress("UNCHECKED_CAST")
-        val obj = out as Map<String, Any?>
+        val obj = out.requireStringMap("explain result")
         val explanations = Debug.explainOutput(obj)
         assertNotNull(explanations)
-        val resultExplain = explanations!!["result"] as Map<String, Any?>
-        @Suppress("UNCHECKED_CAST")
-        val steps = resultExplain["steps"] as List<Map<String, Any?>>
+        val resultExplain = explanations!!["result"].requireStringMap("explain[result]")
+        val steps = resultExplain["steps"].requireMapList("explain[result].steps")
         assertTrue(steps.isNotEmpty(), "Expected result provenance from explainOutput")
         val firstStep = steps.first()
         @Suppress("UNCHECKED_CAST")
@@ -210,14 +209,9 @@ class ExplainProvenanceOneLoopTest {
 
         val (out, tracer) = runWithTracer(program, row)
 
-        @Suppress("UNCHECKED_CAST")
-        val obj = out as Map<String, Any?>
-
-        @Suppress("UNCHECKED_CAST")
-        val result = obj["result"] as Map<String, Any?>
-
-        @Suppress("UNCHECKED_CAST")
-        val items = result["items"] as List<Map<String, Any?>>
+        val obj = out.requireStringMap("result wrapper")
+        val result = obj["result"].requireStringMap("result")
+        val items = result["items"].requireMapList("result.items")
 
         // --- Check numeric results (ids/finals & total) ---
         val finals = items.map { (it["final"] as BigDecimal).setScale(2) }.map { it.toPlainString() }
@@ -347,28 +341,26 @@ class ExplainProvenanceOneLoopTest {
 
         val (out, tracer) = runWithTracer(program, row)
 
-        @Suppress("UNCHECKEDCAST")
+        @Suppress("UNCHECKED_CAST")
         val obj = out as Map<String, Any?>
 
-        @Suppress("UNCHECKEDCAST")
+        @Suppress("UNCHECKED_CAST")
         val result = obj["result"] as Map<String, Any?>
 
-        @Suppress("UNCHECKEDCAST")
+        @Suppress("UNCHECKED_CAST")
         val items = result["items"] as List<Map<String, Any?>>
         val finals = items.map { (it["final"] as BigDecimal).setScale(2) }.map { it.toPlainString() }
         assertEquals(listOf("192.78", "128.52", "153.90"), finals)
         val total = (result["total"] as BigDecimal).setScale(2).toPlainString()
         assertEquals("475.20", total)
 
-        @Suppress("UNCHECKEDCAST")
-        val ex = obj["explain"] as Map<String, Any?>
-        val steps = ex["steps"] as List<Map<String, Any?>>
+        val ex = obj["explain"].requireStringMap("result.explain")
+        val steps = ex["steps"].requireMapList("result.explain.steps")
         val itemsSteps = steps.filter { (it["path"] as List<*>).firstOrNull() == "items" }
         assertEquals(3, itemsSteps.size)
         assertTrue(itemsSteps.all { it["op"] == "APPEND" })
         itemsSteps.forEach { st ->
-            @Suppress("UNCHECKEDCAST")
-            val inputs = st["inputs"] as List<Map<String, Any?>>
+            val inputs = st["inputs"].requireMapList("result.explain.steps.inputs")
             val names = inputs.map { it["name"] as String }
             assertTrue(names.any { it.startsWith("o.") }, "expect some o.* inputs")
             assertTrue("row.coupons" in names, "expect row.coupons in inputs")
@@ -390,4 +382,19 @@ class ExplainProvenanceOneLoopTest {
         assertTrue(human.contains("ROUND("))
         println("--- EXPLAIN(result) human ---\n$human")
     }
+}
+
+private fun Any?.requireStringMap(context: String): Map<String, Any?> {
+    val map = this as? Map<*, *> ?: error("$context expected object")
+    return buildMap(map.size) {
+        for ((k, v) in map) {
+            require(k is String) { "$context keys must be strings" }
+            put(k, v)
+        }
+    }
+}
+
+private fun Any?.requireMapList(context: String): List<Map<String, Any?>> {
+    val list = this as? List<*> ?: error("$context expected list")
+    return list.mapIndexed { idx, value -> value.requireStringMap("$context[$idx]") }
 }

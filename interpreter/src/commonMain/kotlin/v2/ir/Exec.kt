@@ -33,29 +33,29 @@ class Exec(
     private val tracer: Tracer? = null, // DI: pass in, or rely on Debug.tracer fallback
 ) {
     // ---------- tracer helpers (resolve at call-time) ----------
-    private inline fun currentTracer(): Tracer? = tracer ?: Debug.tracer
-    private inline fun emitEnter(n: IRNode) {
+    private fun currentTracer(): Tracer? = tracer ?: Debug.tracer
+    private fun emitEnter(n: IRNode) {
         val t = currentTracer();
         if (t?.opts?.step == true) t.on(TraceEvent.Enter(n))
     }
 
-    private inline fun emitExit(n: IRNode) {
+    private fun emitExit(n: IRNode) {
         val t = currentTracer();
         if (t?.opts?.step == true) t.on(TraceEvent.Exit(n))
     }
 
-    private inline fun emitError(where: String, ex: Throwable) {
+    private fun emitError(where: String, ex: Throwable) {
         currentTracer()?.on(TraceEvent.Error(where, ex))
     }
 
-    private inline fun emitLet(name: String, old: Any?, new: Any?) {
+    private fun emitLet(name: String, old: Any?, new: Any?) {
         val t = currentTracer();
         if (t != null && (t.opts.step || name in t.opts.watch)) {
             t.on(TraceEvent.Let(name, old, new))
         }
     }
 
-    private inline fun emitPathWrite(op: String, root: String, path: List<Any>, old: Any?, new: Any?) {
+    private fun emitPathWrite(op: String, root: String, path: List<Any>, old: Any?, new: Any?) {
         currentTracer()?.on(TraceEvent.PathWrite(op, root, path, old, new))
     }
 

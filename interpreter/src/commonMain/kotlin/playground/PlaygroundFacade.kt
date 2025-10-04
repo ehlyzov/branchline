@@ -40,7 +40,7 @@ import kotlin.js.JsExport
 object PlaygroundFacade {
     private const val INPUT_VAR = "msg"
     private val prettyJson = Json { prettyPrint = true }
-    private val compactJson = Json {}
+    private val compactJson = Json
 
     private val debugHostFns: Map<String, (List<Any?>) -> Any?> = mapOf(
         "EXPLAIN" to { args ->
@@ -108,8 +108,7 @@ object PlaygroundFacade {
             val msg = parseInput(inputJson)
             val env = HashMap<String, Any?>().apply {
                 this[INPUT_VAR] = msg
-                @Suppress("UNCHECKED_CAST")
-                if (msg is Map<*, *>) putAll(msg as Map<String, Any?>)
+                putAll(msg)
             }
             val result = exec.run(env, stringifyKeys = true)
             val jsonElement = toJsonElement(result)
@@ -186,8 +185,15 @@ object PlaygroundFacade {
         if (inputJson.isBlank()) return emptyMap()
         val element = compactJson.parseToJsonElement(inputJson)
         val parsed = fromJsonElement(element)
-        return (parsed as? Map<String, Any?>)
-            ?: error("Input JSON must be an object at the top level.")
+        if (parsed !is Map<*, *>) {
+            error("Input JSON must be an object at the top level.")
+        }
+        val out = LinkedHashMap<String, Any?>(parsed.size)
+        for ((k, v) in parsed) {
+            require(k is String) { "Input JSON keys must be strings." }
+            out[k] = v
+        }
+        return out
     }
 
     private fun fromJsonElement(element: JsonElement): Any? = when (element) {

@@ -8,6 +8,7 @@ import v2.std.SharedStore
 import v2.std.blockingAwait
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashMap
 import v2.runtime.isBigDec
 import v2.runtime.isBigInt
 import v2.runtime.bignum.BLBigDec
@@ -113,9 +114,26 @@ private fun num(x: Any?): Double = (x as Number).toDouble()
 
 internal fun toListOrEmpty(x: Any?): List<Map<String, Any?>> = when (x) {
     null -> emptyList()
-    is List<*> -> x as List<Map<String, Any?>>
-    is Map<*, *> -> listOf(x as Map<String, Any?>)
+    is List<*> -> x.mapIndexed { index, value -> value.toStringKeyedMap("list[$index]") }
+    is Map<*, *> -> listOf(x.toStringKeyedMap("value"))
     else -> error("Expected object or list, got ${x::class.simpleName}")
+}
+
+private fun Any?.toStringKeyedMap(context: String): Map<String, Any?> {
+    val map = this as? Map<*, *> ?: error("$context must be an object")
+    val result = LinkedHashMap<String, Any?>(map.size)
+    for ((key, value) in map) {
+        result[key?.toString() ?: "null"] = value
+    }
+    return result
+}
+
+private fun Any?.toFnValue(): FnValue? = when (this) {
+    is Function1<*, *> -> {
+        @Suppress("UNCHECKED_CAST")
+        (this as FnValue)
+    }
+    else -> null
 }
 
 internal fun normalizeOut(list: List<Map<String, Any?>>): Any? = when (list.size) {
@@ -269,7 +287,7 @@ private class Evaluator(
         hostFns[c.callee.name]?.let { return tracedCall("HOST", c.callee.name, args) { it(args) } }
 
         // value-captured lambda in env?
-        (env[c.callee.name] as? FnValue)?.let { fn ->
+        env[c.callee.name].toFnValue()?.let { fn ->
             return tracedCall("CALL", c.callee.name, args) { fn(args) }
         }
 
@@ -557,7 +575,7 @@ private class Evaluator(
     }
 
     private fun handleInvoke(e: InvokeExpr, env: Env): Any? {
-        val fn = eval(e.target, env) as? FnValue ?: error("Value is not callable")
+        val fn = eval(e.target, env).toFnValue() ?: error("Value is not callable")
         val argv = e.args.map { eval(it, env) }
         return tracedCall("CALL", null, argv) { fn(argv) }
     }
@@ -593,7 +611,6 @@ private class Evaluator(
             is ObjectExpr -> handleObject(e, env)
             is LambdaExpr -> handleLambda(e, env)
             is SharedStateAwaitExpr -> handleSharedStateAwait(e, env)
-            else -> error("Expr kind ${e::class.simpleName} not handled")
         }
     }
 }

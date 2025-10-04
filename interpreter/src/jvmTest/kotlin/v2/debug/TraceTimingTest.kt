@@ -1,6 +1,7 @@
 package v2.debug
 
 import v2.testutils.compileAndRun
+import kotlin.collections.buildMap
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -43,6 +44,16 @@ private fun tracerForPerf(maxEvents: Int = 2_000_000, sample: Int = 200) = Colle
         maxEvents = maxEvents,
     )
 )
+
+private fun Any?.requireStringMap(context: String): Map<String, Any?> {
+    val map = this as? Map<*, *> ?: error("$context expected object")
+    return buildMap(map.size) {
+        for ((k, v) in map) {
+            require(k is String) { "$context keys must be strings" }
+            put(k, v)
+        }
+    }
+}
 
 private fun generateOrders(
     nOrders: Int = 2_500,
@@ -133,7 +144,7 @@ class TraceTimingTest {
 
         val row = generateOrders(nOrders = 1200, maxLinesPerOrder = 30, seed = 123L)
         Debug.tracer = tracer
-        val out = compileAndRun(script, row) as Map<String, Any?>
+        val out = compileAndRun(script, row).requireStringMap("TraceTimingTest output")
         assertTrue(out.containsKey("grand"))
 
         val rep = TraceReport.from(tracer)

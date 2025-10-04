@@ -358,6 +358,22 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
         return result.sortedBy { it.first }
     }
 
+    private fun asTraceMapList(value: Any?, field: String): List<Map<String, Any?>> = when (value) {
+        null -> emptyList()
+        is List<*> -> value.mapIndexed { index, element -> element.toTraceMap("$field[$index]") }
+        else -> listOf(value.toTraceMap(field))
+    }
+
+    private fun Any?.toTraceMap(context: String): Map<String, Any?> {
+        val map = this as? Map<*, *> ?: error("$context must be an object")
+        val result = LinkedHashMap<String, Any?>(map.size)
+        for ((key, value) in map) {
+            require(key is String) { "$context keys must be strings" }
+            result[key] = value
+        }
+        return result
+    }
+
     // ---------- прежнее содержимое ----------
     private var compiledWatchExprs: Map<String, Expr> = emptyMap()
     private var compiledBreaks: Map<String, Expr> = emptyMap()
@@ -596,8 +612,7 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
     fun humanize(name: String): String {
         val prov = explainProvenance(name) ?: return "EXPLAIN($name): происхождение не найдено."
 
-        @Suppress("UNCHECKED_CAST")
-        val steps = prov["steps"] as List<Map<String, Any?>>
+        val steps = asTraceMapList(prov["steps"], "steps")
         if (steps.isEmpty()) return "EXPLAIN($name): нет событий записи."
 
         // сгруппировать по верхнему сегменту пути
@@ -630,15 +645,14 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
                     else -> sb.append('\n')
                 }
                 val debugLines = (s["debug"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
-                val inputPairs = canonicalizeInputPairs(s["inputs"] as List<Map<String, Any?>>)
+                val inputPairs = canonicalizeInputPairs(asTraceMapList(s["inputs"], "inputs"))
                 if (inputPairs.isNotEmpty() && debugLines.isEmpty()) {
                     sb.append("    inputs: ")
                         .append(inputPairs.joinToString(", ") { (n, v) -> "$n=${short(v)}" })
                         .append('\n')
                 }
 
-                @Suppress("UNCHECKED_CAST")
-                val calc = s["calc"] as? List<Map<String, Any?>> ?: emptyList()
+                val calc = asTraceMapList(s["calc"], "calc")
                 if (debugLines.isNotEmpty() || calc.isNotEmpty()) {
                     sb.append("    calc:\n")
                     for (line in debugLines) {
