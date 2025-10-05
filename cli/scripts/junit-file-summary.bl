@@ -1,0 +1,37 @@
+SOURCE row;
+
+TRANSFORM FileSummary { stream } {
+    LET suites = [];
+
+    LET direct = row.testsuite;
+    IF direct != NULL THEN {
+        LET normalized = IF IS_OBJECT(direct) THEN [direct] ELSE direct;
+        FOR suite IN normalized {
+            SET suites = APPEND(suites, suite);
+        }
+    }
+
+    LET container = row.testsuites;
+    IF container != NULL THEN {
+        LET branch = container.testsuite ?? container;
+        LET normalizedContainer = IF IS_OBJECT(branch) THEN [branch] ELSE branch;
+        FOR suite IN normalizedContainer {
+            SET suites = APPEND(suites, suite);
+        }
+    }
+
+    LET metrics = [];
+    FOR suite IN suites {
+        LET item = {
+            tests: suite["@tests"],
+            failures: suite["@failures"],
+            errors: suite["@errors"],
+            skipped: suite["@skipped"]
+        };
+        SET metrics = APPEND(metrics, item);
+    }
+
+    OUTPUT {
+        suites: metrics
+    };
+}

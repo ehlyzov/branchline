@@ -55,6 +55,12 @@ jobs:
         run: ./gradlew --no-daemon :interpreter:clean :interpreter:allTests
         continue-on-error: true
 
+      - name: Prepare Branchline JS CLI
+        if: ${{ always() }}
+        run: |
+          ./gradlew --no-daemon :cli:prepareJsCliPackage
+          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage fast-xml-parser
+
       - name: Summarize interpreter tests
         id: summary
         if: ${{ always() }}
@@ -119,6 +125,12 @@ jobs:
         id: run-tests
         run: ./gradlew --no-daemon :vm:clean :vm:allTests
         continue-on-error: true
+
+      - name: Prepare Branchline JS CLI
+        if: ${{ always() }}
+        run: |
+          ./gradlew --no-daemon :cli:prepareJsCliPackage
+          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage fast-xml-parser
 
       - name: Summarize VM tests
         id: summary
@@ -185,6 +197,12 @@ jobs:
         run: ./gradlew --no-daemon :conformance-tests:clean :conformance-tests:allTests
         continue-on-error: true
 
+      - name: Prepare Branchline JS CLI
+        if: ${{ always() }}
+        run: |
+          ./gradlew --no-daemon :cli:prepareJsCliPackage
+          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage fast-xml-parser
+
       - name: Summarize conformance tests
         id: summary
         if: ${{ always() }}
@@ -203,5 +221,62 @@ jobs:
           color: '${{ steps.summary.outputs.color }}'
 
       - name: Fail if conformance tests failed
+        if: ${{ steps.summary.outputs.status != 'passing' }}
+        run: exit 1
+
+  cli:
+    name: CLI Tests
+    runs-on: ubuntu-latest
+    outputs:
+      status: ${{ steps.summary.outputs.status }}
+      tests: ${{ steps.summary.outputs.tests }}
+      color: ${{ steps.summary.outputs.color }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run CLI tests
+        id: run-tests
+        run: ./gradlew --no-daemon :cli:jvmTest :cli:jsNodeTest
+        continue-on-error: true
+
+      - name: Prepare Branchline JS CLI
+        if: ${{ always() }}
+        run: |
+          ./gradlew --no-daemon :cli:prepareJsCliPackage
+          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage fast-xml-parser
+
+      - name: Summarize CLI tests
+        id: summary
+        if: ${{ always() }}
+        run: node .github/scripts/junit-summary.mjs cli
+
+      - name: Update CLI badge
+        if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: RubbaBoy/BYOB@v1.3.0
+        with:
+          name: cli-test
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: badges
+          path: badges/cli-test.svg
+          label: 'CLI Test'
+          status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
+          color: '${{ steps.summary.outputs.color }}'
+
+      - name: Fail if CLI tests failed
         if: ${{ steps.summary.outputs.status != 'passing' }}
         run: exit 1

@@ -1,6 +1,15 @@
 #!/usr/bin/env node
+import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
+import { createRequire } from 'node:module';
+import { dirname, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const repoRoot = resolve(__dirname, '..', '..');
+const fileSummaryScript = join(repoRoot, 'cli', 'scripts', 'junit-file-summary.bl');
+const summaryScript = join(repoRoot, 'cli', 'scripts', 'junit-summary.bl');
 
 async function main() {
   const [, , modulePath = ''] = process.argv;
@@ -9,7 +18,14 @@ async function main() {
     process.exit(1);
   }
 
-  const reportsRoot = join(process.cwd(), modulePath, 'build', 'test-results');
+  const cliBin = await resolveCliBin();
+  await ensureCliDependencies(cliBin);
+  const moduleRoot = join(repoRoot, modulePath);
+  const reportsRoot = join(moduleRoot, 'build', 'test-results');
+  const reportsDir = join(moduleRoot, 'build', 'reports');
+  const resultsPath = join(reportsDir, 'branchline-junit-results.jsonl');
+  const summaryInputPath = join(reportsDir, 'branchline-junit-summary-input.json');
+  const summaryOutputPath = join(reportsDir, 'branchline-junit-summary.json');
 
   let xmlFiles;
   try {
@@ -26,36 +42,46 @@ async function main() {
     return;
   }
 
-  let totalTests = 0;
-  let totalFailures = 0;
-  let totalErrors = 0;
-  let totalSkipped = 0;
+  await fs.mkdir(reportsDir, { recursive: true });
+  await fs.writeFile(resultsPath, '', 'utf8');
 
+  const collected = [];
   for (const file of xmlFiles) {
     try {
-      const content = await fs.readFile(file, 'utf8');
-      const suites = [...content.matchAll(/<testsuite\b[^>]*>/g)];
-      for (const suiteMatch of suites) {
-        const attrs = Object.fromEntries(
-          [...suiteMatch[0].matchAll(/(\w+)="([^"]*)"/g)].map(([ , key, value ]) => [key, value]),
-        );
-        totalTests += parseInt(attrs.tests ?? '0', 10);
-        totalFailures += parseInt(attrs.failures ?? '0', 10);
-        totalErrors += parseInt(attrs.errors ?? '0', 10);
-        totalSkipped += parseInt(attrs.skipped ?? '0', 10);
-      }
+      const result = await runBranchline(cliBin, fileSummaryScript, {
+        inputPath: file,
+        inputFormat: 'xml',
+      });
+      const entry = buildFileSummary(relative(repoRoot, file), result);
+      collected.push(entry);
+      await fs.appendFile(resultsPath, `${JSON.stringify(entry)}\n`);
     } catch (error) {
-      console.error(`Failed to parse JUnit report ${file}:`, error.message);
+      console.error(`Branchline failed to process ${file}:`, error.message);
     }
   }
 
-  const failedCount = totalFailures + totalErrors;
-  const status = failedCount === 0 && totalTests > 0 ? 'passing' : failedCount > 0 ? 'failing' : 'unknown';
-  const color = colorFor(status);
+  if (collected.length === 0) {
+    await setOutputs({ status: 'error', tests: 'no reports parsed', color: colorFor('error') });
+    return;
+  }
 
-  const details = formatDetails({ totalTests, failedCount, totalSkipped });
-  await setOutputs({ status, tests: details, color });
-  console.log(`Summary for ${modulePath}: ${status} (${details})`);
+  const summaryInput = { reports: collected };
+  await fs.writeFile(summaryInputPath, JSON.stringify(summaryInput), 'utf8');
+
+  let summary;
+  try {
+    summary = await runBranchline(cliBin, summaryScript, { inputPath: summaryInputPath });
+  } catch (error) {
+    console.error('Failed to summarize Branchline results:', error.message);
+    await setOutputs({ status: 'error', tests: 'summary evaluation failed', color: colorFor('error') });
+    return;
+  }
+
+  await fs.writeFile(summaryOutputPath, JSON.stringify(summary, null, 2), 'utf8');
+
+  const { status, tests, color } = summary;
+  await setOutputs({ status, tests, color });
+  console.log(`Summary for ${modulePath}: ${status} (${tests})`);
 }
 
 async function collectXmlFiles(root) {
@@ -84,18 +110,142 @@ async function safeReadDir(path) {
   }
 }
 
-function formatDetails({ totalTests, failedCount, totalSkipped }) {
+function runBranchline(cliBin, scriptPath, { inputPath, inputFormat } = {}) {
+  const cliArgs = [scriptPath];
+  if (inputPath) {
+    cliArgs.push('--input', inputPath);
+    if (inputFormat) {
+      cliArgs.push('--input-format', inputFormat);
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [cliBin, ...cliArgs], {
+      cwd: repoRoot,
+      env: process.env,
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Branchline CLI exited with ${code}: ${stderr || stdout}`));
+        return;
+      }
+      try {
+        const jsonText = extractJson(stdout);
+        resolve(JSON.parse(jsonText));
+      } catch (error) {
+        reject(new Error(`Failed to parse Branchline output: ${error.message}\n${stdout}`));
+      }
+    });
+  });
+}
+
+function extractJson(output) {
+  const trimmed = output.trim();
+  const start = trimmed.indexOf('{');
+  const end = trimmed.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error('Branchline CLI did not produce JSON output');
+  }
+  return trimmed.slice(start, end + 1);
+}
+
+function buildFileSummary(path, result) {
+  const suites = Array.isArray(result?.suites) ? result.suites : [];
+  let tests = 0;
+  let failures = 0;
+  let errors = 0;
+  let skipped = 0;
+
+  for (const suite of suites) {
+    tests += toCount(suite?.tests);
+    failures += toCount(suite?.failures);
+    errors += toCount(suite?.errors);
+    skipped += toCount(suite?.skipped);
+  }
+
+  const failed = failures + errors;
+  const status = statusForTotals(tests, failed);
+  const summary = formatDetails({ totalTests: tests, failedCount: failed, totalSkipped: skipped });
+  const color = colorFor(status);
+
+  return {
+    path,
+    suites: suites.length,
+    tests,
+    failures,
+    errors,
+    skipped,
+    failed,
+    status,
+    summary,
+    color,
+  };
+}
+
+function toCount(value) {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+  const parsed = Number.parseInt(String(value), 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function statusForTotals(totalTests, failed) {
   if (totalTests === 0) {
-    return '0 tests';
+    return 'error';
   }
-  const parts = [`${totalTests} tests`];
-  if (failedCount > 0) {
-    parts.push(`${failedCount} failed`);
+  if (failed === 0) {
+    return 'passing';
   }
-  if (totalSkipped > 0) {
-    parts.push(`${totalSkipped} skipped`);
+  return 'failing';
+}
+
+async function resolveCliBin() {
+  const override = process.env.BRANCHLINE_CLI_BIN;
+  if (override) {
+    return override;
   }
-  return parts.join(', ');
+
+  const packagedBin = join(repoRoot, 'cli', 'build', 'cliJsPackage', 'bin', 'bl.cjs');
+  if (await pathExists(packagedBin)) {
+    return packagedBin;
+  }
+
+  throw new Error(
+    'Branchline JS CLI not found. Run `./gradlew :cli:prepareJsCliPackage` (or set BRANCHLINE_CLI_BIN) before executing this script.',
+  );
+}
+
+async function pathExists(path) {
+  try {
+    await fs.access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function ensureCliDependencies(cliBin) {
+  if (process.env.BRANCHLINE_SKIP_DEP_CHECK === '1') {
+    return;
+  }
+  try {
+    const requireFromCli = createRequire(cliBin);
+    requireFromCli.resolve('fast-xml-parser');
+  } catch (error) {
+    throw new Error(
+      'Branchline JS CLI is missing the "fast-xml-parser" dependency. Install it (e.g. `npm install --prefix cli/build/cliJsPackage fast-xml-parser`) or point BRANCHLINE_CLI_BIN to a build that bundles the module.',
+    );
+  }
 }
 
 function colorFor(status) {
@@ -111,6 +261,20 @@ function colorFor(status) {
   }
 }
 
+function formatDetails({ totalTests, failedCount, totalSkipped }) {
+  if (totalTests === 0) {
+    return '0 tests';
+  }
+  const parts = [`${totalTests} tests`];
+  if (failedCount > 0) {
+    parts.push(`${failedCount} failed`);
+  }
+  if (totalSkipped > 0) {
+    parts.push(`${totalSkipped} skipped`);
+  }
+  return parts.join(', ');
+}
+
 async function setOutputs(outputs) {
   const lines = Object.entries(outputs)
     .filter(([, value]) => value !== undefined && value !== null)
@@ -124,4 +288,10 @@ async function setOutputs(outputs) {
   await fs.appendFile(githubOutput, `${lines.join('\n')}\n`);
 }
 
-await main();
+try {
+  await main();
+} catch (error) {
+  const message = error instanceof Error ? error.message : String(error);
+  console.error(message);
+  process.exit(1);
+}

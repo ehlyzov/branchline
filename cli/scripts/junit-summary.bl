@@ -1,0 +1,45 @@
+SOURCE row;
+
+TRANSFORM Summary { stream } {
+    LET payload = row.reports;
+    LET reports = IF payload == NULL THEN []
+        ELSE IF IS_OBJECT(payload) THEN [payload]
+        ELSE payload;
+
+    LET totals = { tests: 0, failures: 0, errors: 0, skipped: 0 };
+    LET count = 0;
+
+    FOR report IN reports {
+        SET totals.tests = totals.tests + NUMBER(report.tests ?? 0);
+        SET totals.failures = totals.failures + NUMBER(report.failures ?? 0);
+        SET totals.errors = totals.errors + NUMBER(report.errors ?? 0);
+        SET totals.skipped = totals.skipped + NUMBER(report.skipped ?? 0);
+        SET count = count + 1;
+    }
+
+    LET failed = totals.failures + totals.errors;
+    LET status = IF totals.tests == 0 THEN "error"
+        ELSE IF failed == 0 THEN "passing"
+        ELSE "failing";
+    LET color = IF status == "passing" THEN "44cc11"
+        ELSE IF status == "failing" THEN "e05d44"
+        ELSE IF status == "error" THEN "f39c12"
+        ELSE "9f9f9f";
+
+    LET summary = STRING(totals.tests) + " tests";
+    IF failed > 0 THEN {
+        SET summary = summary + ", " + STRING(failed) + " failed";
+    }
+    IF totals.skipped > 0 THEN {
+        SET summary = summary + ", " + STRING(totals.skipped) + " skipped";
+    }
+
+    OUTPUT {
+        status: status,
+        tests: summary,
+        color: color,
+        reports: count,
+        failed: failed,
+        totals: totals
+    };
+}
