@@ -70,14 +70,12 @@ jobs:
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: RubbaBoy/BYOB@v1.3.0
         with:
-          name: interpreter-test
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: badges
-          path: badges/interpreter-test.svg
-          label: 'Interpreter Test'
-          status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
-          color: '${{ steps.summary.outputs.color }}'
-          format: svg
+          NAME: interpreter-test
+          LABEL: 'Interpreter Test'
+          STATUS: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
+          COLOR: '${{ steps.summary.outputs.color }}'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: badges
 
       - name: Fail if interpreter tests failed
         if: ${{ steps.summary.outputs.status != 'passing' }}
@@ -142,14 +140,12 @@ jobs:
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: RubbaBoy/BYOB@v1.3.0
         with:
-          name: vm-test
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: badges
-          path: badges/vm-test.svg
-          label: 'VM Test'
-          status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
-          color: '${{ steps.summary.outputs.color }}'
-          format: svg
+          NAME: vm-test
+          LABEL: 'VM Test'
+          STATUS: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
+          COLOR: '${{ steps.summary.outputs.color }}'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: badges
 
       - name: Fail if VM tests failed
         if: ${{ steps.summary.outputs.status != 'passing' }}
@@ -214,14 +210,12 @@ jobs:
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: RubbaBoy/BYOB@v1.3.0
         with:
-          name: conformance-test
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: badges
-          path: badges/conformance-test.svg
-          label: 'Conformance Test'
-          status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
-          color: '${{ steps.summary.outputs.color }}'
-          format: svg
+          NAME: conformance-test
+          LABEL: 'Conformance Test'
+          STATUS: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
+          COLOR: '${{ steps.summary.outputs.color }}'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: badges
 
       - name: Fail if conformance tests failed
         if: ${{ steps.summary.outputs.status != 'passing' }}
@@ -272,14 +266,12 @@ jobs:
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         uses: RubbaBoy/BYOB@v1.3.0
         with:
-          name: cli-test
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: badges
-          path: badges/cli-test.svg
-          label: 'CLI Test'
-          status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
-          color: '${{ steps.summary.outputs.color }}'
-          format: svg
+          NAME: cli-test
+          LABEL: 'CLI Test'
+          STATUS: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
+          COLOR: '${{ steps.summary.outputs.color }}'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: badges
 
       - name: Fail if CLI tests failed
         if: ${{ steps.summary.outputs.status != 'passing' }}
