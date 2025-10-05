@@ -1,8 +1,9 @@
 # Branchline: speed, clarity, and tracing for structured data
 
-[![Interpreter Test](https://raw.githubusercontent.com/ehlyzov/branchline-public/badges/interpreter-test.svg)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
-[![VM Test](https://raw.githubusercontent.com/ehlyzov/branchline-public/badges/vm-test.svg)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
-[![Conformance Test](https://raw.githubusercontent.com/ehlyzov/branchline-public/badges/conformance-test.svg)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
+[![Interpreter Test](https://byob.yarr.is/ehlyzov/branchline-public/interpreter-test)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
+[![VM Test](https://byob.yarr.is/ehlyzov/branchline-public/vm-test)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
+[![Conformance Test](https://byob.yarr.is/ehlyzov/branchline-public/conformance-test)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
+[![CLI Test](https://byob.yarr.is/ehlyzov/branchline-public/cli-test)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
 
 Branchline is an experimental data transformation language for building efficient pipelines in low-code environments. It focuses on converting one JSON-like document into another while offering tooling to make the process observable, predictable, and fast. Comparisons with JSONATA, JOLT, and similar technologies are planned for the future.
 
