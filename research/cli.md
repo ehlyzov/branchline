@@ -52,6 +52,8 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - JS entry point: `./gradlew :cli:jsNodeProductionRun --args="path/to/script.bl --input sample.json"`
 - Tests: `./gradlew :cli:jvmTest :cli:jsNodeTest`
 - XML input is supported on JVM/JS through `--input-format xml` (JS parser uses `fast-xml-parser`).
+- Prepare the JS CLI package once via `./gradlew :cli:prepareJsCliPackage`; CI helpers (e.g., `junit-summary.mjs`) invoke the resulting `cli/build/cliJsPackage/bin/bl.cjs` instead of shelling out to Gradle for every run.
+- Install the JS CLI runtime dependency (`fast-xml-parser`) alongside the packaged CLI, e.g. `npm install --prefix cli/build/cliJsPackage fast-xml-parser`, so the Node wrapper can parse XML inputs via the Branchline JS runtime.
 
 ## Current Status
 
@@ -62,6 +64,7 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - [x] XML input handler (JVM)
 - [x] XML input handler (JS)
 - [x] Tests in place
+- [x] Branchline scripts replace `junit-summary.mjs` parsing via CLI-driven per-file metrics aggregation
 - [ ] CI migrated to CLI (CLI job exists; interpreter/vm jobs still using Gradle tasks)
 
 ## Follow-ups
@@ -71,6 +74,7 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - Investigate a shared XML parser that works seamlessly across JVM/JS targets (current JS implementation uses `fast-xml-parser`).
 - Document CLI usage in README and developer guides.
 - Decide when to switch interpreter/vm CI jobs to call the CLI instead of module-specific Gradle tasks.
+- Add targeted CI coverage for the new Branchline-driven JUnit summary flow (Node shim + CLI scripts).
 
 ## CI Migration Roadmap (draft)
 
