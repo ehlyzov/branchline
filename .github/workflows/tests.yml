@@ -77,6 +77,7 @@ jobs:
           label: 'Interpreter Test'
           status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
           color: '${{ steps.summary.outputs.color }}'
+          format: svg
 
       - name: Fail if interpreter tests failed
         if: ${{ steps.summary.outputs.status != 'passing' }}
@@ -148,6 +149,7 @@ jobs:
           label: 'VM Test'
           status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
           color: '${{ steps.summary.outputs.color }}'
+          format: svg
 
       - name: Fail if VM tests failed
         if: ${{ steps.summary.outputs.status != 'passing' }}
@@ -219,6 +221,7 @@ jobs:
           label: 'Conformance Test'
           status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
           color: '${{ steps.summary.outputs.color }}'
+          format: svg
 
       - name: Fail if conformance tests failed
         if: ${{ steps.summary.outputs.status != 'passing' }}
@@ -276,6 +279,7 @@ jobs:
           label: 'CLI Test'
           status: '${{ steps.summary.outputs.status }} (${{ steps.summary.outputs.tests }})'
           color: '${{ steps.summary.outputs.color }}'
+          format: svg
 
       - name: Fail if CLI tests failed
         if: ${{ steps.summary.outputs.status != 'passing' }}
