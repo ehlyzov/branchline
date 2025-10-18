@@ -93,6 +93,40 @@ class ParserTest {
     }
 
     @Test
+    fun `object literal allows trailing comma`() {
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { buffer } {
+                LET obj = {a: 1,}
+            }
+        """.trimIndent())
+        val letStmt = (prg.decls[1] as TransformDecl).body.statements[0] as LetStmt
+        val obj = letStmt.expr as ObjectExpr
+        assertEquals(1, obj.fields.size)
+        val field = obj.fields.first() as LiteralProperty
+        assertEquals("a", (field.key as ObjKey.Name).v)
+        assertTrue(field.value is NumberLiteral)
+    }
+
+    @Test
+    fun `output object allows trailing comma`() {
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { buffer } {
+                OUTPUT {hello: world,}
+            }
+        """.trimIndent())
+        val output = (prg.decls[1] as TransformDecl).body.statements[0] as OutputStmt
+        val tpl = output.template
+        assertTrue(tpl is ObjectExpr)
+        tpl as ObjectExpr
+        val field = tpl.fields.single() as LiteralProperty
+        assertEquals("hello", (field.key as ObjKey.Name).v)
+        val value = field.value as IdentifierExpr
+        assertEquals("world", value.name)
+    }
+
+    @Test
     fun `call expression with multiple args`() {
         val prg = parse("""
             SOURCE s

@@ -829,7 +829,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     private fun parseObject(lbrace: Token): ObjectExpr {
         val fields = mutableListOf<Property>()
         if (!check(TokenType.RIGHT_BRACE)) {
-            do {
+            while (true) {
                 when {
                     // {[expr] : value}
                     match(TokenType.LEFT_BRACKET) -> {
@@ -874,7 +874,9 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
                         fields += LiteralProperty(key, valueExpr)
                     }
                 }
-            } while (match(TokenType.COMMA))
+                if (!match(TokenType.COMMA)) break
+                if (check(TokenType.RIGHT_BRACE)) break // allow trailing comma
+            }
         }
         consume(TokenType.RIGHT_BRACE, "Expect '}' after object literal")
         return ObjectExpr(fields, lbrace)
