@@ -96,7 +96,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val start = advance() // SOURCE
         val nameTok = consume(TokenType.IDENTIFIER, "Expect source identifier")
         val adapter = if (match(TokenType.USING)) parseAdapter() else null
-        consume(TokenType.SEMICOLON, "Expect ';' after SOURCE declaration")
+        optionalSemicolon()
         return SourceDecl(nameTok.lexeme, adapter, start)
     }
 
@@ -163,7 +163,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             match(TokenType.MANY) -> SharedKind.MANY
             else -> error(peek(), "Expect SINGLE or MANY after shared name")
         }
-        consume(TokenType.SEMICOLON, "Expect ';' after SHARED declaration.")
+        optionalSemicolon()
         return SharedDecl(nameTok.lexeme, kind, sharedTok)
     }
 
@@ -186,7 +186,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         // тело:  '=' expr ';'   ИЛИ   блок '{ … }'
         val body: FuncBody = if (match(TokenType.ASSIGN)) {
             val expr = parseExpression()
-            consume(TokenType.SEMICOLON, "Expect ';' after function expression body.")
+            optionalSemicolon()
             ExprBody(expr, funcTok)
         } else {
             val block = parseBlock() // parseBlock съедает '{ … }'
@@ -225,7 +225,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             else -> error(peek(), "Expect 'enum' or 'union' after '='")
         }
 
-        consume(TokenType.SEMICOLON, "Expect ';' after TYPE declaration.")
+        optionalSemicolon()
         return TypeDecl(nameTok.lexeme, kind, defs, typeTok)
     }
 
@@ -256,7 +256,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             else -> {
                 val start = peek()
                 val expr = parseExpression()
-                consume(TokenType.SEMICOLON, "Expect ';' after expression.")
+                optionalSemicolon()
                 ExprStmt(expr, start)
             }
         }
@@ -268,7 +268,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val nameTok = consume(TokenType.IDENTIFIER, "Expect identifier after LET")
         consume(TokenType.ASSIGN, "Expect '=' in LET statement")
         val expr = parseExpression()
-        consume(TokenType.SEMICOLON, "Expect ';' after LET")
+        optionalSemicolon()
         return LetStmt(nameTok.lexeme, expr, nameTok)
     }
 
@@ -348,7 +348,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val target = parsePrimaryPostfix(allowCall = false)
         val value = parseExpression()
         val initExpr = if (match(TokenType.INIT)) parseExpression() else null
-        consume(TokenType.SEMICOLON, "Expect ';' after APPEND TO")
+        optionalSemicolon()
         return when (target) {
             is IdentifierExpr -> AppendToVarStmt(target.name, value, initExpr, start)
             is AccessExpr -> AppendToStmt(target, value, initExpr, start)
@@ -361,7 +361,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val target = parsePrimaryPostfix()
         consume(TokenType.ASSIGN, "Expect '=' after SET target")
         val value = parseExpression()
-        consume(TokenType.SEMICOLON, "Expect ';'")
+        optionalSemicolon()
         return when (target) {
             is IdentifierExpr -> SetVarStmt(target.name, value, start)
             is AccessExpr -> SetStmt(target, value, start)
@@ -448,16 +448,24 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     // RETURN expr? ;
     private fun parseReturn(): ReturnStmt {
         val kw = previous() // сам токен RETURN уже съели
-        val value = if (!check(TokenType.SEMICOLON)) parseExpression() else null
-        consume(TokenType.SEMICOLON, "Expect ';' after return statement.")
+        val value = if (shouldParseReturnExpr(kw)) parseExpression() else null
+        optionalSemicolon()
         return ReturnStmt(value, kw)
     }
 
     private fun parseAbort(): AbortStmt {
         val kw = previous() // токен ABORT
-        val expr = if (!check(TokenType.SEMICOLON)) parseExpression() else null
-        consume(TokenType.SEMICOLON, "Expect ';' after ABORT")
+        val expr = if (shouldParseReturnExpr(kw)) parseExpression() else null
+        optionalSemicolon()
         return AbortStmt(expr, kw)
+    }
+
+    private fun shouldParseReturnExpr(kw: Token): Boolean {
+        val next = peek()
+        if (next.type == TokenType.SEMICOLON) return false
+        if (next.line != kw.line) return false
+        if (isStatementBoundary(next.type)) return false
+        return true
     }
 
     // ------------------- expressions --------------------------------
@@ -873,6 +881,22 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     }
 
     // ------------------- helpers ------------------------------------
+
+    private fun optionalSemicolon() {
+        if (match(TokenType.SEMICOLON)) return
+        val next = peek()
+        if (next.line != previous().line) return
+        if (isStatementBoundary(next.type)) return
+        error(next, "Expect ';' or newline between statements")
+    }
+
+    private fun isStatementBoundary(type: TokenType): Boolean {
+        return when (type) {
+            TokenType.EOF,
+            TokenType.RIGHT_BRACE -> true
+            else -> false
+        }
+    }
 
     private fun match(vararg types: TokenType): Boolean {
         for (type in types) {
