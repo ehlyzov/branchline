@@ -1,6 +1,6 @@
 {
   "title": "Gate deployments with CHECKPOINT and ASSERT",
-  "description": "Aggregates CI build metadata, records a CHECKPOINT for tracing, and guards rollout with ASSERT and EXPLAIN.",
+  "description": "Aggregates CI build metadata, records CHECKPOINTS for timing, and guards rollout with ASSERT and EXPLAIN.",
   "program": [
     "LET normalized = [];",
     "FOR build IN msg.builds {",
@@ -16,6 +16,7 @@
     "",
     "LET slowBuilds = FILTER(normalized, (build) -> build.duration_minutes > msg.slo_minutes);",
     "LET failures = FILTER(normalized, (build) -> build.status != \"passed\");",
+    "CHECKPOINT(\"aggregates prepared\");",
     "LET overallStatus = IF LENGTH(failures) > 0 THEN \"failing\"",
     "    ELSE IF LENGTH(slowBuilds) > 0 THEN \"degraded\"",
     "    ELSE \"passing\";",

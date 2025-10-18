@@ -115,10 +115,7 @@ object PlaygroundFacade {
             val output = prettyJson.encodeToString(jsonElement)
             val explanationMap = tracer?.let { Debug.explainOutput(result) }
             val explainJson = explanationMap?.let { prettyJson.encodeToString(toJsonElement(it)) }
-            val explainHuman = tracer?.let {
-                val lines = TraceReport.from(it).explanations
-                lines.joinToString("\n\n").ifBlank { null }
-            }
+            val explainHuman = tracer?.let { TraceReport.from(it) }?.let(::renderTraceSummary)
 
             PlaygroundResult(
                 success = true,
@@ -257,3 +254,29 @@ data class PlaygroundResult(
     val explainJson: String?,
     val explainHuman: String?
 )
+
+private fun renderTraceSummary(report: TraceReport.TraceReportData): String? {
+    val sections = mutableListOf<String>()
+
+    if (report.checkpoints.isNotEmpty()) {
+        val checkpointLines = report.checkpoints.map { checkpoint ->
+            val duration = checkpoint.at.toString()
+            val labelSuffix = checkpoint.label?.takeIf { it.isNotBlank() }?.let { " $it" } ?: ""
+            "  - @$duration$labelSuffix"
+        }
+        sections += buildString {
+            append("Checkpoints:")
+            checkpointLines.forEach { line ->
+                append('\n')
+                append(line)
+            }
+        }
+    }
+
+    if (report.explanations.isNotEmpty()) {
+        sections += report.explanations.joinToString("\n\n")
+    }
+
+    val summary = sections.joinToString("\n\n").trim()
+    return summary.ifEmpty { null }
+}
