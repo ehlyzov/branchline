@@ -1,7 +1,9 @@
 # Optional semicolon rollout notes
 
+> **Status:** ⏳ Proposal — parser productions still require explicit semicolons, so these notes capture the pending implementation plan.【F:interpreter/src/commonMain/kotlin/Parser.kt†L95-L198】
+
 ## Overview
-We relaxed statement terminators across the Branchline parser so that semicolons are now optional when the parser can detect a clear boundary between statements. The core idea is to reuse a single helper that:
+We want to relax statement terminators across the Branchline parser so that semicolons become optional whenever the parser can detect a clear boundary between statements. The core idea is to reuse a single helper that:
 
 1. Consumes an explicit `;` if it is present.
 2. Treats a change in source line between `previous()` and `peek()` as an implicit boundary.
@@ -9,7 +11,7 @@ We relaxed statement terminators across the Branchline parser so that semicolons
 4. Emits a targeted parse error when none of the above signal a boundary.
 
 ## Parser updates
-All declaration and statement productions that previously required `consume(TokenType.SEMICOLON, …)` now call `optionalSemicolon()` instead. This applies to:
+To implement the behaviour we need to replace every `consume(TokenType.SEMICOLON, …)` at the end of a declaration or statement production with a call to `optionalSemicolon()`. This will affect:
 
 - `parseSource`
 - `parseShared`
@@ -22,7 +24,7 @@ All declaration and statement productions that previously required `consume(Toke
 - `parseReturn`
 - `parseAbort`
 
-The new helper lives near the other parser utilities:
+The new helper should live near the other parser utilities:
 
 ```diff
 +    private fun optionalSemicolon() {
@@ -42,10 +44,10 @@ The new helper lives near the other parser utilities:
 +    }
 ```
 
-This replaces the earlier keyword-heavy `isStatementBoundary` check with a minimalist structural guard.
+This helper would replace the current keyword-heavy semicolon enforcement with a minimalist structural guard. Until the change lands the parser still requires explicit semicolons after each statement.
 
 ## Test coverage
-The parser tests now exercise both declaration- and block-level flows without semicolons:
+Once the helper lands, add parser tests that exercise both declaration- and block-level flows without semicolons:
 
 ```diff
 +    @Test
@@ -58,13 +60,9 @@ The parser tests now exercise both declaration- and block-level flows without se
 +    fun `source without semicolon parses`() { … }
 ```
 
-Existing fixtures were rewritten to drop trailing semicolons where the grammar now allows it, covering `SOURCE`, `SHARED`, `FUNC`, `TYPE`, and block statements.
-
-## Commands executed
-- `gradle wrapper` *(ensures the wrapper JAR exists before invoking Gradle tasks)*
-- `./gradlew test --console=plain`
-- `./gradlew :language:test --tests TraceTimingTest.compare_hotspots_scale_with_input_size_and_print`
-
-All commands completed successfully (`BUILD SUCCESSFUL`).
-
-Keep these notes handy when porting the optional-semicolon behavior to another branch.
+Existing fixtures will need rewrites to drop trailing semicolons wherever the grammar now allows it, covering `SOURCE`, `SHARED`, `FUNC`, `TYPE`, and block statements.
+## Rollout checklist
+- [ ] Update parser productions to call `optionalSemicolon()`.
+- [ ] Regenerate fixtures/tests to cover newline-terminated statements.
+- [ ] Run `./gradlew test --console=plain` to confirm the grammar updates.
+- [ ] Capture before/after examples in the language reference.

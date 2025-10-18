@@ -1,5 +1,7 @@
 # Multiplatform Migration — Snapshot
 
+> **Status:** ⚙️ In progress — interpreter/VM modules already use Kotlin Multiplatform, but the VM JS backend still lacks implementations.【F:interpreter/build.gradle†L1-L47】【F:vm/build.gradle†L5-L54】【F:vm/src/commonMain/kotlin/v2/vm/README.md†L69-L73】
+
 ## Module Layout
 - All core modules apply the Kotlin Multiplatform plugin. The interpreter and VM expose JVM + JS targets and reuse shared source sets, while the compiler module keeps stubs so existing callers continue to compile.【F:interpreter/build.gradle†L1-L47】【F:vm/build.gradle†L1-L52】【F:compiler/build.gradle†L1-L36】
 - The MPP modules are assembled together inside the main build; the remaining `platform` module is still JVM-only and currently just aggregates dependencies on the three language layers.【F:settings.gradle†L1-L7】【F:platform/build.gradle†L1-L7】

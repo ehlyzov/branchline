@@ -1,5 +1,7 @@
 # Transform Contracts Implementation Plan
 
+> **Status:** ⏳ Proposed — transforms still require explicit `{ stream }` clauses and do not accept signature metadata yet.【F:interpreter/src/commonMain/kotlin/Parser.kt†L110-L138】【F:interpreter/src/commonMain/kotlin/v2/Ast.kt†L75-L80】
+
 ## Goals
 - Allow `TRANSFORM` definitions to omit the `{ stream }` clause while defaulting the mode to `STREAM`.
 - Support optional type annotations (`AUTO -> AUTO` by default) that describe input/output schemas.

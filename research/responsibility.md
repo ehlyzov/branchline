@@ -1,5 +1,7 @@
 # Responsibility Refactor — Status Update
 
+> **Status:** ⚙️ In progress — language/platform split is still incomplete; parser semantics and runtime helpers retain legacy behaviours.【F:interpreter/src/commonMain/kotlin/v2/Ast.kt†L14-L35】【F:interpreter/src/commonMain/kotlin/Parser.kt†L95-L198】【F:interpreter/src/commonMain/kotlin/v2/ir/RunnerMP.kt†L26-L39】
+
 ## Repository Layout
 - The public build registers `interpreter`, `vm`, `compiler`, `test-fixtures`, `conformance-tests`, and `platform`. The old monolithic `language` module is gone, but the AST, parser, and VM code still live in the interpreter and VM modules rather than a clean language/platform split.【F:settings.gradle†L1-L7】
 - Graph/orchestration constructs (`GraphBody`, `NodeDecl`, `Connection`, `GraphOutput`) remain in the core AST, so the language module still knows about platform wiring instead of exporting only the DSL surface.【F:interpreter/src/commonMain/kotlin/v2/Ast.kt†L9-L43】
