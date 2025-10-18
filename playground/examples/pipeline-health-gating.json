@@ -1,0 +1,53 @@
+{
+  "title": "Gate deployments with CHECKPOINT and ASSERT",
+  "description": "Aggregates CI build metadata, records a CHECKPOINT for tracing, and guards rollout with ASSERT and EXPLAIN.",
+  "program": [
+    "LET normalized = [];",
+    "FOR build IN msg.builds {",
+    "    LET item = {",
+    "        name: build.name,",
+    "        status: build.status,",
+    "        duration_minutes: build.duration_seconds / 60",
+    "    };",
+    "    SET normalized = APPEND(normalized, item);",
+    "}",
+    "",
+    "CHECKPOINT(\"normalized builds\");",
+    "",
+    "LET slowBuilds = FILTER(normalized, (build) -> build.duration_minutes > msg.slo_minutes);",
+    "LET failures = FILTER(normalized, (build) -> build.status != \"passed\");",
+    "LET overallStatus = IF LENGTH(failures) > 0 THEN \"failing\"",
+    "    ELSE IF LENGTH(slowBuilds) > 0 THEN \"degraded\"",
+    "    ELSE \"passing\";",
+    "",
+    "ASSERT(overallStatus != \"failing\", \"Production build failed\");",
+    "",
+    "OUTPUT {",
+    "    builds: normalized,",
+    "    slow_builds: slowBuilds,",
+    "    status: overallStatus,",
+    "    explain_status: EXPLAIN(\"overallStatus\")",
+    "}"
+  ],
+  "input": {
+    "slo_minutes": 10,
+    "builds": [
+      {
+        "name": "api",
+        "status": "passed",
+        "duration_seconds": 540
+      },
+      {
+        "name": "web",
+        "status": "passed",
+        "duration_seconds": 900
+      },
+      {
+        "name": "mobile",
+        "status": "passed",
+        "duration_seconds": 480
+      }
+    ]
+  },
+  "trace": true
+}
