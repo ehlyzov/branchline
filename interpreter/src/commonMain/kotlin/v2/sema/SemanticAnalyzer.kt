@@ -112,17 +112,26 @@ class SemanticAnalyzer(
         }
 
         is FuncDecl -> when (val b = decl.body) {
-            is ExprBody -> checkExpr(b.expr)
-            is BlockBody -> checkBlock(b.block)
+            is ExprBody -> withScope(decl.params) { checkExpr(b.expr) }
+            is BlockBody -> checkBlock(b.block, decl.params)
         }
 
         else -> Unit // SOURCE / SHARED / TYPE / OUTPUT – пока ничего
     }
 
-    private fun checkBlock(block: CodeBlock) {
-        scopes.addLast(mutableSetOf())
+    private fun checkBlock(block: CodeBlock, initialNames: Collection<String> = emptyList()) {
+        scopes.addLast(initialNames.toMutableSet())
         for (stmt in block.statements) checkStmt(stmt)
         scopes.removeLast()
+    }
+
+    private inline fun <T> withScope(initialNames: Collection<String>, action: () -> T): T {
+        scopes.addLast(initialNames.toMutableSet())
+        return try {
+            action()
+        } finally {
+            scopes.removeLast()
+        }
     }
 
     private fun checkStmt(stmt: Stmt) = when (stmt) {
