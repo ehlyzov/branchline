@@ -1,5 +1,7 @@
 # Plan: Rename default input binding and support custom aliases
 
+> **Status:** ⏳ Proposed — execution helpers still seed environments with the legacy `row` binding, so the alias work has not started.【F:interpreter/src/commonMain/kotlin/v2/ir/RunnerMP.kt†L26-L39】【F:vm/src/commonMain/kotlin/v2/ir/StreamCompiler.kt†L63-L83】
+
 ## 1. Baseline analysis
 - [ ] Inventory all code paths that special-case the `row` binding today (parser/sema visibility, IR runners in `interpreter` and `vm`, helper utilities, docs/tests) so we know every site that needs to understand the new alias.
 - [ ] Confirm how `SOURCE <id>;` declarations are used today and whether multiple sources appear in real programs, because the alias wiring has to handle overrides without breaking existing semantics.

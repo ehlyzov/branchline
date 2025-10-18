@@ -1,5 +1,7 @@
 # VM/Interpreter Split — Progress Report
 
+> **Status:** ⚙️ Partial — `compileStream` selects interpreter or VM backends, but VM execution still mirrors `row` and falls back to the interpreter when instructions are missing.【F:vm/src/commonMain/kotlin/v2/ir/StreamCompiler.kt†L63-L83】【F:vm/src/commonMain/kotlin/v2/vm/Integration.kt†L28-L90】
+
 ## Current Shape
 - `compileStream` lives in the VM module and accepts an `ExecutionEngine` enum. On the JVM it can return either an interpreter-backed runner or a `VMExec` that compiles IR to bytecode before execution. Both paths still seed the environment with a cloned `row` map.【F:vm/src/commonMain/kotlin/v2/ir/StreamCompiler.kt†L31-L74】【F:interpreter/src/commonMain/kotlin/v2/ExecutionEngine.kt†L1-L7】
 - The `compiler` module now only exposes thin placeholders that direct callers to the relocated implementations inside `vm`/`interpreter`, confirming the code move but also highlighting that we still need a stable public API surface for downstream consumers.【F:compiler/src/commonMain/kotlin/v2/ir/StreamCompiler.kt†L1-L3】【F:compiler/src/commonMain/kotlin/v2/ir/TransformRegistry.kt†L1-L3】【F:compiler/src/commonMain/kotlin/v2/vm/Compiler.kt†L1-L3】

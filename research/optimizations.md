@@ -1,5 +1,7 @@
 # Runtime Optimizations — Reality Check
 
+> **Status:** ⏳ Research backlog — hotspots remain in the shipped VM; none of the outlined optimizations have landed yet.【F:vm/src/commonMain/kotlin/v2/vm/VM.kt†L754-L880】【F:vm/src/commonMain/kotlin/v2/vm/Compiler.kt†L729-L765】
+
 ## What the VM Does Today
 - Lambda calls still spin up a nested VM. The main VM keeps a lazily-created `lambdaVm` instance and every `CALL`/`CALL_FN` delegates to `lambdaVm.execute`, so we pay for environment copies and snapshot plumbing on each invocation.【F:vm/src/commonMain/kotlin/v2/vm/VM.kt†L43-L68】【F:vm/src/commonMain/kotlin/v2/vm/VM.kt†L940-L1027】
 - Local bindings are mirrored into the global environment to preserve interpreter semantics. `compileLet` emits `DUP; STORE_VAR; STORE_LOCAL`, and `SET`/`LET` keep updating the map, which prevents us from treating locals as pure array slots.【F:vm/src/commonMain/kotlin/v2/vm/Compiler.kt†L178-L207】

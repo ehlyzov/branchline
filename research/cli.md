@@ -1,5 +1,7 @@
 # Branchline CLI Rollout
 
+> **Status:** ✅ CLI module ships JVM and JS binaries; CI jobs still invoke Gradle tasks directly for interpreter/VM suites, so full migration to the CLI remains pending.【F:settings.gradle†L1-L7】【F:.github/workflows/tests.yml†L28-L220】
+
 This document tracks the plan for introducing dedicated command-line tools that wrap the existing Branchline interpreter, compiler, and VM.
 
 ## Goals
