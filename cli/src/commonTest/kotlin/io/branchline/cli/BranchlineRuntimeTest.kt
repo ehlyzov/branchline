@@ -2,6 +2,8 @@ package io.branchline.cli
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import v2.runtime.bignum.BLBigDec
+import v2.runtime.bignum.toPlainString
 import v2.vm.BytecodeIO
 
 class BranchlineRuntimeTest {
@@ -40,5 +42,31 @@ class BranchlineRuntimeTest {
         val env = mutableMapOf<String, Any?>("row" to input).apply { putAll(input) }
         val result = vmExec.run(env, stringifyKeys = true) as Map<*, *>
         assertEquals("Hello, Kotlin", result["greeting"])
+    }
+
+    @Test
+    fun addsStringNumbersWithoutTypeErrors() {
+        val scriptWithNumberMath = """
+            SOURCE row;
+
+            TRANSFORM Totals { stream } {
+                LET totals = { tests: 0 };
+                SET totals.tests = totals.tests + NUMBER(row.count ?? 0);
+                OUTPUT totals;
+            }
+        """.trimIndent()
+
+        val runtime = BranchlineProgram(scriptWithNumberMath)
+        val transform = runtime.selectTransform(null)
+        val result = runtime.execute(transform, mapOf("count" to "2")) as Map<*, *>
+
+        val testsValue = result["tests"]
+        val numericString = when (testsValue) {
+            is Number -> testsValue.toString()
+            is BLBigDec -> testsValue.toPlainString()
+            else -> testsValue?.toString()
+        }
+
+        assertEquals("2", numericString)
     }
 }
