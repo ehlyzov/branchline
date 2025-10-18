@@ -15,7 +15,7 @@ class ParserTest {
     private fun parseExpr(src: String): Expr {
         // строим минимальную программу и парсим
         val program = Parser(
-            Lexer("FUNC f() = $src ;").lex()
+            Lexer("FUNC f() = $src").lex()
         ).parse()
 
         // единственная декларация — FuncDecl c ExprBody
@@ -30,13 +30,14 @@ class ParserTest {
     @Test
     fun `parses full example`() {
         val program = parse(
-            """// branchline 0.2
-               SOURCE row;
-               TRANSFORM NormaliseOne { buffer } {
-                   LET customer = {id:newId("C"), email:row.email};
-                   OUTPUT { customer:customer }
-               }
-            """.trimMargin()
+            """
+            // branchline 0.2
+            SOURCE row
+            TRANSFORM NormaliseOne { buffer } {
+                LET customer = {id:newId("C"), email:row.email}
+                OUTPUT { customer:customer }
+            }
+            """.trimIndent()
         )
         assertEquals(2, program.decls.size)
         val src = program.decls[0] as SourceDecl
@@ -50,7 +51,7 @@ class ParserTest {
 
     @Test
     fun `adapter spec parsed`() {
-        val src = "SOURCE foo USING kafka(\"topic\", \"dlq\");"
+        val src = "SOURCE foo USING kafka(\"topic\", \"dlq\")"
         val program = parse(src)
         val srcDecl = program.decls.first() as SourceDecl
         val adapter = srcDecl.adapter!!
@@ -61,7 +62,12 @@ class ParserTest {
 
     @Test
     fun `let path expression parsed`() {
-        val prg = parse("SOURCE row; TRANSFORM { buffer } { LET x = row.email; }")
+        val prg = parse("""
+            SOURCE row
+            TRANSFORM { buffer } {
+                LET x = row.email
+            }
+        """.trimIndent())
         val tr = prg.decls[1] as TransformDecl
         val let = tr.body.statements[0] as LetStmt
         assertTrue(let.expr is AccessExpr)
@@ -73,7 +79,12 @@ class ParserTest {
 
     @Test
     fun `nested object literal parsed`() {
-        val prg = parse("SOURCE s; TRANSFORM { stream } { LET obj = {a:1, b:{c:2}}; }")
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { stream } {
+                LET obj = {a:1, b:{c:2}}
+            }
+        """.trimIndent())
         val objLet = ((prg.decls[1] as TransformDecl).body.statements[0] as LetStmt).expr as ObjectExpr
         assertEquals(2, objLet.fields.size)
         val inner = (objLet.fields[1] as LiteralProperty).value as ObjectExpr
@@ -83,7 +94,12 @@ class ParserTest {
 
     @Test
     fun `call expression with multiple args`() {
-        val prg = parse("SOURCE s; TRANSFORM { buffer } { LET id = genId(\"X\", 42); }")
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { buffer } {
+                LET id = genId("X", 42)
+            }
+        """.trimIndent())
         val call = ((prg.decls[1] as TransformDecl).body.statements[0] as LetStmt).expr as CallExpr
         assertEquals("genId", call.callee.name)
         assertEquals(2, call.args.size)
@@ -95,14 +111,54 @@ class ParserTest {
     // ------------------------------------------------------------------
 
     @Test
-    fun `missing semicolon throws`() {
-        assertThrows<ParseException> { parse("SOURCE row") }
+    fun `statements in block do not require semicolons`() {
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { buffer } {
+                LET x = 1
+                SET x = x + 1
+                OUTPUT x
+            }
+        """.trimIndent())
+        val stmts = (prg.decls[1] as TransformDecl).body.statements
+        assertEquals(3, stmts.size)
+        assertTrue(stmts[0] is LetStmt)
+        assertTrue(stmts[1] is SetVarStmt)
+        assertTrue(stmts[2] is OutputStmt)
+    }
+
+    @Test
+    fun `expression statements split by newline parse`() {
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { buffer } {
+                callOne()
+                callTwo()
+            }
+        """.trimIndent())
+        val stmts = (prg.decls[1] as TransformDecl).body.statements
+        assertEquals(2, stmts.size)
+        assertTrue(stmts[0] is ExprStmt)
+        assertTrue(stmts[1] is ExprStmt)
+    }
+
+    @Test
+    fun `source without semicolon parses`() {
+        val program = parse("""
+            SOURCE row
+            TRANSFORM { buffer } { }
+        """.trimIndent())
+        assertTrue(program.decls.first() is SourceDecl)
     }
 
     @Test
     fun `unclosed transform block throws`() {
         assertThrows<ParseException> {
-            parse("SOURCE s; TRANSFORM { buffer } { LET x = 1;")
+            parse("""
+                SOURCE s
+                TRANSFORM { buffer } {
+                    LET x = 1
+            """.trimIndent())
         }
     }
 
@@ -111,12 +167,12 @@ class ParserTest {
         assertThrows<ParseException> {
             val prg = parse(
                 """
-SOURCE s;
-TRANSFORM { buffer } {
-    IF cond THEN { LET x = 1; } ELSE { LET x = 2; }
-    x = x + 1;
-}
-"""
+                SOURCE s
+                TRANSFORM { buffer } {
+                    IF cond THEN { LET x = 1 } ELSE { LET x = 2 }
+                    x = x + 1
+                }
+                """.trimIndent()
             )
         }
     }
@@ -129,8 +185,8 @@ TRANSFORM { buffer } {
     @Test
     fun `parser completes within 1s on large input`() {
         val builder = StringBuilder().apply {
-            append("SOURCE row;\nTRANSFORM { buffer } {\n")
-            repeat(10_000) { append("LET a$it = 1;\n") }
+            append("SOURCE row\nTRANSFORM { buffer } {\n")
+            repeat(10_000) { append("LET a$it = 1\n") }
             append("}")
         }
         assertTimeoutPreemptively(1.seconds.toJavaDuration()) {
@@ -145,11 +201,11 @@ TRANSFORM { buffer } {
     fun `if else parsed`() {
         val prg = parse(
             """
-SOURCE s;
-TRANSFORM { buffer } {
-    IF cond THEN { LET x = 1; } ELSE { LET x = 2; }
-}
-"""
+            SOURCE s
+            TRANSFORM { buffer } {
+                IF cond THEN { LET x = 1 } ELSE { LET x = 2 }
+            }
+            """.trimIndent()
         )
         val tr = prg.decls[1] as TransformDecl
         val ifStmt = tr.body.statements[0] as IfStmt
@@ -161,7 +217,10 @@ TRANSFORM { buffer } {
     @Test
     fun `if missing THEN throws`() {
         assertThrows<ParseException> {
-            parse("SOURCE s; TRANSFORM { buffer } { IF cond { LET x = 1; } }")
+            parse("""
+                SOURCE s
+                TRANSFORM { buffer } { IF cond { LET x = 1 } }
+            """.trimIndent())
         }
     }
 
@@ -170,7 +229,12 @@ TRANSFORM { buffer } {
     // ---------------------------------------------------------------
     @Test
     fun `for each parsed`() {
-        val prg = parse("SOURCE s; TRANSFORM { stream } { FOR EACH item IN list { LET x = item; } }")
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { stream } {
+                FOR EACH item IN list { LET x = item }
+            }
+        """.trimIndent())
         val forStmt = (prg.decls[1] as TransformDecl).body.statements[0] as ForEachStmt
         assertEquals("item", forStmt.varName)
         assertTrue(forStmt.iterable is IdentifierExpr)
@@ -181,7 +245,10 @@ TRANSFORM { buffer } {
     @Test
     fun `for each missing IN throws`() {
         assertThrows<ParseException> {
-            parse("SOURCE s; TRANSFORM { stream } { FOR EACH item list { LET x = 1; } }")
+            parse("""
+                SOURCE s
+                TRANSFORM { stream } { FOR EACH item list { LET x = 1 } }
+            """.trimIndent())
         }
     }
 
@@ -191,7 +258,12 @@ TRANSFORM { buffer } {
 
     @Test
     fun `set statement parsed`() {
-        val prg = parse("SOURCE s; TRANSFORM { buffer } { SET obj.name = \"X\"; }")
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { buffer } {
+                SET obj.name = "X"
+            }
+        """.trimIndent())
         val stmt = (prg.decls[1] as TransformDecl).body.statements[0] as SetStmt
         val base = stmt.target.base as IdentifierExpr
         assertEquals("obj", base.name)
@@ -200,7 +272,12 @@ TRANSFORM { buffer } {
 
     @Test
     fun `append to with init parsed`() {
-        val prg = parse("SOURCE s; TRANSFORM { buffer } { APPEND TO obj.items item INIT []; }")
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { buffer } {
+                APPEND TO obj.items item INIT []
+            }
+        """.trimIndent())
         val stmt = (prg.decls[1] as TransformDecl).body.statements[0] as AppendToStmt
         assertEquals("obj", (stmt.target.base as IdentifierExpr).name)
         assertNotNull(stmt.init)
@@ -208,7 +285,10 @@ TRANSFORM { buffer } {
 
     @Test
     fun `modify statement parsed`() {
-        val prg = parse("""SOURCE s; TRANSFORM { buffer } { MODIFY customer { name:"Bob", [k]:42 } }""")
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { buffer } { MODIFY customer { name:"Bob", [k]:42 } }
+        """.trimIndent())
         val stmt = (prg.decls[1] as TransformDecl).body.statements[0] as ModifyStmt
         assertEquals(2, stmt.updates.size)
         assertTrue(stmt.updates[0] is LiteralProperty)
@@ -217,21 +297,36 @@ TRANSFORM { buffer } {
 
     @Test
     fun `nested output statement parsed`() {
-        val prg = parse("SOURCE s; TRANSFORM { buffer } { OUTPUT {a:1}; }")
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { buffer } {
+                OUTPUT {a:1}
+            }
+        """.trimIndent())
         val stmt = (prg.decls[1] as TransformDecl).body.statements[0] as OutputStmt
         assertTrue(stmt.template is ObjectExpr)
     }
 
     @Test
     fun `abort statement parsed`() {
-        val prg = parse("SOURCE s; TRANSFORM { buffer } { ABORT \"fail\"; }")
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { buffer } {
+                ABORT "fail"
+            }
+        """.trimIndent())
         val stmt = (prg.decls[1] as TransformDecl).body.statements[0] as AbortStmt
         assertTrue(stmt.value is StringExpr)
     }
 
     @Test
     fun `expression statement parsed`() {
-        val prg = parse("SOURCE s; TRANSFORM { buffer } { uuid(); }")
+        val prg = parse("""
+            SOURCE s
+            TRANSFORM { buffer } {
+                uuid()
+            }
+        """.trimIndent())
         val stmt = (prg.decls[1] as TransformDecl).body.statements[0]
         assertTrue(stmt is ExprStmt)
     }
@@ -242,11 +337,11 @@ TRANSFORM { buffer } {
     @Test
     fun `try catch retry parsed`() {
         val src = """
-SOURCE s;
-TRANSFORM { buffer } {
-    TRY doWork() CATCH (e) RETRY 3 TIMES BACKOFF "100ms" -> fallback();
-}
-"""
+            SOURCE s
+            TRANSFORM { buffer } {
+                TRY doWork() CATCH (e) RETRY 3 TIMES BACKOFF "100ms" -> fallback()
+            }
+            """.trimIndent()
         val prg = parse(src)
         val tryStmt = (prg.decls[1] as TransformDecl).body.statements[0] as TryCatchStmt
         assertEquals(3, tryStmt.retry)
@@ -258,7 +353,10 @@ TRANSFORM { buffer } {
     @Test
     fun `try without catch throws`() {
         assertThrows<ParseException> {
-            parse("SOURCE s; TRANSFORM { buffer } { TRY x -> y; }")
+            parse("""
+                SOURCE s
+                TRANSFORM { buffer } { TRY x -> y }
+            """.trimIndent())
         }
     }
 
@@ -266,16 +364,16 @@ TRANSFORM { buffer } {
 
     @Test
     fun `shared SINGLE parsed`() {
-        val prog = parse("SHARED cache SINGLE ;")
+        val prog = parse("SHARED cache SINGLE")
         val d = prog.decls.single() as SharedDecl
         assertEquals("cache", d.name)
         assertEquals(SharedKind.SINGLE, d.kind)
     }
 
     @Test
-    fun `shared missing semicolon throws`() {
+    fun `shared without separator errors`() {
         assertThrows<ParseException> {
-            parse("SHARED dict MANY")
+            parse("SHARED dict MANY TRANSFORM { buffer } { }")
         }
     }
 
@@ -283,7 +381,7 @@ TRANSFORM { buffer } {
 
     @Test
     fun `func expression body parsed`() {
-        val prog = parse("FUNC newId(prefix) = concat(prefix, uuid());")
+        val prog = parse("FUNC newId(prefix) = concat(prefix, uuid())")
         val f = prog.decls.single() as FuncDecl
         assertEquals("newId", f.name)
         assertEquals(listOf("prefix"), f.params)
@@ -295,7 +393,7 @@ TRANSFORM { buffer } {
         val prog = parse(
             """
             FUNC sum(a,b) {
-                RETURN a + b;
+                RETURN a + b
             }
             """.trimIndent()
         )
@@ -308,7 +406,7 @@ TRANSFORM { buffer } {
 
     @Test
     fun `type enum parsed`() {
-        val prog = parse("TYPE Color = enum { RED , GREEN } ;")
+        val prog = parse("TYPE Color = enum { RED , GREEN }")
         val t = prog.decls.single() as TypeDecl
         assertEquals(TypeKind.ENUM, t.kind)
         assertEquals(listOf("RED", "GREEN"), t.defs)
@@ -316,7 +414,7 @@ TRANSFORM { buffer } {
 
     @Test
     fun `type union parsed`() {
-        val prog = parse("TYPE Id = union String | Number ;")
+        val prog = parse("TYPE Id = union String | Number")
         val t = prog.decls.single() as TypeDecl
         assertEquals(TypeKind.UNION, t.kind)
         assertEquals(listOf("String", "Number"), t.defs)
@@ -325,7 +423,7 @@ TRANSFORM { buffer } {
     @Test
     fun `type unknown kind throws`() {
         assertThrows<ParseException> {
-            parse("TYPE Foo = something {A} ;")
+            parse("TYPE Foo = something {A}")
         }
     }
 
@@ -366,9 +464,9 @@ TRANSFORM { buffer } {
     fun `parser passes declarations stress within 1s`() {
         val many = buildString {
             appendLine("// branchline stress")
-            appendLine("SOURCE row;")
+            appendLine("SOURCE row")
             repeat(5000) {
-                appendLine("SHARED s$it SINGLE ;")
+                appendLine("SHARED s$it SINGLE")
             }
         }
         assertTimeoutPreemptively(1.seconds.toJavaDuration()) {
