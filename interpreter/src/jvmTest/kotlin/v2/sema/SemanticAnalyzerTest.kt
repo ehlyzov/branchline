@@ -52,6 +52,23 @@ class SemanticAnalyzerTest {
     }
 
     @Test
+    fun `func parameters visible in block body`() {
+        val code = """
+            FUNC toNumber(value) {
+                IF value == NULL THEN {
+                    RETURN 0;
+                } ELSE {
+                    RETURN value;
+                }
+            }
+        """
+
+        assertDoesNotThrow {
+            SemanticAnalyzer().analyze(compile(code))
+        }
+    }
+
+    @Test
     fun `duplicate let in same scope throws`() {
         val code = """
             FUNC f() {
@@ -60,6 +77,17 @@ class SemanticAnalyzerTest {
             }
         """
         assertThrows<SemanticException> {
+            SemanticAnalyzer().analyze(compile(code))
+        }
+    }
+
+    @Test
+    fun `func parameters visible in expression body`() {
+        val code = """
+            FUNC identity(value) = value;
+        """
+
+        assertDoesNotThrow {
             SemanticAnalyzer().analyze(compile(code))
         }
     }
