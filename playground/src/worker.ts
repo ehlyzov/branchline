@@ -1,7 +1,10 @@
+type InputFormat = 'json' | 'xml';
+
 type WorkerRequest = {
   code: string;
   input: string;
   trace: boolean;
+  inputFormat: InputFormat;
 };
 
 type WorkerResponse = {
@@ -18,6 +21,7 @@ import kotlinStdlibUrl from '../../interpreter/build/dist/js/productionLibrary/k
 import serializationCoreUrl from '../../interpreter/build/dist/js/productionLibrary/kotlinx-serialization-kotlinx-serialization-core.js?url';
 import serializationJsonUrl from '../../interpreter/build/dist/js/productionLibrary/kotlinx-serialization-kotlinx-serialization-json.js?url';
 import interpreterUrl from '../../interpreter/build/dist/js/productionLibrary/branchline-interpreter.js?url';
+import { XMLParser } from 'fast-xml-parser';
 
 type PlaygroundFacade = {
   run(program: string, inputJson: string, enableTracing: boolean): WorkerResponse;
@@ -93,10 +97,11 @@ function loadFacade(): Promise<PlaygroundFacade> {
 }
 
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
-  const { code, input, trace } = event.data;
+  const { code, input, trace, inputFormat } = event.data;
   try {
     const runner = await loadFacade();
-    const result = runner.run(code, input, trace) as WorkerResponse;
+    const payload = prepareInput(input, inputFormat);
+    const result = runner.run(code, payload, trace) as WorkerResponse;
     self.postMessage(result satisfies WorkerResponse);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -114,3 +119,57 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
 };
 
 export {};
+
+const xmlParser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: '@',
+  textNodeName: '#text',
+  trimValues: true,
+  parseTagValue: false,
+  parseAttributeValue: false
+});
+
+function prepareInput(raw: string, format: InputFormat): string {
+  if (format === 'xml') {
+    if (!raw.trim()) {
+      return '{}';
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = xmlParser.parse(raw);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to parse XML input: ${message}`);
+    }
+
+    const normalized = normalizeXml(parsed);
+    if (!normalized || Array.isArray(normalized) || typeof normalized !== 'object') {
+      throw new Error('XML input must produce an object at the top level.');
+    }
+
+    return JSON.stringify(normalized);
+  }
+
+  return raw;
+}
+
+function normalizeXml(value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeXml(item));
+  }
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>).map(([key, entryValue]) => [
+      key,
+      normalizeXml(entryValue)
+    ]);
+    return Object.fromEntries(entries);
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return value;
+}

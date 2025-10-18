@@ -24,11 +24,14 @@ const DEFAULT_INPUT = `{
   }
 }`;
 
+type InputFormat = 'json' | 'xml';
+
 type RawExample = {
   title: string;
   description?: string;
   program: string | string[];
   input: unknown;
+  inputFormat?: InputFormat;
   trace?: boolean;
 };
 
@@ -42,6 +45,7 @@ type PlaygroundExample = {
   description?: string;
   program: string;
   input: string;
+  inputFormat: InputFormat;
   enableTracing: boolean;
 };
 
@@ -52,6 +56,7 @@ const exampleModules = import.meta.glob<ExampleModule>('../examples/*.json', {
 function normalizeExample(id: string, raw: RawExample): PlaygroundExample {
   const program = Array.isArray(raw.program) ? raw.program.join('\n') : raw.program ?? DEFAULT_PROGRAM;
   let input = '';
+  const inputFormat = raw.inputFormat ?? 'json';
 
   if (typeof raw.input === 'string') {
     input = raw.input;
@@ -65,6 +70,7 @@ function normalizeExample(id: string, raw: RawExample): PlaygroundExample {
     description: raw.description,
     program,
     input: input || DEFAULT_INPUT,
+    inputFormat,
     enableTracing: Boolean(raw.trace)
   };
 }
@@ -86,6 +92,7 @@ export function BranchlinePlayground() {
   const programEditorRef = React.useRef<monaco.editor.IStandaloneCodeEditor>();
   const inputEditorRef = React.useRef<monaco.editor.IStandaloneCodeEditor>();
   const workerRef = React.useRef<Worker>();
+  const [inputFormat, setInputFormat] = React.useState<InputFormat>('json');
 
   const [isRunning, setIsRunning] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -127,8 +134,8 @@ export function BranchlinePlayground() {
     setError(null);
     setTraceHuman(null);
     setTraceJson(null);
-    workerRef.current?.postMessage({ code: program, input, trace: tracingRef.current });
-  }, []);
+    workerRef.current?.postMessage({ code: program, input, trace: tracingRef.current, inputFormat });
+  }, [inputFormat]);
 
   React.useEffect(() => {
     ensureBranchlineLanguage();
@@ -221,6 +228,7 @@ export function BranchlinePlayground() {
 
     const program = selectedExample?.program ?? DEFAULT_PROGRAM;
     const input = selectedExample?.input ?? DEFAULT_INPUT;
+    const format = selectedExample?.inputFormat ?? 'json';
 
     if (programEditorRef.current.getValue() !== program) {
       programEditorRef.current.setValue(program);
@@ -228,6 +236,10 @@ export function BranchlinePlayground() {
 
     if (inputEditorRef.current.getValue() !== input) {
       inputEditorRef.current.setValue(input);
+    }
+
+    if (inputFormat !== format) {
+      setInputFormat(format);
     }
 
     setError(null);
@@ -239,7 +251,16 @@ export function BranchlinePlayground() {
     }
 
     setIsTracingEnabled(selectedExample?.enableTracing ?? false);
-  }, [selectedExample]);
+  }, [inputFormat, selectedExample]);
+
+  React.useEffect(() => {
+    const model = inputEditorRef.current?.getModel();
+    if (!model) {
+      return;
+    }
+    const language = inputFormat === 'xml' ? 'xml' : 'json';
+    monaco.editor.setModelLanguage(model, language);
+  }, [inputFormat]);
 
   React.useEffect(() => {
     tracingRef.current = isTracingEnabled;
@@ -269,6 +290,13 @@ export function BranchlinePlayground() {
                   {example.title}
                 </option>
               ))}
+            </select>
+          </label>
+          <label className="playground-select">
+            <span>Input format</span>
+            <select value={inputFormat} onChange={(event) => setInputFormat(event.target.value as InputFormat)}>
+              <option value="json">JSON</option>
+              <option value="xml">XML</option>
             </select>
           </label>
           <label className="playground-toggle">
@@ -309,9 +337,18 @@ export function BranchlinePlayground() {
         <section className="panel panel--editor playground-main__input">
           <header className="panel-header">
             <div>
-              <h3>Input JSON</h3>
+              <h3>Input {inputFormat === 'xml' ? 'XML' : 'JSON'}</h3>
               <p>
-                Provide the object bound to <code>msg</code>.
+                {inputFormat === 'xml' ? (
+                  <>
+                    Provide XML that the playground will parse using the same settings as the Branchline CLI before binding it
+                    to <code>msg</code>.
+                  </>
+                ) : (
+                  <>
+                    Provide the object bound to <code>msg</code>.
+                  </>
+                )}
               </p>
             </div>
           </header>
