@@ -52,7 +52,7 @@ async function main() {
         inputPath: file,
         inputFormat: 'xml',
       });
-      const entry = buildFileSummary(relative(repoRoot, file), result);
+      const entry = buildReportEntry(relative(repoRoot, file), result);
       collected.push(entry);
       await fs.appendFile(resultsPath, `${JSON.stringify(entry)}\n`);
     } catch (error) {
@@ -66,7 +66,7 @@ async function main() {
   }
 
   const summaryInput = { reports: collected };
-  await fs.writeFile(summaryInputPath, JSON.stringify(summaryInput), 'utf8');
+  await fs.writeFile(summaryInputPath, JSON.stringify(summaryInput, null, 2), 'utf8');
 
   let summary;
   try {
@@ -158,55 +158,11 @@ function extractJson(output) {
   return trimmed.slice(start, end + 1);
 }
 
-function buildFileSummary(path, result) {
-  const suites = Array.isArray(result?.suites) ? result.suites : [];
-  let tests = 0;
-  let failures = 0;
-  let errors = 0;
-  let skipped = 0;
-
-  for (const suite of suites) {
-    tests += toCount(suite?.tests);
-    failures += toCount(suite?.failures);
-    errors += toCount(suite?.errors);
-    skipped += toCount(suite?.skipped);
+function buildReportEntry(path, result) {
+  if (result && typeof result === 'object') {
+    return { path, ...result };
   }
-
-  const failed = failures + errors;
-  const status = statusForTotals(tests, failed);
-  const summary = formatDetails({ totalTests: tests, failedCount: failed, totalSkipped: skipped });
-  const color = colorFor(status);
-
-  return {
-    path,
-    suites: suites.length,
-    tests,
-    failures,
-    errors,
-    skipped,
-    failed,
-    status,
-    summary,
-    color,
-  };
-}
-
-function toCount(value) {
-  if (value === null || value === undefined) {
-    return 0;
-  }
-  const parsed = Number.parseInt(String(value), 10);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function statusForTotals(totalTests, failed) {
-  if (totalTests === 0) {
-    return 'error';
-  }
-  if (failed === 0) {
-    return 'passing';
-  }
-  return 'failing';
+  return { path };
 }
 
 async function resolveCliBin() {
@@ -243,7 +199,7 @@ async function ensureCliDependencies(cliBin) {
     requireFromCli.resolve('fast-xml-parser');
   } catch (error) {
     throw new Error(
-      'Branchline JS CLI is missing the "fast-xml-parser" dependency. Install it (e.g. `npm install --prefix cli/build/cliJsPackage fast-xml-parser`) or point BRANCHLINE_CLI_BIN to a build that bundles the module.',
+      'Branchline JS CLI is missing the "fast-xml-parser" dependency. Rebuild the bundle via `./gradlew :cli:prepareJsCliPackage` or point BRANCHLINE_CLI_BIN to a build that bundles the module.',
     );
   }
 }
@@ -259,20 +215,6 @@ function colorFor(status) {
     default:
       return '9f9f9f';
   }
-}
-
-function formatDetails({ totalTests, failedCount, totalSkipped }) {
-  if (totalTests === 0) {
-    return '0 tests';
-  }
-  const parts = [`${totalTests} tests`];
-  if (failedCount > 0) {
-    parts.push(`${failedCount} failed`);
-  }
-  if (totalSkipped > 0) {
-    parts.push(`${totalSkipped} skipped`);
-  }
-  return parts.join(', ');
 }
 
 async function setOutputs(outputs) {

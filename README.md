@@ -25,12 +25,20 @@ OUTPUT {
 
 Branchline ships with experimental CLI helpers for both JVM and Node runtimes.
 
-- Run a script (JVM): `./gradlew :cli:runBl --args "path/to/program.bl --input sample.json"`
+**JVM binaries**
+
+- Run a script: `./gradlew :cli:runBl --args "path/to/program.bl --input sample.json"`
 - Compile to bytecode: `./gradlew :cli:runBlc --args "path/to/program.bl --output build/program.blc"`
 - Execute bytecode (VM): `./gradlew :cli:runBlvm --args "build/program.blc --input sample.json"`
-- Run the Node build: `./gradlew :cli:jsNodeProductionRun --args="path/to/program.bl --input sample.json"`
-- Generate a distributable Node package: `./gradlew :cli:packageJsCli` (outputs `cli/build/distributions/branchline-cli-js-<version>.tgz`)
-- Both binaries accept `--input-format xml` for XML payloads.
+
+**Node bundle**
+
+1. Build the package (installs dependencies automatically): `./gradlew :cli:prepareJsCliPackage`
+2. Run the CLI: `node cli/build/cliJsPackage/bin/bl.cjs path/to/program.bl --input sample.json`
+
+The Gradle build also produces a distributable archive via `./gradlew :cli:packageJsCli` (tarball under `cli/build/distributions/`) that bundles the CLI entry point, compiled Kotlin/JS artifacts, and the packaged `node_modules/` dependencies.
+
+Both runtimes accept `--input-format xml` for XML payloads.
 
 ## Project Status
 

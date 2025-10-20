@@ -7,6 +7,10 @@
   },
   "files": [
     "bin",
-    "kotlin"
-  ]
+    "kotlin",
+    "node_modules"
+  ],
+  "dependencies": {
+    "fast-xml-parser": "^4.3.5"
+  }
 }
