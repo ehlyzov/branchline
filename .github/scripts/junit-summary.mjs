@@ -160,6 +160,42 @@ function extractJson(output) {
 
 function buildFileSummary(path, result) {
   const suites = Array.isArray(result?.suites) ? result.suites : [];
+  const totals = normaliseTotals(result, suites);
+  const failed = totals.failures + totals.errors;
+  const status = result?.status ?? statusForTotals(totals.tests, failed);
+  const summary = result?.summary ?? formatDetails({
+    totalTests: totals.tests,
+    failedCount: failed,
+    totalSkipped: totals.skipped,
+  });
+  const color = result?.color ?? colorFor(status);
+
+  return {
+    path,
+    suites: suites.length,
+    tests: totals.tests,
+    failures: totals.failures,
+    errors: totals.errors,
+    skipped: totals.skipped,
+    failed,
+    status,
+    summary,
+    color,
+    totals,
+  };
+}
+
+function normaliseTotals(result, suites) {
+  const totals = result?.totals;
+  if (totals) {
+    return {
+      tests: toCount(totals.tests),
+      failures: toCount(totals.failures),
+      errors: toCount(totals.errors),
+      skipped: toCount(totals.skipped),
+    };
+  }
+
   let tests = 0;
   let failures = 0;
   let errors = 0;
@@ -172,23 +208,7 @@ function buildFileSummary(path, result) {
     skipped += toCount(suite?.skipped);
   }
 
-  const failed = failures + errors;
-  const status = statusForTotals(tests, failed);
-  const summary = formatDetails({ totalTests: tests, failedCount: failed, totalSkipped: skipped });
-  const color = colorFor(status);
-
-  return {
-    path,
-    suites: suites.length,
-    tests,
-    failures,
-    errors,
-    skipped,
-    failed,
-    status,
-    summary,
-    color,
-  };
+  return { tests, failures, errors, skipped };
 }
 
 function toCount(value) {
@@ -243,7 +263,7 @@ async function ensureCliDependencies(cliBin) {
     requireFromCli.resolve('fast-xml-parser');
   } catch (error) {
     throw new Error(
-      'Branchline JS CLI is missing the "fast-xml-parser" dependency. Install it (e.g. `npm install --prefix cli/build/cliJsPackage fast-xml-parser`) or point BRANCHLINE_CLI_BIN to a build that bundles the module.',
+      'Branchline JS CLI is missing the "fast-xml-parser" dependency. Install package dependencies (e.g. `npm install --prefix cli/build/cliJsPackage`) or point BRANCHLINE_CLI_BIN to a build that bundles the module.',
     );
   }
 }

@@ -1,38 +1,86 @@
 SOURCE row;
 
-TRANSFORM Summary { stream } {
-    LET payload = row.reports;
-    LET reports = IF payload == NULL THEN []
-        ELSE IF IS_OBJECT(payload) THEN [payload]
-        ELSE payload;
+FUNC toNumber(value) {
+    LET parsed = NUMBER(value ?? 0);
+    IF parsed == NULL THEN { RETURN 0; }
+    RETURN parsed;
+}
 
+FUNC normalizeReports(payload) {
+    IF payload == NULL THEN { RETURN []; }
+    IF IS_OBJECT(payload) THEN { RETURN [payload]; }
+    RETURN payload;
+}
+
+FUNC extractTotals(report) {
+    LET payload = report.totals;
+    IF payload != NULL THEN {
+        RETURN {
+            tests: toNumber(payload.tests),
+            failures: toNumber(payload.failures),
+            errors: toNumber(payload.errors),
+            skipped: toNumber(payload.skipped)
+        };
+    }
+
+    RETURN {
+        tests: toNumber(report.tests),
+        failures: toNumber(report.failures),
+        errors: toNumber(report.errors),
+        skipped: toNumber(report.skipped)
+    };
+}
+
+FUNC accumulateTotals(current, delta) {
+    RETURN {
+        tests: current.tests + toNumber(delta.tests),
+        failures: current.failures + toNumber(delta.failures),
+        errors: current.errors + toNumber(delta.errors),
+        skipped: current.skipped + toNumber(delta.skipped)
+    };
+}
+
+FUNC statusFor(tests, failed) {
+    IF tests == 0 THEN { RETURN "error"; }
+    IF failed == 0 THEN { RETURN "passing"; }
+    RETURN "failing";
+}
+
+FUNC colorFor(status) {
+    IF status == "passing" THEN { RETURN "44cc11"; }
+    IF status == "failing" THEN { RETURN "e05d44"; }
+    IF status == "error" THEN { RETURN "f39c12"; }
+    RETURN "9f9f9f";
+}
+
+FUNC formatSummary(tests, failed, skipped) {
+    LET base = STRING(tests) + " tests";
+
+    IF failed == 0 THEN {
+        IF skipped == 0 THEN { RETURN base; }
+        RETURN base + ", " + STRING(skipped) + " skipped";
+    }
+
+    LET withFailures = base + ", " + STRING(failed) + " failed";
+    IF skipped == 0 THEN { RETURN withFailures; }
+    RETURN withFailures + ", " + STRING(skipped) + " skipped";
+}
+
+TRANSFORM Summary { stream } {
+    LET reports = normalizeReports(row.reports);
     LET totals = { tests: 0, failures: 0, errors: 0, skipped: 0 };
     LET count = 0;
 
     FOR report IN reports {
-        SET totals.tests = totals.tests + NUMBER(report.tests ?? 0);
-        SET totals.failures = totals.failures + NUMBER(report.failures ?? 0);
-        SET totals.errors = totals.errors + NUMBER(report.errors ?? 0);
-        SET totals.skipped = totals.skipped + NUMBER(report.skipped ?? 0);
+        LET metrics = extractTotals(report);
+        SET totals = accumulateTotals(totals, metrics);
         SET count = count + 1;
     }
 
     LET failed = totals.failures + totals.errors;
-    LET status = IF totals.tests == 0 THEN "error"
-        ELSE IF failed == 0 THEN "passing"
-        ELSE "failing";
-    LET color = IF status == "passing" THEN "44cc11"
-        ELSE IF status == "failing" THEN "e05d44"
-        ELSE IF status == "error" THEN "f39c12"
-        ELSE "9f9f9f";
-
-    LET summary = STRING(totals.tests) + " tests";
-    IF failed > 0 THEN {
-        SET summary = summary + ", " + STRING(failed) + " failed";
-    }
-    IF totals.skipped > 0 THEN {
-        SET summary = summary + ", " + STRING(totals.skipped) + " skipped";
-    }
+    LET status = statusFor(totals.tests, failed);
+    LET color = colorFor(status);
+    LET summary = formatSummary(totals.tests, failed, totals.skipped);
 
     OUTPUT {
         status: status,

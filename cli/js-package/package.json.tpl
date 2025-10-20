@@ -8,5 +8,8 @@
   "files": [
     "bin",
     "kotlin"
-  ]
+  ],
+  "dependencies": {
+    "fast-xml-parser": "^4.3.5"
+  }
 }

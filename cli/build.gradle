@@ -102,6 +102,14 @@ tasks.register('packageJsCli', org.gradle.api.tasks.bundling.Tar) {
     from(jsCliPackageDir)
 }
 
+tasks.named('jvmTest') {
+    dependsOn 'prepareJsCliPackage'
+}
+
+tasks.named('assemble') {
+    dependsOn 'packageJsCli'
+}
+
 tasks.register('runBl', JavaExec) {
     group = 'application'
     description = 'Run Branchline CLI (bl) on the JVM target.'

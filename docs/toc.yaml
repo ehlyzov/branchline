@@ -36,6 +36,8 @@ items:
     items:
       - name: Getting Started
         href: guides/getting-started.md
+      - name: Branchline CLI
+        href: guides/cli.md
       - name: FOR EACH Loops
         href: guides/for-each.md
       - name: Array Comprehensions

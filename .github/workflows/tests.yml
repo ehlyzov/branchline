@@ -59,7 +59,7 @@ jobs:
         if: ${{ always() }}
         run: |
           ./gradlew --no-daemon :cli:prepareJsCliPackage
-          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage fast-xml-parser
+          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage
 
       - name: Summarize interpreter tests
         id: summary
@@ -129,7 +129,7 @@ jobs:
         if: ${{ always() }}
         run: |
           ./gradlew --no-daemon :cli:prepareJsCliPackage
-          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage fast-xml-parser
+          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage
 
       - name: Summarize VM tests
         id: summary
@@ -199,7 +199,7 @@ jobs:
         if: ${{ always() }}
         run: |
           ./gradlew --no-daemon :cli:prepareJsCliPackage
-          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage fast-xml-parser
+          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage
 
       - name: Summarize conformance tests
         id: summary
@@ -255,7 +255,7 @@ jobs:
         if: ${{ always() }}
         run: |
           ./gradlew --no-daemon :cli:prepareJsCliPackage
-          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage fast-xml-parser
+          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage
 
       - name: Summarize CLI tests
         id: summary

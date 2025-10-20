@@ -1,6 +1,6 @@
 # Branchline CLI Rollout
 
-> **Status:** ✅ CLI module ships JVM and JS binaries; CI jobs still invoke Gradle tasks directly for interpreter/VM suites, so full migration to the CLI remains pending.【F:settings.gradle†L1-L7】【F:.github/workflows/tests.yml†L28-L220】
+> **Status:** ✅ CLI module ships JVM and JS binaries; CI now feeds JUnit results through Branchline helpers using the packaged JS bundle, and README/docs cover local usage flows.【F:cli/build.gradle†L1-L140】【F:.github/scripts/junit-summary.mjs†L1-L300】【F:docs/guides/cli.md†L1-L52】
 
 This document tracks the plan for introducing dedicated command-line tools that wrap the existing Branchline interpreter, compiler, and VM.
 
@@ -42,20 +42,19 @@ This document tracks the plan for introducing dedicated command-line tools that 
    - Add Gradle integration tests (`:cli:jvmTest` + Node tests) with sample programs under `test-fixtures/`.
 
 7. **Documentation & CI updates**
-   - Update README/docs with usage examples (**TODO**).
+   - Update README/docs with usage examples.
    - Teach GitHub Actions to invoke `bl run` or the CLI tests once the toolchain is stable (CLI job added; monitor & expand coverage).
 
-## Usage Notes (WIP)
+## Usage Notes
 
-- JVM entry points:
+- JVM entry points remain available via Gradle helpers:
   - `./gradlew :cli:runBl --args "path/to/script.bl --input sample.json"`
   - `./gradlew :cli:runBlc --args "path/to/script.bl --output build/program.blc"`
   - `./gradlew :cli:runBlvm --args "build/program.blc --input sample.json"`
-- JS entry point: `./gradlew :cli:jsNodeProductionRun --args="path/to/script.bl --input sample.json"`
-- Tests: `./gradlew :cli:jvmTest :cli:jsNodeTest`
-- XML input is supported on JVM/JS through `--input-format xml` (JS parser uses `fast-xml-parser`).
-- Prepare the JS CLI package once via `./gradlew :cli:prepareJsCliPackage`; CI helpers (e.g., `junit-summary.mjs`) invoke the resulting `cli/build/cliJsPackage/bin/bl.cjs` instead of shelling out to Gradle for every run.
-- Install the JS CLI runtime dependency (`fast-xml-parser`) alongside the packaged CLI, e.g. `npm install --prefix cli/build/cliJsPackage fast-xml-parser`, so the Node wrapper can parse XML inputs via the Branchline JS runtime.
+- Package the Node bundle with `./gradlew :cli:prepareJsCliPackage`, install dependencies (`npm install --prefix cli/build/cliJsPackage`), then execute scripts through `node cli/build/cliJsPackage/bin/bl.cjs`.
+- Tests: `./gradlew :cli:jvmTest :cli:jsNodeTest` (JVM suite now includes a Node smoke test for the packaged CLI).
+- XML input is supported on JVM/JS through `--input-format xml` (JS runtime relies on `fast-xml-parser`).
+- CI summaries run `.github/scripts/junit-summary.mjs`, which shells into the packaged CLI and reuses `cli/scripts/junit-*.bl` helpers for per-file + aggregate metrics.
 
 ## Current Status
 
@@ -67,16 +66,15 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - [x] XML input handler (JS)
 - [x] Tests in place
 - [x] Branchline scripts replace `junit-summary.mjs` parsing via CLI-driven per-file metrics aggregation
-- [ ] CI migrated to CLI (CLI job exists; interpreter/vm jobs still using Gradle tasks)
+- [x] CI migrated to CLI-powered reporting (JS bundle + `.bl` scripts executed without Gradle run tasks)
 
 ## Follow-ups
 
 - Evaluate distributing the CLI as a separate artifact (e.g., via GitHub Releases).
-- Consider packaging JS CLI via npm for easier consumption.
+- Consider packaging JS CLI via npm for easier consumption (package manifest now declares dependencies but still requires `npm install`).
 - Investigate a shared XML parser that works seamlessly across JVM/JS targets (current JS implementation uses `fast-xml-parser`).
-- Document CLI usage in README and developer guides.
 - Decide when to switch interpreter/vm CI jobs to call the CLI instead of module-specific Gradle tasks.
-- Add targeted CI coverage for the new Branchline-driven JUnit summary flow (Node shim + CLI scripts).
+- Track additional CI coverage for the Branchline-driven JUnit summary flow (Node shim + CLI scripts).
 
 ## CI Migration Roadmap (draft)
 
