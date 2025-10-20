@@ -56,6 +56,12 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - XML input is supported on JVM/JS through `--input-format xml` (JS runtime relies on `fast-xml-parser`).
 - CI summaries run `.github/scripts/junit-summary.mjs`, which shells into the packaged CLI for per-file metrics and delegates aggregate rollups to `cli/scripts/junit-summary.bl`.
 
+### JS runtime numeric quirks (JUnit summary flow)
+
+- `NUMBER("2")` currently produces a `BLBigDec`. Mixing the result with plain integers in expressions (for example, `0 + NUMBER("2")`) throws a `ClassCastException` on the JS backend because the value stays a `BLBigDec` while arithmetic expects primitive numbers.
+- Emitting a `BLBigDec` directly (`OUTPUT NUMBER("2")`) fails with `Expected object or list of objects in OUTPUT, got BLBigDec`—the runtime cannot serialise raw decimal wrappers yet.
+- The stopgap is to delegate parsing to the host (`Number.parseInt` in the Node shim) before doing CLI-side math. Longer term the CLI should normalise numeric conversions so mixed-precision math works consistently on JS.
+
 ## Current Status
 
 - [x] Module scaffolded

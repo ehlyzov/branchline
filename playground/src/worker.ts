@@ -98,11 +98,13 @@ function loadFacade(): Promise<PlaygroundFacade> {
 
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
   const { code, input, trace, inputFormat } = event.data;
+  const wrapperAdjustment = computeWrapperAdjustment(code);
   try {
     const runner = await loadFacade();
     const payload = prepareInput(input, inputFormat);
     const result = runner.run(code, payload, trace) as WorkerResponse;
-    self.postMessage(result satisfies WorkerResponse);
+    const adjusted = adjustResultForWrapper(result, wrapperAdjustment);
+    self.postMessage(adjusted satisfies WorkerResponse);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const fallback: WorkerResponse = {
@@ -172,4 +174,78 @@ function normalizeXml(value: unknown): unknown {
     return String(value);
   }
   return value;
+}
+
+type WrapperAdjustment = {
+  lineOffset: number;
+  lineMap: number[];
+  indentedLines: boolean[];
+  originalLineCount: number;
+  lastContentLine: number;
+};
+
+function computeWrapperAdjustment(code: string): WrapperAdjustment | null {
+  if (/\bTRANSFORM\b/i.test(code)) {
+    return null;
+  }
+
+  const originalLines = code.split(/\r?\n/);
+
+  let firstContent = 0;
+  while (firstContent < originalLines.length && originalLines[firstContent].trim() === '') {
+    firstContent += 1;
+  }
+
+  let lastContent = originalLines.length - 1;
+  while (lastContent >= firstContent && originalLines[lastContent].trim() === '') {
+    lastContent -= 1;
+  }
+
+  const hasContent = firstContent <= lastContent;
+  const trimmedLines = hasContent
+    ? originalLines.slice(firstContent, lastContent + 1)
+    : ([] as string[]);
+  const lineMap = trimmedLines.map((_, index) => firstContent + index + 1);
+  const indentedLines = trimmedLines.map((line) => line.trim().length > 0);
+
+  return {
+    lineOffset: 3,
+    lineMap,
+    indentedLines,
+    originalLineCount: originalLines.length || 1,
+    lastContentLine: hasContent ? lastContent + 1 : 1
+  };
+}
+
+function adjustResultForWrapper(
+  result: WorkerResponse,
+  adjustment: WrapperAdjustment | null
+): WorkerResponse {
+  if (!adjustment || result.success || result.line == null) {
+    return result;
+  }
+
+  const relativeLine = result.line - adjustment.lineOffset;
+  if (relativeLine < 1) {
+    return result;
+  }
+
+  const trimmedIndex = relativeLine - 1;
+  let line = result.line;
+  let column = result.column;
+
+  if (trimmedIndex >= 0 && trimmedIndex < adjustment.lineMap.length) {
+    line = adjustment.lineMap[trimmedIndex];
+    if (column != null && adjustment.indentedLines[trimmedIndex]) {
+      column = Math.max(1, column - 4);
+    }
+  } else {
+    line = Math.min(adjustment.originalLineCount, adjustment.lastContentLine);
+  }
+
+  return {
+    ...result,
+    line,
+    column
+  };
 }

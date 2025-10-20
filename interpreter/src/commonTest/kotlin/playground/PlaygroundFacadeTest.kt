@@ -97,4 +97,52 @@ class PlaygroundFacadeTest {
             json
         )
     }
+
+    @Test
+    fun tracingReportsCheckpoints() {
+        val program = """
+            LET status = msg.status;
+            CHECKPOINT("after status");
+            OUTPUT { status: status }
+        """.trimIndent()
+
+        val result = PlaygroundFacade.run(
+            program,
+            """
+            {
+              "status": "ok"
+            }
+            """.trimIndent(),
+            enableTracing = true
+        )
+
+        assertTrue(result.success)
+        val explainHuman = result.explainHuman
+        assertNotNull(explainHuman)
+        assertTrue(explainHuman.contains("Checkpoints:"))
+        assertTrue(explainHuman.contains("after status"))
+        val checkpointLines = explainHuman.lineSequence().map { it.trim() }
+        assertTrue(checkpointLines.any { it.startsWith("- @") })
+    }
+
+    @Test
+    fun assertFailureReportsHelpfulError() {
+        val program = """
+            ASSERT(msg.ready, "Not ready for deploy");
+            OUTPUT { status: "ok" }
+        """.trimIndent()
+
+        val result = PlaygroundFacade.run(
+            program,
+            """
+            {
+              "ready": false
+            }
+            """.trimIndent()
+        )
+
+        assertFalse(result.success)
+        assertNull(result.outputJson)
+        assertEquals("Not ready for deploy", result.errorMessage)
+    }
 }

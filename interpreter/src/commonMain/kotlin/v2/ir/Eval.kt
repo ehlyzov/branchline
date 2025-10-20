@@ -15,7 +15,6 @@ import v2.runtime.bignum.BLBigDec
 import v2.runtime.bignum.BLBigInt
 import v2.runtime.bignum.blBigDecOfDouble
 import v2.runtime.bignum.blBigDecOfLong
-import v2.runtime.bignum.blBigDecParse
 import v2.runtime.bignum.blBigIntOfLong
 import v2.runtime.bignum.signum
 import v2.runtime.bignum.bitLength
@@ -26,66 +25,74 @@ import v2.runtime.bignum.plus
 import v2.runtime.bignum.rem
 import v2.runtime.bignum.times
 import v2.runtime.bignum.toInt
-import v2.runtime.bignum.toLong
 import v2.runtime.bignum.toBLBigDec
 import v2.runtime.bignum.toBLBigInt
+import v2.runtime.bignum.toLong
+import v2.runtime.bignum.unaryMinus
 
 /* ───────────────── numeric helpers (top-level, unchanged API) ───────────────── */
 // Removed MathContext; BLBigDec ops are provided via expect/actual operators.
 
-private fun isNumeric(x: Any?): Boolean = x is Int || x is Long || x is Double || isBigInt(x) || isBigDec(x)
+private fun isNumeric(x: Any?): Boolean = x is Number || isBigInt(x) || isBigDec(x)
 
-private fun toBLBigInt(n: Number): BLBigInt = when {
+private fun toBLBigInt(n: Any?): BLBigInt = when {
     isBigInt(n) -> n as BLBigInt
-    isBigDec(n) -> (n as BLBigDec).toBLBigInt() // drop fractional part for integer ops
+    isBigDec(n) -> (n as BLBigDec).toBLBigInt()
     n is Long -> blBigIntOfLong(n)
     n is Int -> blBigIntOfLong(n.toLong())
-    else -> blBigIntOfLong(n.toLong())
+    n is Number -> blBigIntOfLong(n.toLong())
+    else -> error("Expected numeric, got ${n?.let { it::class.simpleName } ?: "null"}")
 }
 
-private fun toBLBigDec(n: Number): BLBigDec = when {
+private fun toBLBigDec(n: Any?): BLBigDec = when {
     isBigDec(n) -> n as BLBigDec
     isBigInt(n) -> (n as BLBigInt).toBLBigDec()
-    n is Long -> blBigDecOfLong(n)
-    n is Int -> blBigDecOfLong(n.toLong())
     n is Double -> blBigDecOfDouble(n)
     n is Float -> blBigDecOfDouble(n.toDouble())
-    else -> blBigDecParse(n.toString())
+    n is Long -> blBigDecOfLong(n)
+    n is Int -> blBigDecOfLong(n.toLong())
+    n is Number -> blBigDecOfDouble(n.toDouble())
+    else -> error("Expected numeric, got ${n?.let { it::class.simpleName } ?: "null"}")
 }
 
-private fun addNum(a: Number, b: Number): Any = when {
-    isBigDec(a) || isBigDec(b) -> toBLBigDec(a) + toBLBigDec(b)
+private fun addNum(a: Any?, b: Any?): Any = when {
     isBigInt(a) || isBigInt(b) -> toBLBigInt(a) + toBLBigInt(b)
-    a is Double || b is Double -> a.toDouble() + b.toDouble()
-    a is Long || b is Long -> a.toLong() + b.toLong()
-    else -> a.toInt() + b.toInt()
+    isBigDec(a) || isBigDec(b) -> toBLBigDec(a) + toBLBigDec(b)
+    a is Double || b is Double -> (a as Number).toDouble() + (b as Number).toDouble()
+    a is Float || b is Float -> (a as Number).toFloat() + (b as Number).toFloat()
+    a is Long || b is Long -> (a as Number).toLong() + (b as Number).toLong()
+    else -> (a as Number).toInt() + (b as Number).toInt()
 }
 
-private fun subNum(a: Number, b: Number): Any = when {
-    isBigDec(a) || isBigDec(b) -> toBLBigDec(a) - toBLBigDec(b)
+private fun subNum(a: Any?, b: Any?): Any = when {
     isBigInt(a) || isBigInt(b) -> toBLBigInt(a) - toBLBigInt(b)
-    a is Double || b is Double -> a.toDouble() - b.toDouble()
-    a is Long || b is Long -> a.toLong() - b.toLong()
-    else -> a.toInt() - b.toInt()
+    isBigDec(a) || isBigDec(b) -> toBLBigDec(a) - toBLBigDec(b)
+    a is Double || b is Double -> (a as Number).toDouble() - (b as Number).toDouble()
+    a is Float || b is Float -> (a as Number).toFloat() - (b as Number).toFloat()
+    a is Long || b is Long -> (a as Number).toLong() - (b as Number).toLong()
+    else -> (a as Number).toInt() - (b as Number).toInt()
 }
 
-private fun mulNum(a: Number, b: Number): Any = when {
-    isBigDec(a) || isBigDec(b) -> toBLBigDec(a) * toBLBigDec(b)
+private fun mulNum(a: Any?, b: Any?): Any = when {
     isBigInt(a) || isBigInt(b) -> toBLBigInt(a) * toBLBigInt(b)
-    a is Long || b is Long -> a.toLong() * b.toLong()
-    a is Double || b is Double -> a.toDouble() * b.toDouble()
-    else -> a.toInt() * b.toInt()
+    isBigDec(a) || isBigDec(b) -> toBLBigDec(a) * toBLBigDec(b)
+    a is Double || b is Double -> (a as Number).toDouble() * (b as Number).toDouble()
+    a is Float || b is Float -> (a as Number).toFloat() * (b as Number).toFloat()
+    a is Long || b is Long -> (a as Number).toLong() * (b as Number).toLong()
+    else -> (a as Number).toInt() * (b as Number).toInt()
 }
 
-private fun remNum(a: Number, b: Number): Any = when {
-    isBigDec(a) || isBigDec(b) -> toBLBigDec(a) % toBLBigDec(b)
+private fun remNum(a: Any?, b: Any?): Any = when {
     isBigInt(a) || isBigInt(b) -> toBLBigInt(a) % toBLBigInt(b)
-    a is Long || b is Long -> a.toLong() % b.toLong()
-    else -> a.toInt() % b.toInt()
+    isBigDec(a) || isBigDec(b) -> toBLBigDec(a) % toBLBigDec(b)
+    a is Double || b is Double -> (a as Number).toDouble() % (b as Number).toDouble()
+    a is Float || b is Float -> (a as Number).toFloat() % (b as Number).toFloat()
+    a is Long || b is Long -> (a as Number).toLong() % (b as Number).toLong()
+    else -> (a as Number).toInt() % (b as Number).toInt()
 }
 
 /** Division: if both are integers and divide evenly → return integer; otherwise BLBigDec(DECIMAL128). */
-private fun divNum(a: Number, b: Number): Any {
+private fun divNum(a: Any?, b: Any?): Any {
     if (isBigDec(a) || isBigDec(b)) return toBLBigDec(a) / toBLBigDec(b)
     val ai = toBLBigInt(a)
     val bi = toBLBigInt(b)
@@ -103,14 +110,28 @@ private fun divNum(a: Number, b: Number): Any {
 }
 
 /* ───────────────── small shared helpers (top-level) ───────────────── */
-fun Any?.asBool(): Boolean = when (this) {
-    null -> false
-    is Boolean -> this
-    is Number -> this.toDouble() != 0.0
+fun Any?.asBool(): Boolean = when {
+    this == null -> false
+    this is Boolean -> this
+    this is Number -> this.toDouble() != 0.0
+    isBigInt(this) -> (this as BLBigInt).signum() != 0
+    isBigDec(this) -> toBLBigDec(this).compareTo(blBigDecOfLong(0)) != 0
     else -> true
 }
 
-private fun num(x: Any?): Double = (x as Number).toDouble()
+private fun negateNum(value: Any?): Any {
+    require(isNumeric(value)) { "Operator '-' expects number" }
+    val v = value
+    return when {
+        isBigInt(v) -> -(v as BLBigInt)
+        isBigDec(v) -> -(v as BLBigDec)
+        v is Double -> -v
+        v is Float -> -v
+        v is Long -> -v
+        v is Int -> -v
+        else -> -(v as Number).toInt()
+    }
+}
 
 internal fun toListOrEmpty(x: Any?): List<Map<String, Any?>> = when (x) {
     null -> emptyList()
@@ -318,33 +339,33 @@ private class Evaluator(
                     l.toString() + r.toString()
                 } else {
                     require(isNumeric(l) && isNumeric(r)) { "Operator '+' expects numbers or strings" }
-                    addNum(l as Number, r as Number)
+                    addNum(l, r)
                 }
             }
             TokenType.MINUS -> {
                 val r = eval(e.right, env)
                 require(isNumeric(l) && isNumeric(r)) { "Operator '-' expects numbers" }
-                subNum(l as Number, r as Number)
+                subNum(l, r)
             }
             TokenType.STAR -> {
                 val r = eval(e.right, env)
                 require(isNumeric(l) && isNumeric(r)) { "Operator '*' expects numbers" }
-                mulNum(l as Number, r as Number)
+                mulNum(l, r)
             }
             TokenType.SLASH -> {
                 val r = eval(e.right, env)
                 require(isNumeric(l) && isNumeric(r)) { "Operator '/' expects numbers" }
-                divNum(l as Number, r as Number)
+                divNum(l, r)
             }
             TokenType.PERCENT -> {
                 val r = eval(e.right, env)
                 require(isNumeric(l) && isNumeric(r)) { "Operator '%' expects numbers" }
-                remNum(l as Number, r as Number)
+                remNum(l, r)
             }
             TokenType.LT, TokenType.LE, TokenType.GT, TokenType.GE -> {
                 val r = eval(e.right, env)
                 val cmp = if (isNumeric(l) && isNumeric(r)) {
-                    toBLBigDec(l as Number).compareTo(toBLBigDec(r as Number))
+                    toBLBigDec(l).compareTo(toBLBigDec(r))
                 } else {
                     l.toString().compareTo(r.toString())
                 }
@@ -470,7 +491,7 @@ private class Evaluator(
     }
 
     private fun handleUnary(e: UnaryExpr, env: Env): Any? = when (e.token.type) {
-        TokenType.MINUS -> -num(eval(e.expr, env))
+        TokenType.MINUS -> negateNum(eval(e.expr, env))
         TokenType.BANG -> !eval(e.expr, env).asBool()
         TokenType.AWAIT -> eval(e.expr, env) // no async in demo
         TokenType.SUSPEND -> throw UnsupportedOperationException("'suspend' not supported in stream demo")
