@@ -33,11 +33,10 @@ Branchline ships with experimental CLI helpers for both JVM and Node runtimes.
 
 **Node bundle**
 
-1. Build the package: `./gradlew :cli:prepareJsCliPackage`
-2. Install dependencies: `npm install --prefix cli/build/cliJsPackage`
-3. Run the CLI: `node cli/build/cliJsPackage/bin/bl.cjs path/to/program.bl --input sample.json`
+1. Build the package (installs dependencies automatically): `./gradlew :cli:prepareJsCliPackage`
+2. Run the CLI: `node cli/build/cliJsPackage/bin/bl.cjs path/to/program.bl --input sample.json`
 
-The Gradle build also produces a distributable archive via `./gradlew :cli:packageJsCli` (tarball under `cli/build/distributions/`).
+The Gradle build also produces a distributable archive via `./gradlew :cli:packageJsCli` (tarball under `cli/build/distributions/`) that bundles the CLI entry point, compiled Kotlin/JS artifacts, and the packaged `node_modules/` dependencies.
 
 Both runtimes accept `--input-format xml` for XML payloads.
 

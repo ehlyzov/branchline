@@ -27,18 +27,99 @@ TRANSFORM FileSummary { stream } {
         }
     }
 
-    LET metrics = [];
+    LET digitMap = {
+        "0": 0,
+        "1": 1,
+        "2": 2,
+        "3": 3,
+        "4": 4,
+        "5": 5,
+        "6": 6,
+        "7": 7,
+        "8": 8,
+        "9": 9
+    };
+
+    LET suiteCount = 0;
+    LET totalTests = 0;
+    LET totalFailures = 0;
+    LET totalErrors = 0;
+    LET totalSkipped = 0;
+
     FOR suite IN suites {
-        LET item = {
-            tests: suite["@tests"],
-            failures: suite["@failures"],
-            errors: suite["@errors"],
-            skipped: suite["@skipped"]
-        };
-        SET metrics = APPEND(metrics, item);
+        SET suiteCount = suiteCount + 1;
+
+        LET attrs = [
+            { key: "tests", value: suite["@tests"] },
+            { key: "failures", value: suite["@failures"] },
+            { key: "errors", value: suite["@errors"] },
+            { key: "skipped", value: suite["@skipped"] }
+        ];
+
+        LET parsed = { tests: 0, failures: 0, errors: 0, skipped: 0 };
+        FOR attr IN attrs {
+            LET text = STRING(attr.value ?? "0");
+            LET digits = MATCH(text, "[0-9]");
+            LET value = 0;
+            FOR digit IN digits {
+                LET mapped = digitMap[digit];
+                IF mapped == NULL THEN {
+                    SET value = 0;
+                } ELSE {
+                    SET value = value * 10 + mapped;
+                }
+            }
+
+            IF attr.key == "tests" THEN {
+                SET parsed.tests = value;
+            } ELSE {
+                IF attr.key == "failures" THEN {
+                    SET parsed.failures = value;
+                } ELSE {
+                    IF attr.key == "errors" THEN {
+                        SET parsed.errors = value;
+                    } ELSE {
+                        IF attr.key == "skipped" THEN {
+                            SET parsed.skipped = value;
+                        }
+                    }
+                }
+            }
+        }
+
+        SET totalTests = totalTests + parsed.tests;
+        SET totalFailures = totalFailures + parsed.failures;
+        SET totalErrors = totalErrors + parsed.errors;
+        SET totalSkipped = totalSkipped + parsed.skipped;
     }
 
+    LET failed = totalFailures + totalErrors;
+    LET status = IF totalTests == 0 THEN "error"
+        ELSE IF failed == 0 THEN "passing"
+        ELSE "failing";
+
+    LET summary = STRING(totalTests) + " tests";
+    IF failed > 0 THEN {
+        SET summary = summary + ", " + STRING(failed) + " failed";
+    }
+    IF totalSkipped > 0 THEN {
+        SET summary = summary + ", " + STRING(totalSkipped) + " skipped";
+    }
+
+    LET color = IF status == "passing" THEN "44cc11"
+        ELSE IF status == "failing" THEN "e05d44"
+        ELSE IF status == "error" THEN "f39c12"
+        ELSE "9f9f9f";
+
     OUTPUT {
-        suites: metrics
+        suites: suiteCount,
+        tests: totalTests,
+        failures: totalFailures,
+        errors: totalErrors,
+        skipped: totalSkipped,
+        failed: failed,
+        status: status,
+        summary: summary,
+        color: color
     };
 }

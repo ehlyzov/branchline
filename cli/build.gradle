@@ -88,6 +88,12 @@ tasks.register('prepareJsCliPackage') {
         def resolved = template.replace('__VERSION__', project.version.toString())
         def pkgFile = new File(targetRoot, 'package.json')
         pkgFile.text = resolved
+
+        // Install production dependencies so the packaged CLI ships a self-contained node_modules tree
+        exec {
+            workingDir targetRoot
+            commandLine 'npm', 'install', '--production', '--ignore-scripts', '--no-audit', '--no-fund'
+        }
     }
 }
 

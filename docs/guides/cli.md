@@ -26,15 +26,14 @@ Gradle compiles the CLI on demand and wires the correct classpath for each comma
 
 To work with the Node build directly, package the compiled JavaScript output and run it with Node:
 
-1. Build the bundle: `./gradlew :cli:prepareJsCliPackage`
-2. Install dependencies: `npm install --prefix cli/build/cliJsPackage`
-3. Execute scripts: `node cli/build/cliJsPackage/bin/bl.cjs path/to/program.bl --input sample.json`
+1. Build the bundle (installs dependencies automatically): `./gradlew :cli:prepareJsCliPackage`
+2. Execute scripts: `node cli/build/cliJsPackage/bin/bl.cjs path/to/program.bl --input sample.json`
 
 The `bl.cjs` launcher delegates to the compiled Kotlin/JS runtime and respects the same arguments as the JVM version. Use `BRANCHLINE_CLI_BIN` to point automation at a custom bundle if the default location differs.
 
 ## Distribution archive
 
-`./gradlew :cli:packageJsCli` produces a gzipped tarball under `cli/build/distributions/`. The archive includes the CLI entry point, compiled Kotlin/JS artifacts, and the `package.json` manifest declaring runtime dependencies such as `fast-xml-parser`.
+`./gradlew :cli:packageJsCli` produces a gzipped tarball under `cli/build/distributions/`. The archive includes the CLI entry point, compiled Kotlin/JS artifacts, the `package.json` manifest, and the `node_modules/` tree so consumers do not need to install dependencies separately.
 
 ## CI smoke test
 

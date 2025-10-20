@@ -1,6 +1,6 @@
 # Branchline CLI Rollout
 
-> **Status:** ✅ CLI module ships JVM and JS binaries; CI now feeds JUnit results through Branchline helpers using the packaged JS bundle, and README/docs cover local usage flows.【F:cli/build.gradle†L1-L140】【F:.github/scripts/junit-summary.mjs†L1-L300】【F:docs/guides/cli.md†L1-L52】
+> **Status:** ✅ CLI module ships JVM and JS binaries; CI runs JUnit summaries entirely through Branchline helpers using the packaged JS bundle (with dependencies bundled), and README/docs cover local usage flows.【F:cli/build.gradle†L1-L140】【F:.github/scripts/junit-summary.mjs†L1-L280】【F:docs/guides/cli.md†L1-L58】
 
 This document tracks the plan for introducing dedicated command-line tools that wrap the existing Branchline interpreter, compiler, and VM.
 
@@ -51,10 +51,10 @@ This document tracks the plan for introducing dedicated command-line tools that 
   - `./gradlew :cli:runBl --args "path/to/script.bl --input sample.json"`
   - `./gradlew :cli:runBlc --args "path/to/script.bl --output build/program.blc"`
   - `./gradlew :cli:runBlvm --args "build/program.blc --input sample.json"`
-- Package the Node bundle with `./gradlew :cli:prepareJsCliPackage`, install dependencies (`npm install --prefix cli/build/cliJsPackage`), then execute scripts through `node cli/build/cliJsPackage/bin/bl.cjs`.
+- Package the Node bundle with `./gradlew :cli:prepareJsCliPackage` (installs dependencies automatically), then execute scripts through `node cli/build/cliJsPackage/bin/bl.cjs`.
 - Tests: `./gradlew :cli:jvmTest :cli:jsNodeTest` (JVM suite now includes a Node smoke test for the packaged CLI).
 - XML input is supported on JVM/JS through `--input-format xml` (JS runtime relies on `fast-xml-parser`).
-- CI summaries run `.github/scripts/junit-summary.mjs`, which shells into the packaged CLI for per-file metrics and performs aggregate rollups in Node to dodge JS numeric quirks discovered while evaluating Branchline helpers.
+- CI summaries run `.github/scripts/junit-summary.mjs`, which shells into the packaged CLI for per-file metrics and delegates aggregate rollups to `cli/scripts/junit-summary.bl`.
 
 ## Current Status
 
@@ -71,7 +71,7 @@ This document tracks the plan for introducing dedicated command-line tools that 
 ## Follow-ups
 
 - Evaluate distributing the CLI as a separate artifact (e.g., via GitHub Releases).
-- Consider packaging JS CLI via npm for easier consumption (package manifest now declares dependencies but still requires `npm install`).
+- Consider packaging the JS CLI via npm for easier consumption (current bundle already installs dependencies automatically).
 - Investigate a shared XML parser that works seamlessly across JVM/JS targets (current JS implementation uses `fast-xml-parser`).
 - Decide when to switch interpreter/vm CI jobs to call the CLI instead of module-specific Gradle tasks.
 - Track additional CI coverage for the Branchline-driven JUnit summary flow (Node shim + CLI scripts).
