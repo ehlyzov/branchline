@@ -9,7 +9,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const repoRoot = resolve(__dirname, '..', '..');
 const fileSummaryScript = join(repoRoot, 'cli', 'scripts', 'junit-file-summary.bl');
-const summaryScript = join(repoRoot, 'cli', 'scripts', 'junit-summary.bl');
 
 async function main() {
   const [, , modulePath = ''] = process.argv;
@@ -66,20 +65,26 @@ async function main() {
   }
 
   const summaryInput = { reports: collected };
-  await fs.writeFile(summaryInputPath, JSON.stringify(summaryInput), 'utf8');
+  await fs.writeFile(summaryInputPath, JSON.stringify(summaryInput, null, 2), 'utf8');
 
-  let summary;
-  try {
-    summary = await runBranchline(cliBin, summaryScript, { inputPath: summaryInputPath });
-  } catch (error) {
-    console.error('Failed to summarize Branchline results:', error.message);
-    await setOutputs({ status: 'error', tests: 'summary evaluation failed', color: colorFor('error') });
-    return;
-  }
+  const totals = collected.reduce(
+    (acc, report) => ({
+      tests: acc.tests + toCount(report.tests),
+      failures: acc.failures + toCount(report.failures),
+      errors: acc.errors + toCount(report.errors),
+      skipped: acc.skipped + toCount(report.skipped),
+    }),
+    { tests: 0, failures: 0, errors: 0, skipped: 0 },
+  );
+
+  const failed = totals.failures + totals.errors;
+  const status = statusForTotals(totals.tests, failed);
+  const tests = formatDetails({ totalTests: totals.tests, failedCount: failed, totalSkipped: totals.skipped });
+  const color = colorFor(status);
+  const summary = { status, tests, color, reports: collected.length, failed, totals };
 
   await fs.writeFile(summaryOutputPath, JSON.stringify(summary, null, 2), 'utf8');
 
-  const { status, tests, color } = summary;
   await setOutputs({ status, tests, color });
   console.log(`Summary for ${modulePath}: ${status} (${tests})`);
 }

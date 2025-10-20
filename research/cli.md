@@ -54,7 +54,7 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - Package the Node bundle with `./gradlew :cli:prepareJsCliPackage`, install dependencies (`npm install --prefix cli/build/cliJsPackage`), then execute scripts through `node cli/build/cliJsPackage/bin/bl.cjs`.
 - Tests: `./gradlew :cli:jvmTest :cli:jsNodeTest` (JVM suite now includes a Node smoke test for the packaged CLI).
 - XML input is supported on JVM/JS through `--input-format xml` (JS runtime relies on `fast-xml-parser`).
-- CI summaries run `.github/scripts/junit-summary.mjs`, which shells into the packaged CLI and reuses `cli/scripts/junit-*.bl` helpers for per-file + aggregate metrics.
+- CI summaries run `.github/scripts/junit-summary.mjs`, which shells into the packaged CLI for per-file metrics and performs aggregate rollups in Node to dodge JS numeric quirks discovered while evaluating Branchline helpers.
 
 ## Current Status
 
