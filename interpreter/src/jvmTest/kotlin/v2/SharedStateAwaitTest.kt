@@ -26,8 +26,7 @@ class SharedStateAwaitTest {
     fun `test await SharedState parsing`() {
         val program = """
             SHARED nodeParents SINGLE;
-            TRANSFORM test { stream } {
-                await nodeParents.someKey;
+            TRANSFORM test { await nodeParents.someKey;
             }
         """.trimIndent()
 
@@ -53,8 +52,7 @@ class SharedStateAwaitTest {
         val program = """
             SHARED cache SINGLE;
             SHARED store MANY;
-            TRANSFORM test { stream } {
-                LET parent = await cache.parentKey;
+            TRANSFORM test { LET parent = await cache.parentKey;
                 LET child = await store.childKey;
                 OUTPUT { parent: parent, child: child };
             }
@@ -81,8 +79,7 @@ class SharedStateAwaitTest {
     fun `test await in complex expressions`() {
         val program = """
             SHARED data SINGLE;
-            TRANSFORM test { stream } {
-                LET result = (await data.key1) + (await data.key2);
+            TRANSFORM test { LET result = (await data.key1) + (await data.key2);
             }
         """.trimIndent()
 
@@ -108,8 +105,7 @@ class SharedStateAwaitTest {
     fun `test await not used directly in IF condition`() {
         val program = """
             SHARED flags SINGLE;
-            TRANSFORM test { stream } {
-                LET isEnabled = await flags.enabled;
+            TRANSFORM test { LET isEnabled = await flags.enabled;
                 IF isEnabled THEN {
                     OUTPUT { status: "enabled" };
                 }
@@ -133,8 +129,7 @@ class SharedStateAwaitTest {
             parseProgram(
                 """
                 SHARED data SINGLE;
-                TRANSFORM test { stream } {
-                    await data key;
+                TRANSFORM test { await data key;
                 }
                 """.trimIndent()
             )
@@ -144,8 +139,7 @@ class SharedStateAwaitTest {
         assertThrows(ParseException::class.java) {
             parseProgram(
                 """
-                TRANSFORM test { stream } {
-                    await .key;
+                TRANSFORM test { await .key;
                 }
                 """.trimIndent()
             )
@@ -156,8 +150,7 @@ class SharedStateAwaitTest {
             parseProgram(
                 """
                 SHARED data SINGLE;
-                TRANSFORM test { stream } {
-                    await data.;
+                TRANSFORM test { await data.;
                 }
                 """.trimIndent()
             )

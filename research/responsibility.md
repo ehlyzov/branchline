@@ -3,23 +3,22 @@
 > **Status:** ⚙️ In progress — language/platform split is still incomplete; parser semantics and runtime helpers retain legacy behaviours.【F:interpreter/src/commonMain/kotlin/v2/Ast.kt†L14-L35】【F:interpreter/src/commonMain/kotlin/Parser.kt†L95-L198】【F:interpreter/src/commonMain/kotlin/v2/ir/RunnerMP.kt†L26-L39】
 
 ## Repository Layout
-- The public build registers `interpreter`, `vm`, `compiler`, `test-fixtures`, `conformance-tests`, and `platform`. The old monolithic `language` module is gone, but the AST, parser, and VM code still live in the interpreter and VM modules rather than a clean language/platform split.【F:settings.gradle†L1-L7】
+- The public build registers `interpreter`, `vm`, `cli`, `test-fixtures`, and `conformance-tests` (settings.gradle still lists a `platform` include, but there is no compiler module in the repo and no `platform/` sources checked in). The old monolithic `language` module is gone, but the AST, parser, and VM code still live in the interpreter and VM modules rather than a clean language/platform split.【F:settings.gradle†L1-L7】
 - Graph/orchestration constructs (`GraphBody`, `NodeDecl`, `Connection`, `GraphOutput`) remain in the core AST, so the language module still knows about platform wiring instead of exporting only the DSL surface.【F:interpreter/src/commonMain/kotlin/v2/Ast.kt†L9-L43】
 
 ## Syntax and Semantics
-- Semicolons are still mandatory. Every statement parser calls `consume(TokenType.SEMICOLON, …)`, including top-level `SOURCE`, `SHARED`, `TYPE`, `LET`, expression statements, and append/set operations.【F:interpreter/src/commonMain/kotlin/Parser.kt†L95-L272】【F:interpreter/src/commonMain/kotlin/Parser.kt†L338-L359】
-- `SourceDecl` continues to require a named identifier plus an optional adapter reference; the AST and semantic analyser both treat it as a concrete declaration, not as an optional type hint.【F:interpreter/src/commonMain/kotlin/v2/Ast.kt†L41-L75】【F:interpreter/src/commonMain/kotlin/v2/sema/SemanticAnalyzer.kt†L313-L319】
+- Semicolons are optional. `optionalSemicolon()` accepts explicit `;` or line/brace boundaries across top-level declarations and block statements, with tests covering newline-terminated programs.【F:interpreter/src/commonMain/kotlin/Parser.kt†L99-L365】【F:interpreter/src/commonMain/kotlin/Parser.kt†L887-L910】【F:interpreter/src/jvmTest/kotlin/v2/ParserTests.kt†L71-L118】
+- `SourceDecl` is still part of the AST but parsing a `SOURCE` line is a no-op; transforms default to buffer mode without a `{ mode }` header ( `{ stream }` is rejected).【F:interpreter/src/commonMain/kotlin/Parser.kt†L95-L152】【F:interpreter/src/commonMain/kotlin/v2/Ast.kt†L41-L75】
 
 ## Runtime Input Binding
-- Helper utilities that compile and run DSL snippets still wrap user code with `SOURCE row;` and populate the execution environment with a `row` map. There is no automatic `in` alias yet, so tests and platform callers must keep using `row` explicitly.【F:test-fixtures/src/jvmMain/kotlin/v2/testutils/Runners.kt†L35-L76】
-- The multiplatform runner (`buildRunnerFromIRMP`) and both `TransformRegistry` actuals seed the environment by copying the input map into `row`, reinforcing the legacy name in cross-platform code paths.【F:interpreter/src/commonMain/kotlin/v2/ir/RunnerMP.kt†L26-L39】【F:interpreter/src/jvmMain/kotlin/v2/ir/TransformRegistryJvm.kt†L7-L35】【F:interpreter/src/jsMain/kotlin/v2/ir/TransformRegistryJs.kt†L7-L27】
+- Helper utilities and runners now seed the execution environment with `input` as the canonical binding and add `row` as a compatibility alias; test helpers no longer inject a `SOURCE` stub before user code.【F:interpreter/src/commonMain/kotlin/v2/ir/RunnerMP.kt†L18-L67】【F:interpreter/src/jvmMain/kotlin/v2/ir/TransformRegistryJvm.kt†L7-L27】【F:interpreter/src/jsMain/kotlin/v2/ir/TransformRegistryJs.kt†L7-L27】【F:test-fixtures/src/jvmMain/kotlin/v2/testutils/Runners.kt†L14-L54】
+- `SOURCE` declarations are still parsed for now but are no longer required; the long-term plan is to remove them in favour of per-transform options and the default `input` binding.
 
 ## Platform Module
-- The `platform` Gradle project exists but currently exposes no source sets; it only declares dependencies on the interpreter, VM, and compiler modules. All platform-facing logic (graph orchestration, mode selection, environment setup) still lives in the language modules.【F:platform/build.gradle†L1-L7】【F:interpreter/src/commonMain/kotlin/v2/Ast.kt†L9-L43】
+- There is no checked-in `platform/` module despite the include in `settings.gradle`, so platform-facing logic (graph orchestration, mode selection, environment setup) still lives in interpreter code and test fixtures.【F:settings.gradle†L1-L7】【F:interpreter/src/commonMain/kotlin/v2/Ast.kt†L9-L43】
 
 ## Recommended Follow-Up
 1. Move graph/orchestration AST nodes out of the interpreter module and into a dedicated platform layer, leaving the core AST focused on transforms, functions, shared declarations, and expressions.
-2. Introduce newline-sensitive parsing so statements can be separated by `;` **or** line breaks, matching the original spec. Once implemented, add tests that cover both styles.
-3. Replace `SourceDecl(name, adapter)` with a thin structure that records only the optional type hint (`AUTO` by default). Update the semantic analyser to stop special-casing concrete source names.
-4. Teach the runtime helpers to publish `in` as the primary input binding (and populate `row` as a temporary alias). After the transition window, deprecate `row` from the semantic whitelist.
-5. Flesh out the `platform` module with the mode-selection logic and runner scaffolding currently embedded in the test fixtures, so applications can depend on a single entrypoint instead of reimplementing it.
+2. Replace `SourceDecl(name, adapter)` with a thin structure that records only the optional type hint (`AUTO` by default). Update the semantic analyser to stop special-casing concrete source names.
+3. Teach the runtime helpers to publish `in` as the primary input binding (and populate `row` as a temporary alias). After the transition window, deprecate `row` from the semantic whitelist.
+4. Create a real platform module (or remove the stale include) that owns mode selection and runner scaffolding currently embedded in test fixtures, so applications can depend on a single entrypoint instead of reimplementing it.

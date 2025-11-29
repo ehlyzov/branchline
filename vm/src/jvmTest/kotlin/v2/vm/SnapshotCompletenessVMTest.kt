@@ -15,8 +15,7 @@ class SnapshotCompletenessVMTest {
     @Test
     fun resume_inside_try_block() {
         val program = """
-                TRANSFORM T { stream } {
-                    TRY SUSPEND 0
+                TRANSFORM T { TRY SUSPEND 0
                     CATCH(e) RETRY 0 TIMES -> { err: "x" }
                     OUTPUT { ok: true }
                 }
@@ -41,8 +40,7 @@ class SnapshotCompletenessVMTest {
     @Test
     fun resume_in_middle_of_loop() {
         val program = """
-                TRANSFORM T { stream } {
-                    LET xs = [1,2,3];
+                TRANSFORM T { LET xs = [1,2,3];
                     LET acc = { ys: [] };
                     FOR EACH i IN xs {
                         APPEND TO acc.ys i INIT [];
@@ -86,8 +84,7 @@ class SnapshotCompletenessVMTest {
                     SUSPEND 0;
                     RETURN a + 1;
                 }
-                TRANSFORM T { stream } {
-                    OUTPUT { y: f() }
+                TRANSFORM T { OUTPUT { y: f() }
                 }
             """.trimIndent()
         val tokens = Lexer(program).lex()

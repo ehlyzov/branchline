@@ -145,8 +145,7 @@ class VMExample {
         println("\n=== Stream VM OUTPUT Example ===")
         val program = """
             SOURCE row;
-            TRANSFORM __T { stream } {
-                // Produce multiple OUTPUTs; VM will normalize to list
+            TRANSFORM __T { // Produce multiple OUTPUTs; VM will normalize to list
                 FOR EACH n IN row.nums {
                     OUTPUT { val: n }
                 }
@@ -218,8 +217,7 @@ class VMExample {
         // 2) VMExec on a stream transform: increments compile & execute metrics
         val program = """
             SOURCE row;
-            TRANSFORM __T { stream } {
-                LET a = 1; LET b = 2; OUTPUT { s: a + b };
+            TRANSFORM __T { LET a = 1; LET b = 2; OUTPUT { s: a + b };
             }
         """.trimIndent()
         val tokens = Lexer(program).lex()
@@ -241,8 +239,7 @@ class VMExample {
         println("\n=== VM Instruction Histogram Demo ===")
         val program = """
             SOURCE row;
-            TRANSFORM __T { stream } {
-                LET acc = 0;
+            TRANSFORM __T { LET acc = 0;
                 FOR EACH n IN row.nums {
                     IF n % 2 == 0 THEN { SET acc = acc + n; } ELSE { }
                 }

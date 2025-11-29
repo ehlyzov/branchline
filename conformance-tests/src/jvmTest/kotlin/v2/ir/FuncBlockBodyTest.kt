@@ -14,13 +14,11 @@ class FuncBlockBodyTest {
     @EngineTest
     fun `factorial via block body`(engine: ExecutionEngine) {
         val bl = """
-            SOURCE row;
             FUNC fact(n) {
                 IF n == 0 THEN { RETURN 1 ; }
                 RETURN n * fact(n - 1) ;
             }
-            TRANSFORM T { stream } {
-                OUTPUT { f : fact(row.n) }
+            TRANSFORM T { OUTPUT { f : fact(input.n) }
             }
         """.trimIndent()
 
@@ -30,9 +28,8 @@ class FuncBlockBodyTest {
     @EngineTest
     fun `return optional`(engine: ExecutionEngine) {
         val bl = """
-            SOURCE row;
             FUNC maybe(x) { IF x ?? false THEN { RETURN "yes" ; } }
-            TRANSFORM T { stream } { OUTPUT { v : maybe(row.flag) } }
+            TRANSFORM T { OUTPUT { v : maybe(input.flag) } }
         """.trimIndent()
         assertEquals(mapOf("v" to "yes"), exec(bl, engine)(mapOf("flag" to true)))
         assertEquals(mapOf("v" to null), exec(bl, engine)(mapOf("flag" to false)))
@@ -41,9 +38,8 @@ class FuncBlockBodyTest {
     @EngineTest
     fun `output inside func forbidden`(engine: ExecutionEngine) {
         val bad = """
-            SOURCE row;
             FUNC wrong() { OUTPUT {x:1} }
-            TRANSFORM T { stream } { OUTPUT { v: wrong() } }
+            TRANSFORM T { OUTPUT { v: wrong() } }
         """.trimIndent()
         assertThrows<IllegalStateException> { exec(bad, engine)(emptyMap()) }
     }

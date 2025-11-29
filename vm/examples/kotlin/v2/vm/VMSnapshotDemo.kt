@@ -21,9 +21,7 @@ object VMSnapshotDemo {
 
         // Parse → IR
         val code = """
-            SOURCE row;
-            TRANSFORM __T { stream } {
-                $program
+            TRANSFORM __T { $program
             }
         """.trimIndent()
 
@@ -41,7 +39,11 @@ object VMSnapshotDemo {
 
         // Start VM and run a few steps
         val vm = VM(hostFns, funcs)
-        val env = mutableMapOf<String, Any?>("row" to emptyMap<String, Any?>())
+        val env = mutableMapOf<String, Any?>(
+            v2.DEFAULT_INPUT_ALIAS to emptyMap<String, Any?>()
+        ).apply {
+            for (alias in v2.COMPAT_INPUT_ALIASES) this[alias] = emptyMap<String, Any?>()
+        }
         vm.begin(bytecode, env)
         vm.step(3) // run partially
 

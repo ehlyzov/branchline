@@ -10,6 +10,8 @@ import v2.ParseException
 import v2.Parser
 import v2.Program
 import v2.TransformDecl
+import v2.DEFAULT_INPUT_ALIAS
+import v2.COMPAT_INPUT_ALIASES
 import v2.ir.Exec
 import v2.ir.ToIR
 import v2.ir.TransformRegistry
@@ -60,8 +62,11 @@ class BranchlineProgram(private val source: String) {
         val ir = compileIr(transform)
         val exec = Exec(ir, eval)
         val env = HashMap<String, Any?>(input.size + 1).apply {
-            this[INPUT_VAR] = input
+            this[DEFAULT_INPUT_ALIAS] = input
             putAll(input)
+            for (alias in COMPAT_INPUT_ALIASES) {
+                this[alias] = input
+            }
         }
         return exec.run(env, stringifyKeys = true)
     }
@@ -84,10 +89,6 @@ class BranchlineProgram(private val source: String) {
     fun source(): String = source
 
     private fun compileIr(transform: TransformDecl) = ToIR(funcs, hostFns).compile(transform.body.statements)
-
-    companion object {
-        private const val INPUT_VAR = "row"
-    }
 }
 
 @Serializable

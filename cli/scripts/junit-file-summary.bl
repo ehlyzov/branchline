@@ -1,7 +1,6 @@
 SOURCE row;
 
-TRANSFORM FileSummary { stream } {
-    LET suites = [];
+TRANSFORM FileSummary { LET suites = [];
 
     LET direct = row.testsuite;
     IF direct != NULL THEN {

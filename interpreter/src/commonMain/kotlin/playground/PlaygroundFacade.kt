@@ -24,6 +24,7 @@ import v2.Lexer
 import v2.ParseException
 import v2.Parser
 import v2.TransformDecl
+import v2.DEFAULT_INPUT_ALIAS
 import v2.ir.Exec
 import v2.ir.ToIR
 import v2.ir.TransformRegistry
@@ -39,7 +40,7 @@ import kotlin.js.JsExport
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 object PlaygroundFacade {
-    private const val INPUT_VAR = "msg"
+    private const val INPUT_VAR = DEFAULT_INPUT_ALIAS
     private val prettyJson = Json { prettyPrint = true }
     private val compactJson = Json
 
@@ -171,10 +172,8 @@ object PlaygroundFacade {
             if (line.isBlank()) line else "    $line"
         }
         return """
-            SOURCE $INPUT_VAR;
-
-            TRANSFORM Playground { stream } {
-        $indented
+            TRANSFORM Playground {
+$indented
             }
         """.trimIndent()
     }

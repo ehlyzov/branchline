@@ -3,7 +3,7 @@
 > **Status:** ⚙️ Active multiplatform suite covers interpreter flows; alias migration to `in` and JS-capable VM assertions are still outstanding.【F:conformance-tests/build.gradle†L1-L49】【F:interpreter/src/commonMain/kotlin/v2/ir/RunnerMP.kt†L26-L38】
 
 ## Modules and Targets
-- `conformance-tests` is part of the main Gradle build alongside the interpreter, VM, compiler, and shared fixtures, so CI can run the suite without extra wiring.【F:settings.gradle†L1-L7】
+- `conformance-tests` is part of the main Gradle build alongside the interpreter, VM, CLI, and shared fixtures (settings.gradle still lists a `platform` stub, but no compiler module exists).【F:settings.gradle†L1-L7】【F:cli/build.gradle†L1-L48】【F:test-fixtures/build.gradle†L1-L52】
 - The module is already Kotlin Multiplatform: JVM runs JUnit 5, JS runs on Node, and both reuse the interpreter module for assertions.【F:conformance-tests/build.gradle†L1-L49】
 
 ## Implemented Coverage

@@ -23,8 +23,7 @@ class TreeReconstructionDSLRuntimeTest {
         val dsl = """
             SHARED nodeParents SINGLE;
 
-            TRANSFORM TreeReconstruction { stream } {
-                LET message = row;
+            TRANSFORM TreeReconstruction { LET message = row;
                 LET treeId = message.treeId;
                 LET fromId = message.fromId;
                 LET toId = message.toId;

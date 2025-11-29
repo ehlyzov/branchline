@@ -23,17 +23,21 @@ fun runIR(
     return exec.run(env, stringifyKeys)
 }
 
-/** Build a simple runner from IR that expects a single `row` input map. */
+/** Build a simple runner from IR that expects a single input map. */
 fun buildRunnerFromIRMP(
     ir: List<IRNode>,
     hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
     funcs: Map<String, FuncDecl> = emptyMap(),
     tracer: Tracer? = null,
 ): (Map<String, Any?>) -> Any? {
-    return { row: Map<String, Any?> ->
+    return { input: Map<String, Any?> ->
         val env = HashMap<String, Any?>().apply {
-            this["row"] = row
-            putAll(row)
+            this[v2.DEFAULT_INPUT_ALIAS] = input
+            putAll(input)
+            // Back-compat alias
+            for (alias in v2.COMPAT_INPUT_ALIASES) {
+                this[alias] = input
+            }
         }
         runIR(ir, env, hostFns, funcs, tracer)
     }
@@ -53,7 +57,7 @@ fun buildRunnerFromProgramMP(
     val transforms = prog.decls.filterIsInstance<v2.TransformDecl>()
     require(transforms.size == 1) { "Program must contain exactly one TRANSFORM" }
     val t = transforms.single()
-    require(t.mode == v2.Mode.STREAM) { "Only stream mode yet" }
+    require(t.mode == v2.Mode.BUFFER) { "Only buffer mode is supported" }
 
     if (runSema) {
         v2.sema.SemanticAnalyzer(hostFns.keys).analyze(prog)
@@ -66,10 +70,13 @@ fun buildRunnerFromProgramMP(
     val eval = makeEval(hostFns, funcs, reg, tracer)
     val exec = Exec(ir, eval, tracer)
 
-    return { row: Map<String, Any?> ->
+    return { input: Map<String, Any?> ->
         val env = HashMap<String, Any?>().apply {
-            this["row"] = row
-            putAll(row)
+            this[v2.DEFAULT_INPUT_ALIAS] = input
+            putAll(input)
+            for (alias in v2.COMPAT_INPUT_ALIASES) {
+                this[alias] = input
+            }
         }
         exec.run(env)
     }

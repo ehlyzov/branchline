@@ -52,8 +52,7 @@ class CallSuspendBytecodeTest {
     fun transform_calls_func_and_emits_output() {
         val program = """
             FUNC f() { RETURN 7; }
-            TRANSFORM T { stream } {
-                OUTPUT { y: f() }
+            TRANSFORM T { OUTPUT { y: f() }
             }
         """.trimIndent()
 
@@ -81,8 +80,7 @@ class CallSuspendBytecodeTest {
     @Test
     fun suspend_in_transform_ir_and_bytecode() {
         val program = """
-            TRANSFORM T { stream } {
-                SUSPEND 0;
+            TRANSFORM T { SUSPEND 0;
                 OUTPUT { ok: true }
             }
         """.trimIndent()

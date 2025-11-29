@@ -12,8 +12,7 @@ class FuncVMTest {
         val runner = buildRunnerFromProgram(
             """
             FUNC inc(x) = x + 1;
-            TRANSFORM T { stream } {
-                OUTPUT { y: inc(41) }
+            TRANSFORM T { OUTPUT { y: inc(41) }
             }
             """.trimIndent(),
             engine = ExecutionEngine.VM
@@ -29,8 +28,7 @@ class FuncVMTest {
                 LET s = a + b;
                 RETURN s;
             }
-            TRANSFORM T { stream } {
-                OUTPUT { z: sum(3,4) }
+            TRANSFORM T { OUTPUT { z: sum(3,4) }
             }
             """.trimIndent(),
             engine = ExecutionEngine.VM
@@ -43,8 +41,7 @@ class FuncVMTest {
         val runner = buildRunnerFromProgram(
             """
             FUNC addK(x) = x + k;
-            TRANSFORM T { stream } {
-                LET k = 10;
+            TRANSFORM T { LET k = 10;
                 OUTPUT { v: addK(5) }
             }
             """.trimIndent(),

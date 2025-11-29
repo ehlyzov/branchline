@@ -8,9 +8,7 @@ class ConformComputedKeysTest {
     @Test
     fun computed_string_key_in_object() {
         val program = """
-            SOURCE row;
-            TRANSFORM T { stream } {
-                OUTPUT { obj: { [row.key] : 1 } }
+            TRANSFORM T { OUTPUT { obj: { [input.key] : 1 } }
             }
         """.trimIndent()
         val runner = buildRunnerFromProgramMP(program)

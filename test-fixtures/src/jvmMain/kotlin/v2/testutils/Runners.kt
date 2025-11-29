@@ -39,8 +39,7 @@ fun compileAndRun(
     engine: ExecutionEngine = ExecutionEngine.INTERPRETER,
 ): Any? {
     val code = """
-        SOURCE row;
-        TRANSFORM __T { stream } {
+        TRANSFORM __T {
             $body
         }
     """.trimIndent()
@@ -54,8 +53,7 @@ fun buildRunner(
     engine: ExecutionEngine = ExecutionEngine.INTERPRETER,
 ): (Map<String, Any?>) -> Any? {
     val code = """
-        SOURCE row;
-        TRANSFORM __T { stream } {
+        TRANSFORM __T {
             $body
         }
     """.trimIndent()
@@ -68,8 +66,7 @@ fun buildRunnerUnchecked(
     engine: ExecutionEngine = ExecutionEngine.INTERPRETER,
 ): (Map<String, Any?>) -> Any? {
     val code = """
-        SOURCE row;
-        TRANSFORM __T { stream } {
+        TRANSFORM __T {
             $body
         }
     """.trimIndent()

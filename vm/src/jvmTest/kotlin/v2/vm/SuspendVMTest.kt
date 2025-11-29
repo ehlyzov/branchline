@@ -14,8 +14,7 @@ class SuspendVMTest {
     @Test
     fun suspend_and_resume_simple() {
         val program = """
-            TRANSFORM T { stream } {
-                SUSPEND 1;
+            TRANSFORM T { SUSPEND 1;
                 OUTPUT { done: true }
             }
         """.trimIndent()
@@ -43,8 +42,7 @@ class SuspendVMTest {
     @Test
     fun suspend_preserves_locals_across_resume() {
         val program = """
-            TRANSFORM T { stream } {
-                LET a = 5;
+            TRANSFORM T { LET a = 5;
                 SUSPEND 1;
                 OUTPUT { v: a }
             }

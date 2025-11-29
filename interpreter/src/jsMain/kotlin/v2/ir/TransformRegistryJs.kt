@@ -3,6 +3,8 @@ package v2.ir
 import v2.FuncDecl
 import v2.Mode
 import v2.TransformDecl
+import v2.DEFAULT_INPUT_ALIAS
+import v2.COMPAT_INPUT_ALIASES
 
 actual class TransformRegistry actual constructor(
     private val funcs: Map<String, FuncDecl>,
@@ -14,14 +16,17 @@ actual class TransformRegistry actual constructor(
     actual fun get(name: String): (Map<String, Any?>) -> Any? =
         cache.getOrPut(name) {
             val decl = transforms[name] ?: error("Transform '$name' not found")
-            require(decl.mode == Mode.STREAM) { "Only stream mode yet" }
+            require(decl.mode == Mode.BUFFER) { "Only buffer mode is supported" }
             val ir = ToIR(funcs, hostFns).compile(decl.body.statements)
             val evalFn = makeEval(hostFns, funcs, this)
             val exec = Exec(ir, evalFn)
             val runner: (Map<String, Any?>) -> Any? = { input: Map<String, Any?> ->
                 val env = HashMap<String, Any?>().apply {
-                    this["row"] = input
+                    this[DEFAULT_INPUT_ALIAS] = input
                     putAll(input)
+                    for (alias in COMPAT_INPUT_ALIASES) {
+                        this[alias] = input
+                    }
                 }
                 val produced = exec.run(env)
                 produced ?: error("No OUTPUT")
