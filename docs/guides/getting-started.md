@@ -12,7 +12,8 @@ Create a file `hello.bl` with the following contents:
 
 ```branchline
 SOURCE row;
-TRANSFORM Hello { LET greet = "Hello, " + row.name;
+TRANSFORM Hello {
+    LET greet = "Hello, " + row.name;
     OUTPUT { greeting: greet };
 }
 ```
