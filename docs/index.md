@@ -40,3 +40,8 @@ Need more detail? See [Install Branchline](guides/install.md) and [First steps](
 - Start with the [Language Overview](language/index.md) and the [Getting Started guide](guides/getting-started.md).
 - Explore the standard library pages for runnable examples linked to the playground.
 - Use the playground to tweak code and inputs without installing anything.
+
+## What you can build
+- [Normalize XML test reports](playground.md?example=junit-badge-summary){ target="_blank" } into JSON summaries and badges.
+- [Enrich customer/order payloads](playground.md?example=customer-profile){ target="_blank" } with fallbacks and computed fields.
+- [Gate deployments](playground.md?example=pipeline-health-gating){ target="_blank" } using CHECKPOINT/ASSERT plus traces.

@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.longOrNull
+import v2.runtime.bignum.toDouble
 import v2.debug.Debug
 import v2.debug.CollectingTracer
 import v2.debug.TraceOptions
@@ -225,11 +226,11 @@ object PlaygroundFacade {
         is Float -> JsonPrimitive(value)
         is Double -> JsonPrimitive(value)
         is BLBigInt -> JsonPrimitive(value.toString())
-        is BLBigDec -> JsonPrimitive(value.toString())
+        is BLBigDec -> JsonPrimitive(value.toDouble())
         is I32 -> JsonPrimitive(value.v)
         is I64 -> JsonPrimitive(value.v)
         is IBig -> JsonPrimitive(value.v.toString())
-        is Dec -> JsonPrimitive(value.v.toString())
+        is Dec -> JsonPrimitive(value.v.toDouble())
         is Map<*, *> -> JsonObject(buildMap {
             value.entries.forEach { (k, v) ->
                 val key = k?.toString() ?: "null"

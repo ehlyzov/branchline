@@ -34,3 +34,4 @@ expect operator fun BLBigDec.unaryMinus(): BLBigDec
 expect operator fun BLBigDec.compareTo(other: BLBigDec): Int
 expect fun BLBigDec.toPlainString(): String
 expect fun BLBigDec.toBLBigInt(): BLBigInt
+expect fun BLBigDec.toDouble(): Double

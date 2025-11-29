@@ -1,8 +1,12 @@
 package v2.runtime.bignum
 
-actual class BLBigInt internal constructor(internal val v: Long)
+actual class BLBigInt internal constructor(internal val v: Long) {
+    override fun toString(): String = v.toString()
+}
 
-actual class BLBigDec internal constructor(internal val v: Double)
+actual class BLBigDec internal constructor(internal val v: Double) {
+    override fun toString(): String = toPlainString()
+}
 
 // --- BLBigInt ---
 actual fun blBigIntOfLong(v: Long): BLBigInt = BLBigInt(v)
@@ -42,3 +46,4 @@ actual operator fun BLBigDec.unaryMinus(): BLBigDec = BLBigDec(-this.v)
 actual operator fun BLBigDec.compareTo(other: BLBigDec): Int = this.v.compareTo(other.v)
 actual fun BLBigDec.toPlainString(): String = this.v.toString()
 actual fun BLBigDec.toBLBigInt(): BLBigInt = BLBigInt(this.v.toLong())
+actual fun BLBigDec.toDouble(): Double = this.v

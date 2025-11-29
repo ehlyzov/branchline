@@ -77,7 +77,7 @@ The `TRY` statement handles errors and exceptions.
 
 The `SHARED` statement declares shared memory resources.
 
-To wait for a shared entry from within a program, use the `AWAIT_SHARED(resource, key)` stdlib function (requires a configured shared store in the host). In the playground it throws because no store is wired; see [the shared example](../playground.md?example=stdlib-shared-await) for expected behavior with error handling.
+To wait for a shared entry from within a program, use the `AWAIT_SHARED(resource, key)` stdlib function (requires a configured shared store in the host). This cannot be demonstrated in the playground because no shared store is wired there.
 
 ## Functions {#func}
 

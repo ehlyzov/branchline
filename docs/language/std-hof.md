@@ -11,8 +11,8 @@ Each helper expects a function value of the form `(value, index, list) -> ...` u
 - `MAP(list, fn)` → transforms each element.
 - `FILTER(list, fn)` → keeps elements where `fn` is truthy.
 - `REDUCE(list, init, fn)` → accumulates from `init`.
-- `SOME(list, fn)` / `EVERY(list, fn)` → booleans for any/all.
-- `FIND(list, fn)` → first matching value or `null`.
+- `SOME(list, fn)` / `EVERY(list, fn)` → booleans for any/all; empty lists return `false`/`true` respectively.
+- `FIND(list, fn)` → first matching value or `null`; returns `null` on empty lists.
 - `APPLY(fn, ...args)` → calls a function value with arbitrary args.
 - `IS_FUNCTION(x)` → tests if a value is callable.
 

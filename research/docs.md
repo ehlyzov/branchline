@@ -198,7 +198,7 @@ For each function we will document: signature, parameters, returns, error cases,
 - NOW — example `stdlib-time-now`
 
 ### Shared
-- AWAIT_SHARED — example `stdlib-shared-await-shared`
+- AWAIT_SHARED — host-only; requires configured shared store (no playground example)
 
 ---
 

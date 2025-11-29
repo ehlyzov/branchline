@@ -167,6 +167,36 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     workerRef.current?.postMessage({ code: program, input, trace: tracingRef.current, inputFormat });
   }, [inputFormat]);
 
+  const resetExample = React.useCallback(() => {
+    if (!selectedExample) {
+      return;
+    }
+    const program = selectedExample.program ?? DEFAULT_PROGRAM;
+    const input = selectedExample.input ?? DEFAULT_INPUT;
+    const format = selectedExample.inputFormat ?? 'json';
+
+    if (programEditorRef.current) {
+      programEditorRef.current.setValue(program);
+    }
+    if (inputEditorRef.current) {
+      inputEditorRef.current.setValue(input);
+    }
+
+    if (inputFormat !== format) {
+      setInputFormat(format);
+    }
+
+    setError(null);
+    setOutput('');
+    setTraceHuman(null);
+    setTraceJson(null);
+    if (outputRef.current) {
+      outputRef.current.textContent = '';
+    }
+
+    setIsTracingEnabled(selectedExample.enableTracing);
+  }, [inputFormat, selectedExample]);
+
   React.useEffect(() => {
     ensureBranchlineLanguage();
 
@@ -244,6 +274,12 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     };
 
     return () => {
+      if (programContainerRef.current && programWheelGuardRef.current) {
+        programContainerRef.current.removeEventListener('wheel', programWheelGuardRef.current, { capture: true } as EventListenerOptions);
+      }
+      if (inputContainerRef.current && inputWheelGuardRef.current) {
+        inputContainerRef.current.removeEventListener('wheel', inputWheelGuardRef.current, { capture: true } as EventListenerOptions);
+      }
       workerRef.current?.terminate();
       programEditorRef.current?.dispose();
       inputEditorRef.current?.dispose();
@@ -252,36 +288,12 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   }, []);
 
   React.useEffect(() => {
-    if (!programEditorRef.current || !inputEditorRef.current) {
+    if (!programEditorRef.current || !inputEditorRef.current || !selectedExample) {
       return;
     }
-
-    const program = selectedExample?.program ?? DEFAULT_PROGRAM;
-    const input = selectedExample?.input ?? DEFAULT_INPUT;
-    const format = selectedExample?.inputFormat ?? 'json';
-
-    if (programEditorRef.current.getValue() !== program) {
-      programEditorRef.current.setValue(program);
-    }
-
-    if (inputEditorRef.current.getValue() !== input) {
-      inputEditorRef.current.setValue(input);
-    }
-
-    if (inputFormat !== format) {
-      setInputFormat(format);
-    }
-
-    setError(null);
-    setOutput('');
-    setTraceHuman(null);
-    setTraceJson(null);
-    if (outputRef.current) {
-      outputRef.current.textContent = '';
-    }
-
-    setIsTracingEnabled(selectedExample?.enableTracing ?? false);
-  }, [inputFormat, selectedExample]);
+    resetExample();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetExample, selectedExample]);
 
   React.useEffect(() => {
     const model = inputEditorRef.current?.getModel();
@@ -297,6 +309,48 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   }, [isTracingEnabled]);
 
   const hasTrace = Boolean(traceHuman || traceJson);
+
+  const programWheelGuardRef = React.useRef<(event: WheelEvent) => void>();
+  const inputWheelGuardRef = React.useRef<(event: WheelEvent) => void>();
+
+  React.useEffect(() => {
+    const programContainer = programContainerRef.current;
+    const inputContainer = inputContainerRef.current;
+    const programEditor = programEditorRef.current;
+    const inputEditor = inputEditorRef.current;
+
+    if (programContainer && programEditor && !programWheelGuardRef.current) {
+      const handler = (event: WheelEvent) => {
+        if (!programEditor.hasTextFocus()) {
+          // Let page scroll instead of editor when not focused.
+          event.stopImmediatePropagation();
+        }
+      };
+      programContainer.addEventListener('wheel', handler, { capture: true });
+      programWheelGuardRef.current = handler;
+    }
+
+    if (inputContainer && inputEditor && !inputWheelGuardRef.current) {
+      const handler = (event: WheelEvent) => {
+        if (!inputEditor.hasTextFocus()) {
+          event.stopImmediatePropagation();
+        }
+      };
+      inputContainer.addEventListener('wheel', handler, { capture: true });
+      inputWheelGuardRef.current = handler;
+    }
+
+    return () => {
+      if (programContainer && programWheelGuardRef.current) {
+        programContainer.removeEventListener('wheel', programWheelGuardRef.current, { capture: true } as EventListenerOptions);
+        programWheelGuardRef.current = undefined;
+      }
+      if (inputContainer && inputWheelGuardRef.current) {
+        inputContainer.removeEventListener('wheel', inputWheelGuardRef.current, { capture: true } as EventListenerOptions);
+        inputWheelGuardRef.current = undefined;
+      }
+    };
+  }, []);
 
   return (
     <div className="branchline-playground">
@@ -337,6 +391,12 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
             />
             <span>Enable tracing (EXPLAIN)</span>
           </label>
+          <button className="playground-button playground-button--ghost" onClick={resetExample}>
+            Reset example
+          </button>
+          <a className="playground-button playground-button--ghost" href="../playground/demo.html" target="_blank" rel="noreferrer">
+            Open in new tab
+          </a>
           <button className="playground-button" onClick={run} disabled={isRunning}>
             {isRunning ? 'Running…' : 'Run ▶'}
           </button>

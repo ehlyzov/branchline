@@ -8,7 +8,7 @@ Text processing helpers.
 
 ## Conversions
 - `STRING(x)` → string representation or `null` for `null`.
-- `NUMBER(x)` → parses numbers/booleans/strings to numeric; errors on invalid strings.
+- `NUMBER(x)` → parses numbers/booleans/strings to numeric; errors on invalid strings; returns `null` for `null`.
 - `BOOLEAN(x)` → truthiness: `false` for `null`, empty string, or zero; `true` otherwise.
 
 Run it: [STRING/NUMBER/BOOLEAN example](../playground.md?example=stdlib-strings-casts).

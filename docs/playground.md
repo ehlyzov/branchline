@@ -1,17 +1,89 @@
+---
 title: Interactive Playground
 description: Try Branchline in your browser with the interactive playground.
+hide:
+  - navigation
+  - toc
 ---
 
 # Interactive Playground
 
-Experiment with Branchline directly in your browser—no installs required. Pick an example, edit the program and input, enable tracing, and run.
+Experiment with Branchline directly in your browser—no installs required. The layout below is full-width to give editors more room. Pick an example, edit the program and input, enable tracing, and run.
+
+<script>
+  // Add a page-specific class so we can scope layout overrides to this page only.
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.classList.add('page-playground');
+  });
+</script>
+
+<style>
+  /* Full-width layout for this page only */
+  body.page-playground .md-sidebar--primary,
+  body.page-playground .md-sidebar--secondary {
+    display: none;
+  }
+  body.page-playground .md-main__inner {
+    margin: 0;
+  }
+  body.page-playground .md-content {
+    margin: 0;
+    max-width: none;
+    width: 100%;
+  }
+  body.page-playground .md-content__inner {
+    max-width: none;
+    padding: 0;
+  }
+  body.page-playground .md-typeset {
+    max-width: none;
+    padding: 0;
+  }
+  body.page-playground .md-content .playground-embed,
+  body.page-playground .md-content .playground-frame,
+  body.page-playground .md-content .bl-playground {
+    width: 100%;
+  }
+  /* Shell styling around the embed */
+  body.page-playground .playground-embed {
+    margin: 0;
+    padding: 8px 0 0;
+  }
+  body.page-playground .playground-embed__intro {
+    background: rgba(37, 99, 235, 0.06);
+    border: 1px solid rgba(37, 99, 235, 0.12);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    color: var(--md-default-fg-color--light, #475569);
+  }
+  body.page-playground .playground-embed__intro code {
+    background: rgba(37, 99, 235, 0.12);
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+  body.page-playground .playground-frame {
+    border-radius: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+  }
+  body.page-playground .playground-embed__actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  body.page-playground .playground-embed__hint {
+    font-size: 14px;
+    color: var(--md-default-fg-color--light, #475569);
+  }
+</style>
 
 <link rel="stylesheet" href="../assets/playground.css">
 
 <div class="playground-embed">
-  <div class="playground-embed__intro">
-    <p><strong>Tips:</strong> Cmd/Ctrl + Enter runs the playground. Switch input between JSON and XML. Toggle tracing to view <code>EXPLAIN(...)</code> provenance. Switching examples resets the editors.</p>
-  </div>
+  <div class="playground-embed__intro"><strong>Tips:</strong> Cmd/Ctrl + Enter runs. Switch JSON/XML input. Toggle tracing for <code>EXPLAIN(...)</code>. Changing examples resets the editors.</div>
   <div class="playground-frame">
     <div class="bl-playground" data-default-example="customer-profile" role="region" aria-label="Branchline playground embed"></div>
   </div>
@@ -24,13 +96,24 @@ Experiment with Branchline directly in your browser—no installs required. Pick
 <script type="module" src="../assets/playground.js"></script>
 
 ## Curated examples (all preserved)
-- `collection-transforms` — MAP/FILTER/REDUCE style array work
-- `customer-profile` — basic enrichment and null coalescing
-- `explain-derived-total` — enable tracing to see EXPLAIN output
-- `junit-badge-summary` — XML parsing and normalization
-- `order-shipment` — object reshaping and path navigation
-- `pipeline-health-gating` — ASSERT/CHECKPOINT with trace
-- Standard library coverage: `stdlib-core-keys-values`, `stdlib-core-put-delete`, `stdlib-core-append-prepend`, `stdlib-core-walk`, `stdlib-core-print`, `stdlib-arrays-overview`, `stdlib-agg-overview`, `stdlib-strings-casts`, `stdlib-strings-text`, `stdlib-hof-overview`, `stdlib-debug-explain`, `stdlib-time-now`, `stdlib-shared-await`
+- [collection-transforms](?example=collection-transforms){ target="_blank" } — MAP/FILTER/REDUCE style array work
+- [customer-profile](?example=customer-profile){ target="_blank" } — basic enrichment and null coalescing
+- [explain-derived-total](?example=explain-derived-total){ target="_blank" } — enable tracing to see EXPLAIN output
+- [junit-badge-summary](?example=junit-badge-summary){ target="_blank" } — XML parsing and normalization
+- [order-shipment](?example=order-shipment){ target="_blank" } — object reshaping and path navigation
+- [pipeline-health-gating](?example=pipeline-health-gating){ target="_blank" } — ASSERT/CHECKPOINT with trace
+- Standard library coverage:
+  [stdlib-core-keys-values](?example=stdlib-core-keys-values){ target="_blank" },
+  [stdlib-core-put-delete](?example=stdlib-core-put-delete){ target="_blank" },
+  [stdlib-core-append-prepend](?example=stdlib-core-append-prepend){ target="_blank" },
+  [stdlib-core-walk](?example=stdlib-core-walk){ target="_blank" },
+  [stdlib-arrays-overview](?example=stdlib-arrays-overview){ target="_blank" },
+  [stdlib-agg-overview](?example=stdlib-agg-overview){ target="_blank" },
+  [stdlib-strings-casts](?example=stdlib-strings-casts){ target="_blank" },
+  [stdlib-strings-text](?example=stdlib-strings-text){ target="_blank" },
+  [stdlib-hof-overview](?example=stdlib-hof-overview){ target="_blank" },
+  [stdlib-debug-explain](?example=stdlib-debug-explain){ target="_blank" },
+  [stdlib-time-now](?example=stdlib-time-now){ target="_blank" }
 
 ## Troubleshooting
 - If the embed does not appear, open the new-tab link above.

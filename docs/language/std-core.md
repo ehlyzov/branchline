@@ -33,6 +33,4 @@ Run it: [WALK example](../playground.md?example=stdlib-core-walk).
 Run it: [APPEND/PREPEND/COLLECT example](../playground.md?example=stdlib-core-append-prepend).
 
 ## Side effects
-- `PRINT(...args)` → writes to stdout, returns `null`. In the playground, output goes to the dev console.
-
-Run it: [PRINT example](../playground.md?example=stdlib-core-print).
+- `PRINT(...args)` → writes to stdout, returns `null`. Use in CLI/runtime environments; not demonstrated in the playground because browser consoles do not display the call reliably.
