@@ -1,6 +1,5 @@
-SOURCE row;
-
-TRANSFORM Summary { LET payload = row.reports;
+TRANSFORM Summary {
+    LET payload = input.reports;
     LET reports = IF payload == NULL THEN []
         ELSE IF IS_OBJECT(payload) THEN [payload]
         ELSE payload;
