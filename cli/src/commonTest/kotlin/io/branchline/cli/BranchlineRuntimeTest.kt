@@ -8,7 +8,8 @@ import v2.vm.BytecodeIO
 
 class BranchlineRuntimeTest {
     private val script = """
-        TRANSFORM Hello { OUTPUT { greeting: "Hello, " + input.name };
+        TRANSFORM Hello {
+            OUTPUT { greeting: "Hello, " + input.name };
         }
     """.trimIndent()
 
@@ -49,7 +50,8 @@ class BranchlineRuntimeTest {
     @Test
     fun addsStringNumbersWithoutTypeErrors() {
         val scriptWithNumberMath = """
-            TRANSFORM Totals { LET totals = { tests: 0 };
+            TRANSFORM Totals {
+                LET totals = { tests: 0 };
                 SET totals.tests = totals.tests + NUMBER(input.count ?? 0);
                 OUTPUT totals;
             }
