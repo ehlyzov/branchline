@@ -6,28 +6,9 @@ title: Aggregation Standard Library
 
 Functions for computing statistics over collections.
 
-### LENGTH(x) / COUNT(x)
-- **Parameters:** `x` – string, list, object, or `null`
-- **Returns:** number of elements (`0` for `null`)
-- **Example:** `LENGTH([1,2,3])` → `3`
+- `LENGTH(x)` / `COUNT(x)` → size of strings, lists, or objects; `0` for `null`.
+- `SUM(list)` → sum of numbers; errors on non-numeric entries.
+- `AVG(list)` → average or `null` when empty; errors on non-numeric entries.
+- `MIN(list)` / `MAX(list)` → smallest/largest value or `null` when empty; errors on incomparable values.
 
-### SUM(list)
-- **Parameters:** `list` – list of numbers
-- **Returns:** sum as decimal
-- **Example:** `SUM([1,2,3])` → `6`
-
-### AVG(list)
-- **Parameters:** `list` – list of numbers
-- **Returns:** average or `null` when empty
-- **Example:** `AVG([1,2,3])` → `2`
-
-### MIN(list)
-- **Parameters:** `list` – list of comparable values
-- **Returns:** smallest value or `null` when empty
-- **Example:** `MIN([3,1,4])` → `1`
-
-### MAX(list)
-- **Parameters:** `list` – list of comparable values
-- **Returns:** largest value or `null` when empty
-- **Example:** `MAX([3,1,4])` → `4`
-
+Run it: [Aggregation example](../playground.md?example=stdlib-agg-overview).

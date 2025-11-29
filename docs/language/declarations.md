@@ -7,6 +7,8 @@ title: Declarations
 Branchline programs are composed of top-level declarations that introduce
 sources, outputs, transformations, and reusable definitions.
 
+In small programs you can rely on an implicit `SOURCE` and `OUTPUT` (the playground does this), but production pipelines typically declare them explicitly and wire adapters via `USING`.
+
 ## Source declarations
 
 ```
@@ -61,4 +63,3 @@ typeExpr ::= enum "{" enumVal ("," enumVal)* "}" | simpleType ( "|" simpleType )
 
 Type definitions describe new enums or compositions of built-in types
 such as `string`, `number`, `boolean`, `null`, and generic arrays【F:language/src/test/kotlin/v2/ebnf.txt†L65-L70】.
-

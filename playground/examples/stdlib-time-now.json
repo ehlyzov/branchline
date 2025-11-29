@@ -1,0 +1,14 @@
+{
+  "title": "Stdlib: NOW timestamp",
+  "description": "Call NOW() to capture the current timestamp (ISO 8601).",
+  "program": [
+    "LET captured = NOW();",
+    "",
+    "OUTPUT {",
+    "    captured: captured",
+    "}"
+  ],
+  "input": {
+    "note": "Timestamps will reflect your browser clock."
+  }
+}

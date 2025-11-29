@@ -34,6 +34,10 @@ items:
   - name: Guides
     href: guides/index.md
     items:
+      - name: First Steps
+        href: guides/first-steps.md
+      - name: Install Branchline
+        href: guides/install.md
       - name: Getting Started
         href: guides/getting-started.md
       - name: Branchline CLI
@@ -44,6 +48,8 @@ items:
         href: guides/array-comprehension.md
       - name: TRY/CATCH
         href: guides/try-catch.md
+      - name: Parallelism
+        href: guides/parallelism.md
   - name: Architecture
     items:
       - name: VM Overview

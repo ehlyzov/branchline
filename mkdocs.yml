@@ -59,6 +59,13 @@ nav:
       - Debug Utilities: language/std-debug.md
   - Guides: 
     - guides/index.md
+    - guides/first-steps.md
+    - guides/install.md
+    - guides/getting-started.md
+    - guides/for-each.md
+    - guides/array-comprehension.md
+    - guides/try-catch.md
+    - guides/parallelism.md
   - Architecture:
     - VM Overview: vm.md
 

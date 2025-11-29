@@ -7,6 +7,14 @@ title: Expressions
 Expressions compute values and support operators, function calls, and data
 construction.
 
+## Practical notes
+- Use `LET` inside expressions to bind temporary values: `LET x = ...; OUTPUT { result: x }`.
+- `AWAIT`/`SUSPEND` are for async/suspension-aware hosts; in pure playground scenarios they behave like unary operators and will error if no async host is configured.
+- `CALL name(args)` invokes host functions registered by the embedding runtime.
+- Use `??` to provide fallbacks when fields may be missing or null.
+- Lambda syntax `(param[, ...]) -> expression` feeds higher-order stdlib functions (`MAP`, `FILTER`, `REDUCE`, etc).
+- Path expressions let you traverse JSON/XML structures quickly; combine slices `[start:end]` and predicates `[expr]` for selective access.
+
 ## As {#as}
 
 The `AS` keyword provides aliasing and casting functionality.
@@ -107,4 +115,3 @@ predicate ::= expression
 【F:language/src/test/kotlin/v2/ebnf.txt†L134-L144】
 
 These forms allow navigating and slicing data structures within expressions.
-

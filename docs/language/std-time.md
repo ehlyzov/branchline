@@ -6,8 +6,6 @@ title: Time Standard Library
 
 Utilities for working with time.
 
-### NOW()
-- **Parameters:** none
-- **Returns:** current timestamp string in ISO format
-- **Example:** `NOW()` → `"2024-01-01T00:00:00Z"`
+- `NOW()` → current timestamp string in ISO format using the host clock.
 
+Run it: [NOW example](../playground.md?example=stdlib-time-now).

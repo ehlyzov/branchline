@@ -1,0 +1,32 @@
+{
+  "title": "Stdlib: WALK over nested data",
+  "description": "Traverse nested objects/lists with WALK and inspect the resulting path metadata.",
+  "program": [
+    "LET entries = COLLECT(WALK(msg.document));",
+    "",
+    "OUTPUT {",
+    "    paths: MAP(entries, (node) -> JOIN(node.path, \".\")),",
+    "    leaves: FILTER(entries, (node) -> node.isLeaf),",
+    "    summary: {",
+    "        depth: MAX(MAP(entries, (node) -> node.depth)),",
+    "        total_nodes: LENGTH(entries)",
+    "    }",
+    "}"
+  ],
+  "input": {
+    "document": {
+      "id": "doc-5",
+      "title": "Nested",
+      "items": [
+        {
+          "sku": "a1",
+          "qty": 2
+        },
+        {
+          "sku": "b2",
+          "qty": 1
+        }
+      ]
+    }
+  }
+}

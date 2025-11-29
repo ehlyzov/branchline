@@ -25,7 +25,8 @@ language specification is defined in an [EBNF grammar](../../interpreter/src/jvm
 - [Strings](std-strings.md)
 - [Time](std-time.md)
 
+Each stdlib page links to an interactive playground example (use `?example=<id>` in the URL) so you can run the function in context.
+
 See the [grammar](grammar.md) for a formal definition of the syntax.
 
 - [Lexical Structure](lexical.md): token and keyword reference.
-

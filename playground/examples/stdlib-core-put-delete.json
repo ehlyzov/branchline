@@ -1,0 +1,32 @@
+{
+  "title": "Stdlib: PUT and DELETE",
+  "description": "Use PUT and DELETE to update objects and lists immutably.",
+  "program": [
+    "LET updatedUser = PUT(msg.user, \"role\", \"reviewer\");",
+    "LET removedField = DELETE(updatedUser, \"legacy_id\");",
+    "",
+    "LET appendedTag = PUT(msg.tags, LENGTH(msg.tags), \"vip\");",
+    "LET deletedTag = DELETE(appendedTag, 1);",
+    "",
+    "OUTPUT {",
+    "    original_user: msg.user,",
+    "    updated_user: updatedUser,",
+    "    removed_field: removedField,",
+    "    original_tags: msg.tags,",
+    "    appended_tag: appendedTag,",
+    "    deleted_tag: deletedTag",
+    "}"
+  ],
+  "input": {
+    "user": {
+      "id": 88,
+      "role": "author",
+      "legacy_id": "old-1"
+    },
+    "tags": [
+      "new",
+      "beta",
+      "owner"
+    ]
+  }
+}

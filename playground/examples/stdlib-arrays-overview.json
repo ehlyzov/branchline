@@ -1,0 +1,50 @@
+{
+  "title": "Stdlib: Array helpers",
+  "description": "Distinct, flatten, sort, generate ranges, and zip lists together.",
+  "program": [
+    "LET unique = DISTINCT(msg.values);",
+    "LET flattened = FLATTEN(msg.nested);",
+    "LET sorted = SORT(msg.values);",
+    "LET rangeUp = RANGE(3);",
+    "LET rangeDown = RANGE(5, 1, 2);",
+    "LET zipped = ZIP(msg.names, msg.roles);",
+    "",
+    "OUTPUT {",
+    "    distinct: unique,",
+    "    flattened: flattened,",
+    "    sorted: sorted,",
+    "    range_up: rangeUp,",
+    "    range_down: rangeDown,",
+    "    zipped: zipped",
+    "}"
+  ],
+  "input": {
+    "values": [
+      3,
+      1,
+      2,
+      2,
+      3
+    ],
+    "nested": [
+      [
+        1,
+        2
+      ],
+      [
+        3
+      ],
+      4
+    ],
+    "names": [
+      "Jae",
+      "Luz",
+      "Mo"
+    ],
+    "roles": [
+      "analyst",
+      "pm",
+      "engineer"
+    ]
+  }
+}

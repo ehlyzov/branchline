@@ -1,0 +1,14 @@
+{
+  "title": "Stdlib: AWAIT_SHARED (requires shared store)",
+  "description": "Demonstrates AWAIT_SHARED with TRY/CATCH. In the playground, the shared store is not configured, so the call will throw.",
+  "program": [
+    "LET result = TRY AWAIT_SHARED(\"cache\", \"ready\") CATCH (err) => \"error: \" + err;",
+    "",
+    "OUTPUT {",
+    "    await_shared_result: result",
+    "}"
+  ],
+  "input": {
+    "note": "In production set a SharedStoreProvider; here we catch the missing-store error."
+  }
+}

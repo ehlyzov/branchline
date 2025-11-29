@@ -1,0 +1,28 @@
+{
+  "title": "Stdlib: CHECKPOINT, ASSERT, EXPLAIN",
+  "description": "Guard a calculation, mark checkpoints, and view provenance via EXPLAIN. Enable tracing to see EXPLAIN output.",
+  "program": [
+    "CHECKPOINT(\"start\");",
+    "LET subtotal = SUM(msg.items);",
+    "LET discount = msg.discount ?? 0;",
+    "LET total = subtotal - discount;",
+    "ASSERT(total >= 0, \"total cannot be negative\");",
+    "CHECKPOINT(\"ready\");",
+    "",
+    "OUTPUT {",
+    "    subtotal: subtotal,",
+    "    discount: discount,",
+    "    total: total,",
+    "    explain_total: EXPLAIN(\"total\")",
+    "}"
+  ],
+  "input": {
+    "items": [
+      15.0,
+      20.0,
+      12.5
+    ],
+    "discount": 5.0
+  },
+  "trace": true
+}

@@ -85,7 +85,35 @@ type WorkerResult = {
   explainHuman: string | null;
 };
 
-export function BranchlinePlayground() {
+type BranchlinePlaygroundProps = {
+  defaultExampleId?: string;
+};
+
+function readExampleFromLocation(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  const params = new URLSearchParams(window.location.search);
+  const fromQuery = params.get('example');
+  if (fromQuery) {
+    return fromQuery;
+  }
+  const hash = window.location.hash?.replace(/^#/, '');
+  return hash || null;
+}
+
+function resolveDefaultExample(examples: PlaygroundExample[], preferred?: string | null): string {
+  const requested = readExampleFromLocation() ?? preferred;
+  if (requested) {
+    const match = examples.find((item) => item.id === requested);
+    if (match) {
+      return match.id;
+    }
+  }
+  return examples[0]?.id ?? '';
+}
+
+export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundProps) {
   const programContainerRef = React.useRef<HTMLDivElement | null>(null);
   const inputContainerRef = React.useRef<HTMLDivElement | null>(null);
   const outputRef = React.useRef<HTMLPreElement | null>(null);
@@ -121,7 +149,9 @@ export function BranchlinePlayground() {
 
     return items.sort((a, b) => a.title.localeCompare(b.title));
   }, []);
-  const [selectedExampleId, setSelectedExampleId] = React.useState(() => examples[0]?.id ?? '');
+  const [selectedExampleId, setSelectedExampleId] = React.useState(() =>
+    resolveDefaultExample(examples, defaultExampleId)
+  );
   const selectedExample = React.useMemo(
     () => examples.find((item) => item.id === selectedExampleId) ?? null,
     [examples, selectedExampleId]

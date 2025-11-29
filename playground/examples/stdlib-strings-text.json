@@ -1,0 +1,32 @@
+{
+  "title": "Stdlib: Text helpers",
+  "description": "Substring, contains, regex match, replace, split/join, upper/lower/trim in one pass.",
+  "program": [
+    "LET trimmed = TRIM(msg.phrase);",
+    "LET upper = UPPER(trimmed);",
+    "LET lower = LOWER(trimmed);",
+    "LET hasWorld = CONTAINS(trimmed, \"world\");",
+    "LET matchedDigits = MATCH(msg.logLine, \"\\\\d+\");",
+    "LET replaced = REPLACE(msg.logLine, \"error\", \"warning\");",
+    "LET parts = SPLIT(msg.csv, \",\");",
+    "LET joined = JOIN(parts, \" | \");",
+    "LET slice = SUBSTRING(trimmed, 7, 5);",
+    "",
+    "OUTPUT {",
+    "    trimmed: trimmed,",
+    "    upper: upper,",
+    "    lower: lower,",
+    "    contains_world: hasWorld,",
+    "    digits: matchedDigits,",
+    "    replaced: replaced,",
+    "    parts: parts,",
+    "    joined: joined,",
+    "    substring: slice",
+    "}"
+  ],
+  "input": {
+    "phrase": "  Hello, world!  ",
+    "logLine": "error 504 after 3 retries",
+    "csv": "alpha,beta,gamma"
+  }
+}

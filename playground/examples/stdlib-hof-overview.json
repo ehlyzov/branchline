@@ -1,0 +1,35 @@
+{
+  "title": "Stdlib: Higher-order functions",
+  "description": "MAP, FILTER, REDUCE, SOME, EVERY, FIND, APPLY, IS_FUNCTION working together.",
+  "program": [
+    "LET doubled = MAP(msg.values, (value, index, _) -> value * 2 + index);",
+    "LET passing = FILTER(doubled, (value) -> value >= 6);",
+    "LET total = REDUCE(passing, 0, (acc, value) -> acc + value);",
+    "LET anyLarge = SOME(passing, (value) -> value > 10);",
+    "LET allEven = EVERY(passing, (value) -> value % 2 == 0);",
+    "LET firstPassing = FIND(passing, (value) -> value >= 8);",
+    "",
+    "LET increment = (x) -> x + 1;",
+    "LET incremented = APPLY(increment, 4);",
+    "LET isFn = IS_FUNCTION(increment);",
+    "",
+    "OUTPUT {",
+    "    doubled: doubled,",
+    "    passing: passing,",
+    "    reduce_total: total,",
+    "    any_large: anyLarge,",
+    "    all_even: allEven,",
+    "    first_passing: firstPassing,",
+    "    apply_increment: incremented,",
+    "    is_function: isFn",
+    "}"
+  ],
+  "input": {
+    "values": [
+      1,
+      2,
+      3,
+      4
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "title": "Stdlib: PRINT side effects",
+  "description": "PRINT writes to stdout; playground shows result but not console output.",
+  "program": [
+    "PRINT(\"Hello from Branchline!\", msg.user);",
+    "",
+    "OUTPUT {",
+    "    note: \"PRINT output is written to the console; the playground captures only the returned null.\",",
+    "    print_returns: PRINT(\"another call\", 123)",
+    "}"
+  ],
+  "input": {
+    "user": {
+      "id": 1,
+      "name": "Console Tester"
+    }
+  }
+}

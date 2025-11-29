@@ -1,0 +1,35 @@
+{
+  "title": "Stdlib: Aggregation helpers",
+  "description": "Summaries with LENGTH/COUNT, SUM, AVG, MIN, and MAX.",
+  "program": [
+    "LET totalItems = LENGTH(msg.items);",
+    "LET totalAndCountSame = COUNT(msg.items);",
+    "LET totalCost = SUM(msg.prices);",
+    "LET averageCost = AVG(msg.prices);",
+    "LET lowest = MIN(msg.prices);",
+    "LET highest = MAX(msg.prices);",
+    "",
+    "OUTPUT {",
+    "    length: totalItems,",
+    "    count_alias: totalAndCountSame,",
+    "    sum: totalCost,",
+    "    avg: averageCost,",
+    "    min: lowest,",
+    "    max: highest",
+    "}"
+  ],
+  "input": {
+    "items": [
+      "pen",
+      "pad",
+      "bag",
+      "pad"
+    ],
+    "prices": [
+      9.5,
+      12.0,
+      4.75,
+      14.0
+    ]
+  }
+}
