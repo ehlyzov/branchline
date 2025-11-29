@@ -9,7 +9,7 @@ TRANSFORM FileSummary {
         }
     }
 
-    LET container = input.testsuites;
+    LET container = input.testsuites ?? input;
     IF container != NULL THEN {
         LET branch = container.testsuite;
         IF branch == NULL THEN {

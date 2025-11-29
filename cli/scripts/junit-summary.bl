@@ -1,5 +1,6 @@
 TRANSFORM Summary {
-    LET payload = input.reports;
+    // Accept both XML-derived maps (attrs as strings) and JSON-derived native types.
+    LET payload = input.reports ?? input.testsuites ?? input.testsuite ?? input;
     LET reports = IF payload == NULL THEN []
         ELSE IF IS_OBJECT(payload) THEN [payload]
         ELSE payload;
