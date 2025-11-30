@@ -27,9 +27,8 @@ class JsCliBundleSmokeTest {
         try {
             script.writeText(
                 """
-                SOURCE row;
-                TRANSFORM Hello { stream } {
-                    OUTPUT { message: "Hello, " + row.name };
+                TRANSFORM Hello {
+                    OUTPUT { message: "Hello, " + input.name };
                 }
                 """.trimIndent(),
             )
