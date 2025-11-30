@@ -2,7 +2,7 @@
   "title": "Stdlib: WALK over nested data",
   "description": "Traverse nested objects/lists with WALK and inspect the resulting path metadata.",
   "program": [
-    "LET entries = COLLECT(WALK(msg.document));",
+    "LET entries = COLLECT(WALK(input.document));",
     "",
     "OUTPUT {",
     "    paths: MAP(entries, (node) -> JOIN(node.path, \".\")),",

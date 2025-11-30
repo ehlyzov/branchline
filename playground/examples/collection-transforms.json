@@ -2,12 +2,12 @@
   "title": "Normalize scores with collection helpers",
   "description": "Demonstrates MAP, FILTER, REDUCE, SOME, EVERY, and FIND to reshape and analyze arrays.",
   "program": [
-    "LET increments = MAP(msg.scores, (value) -> value + msg.increment);",
-    "LET passing = FILTER(increments, (value) -> value >= msg.passing_score);",
+    "LET increments = MAP(input.scores, (value) -> value + input.increment);",
+    "LET passing = FILTER(increments, (value) -> value >= input.passing_score);",
     "LET total = REDUCE(increments, 0, (acc, value) -> acc + value);",
-    "LET anyPerfect = SOME(increments, (value) -> value == msg.max_score);",
-    "LET allAboveBaseline = EVERY(increments, (value) -> value >= msg.baseline);",
-    "LET firstPassing = FIND(increments, (value) -> value >= msg.passing_score);",
+    "LET anyPerfect = SOME(increments, (value) -> value == input.max_score);",
+    "LET allAboveBaseline = EVERY(increments, (value) -> value >= input.baseline);",
+    "LET firstPassing = FIND(increments, (value) -> value >= input.passing_score);",
     "",
     "OUTPUT {",
     "    increments: increments,",
@@ -19,7 +19,12 @@
     "}"
   ],
   "input": {
-    "scores": [14, 16, 18, 19],
+    "scores": [
+      14,
+      16,
+      18,
+      19
+    ],
     "increment": 1,
     "passing_score": 18,
     "max_score": 20,

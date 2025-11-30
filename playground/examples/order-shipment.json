@@ -2,13 +2,13 @@
   "title": "Order shipment overview",
   "description": "Peek into an order request and build an object focused on shipping operations.",
   "program": [
-    "LET primaryItem = msg.items[0];",
-    "LET shippingLabel = msg.shipping.address.line1 + \", \" + msg.shipping.address.city;",
+    "LET primaryItem = input.items[0];",
+    "LET shippingLabel = input.shipping.address.line1 + \", \" + input.shipping.address.city;",
     "",
     "OUTPUT {",
-    "    order_id: msg.id,",
-    "    customer_email: msg.customer.email,",
-    "    rush_order: msg.shipping.priority == \"rush\",",
+    "    order_id: input.id,",
+    "    customer_email: input.customer.email,",
+    "    rush_order: input.shipping.priority == \"rush\",",
     "    primary_sku: primaryItem.sku,",
     "    shipping_label: shippingLabel",
     "}"
