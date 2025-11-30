@@ -10,17 +10,14 @@ import kotlin.test.assertTrue
 
 class PlaygroundFacadeTest {
     private val fullProgram = """
-        SOURCE msg;
-
-        TRANSFORM Playground { stream } {
-            OUTPUT {
-                greeting: "Hello, " + msg.name
+        TRANSFORM Playground { OUTPUT {
+                greeting: "Hello, " + input.name
             }
         }
     """.trimIndent()
 
     private val bodyOnlyProgram = """
-        LET greeting = "Hello, " + msg.name;
+        LET greeting = "Hello, " + input.name;
         OUTPUT { greeting: greeting }
     """.trimIndent()
 
@@ -101,7 +98,7 @@ class PlaygroundFacadeTest {
     @Test
     fun tracingReportsCheckpoints() {
         val program = """
-            LET status = msg.status;
+            LET status = input.status;
             CHECKPOINT("after status");
             OUTPUT { status: status }
         """.trimIndent()
@@ -128,7 +125,7 @@ class PlaygroundFacadeTest {
     @Test
     fun assertFailureReportsHelpfulError() {
         val program = """
-            ASSERT(msg.ready, "Not ready for deploy");
+            ASSERT(input.ready, "Not ready for deploy");
             OUTPUT { status: "ok" }
         """.trimIndent()
 

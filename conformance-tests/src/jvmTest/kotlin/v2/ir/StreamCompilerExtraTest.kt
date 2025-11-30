@@ -17,7 +17,7 @@ class StreamCompilerExtraTest {
         val exec = buildExec(
             """
             LET msg = "Hello, " ;
-            OUTPUT { greet : msg + row.name }
+            OUTPUT { greet : msg + input.name }
             """.trimIndent(),
             engine,
         )
@@ -41,7 +41,7 @@ class StreamCompilerExtraTest {
     fun `deep path`(engine: ExecutionEngine) {
         val exec = buildExec(
             """
-            OUTPUT { city : row.customer.address.city }
+            OUTPUT { city : input.customer.address.city }
             """.trimIndent(),
             engine,
         )
@@ -69,8 +69,7 @@ class StreamCompilerExtraTest {
     @EngineTest
     fun `no output throws`(engine: ExecutionEngine) {
         val src = """
-            SOURCE row;
-            TRANSFORM T { stream } { LET x = 1; }
+            TRANSFORM T { LET x = 1; }
         """.trimIndent()
         val exec = buildRunnerFromProgram(src, engine = engine)
         assertThrows<IllegalStateException> { exec(emptyMap()) }

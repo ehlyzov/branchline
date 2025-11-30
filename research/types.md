@@ -1,16 +1,16 @@
 # Transform Contracts Implementation Plan
 
-> **Status:** ⏳ Proposed — transforms still require explicit `{ stream }` clauses and do not accept signature metadata yet.【F:interpreter/src/commonMain/kotlin/Parser.kt†L110-L138】【F:interpreter/src/commonMain/kotlin/v2/Ast.kt†L75-L80】
+> **Status:** ⏳ Proposed — transforms default to buffer mode with no `{ mode }` header; `{ stream }` is rejected for now and signature metadata is still not supported.【F:interpreter/src/commonMain/kotlin/Parser.kt†L95-L152】【F:interpreter/src/commonMain/kotlin/v2/Ast.kt†L75-L80】
 
 ## Goals
-- Allow `TRANSFORM` definitions to omit the `{ stream }` clause while defaulting the mode to `STREAM`.
+- Allow `TRANSFORM` definitions to omit the mode clause while defaulting the mode to `BUFFER`; reject `{ stream }` until streaming support returns.
 - Support optional type annotations (`AUTO -> AUTO` by default) that describe input/output schemas.
 - Synthesize schema requirements and guarantees automatically when authors rely on the `AUTO` default.
 
 ## Step-by-Step Plan
 
 1. **Document Grammar Changes**
-   - Update the language reference and EBNF fixtures to show that the mode block is optional and defaults to `{ stream }`.
+- Update the language reference and EBNF fixtures to show that the mode block is optional, defaults to buffer, and that `{ stream }` is currently unsupported.
    - Describe the new optional `: InputType -> OutputType` signature syntax and clarify that both sides default to `AUTO` when omitted.
 
 2. **Parser Adjustments**

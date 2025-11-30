@@ -15,8 +15,7 @@ class InlineCallBytecodeInspectTest {
                     SUSPEND 0;
                     RETURN a + 1;
                 }
-                TRANSFORM T { stream } {
-                    OUTPUT { y: f() }
+                TRANSFORM T { OUTPUT { y: f() }
                 }
             """.trimIndent()
         val tokens = Lexer(program).lex()

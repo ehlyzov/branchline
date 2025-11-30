@@ -6,58 +6,31 @@ title: Core Standard Library
 
 Utilities for working with objects and arrays.
 
-### KEYS(coll)
-- **Parameters:** `coll` – list or object
-- **Returns:** list of keys or indices
-- **Example:** `KEYS({"a":1})` → `["a"]`
+## Shape and inspect data
+- `KEYS(coll)` → list of keys/indices. Lists return indices `[0,1,...]`. Errors on non list/object.
+- `VALUES(obj)` → list of values from an object. Errors if not an object.
+- `ENTRIES(obj)` → list of `{ key, value }` pairs. Errors if not an object.
 
-### VALUES(obj)
-- **Parameters:** `obj` – object
-- **Returns:** list of values
-- **Example:** `VALUES({"a":1})` → `[1]`
+Run it: [KEYS/VALUES/ENTRIES example](../playground.md?example=stdlib-core-keys-values).
 
-### ENTRIES(obj)
-- **Parameters:** `obj` – object
-- **Returns:** list of `{ "key": k, "value": v }`
-- **Example:** `ENTRIES({"a":1})` → `[{"key":"a","value":1}]`
+## Update collections immutably
+- `PUT(coll, key, value)` → new list/object with the entry added or replaced. List indexes must be within `0..size` (append when equal to size).
+- `DELETE(coll, key)` → remove an entry by key/index. Errors if out of bounds or unsupported type.
+- `APPEND(list, value)` / `PREPEND(list, value)` → new lists with value at the end/start.
 
-### PUT(coll, key, value)
-- **Parameters:** `coll` – object or list, `key` – index or key, `value` – value to set
-- **Returns:** new collection with the value added or replaced
-- **Example:** `PUT([1,2], 2, 9)` → `[1,2,9]`
+Run it: [PUT/DELETE example](../playground.md?example=stdlib-core-put-delete) and [APPEND/PREPEND/COLLECT example](../playground.md?example=stdlib-core-append-prepend).
 
-### DELETE(coll, key)
-- **Parameters:** `coll` – object or list, `key` – index or key to remove
-- **Returns:** collection without the given entry
-- **Example:** `DELETE({"a":1}, "a")` → `{}`
+## Walk trees
+- `WALK(tree)` → sequence describing each node: `path`, `key`, `value`, `depth`, `isLeaf`. Works on objects and lists; other values yield a single leaf entry.
+- Combine with `COLLECT` to materialize the sequence; use `MAP`/`FILTER` to inspect paths.
 
-### WALK(tree)
-- **Parameters:** `tree` – nested object or list
-- **Returns:** sequence of entries describing each node
-- **Example:** `COLLECT(WALK({"a":1}))` → `[{"path":["a"],"key":"a","value":1,"depth":1,"isLeaf":true}]`
+Run it: [WALK example](../playground.md?example=stdlib-core-walk).
 
-### APPEND(list, value)
-- **Parameters:** `list` – list, `value` – value to append
-- **Returns:** new list with value added to end
-- **Example:** `APPEND([1],2)` → `[1,2]`
+## Normalize iterables
+- `COLLECT(iterable)` → list from a sequence/iterable. Errors on unsupported types.
+- `IS_OBJECT(x)` → boolean indicating object-ness (maps only).
 
-### PREPEND(list, value)
-- **Parameters:** `list` – list, `value` – value to prepend
-- **Returns:** new list with value added to start
-- **Example:** `PREPEND([1],2)` → `[2,1]`
+Run it: [APPEND/PREPEND/COLLECT example](../playground.md?example=stdlib-core-append-prepend).
 
-### COLLECT(iterable)
-- **Parameters:** `iterable` – iterable or sequence
-- **Returns:** list containing all elements
-- **Example:** `COLLECT(WALK([1]))` → `[{"path":[0],"key":0,"value":1,"depth":1,"isLeaf":true}]`
-
-### PRINT(...args)
-- **Parameters:** any number of values
-- **Returns:** `null`
-- **Example:** `PRINT("hi")` outputs `hi`
-
-### IS_OBJECT(x)
-- **Parameters:** `x` – value to test
-- **Returns:** `true` if `x` is an object, else `false`
-- **Example:** `IS_OBJECT({})` → `true`
-
+## Side effects
+- `PRINT(...args)` → writes to stdout, returns `null`. Use in CLI/runtime environments; not demonstrated in the playground because browser consoles do not display the call reliably.

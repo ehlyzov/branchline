@@ -23,9 +23,9 @@ import v2.IBig
 import v2.IdentifierExpr
 import v2.IfElseExpr
 import v2.IfStmt
+import v2.Mode
 import v2.LetStmt
 import v2.LiteralProperty
-import v2.Mode
 import v2.ModifyStmt
 import v2.NodeDecl
 import v2.ObjKey
@@ -34,10 +34,10 @@ import v2.OutputDecl
 import v2.OutputStmt
 import v2.Program
 import v2.ReturnStmt
+import v2.SourceDecl
 import v2.SetStmt
 import v2.SetVarStmt
 import v2.SharedDecl
-import v2.SourceDecl
 import v2.Stmt
 import v2.Token
 import v2.TokenType
@@ -46,6 +46,8 @@ import v2.TransformDecl
 import v2.TryCatchStmt
 import v2.TypeDecl
 import v2.UnaryExpr
+import v2.DEFAULT_INPUT_ALIAS
+import v2.COMPAT_INPUT_ALIASES
 
 class SemanticException(msg: String, val token: Token) :
     RuntimeException("[${token.line}:${token.column}] $msg near '${token.lexeme}'")
@@ -321,7 +323,8 @@ class SemanticAnalyzer(
 
     private fun isIdentifierVisible(name: String): Boolean =
         name == "$" || // глобальный JSON-корень
-                name == "row" ||
+                name == DEFAULT_INPUT_ALIAS ||
+                name in COMPAT_INPUT_ALIASES ||
                 scopes.any { name in it } || // LET / var цикла
                 name in globals || // SOURCE / SHARED / TYPE / FUNC
                 name in hostFns

@@ -6,63 +6,20 @@ title: Strings Standard Library
 
 Text processing helpers.
 
-### STRING(x)
-- **Parameters:** `x` – any value
-- **Returns:** string representation or `null`
-- **Example:** `STRING(123)` → `"123"`
+## Conversions
+- `STRING(x)` → string representation or `null` for `null`.
+- `NUMBER(x)` → parses numbers/booleans/strings to numeric; errors on invalid strings; returns `null` for `null`.
+- `BOOLEAN(x)` → truthiness: `false` for `null`, empty string, or zero; `true` otherwise.
 
-### NUMBER(x)
-- **Parameters:** `x` – string, number, or boolean
-- **Returns:** numeric value or `null`
-- **Example:** `NUMBER("42")` → `42`
+Run it: [STRING/NUMBER/BOOLEAN example](../playground.md?example=stdlib-strings-casts).
 
-### BOOLEAN(x)
-- **Parameters:** `x` – any value
-- **Returns:** truthiness as boolean
-- **Example:** `BOOLEAN("hi")` → `true`
+## Text operations
+- `SUBSTRING(str, start[, len])` → substring with safe bounds; errors if start > length.
+- `CONTAINS(str, substr)` → boolean containment.
+- `MATCH(str, pattern)` → regex matches as a list.
+- `REPLACE(str, pattern, repl)` → regex replace.
+- `SPLIT(str, sep)` → list of parts.
+- `JOIN(list, sep)` → concatenates stringified elements with a separator.
+- `UPPER(str)` / `LOWER(str)` / `TRIM(str)` → casing and whitespace helpers.
 
-### SUBSTRING(str, start[, len])
-- **Parameters:** `str`, `start` index, optional `len`
-- **Returns:** substring
-- **Example:** `SUBSTRING("hello", 1, 3)` → `"ell"`
-
-### CONTAINS(str, substr)
-- **Parameters:** `str`, `substr`
-- **Returns:** `true` if `str` contains `substr`
-- **Example:** `CONTAINS("hello", "ell")` → `true`
-
-### MATCH(str, pattern)
-- **Parameters:** `str`, `pattern` regex
-- **Returns:** list of matches
-- **Example:** `MATCH("a1b2", "\\d")` → `["1","2"]`
-
-### REPLACE(str, pattern, repl)
-- **Parameters:** `str`, `pattern` regex, `repl` string
-- **Returns:** string with matches replaced
-- **Example:** `REPLACE("1-2", "-", ":")` → `"1:2"`
-
-### SPLIT(str, sep)
-- **Parameters:** `str`, `sep`
-- **Returns:** list of substrings
-- **Example:** `SPLIT("a,b", ",")` → `["a","b"]`
-
-### JOIN(list, sep)
-- **Parameters:** `list` – list of values, `sep` – separator string
-- **Returns:** joined string
-- **Example:** `JOIN(["a","b"], ",")` → `"a,b"`
-
-### UPPER(str)
-- **Parameters:** `str`
-- **Returns:** uppercase string
-- **Example:** `UPPER("a")` → `"A"`
-
-### LOWER(str)
-- **Parameters:** `str`
-- **Returns:** lowercase string
-- **Example:** `LOWER("A")` → `"a"`
-
-### TRIM(str)
-- **Parameters:** `str`
-- **Returns:** string without leading/trailing whitespace
-- **Example:** `TRIM(" a ")` → `"a"`
-
+Run it: [Text helpers example](../playground.md?example=stdlib-strings-text).

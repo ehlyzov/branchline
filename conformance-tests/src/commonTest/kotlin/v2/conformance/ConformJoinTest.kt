@@ -8,9 +8,7 @@ class ConformJoinTest {
     @Test
     fun join_strings_with_separator() {
         val program = """
-            SOURCE row;
-            TRANSFORM T { stream } {
-                OUTPUT { v: JOIN(["a", "b", "c"], "-") }
+            TRANSFORM T { OUTPUT { v: JOIN(["a", "b", "c"], "-") }
             }
         """.trimIndent()
 
@@ -22,9 +20,7 @@ class ConformJoinTest {
     @Test
     fun join_strings_default_separator_empty() {
         val program = """
-            SOURCE row;
-            TRANSFORM T { stream } {
-                OUTPUT { v: JOIN(["x", "y", "z"]) }
+            TRANSFORM T { OUTPUT { v: JOIN(["x", "y", "z"]) }
             }
         """.trimIndent()
 

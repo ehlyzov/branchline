@@ -1,0 +1,30 @@
+{
+  "title": "Stdlib: KEYS, VALUES, ENTRIES",
+  "description": "Explore KEYS, VALUES, and ENTRIES on objects and lists.",
+  "program": [
+    "LET objectKeys = KEYS(msg.user);",
+    "LET objectValues = VALUES(msg.user);",
+    "LET objectEntries = ENTRIES(msg.user);",
+    "",
+    "LET listKeys = KEYS(msg.tags);",
+    "",
+    "OUTPUT {",
+    "    object_keys: objectKeys,",
+    "    object_values: objectValues,",
+    "    object_entries: objectEntries,",
+    "    list_keys: listKeys",
+    "}"
+  ],
+  "input": {
+    "user": {
+      "id": 101,
+      "role": "admin",
+      "active": true
+    },
+    "tags": [
+      "new",
+      "beta",
+      "owner"
+    ]
+  }
+}

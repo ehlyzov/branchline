@@ -77,8 +77,7 @@ class TreeReconstructionLoadTest {
 
     private fun compileToVM(): VMProgram {
         val program = """
-            TRANSFORM T { stream } {
-                LET msg = row;
+            TRANSFORM T { LET msg = row;
                 // Keep VM work non-trivial
                 LET a = msg.treeId;
                 OUTPUT { ok: true };

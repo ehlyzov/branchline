@@ -45,8 +45,7 @@ SHARED nodeParents SINGLE;
 SHARED treeTops SINGLE;
 SHARED completedTrees MANY;
 
-TRANSFORM TreeReconstruction { stream } {
-    LET message = $;
+TRANSFORM TreeReconstruction { LET message = $;
     LET treeId = message.treeId;
     LET fromId = message.fromId;
     LET toId = message.toId;

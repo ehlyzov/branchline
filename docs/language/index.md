@@ -5,7 +5,7 @@ title: Language Overview
 # Language Overview
 
 Branchline is a DSL for connecting data sources with outputs and transformations. The
-language specification is defined in an [EBNF grammar](../../interpreter/src/jvmTest/resources/v2/ebnf.txt).
+language specification is defined in an [EBNF grammar](grammar.md).
 
 ## Table of contents
 
@@ -25,7 +25,8 @@ language specification is defined in an [EBNF grammar](../../interpreter/src/jvm
 - [Strings](std-strings.md)
 - [Time](std-time.md)
 
+Each stdlib page links to an interactive playground example (use `?example=<id>` in the URL) so you can run the function in context.
+
 See the [grammar](grammar.md) for a formal definition of the syntax.
 
 - [Lexical Structure](lexical.md): token and keyword reference.
-

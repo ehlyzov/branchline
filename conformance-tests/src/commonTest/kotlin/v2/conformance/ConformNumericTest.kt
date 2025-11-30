@@ -7,9 +7,7 @@ import v2.ir.buildRunnerFromProgramMP
 class ConformNumericTest {
 
     private fun programOf(body: String) = """
-        SOURCE row;
-        TRANSFORM T { stream } {
-            OUTPUT { v: $body }
+        TRANSFORM T { OUTPUT { v: $body }
         }
     """.trimIndent()
 

@@ -2,7 +2,7 @@
 
 > **Status:** ✅ CLI module ships JVM and JS binaries; CI runs JUnit summaries entirely through Branchline helpers using the packaged JS bundle (with dependencies bundled), and README/docs cover local usage flows.【F:cli/build.gradle†L1-L140】【F:.github/scripts/junit-summary.mjs†L1-L280】【F:docs/guides/cli.md†L1-L58】
 
-This document tracks the plan for introducing dedicated command-line tools that wrap the existing Branchline interpreter, compiler, and VM.
+This document tracks the plan for introducing dedicated command-line tools that wrap the existing Branchline interpreter and VM (compile/bytecode paths live inside those modules).
 
 ## Goals
 - Provide a single entry point (`bl`) that can run Branchline scripts on both JVM and JS targets.

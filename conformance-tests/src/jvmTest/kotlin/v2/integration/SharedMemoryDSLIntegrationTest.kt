@@ -36,8 +36,7 @@ class SharedMemoryDSLIntegrationTest {
             SHARED cache SINGLE;
             SHARED buf MANY;
             
-            TRANSFORM ComplexAwait { stream } {                
-                // Test simple AWAIT
+            TRANSFORM ComplexAwait { // Test simple AWAIT
                 LET parent = AWAIT cache.parentKey;
                 
                 // Test AWAIT in expressions
@@ -120,8 +119,7 @@ class SharedMemoryDSLIntegrationTest {
             SHARED singleResource SINGLE;
             SHARED manyResource MANY;
             
-            TRANSFORM TestSemantics { stream } {
-                OUTPUT { test: "parsed" };
+            TRANSFORM TestSemantics { OUTPUT { test: "parsed" };
             }
         """.trimIndent()
         
@@ -145,6 +143,6 @@ class SharedMemoryDSLIntegrationTest {
         // Check transform
         val transform = program.decls[2] as TransformDecl
         assertEquals("TestSemantics", transform.name)
-        assertEquals(Mode.STREAM, transform.mode)
+        assertEquals(Mode.BUFFER, transform.mode)
     }
 }

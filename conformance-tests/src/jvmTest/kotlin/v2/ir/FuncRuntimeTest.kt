@@ -15,10 +15,8 @@ class FuncRuntimeTest {
     fun `simple add`(engine: ExecutionEngine) {
         val exec = execOf(
             """
-            SOURCE row;
             FUNC add(a,b) = a + b ;
-            TRANSFORM T { stream } {
-                LET s = add(row.x , row.y);
+            TRANSFORM T { LET s = add(input.x , input.y);
                 OUTPUT { sum : s }
             }
             """.trimIndent(),
@@ -31,11 +29,9 @@ class FuncRuntimeTest {
     fun `nested calls`(engine: ExecutionEngine) {
         val exec = execOf(
             """
-            SOURCE row;
             FUNC double(n) = n * 2 ;
             FUNC plus1(n)  = n + 1 ;
-            TRANSFORM T { stream } {
-                LET r = plus1( double(row.v) );
+            TRANSFORM T { LET r = plus1( double(input.v) );
                 OUTPUT { res : r }
             }
             """.trimIndent(),
@@ -48,13 +44,11 @@ class FuncRuntimeTest {
     fun `recursive func`(engine: ExecutionEngine) {
         val exec = execOf(
             """
-            SOURCE row;
             FUNC fact(n) {
                 IF n == 0 THEN { RETURN 1 ; }
                 ELSE { RETURN n * fact(n - 1) ; }
             }
-            TRANSFORM T { stream } {
-                OUTPUT { f : fact(row.n) }
+            TRANSFORM T { OUTPUT { f : fact(input.n) }
             }
             """.trimIndent(),
             engine,
@@ -66,9 +60,7 @@ class FuncRuntimeTest {
     fun `undefined function throws`(engine: ExecutionEngine) {
         val exec = execOf(
             """
-            SOURCE row;
-            TRANSFORM T { stream } {
-                OUTPUT { x : foo(1) }
+            TRANSFORM T { OUTPUT { x : foo(1) }
             }
             """.trimIndent(),
             engine,

@@ -50,15 +50,25 @@ nav:
     - Lexical Structure: language/lexical.md
     - Declarations: language/declarations.md
     - Statements: language/statements.md
+    - Expressions: language/expressions.md
+    - Grammar: language/grammar.md
     - Standard Library:
       - Core Functions: language/std-core.md
       - Array Operations: language/std-arrays.md
       - Time Functions: language/std-time.md
       - Aggregation: language/std-agg.md
       - Higher-order Functions: language/std-hof.md
+      - Strings: language/std-strings.md
       - Debug Utilities: language/std-debug.md
   - Guides: 
     - guides/index.md
+    - guides/first-steps.md
+    - guides/install.md
+    - guides/getting-started.md
+    - guides/for-each.md
+    - guides/array-comprehension.md
+    - guides/try-catch.md
+    - guides/parallelism.md
   - Architecture:
     - VM Overview: vm.md
 

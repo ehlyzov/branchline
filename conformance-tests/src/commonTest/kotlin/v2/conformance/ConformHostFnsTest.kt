@@ -12,9 +12,7 @@ class ConformHostFnsTest {
             "ADD1" to { args: List<Any?> -> ((args[0] as? Int) ?: (args[0] as Number).toInt()) + 1 }
         )
         val program = """
-            SOURCE row;
-            TRANSFORM T { stream } {
-                OUTPUT { v: ADD1(41) }
+            TRANSFORM T { OUTPUT { v: ADD1(41) }
             }
         """.trimIndent()
         val runner = buildRunnerFromProgramMP(program, hostFns = host)

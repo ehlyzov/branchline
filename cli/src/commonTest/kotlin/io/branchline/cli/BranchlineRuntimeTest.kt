@@ -8,9 +8,8 @@ import v2.vm.BytecodeIO
 
 class BranchlineRuntimeTest {
     private val script = """
-        SOURCE row;
-        TRANSFORM Hello { stream } {
-            OUTPUT { greeting: "Hello, " + row.name };
+        TRANSFORM Hello {
+            OUTPUT { greeting: "Hello, " + input.name };
         }
     """.trimIndent()
 
@@ -39,7 +38,11 @@ class BranchlineRuntimeTest {
         val transform2 = runtime2.selectTransform(decoded.transform)
         val vmExec = runtime2.prepareVmExec(transform2, BytecodeIO.deserializeBytecode(decoded.bytecode))
         val input = mapOf("name" to "Kotlin")
-        val env = mutableMapOf<String, Any?>("row" to input).apply { putAll(input) }
+        val env = mutableMapOf<String, Any?>().apply {
+            this[v2.DEFAULT_INPUT_ALIAS] = input
+            putAll(input)
+            for (alias in v2.COMPAT_INPUT_ALIASES) this[alias] = input
+        }
         val result = vmExec.run(env, stringifyKeys = true) as Map<*, *>
         assertEquals("Hello, Kotlin", result["greeting"])
     }
@@ -47,11 +50,9 @@ class BranchlineRuntimeTest {
     @Test
     fun addsStringNumbersWithoutTypeErrors() {
         val scriptWithNumberMath = """
-            SOURCE row;
-
-            TRANSFORM Totals { stream } {
+            TRANSFORM Totals {
                 LET totals = { tests: 0 };
-                SET totals.tests = totals.tests + NUMBER(row.count ?? 0);
+                SET totals.tests = totals.tests + NUMBER(input.count ?? 0);
                 OUTPUT totals;
             }
         """.trimIndent()

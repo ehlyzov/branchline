@@ -17,6 +17,7 @@ kotlin {
         browser()
         nodejs()
         binaries.library()
+        binaries.executable()
     }
 
     sourceSets {

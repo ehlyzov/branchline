@@ -33,7 +33,6 @@ class Lexer(private val source: String) {
         "PARALLEL" to TokenType.PARALLEL,
         "ONBLOCK" to TokenType.ONBLOCK,
         "FOREACH" to TokenType.FOREACH,
-        "INPUT" to TokenType.INPUT,
         "ABORT" to TokenType.ABORT,
         "THROW" to TokenType.THROW,
         "TRY" to TokenType.TRY,
@@ -221,4 +220,3 @@ class Lexer(private val source: String) {
     private fun Char.isIdentifierStart(): Boolean = this == '_' || this.isLetter()
     private fun Char.isIdentifierPart(): Boolean = isIdentifierStart() || this.isDigit()
 }
-

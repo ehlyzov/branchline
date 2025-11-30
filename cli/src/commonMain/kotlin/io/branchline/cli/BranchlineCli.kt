@@ -109,8 +109,11 @@ object BranchlineCli {
             val vmExec = runtime.prepareVmExec(transform, bytecode)
             val input = loadInput(options.inputPath, options.inputFormat)
             val env = HashMap<String, Any?>(input.size + 1).apply {
-                this["row"] = input
+                this[v2.DEFAULT_INPUT_ALIAS] = input
                 putAll(input)
+                for (alias in v2.COMPAT_INPUT_ALIASES) {
+                    this[alias] = input
+                }
             }
             val result = vmExec.run(env as MutableMap<String, Any?>, stringifyKeys = true)
             println(formatJson(result, pretty = true))

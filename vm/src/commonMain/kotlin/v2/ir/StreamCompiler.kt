@@ -50,7 +50,7 @@ fun compileStream(
     transforms: Map<String, TransformDecl> = emptyMap(), // обязателен!
     engine: ExecutionEngine = ExecutionEngine.INTERPRETER,
 ): (Map<String, Any?>) -> Any? {
-    require(t.mode == Mode.STREAM) { "Only stream mode yet" }
+    require(t.mode == Mode.BUFFER) { "Only buffer mode is supported" }
 
     /* 1. compile AST → IR */
     val irRoot = ToIR(funcs, hostFns).compile(t.body.statements)
@@ -64,8 +64,11 @@ fun compileStream(
         val vmExec = VMExec(irRoot, eval, hostFns = hostFns, funcs = funcs)
         return { input: Map<String, Any?> ->
             val env = HashMap<String, Any?>().apply {
-                this["row"] = input
+                this[v2.DEFAULT_INPUT_ALIAS] = input
                 putAll(input)
+                for (alias in v2.COMPAT_INPUT_ALIASES) {
+                    this[alias] = input
+                }
             }
             val produced = vmExec.run(env)
             produced ?: error("No OUTPUT")
@@ -75,8 +78,11 @@ fun compileStream(
     val exec = Exec(irRoot, eval)
     return { input: Map<String, Any?> ->
         val env = HashMap<String, Any?>().apply {
-            this["row"] = input
+            this[v2.DEFAULT_INPUT_ALIAS] = input
             putAll(input)
+            for (alias in v2.COMPAT_INPUT_ALIASES) {
+                this[alias] = input
+            }
         }
         val produced = exec.run(env)
         produced ?: error("No OUTPUT")

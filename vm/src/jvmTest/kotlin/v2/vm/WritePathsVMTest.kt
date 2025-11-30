@@ -22,9 +22,7 @@ class WritePathsVMTest {
     @Test
     fun debug_dump_set_dynamic() {
         val program = """
-            SOURCE row;
-            TRANSFORM __T { stream } {
-                LET k = "x";
+            TRANSFORM __T { LET k = "x";
                 LET o = {};
                 SET o.[k] = 10;
                 OUTPUT o;

@@ -9,9 +9,7 @@ class ConformBasicsTest {
     @Test
     fun arithmetic_addition() {
         val program = """
-            SOURCE row;
-            TRANSFORM T { stream } {
-                OUTPUT { v: 1 + 2 }
+            TRANSFORM T { OUTPUT { v: 1 + 2 }
             }
         """.trimIndent()
         val runner = buildRunnerFromProgramMP(program)
@@ -22,9 +20,7 @@ class ConformBasicsTest {
     @Test
     fun if_else_expression() {
         val program = """
-            SOURCE row;
-            TRANSFORM T { stream } {
-                OUTPUT { v: IF true THEN 1 ELSE 2 }
+            TRANSFORM T { OUTPUT { v: IF true THEN 1 ELSE 2 }
             }
         """.trimIndent()
         val runner = buildRunnerFromProgramMP(program)
@@ -35,9 +31,7 @@ class ConformBasicsTest {
     @Test
     fun array_comprehension() {
         val program = """
-            SOURCE row;
-            TRANSFORM T { stream } {
-                OUTPUT { arr: [x FOR EACH x IN row.items] }
+            TRANSFORM T { OUTPUT { arr: [x FOR EACH x IN input.items] }
             }
         """.trimIndent()
         val runner = buildRunnerFromProgramMP(program)

@@ -26,8 +26,7 @@ class SharedAwaitVMTest {
         val out = compileProgramAndRun(
             """
             SHARED cache SINGLE;
-            TRANSFORM T { stream } {
-                LET v = AWAIT cache.k;
+            TRANSFORM T { LET v = AWAIT cache.k;
                 OUTPUT { v: v }
             }
             """.trimIndent(),

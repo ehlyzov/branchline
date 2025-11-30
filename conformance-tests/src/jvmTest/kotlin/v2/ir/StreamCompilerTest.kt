@@ -13,9 +13,7 @@ class StreamCompilerTest {
     @EngineTest
     fun `row passes through let output`(engine: ExecutionEngine) {
         val bl = """
-            SOURCE row;
-            TRANSFORM Sum { stream } {
-                LET total = row.a + row.b ;
+            TRANSFORM Sum { LET total = input.a + input.b ;
                 OUTPUT { total : total }
             }
         """.trimIndent()

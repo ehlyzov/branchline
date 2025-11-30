@@ -1,0 +1,25 @@
+{
+  "title": "Stdlib: STRING, NUMBER, BOOLEAN",
+  "description": "Convert between primitive types and observe null/error behavior.",
+  "program": [
+    "LET asString = STRING(msg.raw.number);",
+    "LET asNumber = NUMBER(msg.raw.text);",
+    "LET boolFromText = BOOLEAN(msg.raw.text);",
+    "LET boolFromEmpty = BOOLEAN(\"\");",
+    "LET boolFromZero = BOOLEAN(0);",
+    "",
+    "OUTPUT {",
+    "    string: asString,",
+    "    number: asNumber,",
+    "    boolean_from_text: boolFromText,",
+    "    boolean_from_empty: boolFromEmpty,",
+    "    boolean_from_zero: boolFromZero",
+    "}"
+  ],
+  "input": {
+    "raw": {
+      "number": 42,
+      "text": "19"
+    }
+  }
+}

@@ -9,9 +9,7 @@ class ConformPathsTest {
     @Test
     fun set_and_append_inside_object() {
         val program = """
-            SOURCE row;
-            TRANSFORM T { stream } {
-                LET obj = {};
+            TRANSFORM T { LET obj = {};
                 SET obj.x = 1;
                 APPEND TO obj.items 2 INIT [];
                 OUTPUT { obj: obj }
@@ -25,9 +23,7 @@ class ConformPathsTest {
     @Test
     fun modify_root_object() {
         val program = """
-            SOURCE row;
-            TRANSFORM T { stream } {
-                LET o = { a: 1, b: 2 };
+            TRANSFORM T { LET o = { a: 1, b: 2 };
                 MODIFY o { b: 3, c: 4 }
                 OUTPUT { o: o }
             }

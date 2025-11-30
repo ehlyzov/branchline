@@ -1,9 +1,7 @@
-SOURCE row;
-
-TRANSFORM FileSummary { stream } {
+TRANSFORM FileSummary {
     LET suites = [];
 
-    LET direct = row.testsuite;
+    LET direct = input.testsuite;
     IF direct != NULL THEN {
         LET normalized = IF IS_OBJECT(direct) THEN [direct] ELSE direct;
         FOR suite IN normalized {
@@ -11,7 +9,7 @@ TRANSFORM FileSummary { stream } {
         }
     }
 
-    LET container = row.testsuites;
+    LET container = input.testsuites ?? input;
     IF container != NULL THEN {
         LET branch = container.testsuite;
         IF branch == NULL THEN {

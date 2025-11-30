@@ -37,7 +37,7 @@ class HostFunctionsTest {
     @EngineTest
     fun uuid_is_unique_per_call(engine: ExecutionEngine) {
         val src = """
-            TRANSFORM { stream } {
+            TRANSFORM {
                 LET id = uuid();
                 OUTPUT { id:id };
             }
@@ -51,7 +51,7 @@ class HostFunctionsTest {
     @EngineTest
     fun concat_joins_all_arguments(engine: ExecutionEngine) {
         val src = """
-            TRANSFORM { stream } {
+            TRANSFORM {
                 OUTPUT { v: concat("a", "b", "c") };
             }
         """.trimIndent()
@@ -63,7 +63,7 @@ class HostFunctionsTest {
     @EngineTest
     fun md5_returns_expected_hash(engine: ExecutionEngine) {
         val src = """
-            TRANSFORM { stream } {
+            TRANSFORM {
                 OUTPUT { h: md5("hello") };
             }
         """.trimIndent()
@@ -75,8 +75,8 @@ class HostFunctionsTest {
     @EngineTest
     fun host_func_can_use_input_row_values(engine: ExecutionEngine) {
         val src = """
-            TRANSFORM { stream } {
-                OUTPUT { v: concat(row.a, "-", row.b) };
+            TRANSFORM {
+                OUTPUT { v: concat(input.a, "-", input.b) };
             }
         """.trimIndent()
 

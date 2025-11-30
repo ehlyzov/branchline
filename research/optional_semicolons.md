@@ -1,68 +1,11 @@
 # Optional semicolon rollout notes
 
-> **Status:** ⏳ Proposal — parser productions still require explicit semicolons, so these notes capture the pending implementation plan.【F:interpreter/src/commonMain/kotlin/Parser.kt†L95-L198】
+> **Status:** ✅ Implemented — the parser accepts explicit `;` or implicit boundaries (newline / `}` / `EOF`) via `optionalSemicolon`, and tests cover newline-terminated statements.【F:interpreter/src/commonMain/kotlin/Parser.kt†L99-L365】【F:interpreter/src/commonMain/kotlin/Parser.kt†L887-L910】【F:interpreter/src/jvmTest/kotlin/v2/ParserTests.kt†L71-L118】
 
-## Overview
-We want to relax statement terminators across the Branchline parser so that semicolons become optional whenever the parser can detect a clear boundary between statements. The core idea is to reuse a single helper that:
+## Current behaviour
+- `optionalSemicolon()` guards all declaration and statement parsers; it consumes `;` when present, otherwise treats a line break or `}`/`EOF` as a valid boundary, and emits a targeted error if none apply.【F:interpreter/src/commonMain/kotlin/Parser.kt†L99-L365】【F:interpreter/src/commonMain/kotlin/Parser.kt†L887-L910】
+- Parser tests assert that block statements, expression statements, and even `SOURCE` declarations parse without trailing semicolons, confirming newline handling across the surface.【F:interpreter/src/jvmTest/kotlin/v2/ParserTests.kt†L71-L118】
 
-1. Consumes an explicit `;` if it is present.
-2. Treats a change in source line between `previous()` and `peek()` as an implicit boundary.
-3. Falls back to permitting only structural delimiters (currently `RIGHT_BRACE` and `EOF`).
-4. Emits a targeted parse error when none of the above signal a boundary.
-
-## Parser updates
-To implement the behaviour we need to replace every `consume(TokenType.SEMICOLON, …)` at the end of a declaration or statement production with a call to `optionalSemicolon()`. This will affect:
-
-- `parseSource`
-- `parseShared`
-- `parseFuncDecl`
-- `parseTypeDecl`
-- `parseStatement` (expression statements)
-- `parseLet`
-- `parseAppend`
-- `parseSet`
-- `parseReturn`
-- `parseAbort`
-
-The new helper should live near the other parser utilities:
-
-```diff
-+    private fun optionalSemicolon() {
-+        if (match(TokenType.SEMICOLON)) return
-+        val next = peek()
-+        if (next.line != previous().line) return
-+        if (isStatementBoundary(next.type)) return
-+        error(next, "Expect ';' or newline between statements")
-+    }
-+
-+    private fun isStatementBoundary(type: TokenType): Boolean {
-+        return when (type) {
-+            TokenType.EOF,
-+            TokenType.RIGHT_BRACE -> true
-+            else -> false
-+        }
-+    }
-```
-
-This helper would replace the current keyword-heavy semicolon enforcement with a minimalist structural guard. Until the change lands the parser still requires explicit semicolons after each statement.
-
-## Test coverage
-Once the helper lands, add parser tests that exercise both declaration- and block-level flows without semicolons:
-
-```diff
-+    @Test
-+    fun `statements in block do not require semicolons`() { … }
-+
-+    @Test
-+    fun `expression statements split by newline parse`() { … }
-+
--    fun `missing semicolon throws`() { … }
-+    fun `source without semicolon parses`() { … }
-```
-
-Existing fixtures will need rewrites to drop trailing semicolons wherever the grammar now allows it, covering `SOURCE`, `SHARED`, `FUNC`, `TYPE`, and block statements.
-## Rollout checklist
-- [ ] Update parser productions to call `optionalSemicolon()`.
-- [ ] Regenerate fixtures/tests to cover newline-terminated statements.
-- [ ] Run `./gradlew test --console=plain` to confirm the grammar updates.
-- [ ] Capture before/after examples in the language reference.
+## Follow-ups
+- Refresh language/reference docs and playground examples to show semicolons as optional rather than mandatory.
+- Keep linting/examples consistent: prefer newline termination in docs while allowing `;` for dense one-liners.

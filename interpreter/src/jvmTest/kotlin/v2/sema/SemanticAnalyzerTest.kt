@@ -106,12 +106,10 @@ class SemanticAnalyzerTest {
     @Test
     fun `for each var visible in body`() {
         val code = """
-        TRANSFORM T { stream } {
-            FOR EACH r IN rows {
+        TRANSFORM T { FOR EACH r IN input.rows {
                 RETURN r.id ;
             }
         }
-        SOURCE rows;
     """
         assertDoesNotThrow {
             SemanticAnalyzer().analyze(compile(code))

@@ -10,6 +10,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.longOrNull
+import v2.runtime.bignum.toDouble
 import v2.debug.Debug
 import v2.debug.CollectingTracer
 import v2.debug.TraceOptions
@@ -23,6 +24,7 @@ import v2.Lexer
 import v2.ParseException
 import v2.Parser
 import v2.TransformDecl
+import v2.DEFAULT_INPUT_ALIAS
 import v2.ir.Exec
 import v2.ir.ToIR
 import v2.ir.TransformRegistry
@@ -38,7 +40,7 @@ import kotlin.js.JsExport
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 object PlaygroundFacade {
-    private const val INPUT_VAR = "msg"
+    private const val INPUT_VAR = DEFAULT_INPUT_ALIAS
     private val prettyJson = Json { prettyPrint = true }
     private val compactJson = Json
 
@@ -170,10 +172,8 @@ object PlaygroundFacade {
             if (line.isBlank()) line else "    $line"
         }
         return """
-            SOURCE $INPUT_VAR;
-
-            TRANSFORM Playground { stream } {
-        $indented
+            TRANSFORM Playground {
+$indented
             }
         """.trimIndent()
     }
@@ -225,11 +225,11 @@ object PlaygroundFacade {
         is Float -> JsonPrimitive(value)
         is Double -> JsonPrimitive(value)
         is BLBigInt -> JsonPrimitive(value.toString())
-        is BLBigDec -> JsonPrimitive(value.toString())
+        is BLBigDec -> JsonPrimitive(value.toDouble())
         is I32 -> JsonPrimitive(value.v)
         is I64 -> JsonPrimitive(value.v)
         is IBig -> JsonPrimitive(value.v.toString())
-        is Dec -> JsonPrimitive(value.v.toString())
+        is Dec -> JsonPrimitive(value.v.toDouble())
         is Map<*, *> -> JsonObject(buildMap {
             value.entries.forEach { (k, v) ->
                 val key = k?.toString() ?: "null"

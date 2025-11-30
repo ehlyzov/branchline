@@ -6,18 +6,10 @@ title: Debug Standard Library
 
 Tools for diagnosing programs.
 
-### CHECKPOINT(label)
-- **Parameters:** optional `label` string
-- **Returns:** `true`
-- **Example:** `CHECKPOINT("start")`
+- `CHECKPOINT(label?)` → marks a step; returns `true`. Useful for profiling or logging.
+- `ASSERT(cond[, msg])` → errors if `cond` is falsey; otherwise returns `true`. Provide a message for clearer failures.
+- `EXPLAIN(varName)` → provenance info for a named variable when tracing is enabled; otherwise returns `{ "var": name, "info": "no provenance" }`.
 
-### ASSERT(cond[, msg])
-- **Parameters:** `cond` – value tested for truthiness, optional `msg` string
-- **Returns:** `true` if condition passes, otherwise error
-- **Example:** `ASSERT(1 == 1)` → `true`
+Enable tracing in the playground or runtime to see `EXPLAIN` output.
 
-### EXPLAIN(varName)
-- **Parameters:** `varName` – name of variable
-- **Returns:** provenance information or `{ "var": name, "info": "no provenance" }`
-- **Example:** `EXPLAIN("x")`
-
+Run it: [Debugging example](../playground.md?example=stdlib-debug-explain) (toggle tracing).

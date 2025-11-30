@@ -1,9 +1,9 @@
 # Plan: Rename default input binding and support custom aliases
 
-> **Status:** ⏳ Proposed — execution helpers still seed environments with the legacy `row` binding, so the alias work has not started.【F:interpreter/src/commonMain/kotlin/v2/ir/RunnerMP.kt†L26-L39】【F:vm/src/commonMain/kotlin/v2/ir/StreamCompiler.kt†L63-L83】
+> **Status:** ⚙️ In progress — runtime helpers now seed `input` as the canonical binding with `row` as a compatibility alias, but the parser still accepts legacy `SOURCE` declarations and there is no per-transform options block yet.【F:interpreter/src/commonMain/kotlin/v2/ir/RunnerMP.kt†L18-L67】【F:vm/src/commonMain/kotlin/v2/ir/StreamCompiler.kt†L46-L83】【F:test-fixtures/src/jvmMain/kotlin/v2/testutils/Runners.kt†L14-L54】
 
 ## 1. Baseline analysis
-- [ ] Inventory all code paths that special-case the `row` binding today (parser/sema visibility, IR runners in `interpreter` and `vm`, helper utilities, docs/tests) so we know every site that needs to understand the new alias.
+- [x] Inventory all code paths that special-case the `row` binding (parser/sema visibility, IR runners in `interpreter` and `vm`, helper utilities, docs/tests) so we know every site that needs to understand the new alias.
 - [ ] Confirm how `SOURCE <id>;` declarations are used today and whether multiple sources appear in real programs, because the alias wiring has to handle overrides without breaking existing semantics.
 
 ## 2. Define shared alias metadata
@@ -16,8 +16,7 @@
 - [ ] Add new validation to detect conflicting explicit aliases (e.g., multiple `SOURCE` declarations targeting the same binding) while preserving existing adapter parsing.
 
 ## 4. Execution environment wiring
-- [ ] Extend `compileStream` (and any other runner factories such as `TransformRegistry`, `RunnerMP`, VM helpers, and playground loaders) to accept the resolved alias and seed the evaluation environment with that name instead of hard-coding `row`.
-- [ ] Ensure both interpreter and VM execution paths mirror the alias map, and keep copying the incoming payload into top-level keys for backward compatibility if that behaviour is still required.
+- [x] Extend runner factories (`compileStream`, `TransformRegistry`, `RunnerMP`, playground loaders) to seed the environment with the canonical `input` alias and a `row` compatibility alias instead of hard-coding `row`.【F:interpreter/src/commonMain/kotlin/v2/ir/RunnerMP.kt†L18-L67】【F:interpreter/src/jvmMain/kotlin/v2/ir/TransformRegistryJvm.kt†L7-L27】【F:vm/src/commonMain/kotlin/v2/ir/StreamCompiler.kt†L46-L83】
 - [ ] Thread the alias through higher-level loaders (e.g., `BranchlineTransformLoader`) by extracting it from the parsed program before invoking `compileStream`.
 
 ## 5. Test coverage
@@ -26,7 +25,7 @@
 - [ ] Verify any VM/interpreter parity or benchmark fixtures still compile after the alias change.
 
 ## 6. Documentation & migration notes
-- [ ] Refresh user-facing docs and playground instructions to reference `in` as the implicit input variable and describe how to opt into a custom alias.
+- [ ] Refresh user-facing docs and playground instructions to reference `input` as the implicit input variable and describe how to opt into a custom alias.
 
 ## 7. Rollout checks
 - [ ] Re-run the standard Gradle test suite (and Detekt if relevant) to confirm no regressions. 

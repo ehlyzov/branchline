@@ -6,5 +6,6 @@ const container = document.querySelector('.bl-playground');
 
 if (container) {
   const root = createRoot(container);
-  root.render(<BranchlinePlayground />);
+  const defaultExampleId = container.getAttribute('data-default-example') ?? undefined;
+  root.render(<BranchlinePlayground defaultExampleId={defaultExampleId || undefined} />);
 }

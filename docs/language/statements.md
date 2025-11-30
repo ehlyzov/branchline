@@ -6,6 +6,13 @@ title: Statements
 
 Statements control execution and side effects within blocks.
 
+## Quick patterns
+- Use `LET` for new bindings and `SET` for mutation inside loops.
+- Guard code with `IF` and `TRY/CATCH`; pair `ASSERT`/`THROW` for explicit failures.
+- `FOR`/`FOR EACH` iterate collections; comprehensions in expressions provide a shorthand for building arrays.
+- `OUTPUT { ... }` shapes final payloads; nested `OUTPUT` is allowed for intermediate blocks.
+- `CALL` bridges to host functions; `AWAIT`/`SUSPEND`/`PARALLEL` require host support for async/concurrency.
+
 ## Overview {#source}
 
 The `SOURCE` statement declares a data source for the pipeline.
@@ -69,6 +76,8 @@ The `TRY` statement handles errors and exceptions.
 ## Shared {#shared}
 
 The `SHARED` statement declares shared memory resources.
+
+To wait for a shared entry from within a program, use the `AWAIT_SHARED(resource, key)` stdlib function (requires a configured shared store in the host). This cannot be demonstrated in the playground because no shared store is wired there.
 
 ## Functions {#func}
 
@@ -160,4 +169,3 @@ expressionStmt ::= expression ";"
 ```
 
 Nested `OUTPUT` blocks and bare expressions complete the statement set【F:language/src/test/kotlin/v2/ebnf.txt†L93-L94】.
-

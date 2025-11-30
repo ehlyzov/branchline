@@ -76,7 +76,11 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val decls = mutableListOf<TopLevelDecl>()
         while (!isAtEnd()) {
             when {
-                check(TokenType.SOURCE) -> decls += parseSource()
+                check(TokenType.SOURCE) -> {
+                    // Legacy SOURCE declarations are ignored; input binding defaults to `input`.
+                    // Consume the declaration to allow old programs to parse without effect.
+                    skipSource()
+                }
                 check(TokenType.TRANSFORM) -> decls += parseTransform()
                 check(TokenType.OUTPUT) -> decls += parseOutput()
                 check(TokenType.SHARED) -> decls += parseShared()
@@ -92,12 +96,23 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
 
     // ------------------- top‑level parsers --------------------------
 
-    private fun parseSource(): SourceDecl {
-        val start = advance() // SOURCE
-        val nameTok = consume(TokenType.IDENTIFIER, "Expect source identifier")
-        val adapter = if (match(TokenType.USING)) parseAdapter() else null
+    private fun skipSource() {
+        advance() // SOURCE
+        if (check(TokenType.IDENTIFIER)) advance()
+        if (match(TokenType.USING)) {
+            advance() // adapter name
+            if (match(TokenType.LEFT_PAREN)) {
+                while (!check(TokenType.RIGHT_PAREN) && !isAtEnd()) {
+                    if (check(TokenType.COMMA)) {
+                        advance(); continue
+                    }
+                    parseExpression()
+                    if (!match(TokenType.COMMA)) break
+                }
+                consume(TokenType.RIGHT_PAREN, "Expect ')' after adapter args")
+            }
+        }
         optionalSemicolon()
-        return SourceDecl(nameTok.lexeme, adapter, start)
     }
 
     private fun parseOutput(): OutputDecl {
@@ -123,15 +138,18 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             consume(TokenType.RIGHT_PAREN, "Expect ')' after transform parameters")
         }
 
-        // { STREAM }  или  { BUFFER }
-        consume(TokenType.LEFT_BRACE, "Expect '{' before mode")
-        val modeTok = advance()
-        val mode = when (modeTok.type) {
-            TokenType.STREAM -> Mode.STREAM
-            TokenType.BUFFER -> Mode.BUFFER
-            else -> error(modeTok, "Expect STREAM or BUFFER")
+        // Optional mode block; only BUFFER supported. STREAM not supported yet.
+        var mode: Mode = Mode.BUFFER
+        if (check(TokenType.LEFT_BRACE) && (checkNext(TokenType.STREAM) || checkNext(TokenType.BUFFER))) {
+            advance() // consume '{'
+            val modeTok = advance()
+            mode = when (modeTok.type) {
+                TokenType.BUFFER -> Mode.BUFFER
+                TokenType.STREAM -> error(modeTok, "STREAM mode is not supported yet. Omit mode to use BUFFER.")
+                else -> error(modeTok, "Expect BUFFER")
+            }
+            consume(TokenType.RIGHT_BRACE, "Expect '}' after mode")
         }
-        consume(TokenType.RIGHT_BRACE, "Expect '}' after mode")
 
         val body: TransformBody = parseBlock()
 
