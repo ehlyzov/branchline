@@ -2,7 +2,7 @@
   "title": "Summarize JUnit XML (simple)",
   "description": "Parse a testsuites document produced by JUnit and total each suite for badge generation.",
   "program": [
-    "LET root = msg.testsuites ?? msg.testsuite ?? {};",
+    "LET root = input.testsuites ?? input.testsuite ?? {};",
     "LET suitesRaw = root.testsuite ?? root;",
     "LET suites = IF suitesRaw == NULL THEN []",
     "    ELSE IF IS_OBJECT(suitesRaw) THEN [suitesRaw]",

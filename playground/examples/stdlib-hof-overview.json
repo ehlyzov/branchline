@@ -2,7 +2,7 @@
   "title": "Stdlib: Higher-order functions",
   "description": "MAP, FILTER, REDUCE, SOME, EVERY, FIND, APPLY, IS_FUNCTION working together.",
   "program": [
-    "LET doubled = MAP(msg.values, (value, index, _) -> value * 2 + index);",
+    "LET doubled = MAP(input.values, (value, index, _) -> value * 2 + index);",
     "LET passing = FILTER(doubled, (value) -> value >= 6);",
     "LET total = REDUCE(passing, 0, (acc, value) -> acc + value);",
     "LET anyLarge = SOME(passing, (value) -> value > 10);",

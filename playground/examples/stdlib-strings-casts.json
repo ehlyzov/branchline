@@ -2,9 +2,9 @@
   "title": "Stdlib: STRING, NUMBER, BOOLEAN",
   "description": "Convert between primitive types and observe null/error behavior.",
   "program": [
-    "LET asString = STRING(msg.raw.number);",
-    "LET asNumber = NUMBER(msg.raw.text);",
-    "LET boolFromText = BOOLEAN(msg.raw.text);",
+    "LET asString = STRING(input.raw.number);",
+    "LET asNumber = NUMBER(input.raw.text);",
+    "LET boolFromText = BOOLEAN(input.raw.text);",
     "LET boolFromEmpty = BOOLEAN(\"\");",
     "LET boolFromZero = BOOLEAN(0);",
     "",
