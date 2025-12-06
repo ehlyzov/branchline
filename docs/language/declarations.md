@@ -5,18 +5,8 @@ title: Declarations
 # Declarations
 
 Branchline programs are composed of top-level declarations that introduce
-sources, outputs, transformations, and reusable definitions.
-
-In small programs you can rely on an implicit `SOURCE` and `OUTPUT` (the playground does this), but production pipelines typically declare them explicitly and wire adapters via `USING`.
-
-## Source declarations
-
-```
-sourceDecl ::= SOURCE IDENTIFIER adapterSpec? ;
-```
-
-Each `SOURCE` names an input and optionally specifies an adapter
-that reads data【F:language/src/test/kotlin/v2/ebnf.txt†L22-L31】.
+outputs, transformations, and reusable definitions. The input payload is
+available implicitly as `input`/`INPUT`.
 
 ## Output declarations
 
@@ -34,7 +24,7 @@ transformDecl ::= annotation* TRANSFORM IDENTIFIER? transformMode? block
 ```
 
 Transforms process data from sources to outputs, optionally annotated or
-modeled as a stream or buffer【F:language/src/test/kotlin/v2/ebnf.txt†L45-L49】.
+configured with a buffer mode header【F:language/src/test/kotlin/v2/ebnf.txt†L45-L49】.
 
 ## Shared declarations
 

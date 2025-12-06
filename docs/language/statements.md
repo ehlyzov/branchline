@@ -13,10 +13,6 @@ Statements control execution and side effects within blocks.
 - `OUTPUT { ... }` shapes final payloads; nested `OUTPUT` is allowed for intermediate blocks.
 - `CALL` bridges to host functions; `AWAIT`/`SUSPEND`/`PARALLEL` require host support for async/concurrency.
 
-## Overview {#source}
-
-The `SOURCE` statement declares a data source for the pipeline.
-
 ## Output {#output}
 
 The `OUTPUT` statement specifies how results are emitted from the pipeline.
@@ -27,15 +23,9 @@ The `USING` clause references adapters and external modules.
 
 ## Transform {#transform}
 
-The `TRANSFORM` statement defines transformation steps in the pipeline.
-
-## Stream {#stream}
-
-The `STREAM` mode processes data as a continuous flow.
-
-## Buffer {#buffer}
-
-The `BUFFER` mode collects data before processing.
+The `TRANSFORM` statement defines transformation steps in the pipeline. Use
+`TRANSFORM Name { ... }` or include `{ buffer }` after the name to mark buffer
+mode explicitly.
 
 ## For Loops {#for}
 
@@ -55,7 +45,7 @@ The `FOREACH` statement provides a shortcut for iteration.
 
 ## Input {#input}
 
-The `INPUT` keyword references the pipeline input data.
+The `INPUT` keyword references the pipeline input data (alias: `input`).
 
 ## Parallel {#parallel}
 

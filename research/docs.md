@@ -41,7 +41,6 @@ cd branchline-public
 ### Run your first program (JVM)
 Create `hello.bl`:
 ```branchline
-SOURCE msg;
 TRANSFORM Hello {
     LET greet = "Hello, " + msg.name;
     OUTPUT { greeting: greet };

@@ -13,7 +13,7 @@ New to Branchline? This walkthrough takes you from zero to running code and insp
 - Paste your own JSON (or XML) in the input pane and rerun.
 
 ## 2) Learn the essentials
-- **Paths:** `$`/`INPUT` refers to the root payload. Use `msg.field`, `items[0]`, slices `[start:end]`, predicates `[expr]`, and wildcards `.*`.
+- **Paths:** `$`/`INPUT` refers to the root payload. Use `input.field`, `items[0]`, slices `[start:end]`, predicates `[expr]`, and wildcards `.*`.
 - **Bindings:** `LET name = expr;` defines variables. Use `??` to coalesce nulls.
 - **Control flow:** `IF/ELSE`, `FOR` or `FOR EACH`, comprehensions `[FOR (x IN xs) => expr]`, `TRY/CATCH` for safe handling.
 - **Output:** shape your result with `OUTPUT { ... }`.

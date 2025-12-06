@@ -17,23 +17,8 @@ versionDecl      ::= "#!branchline" VERSION                                  ;
 
 importDecl       ::= **IMPORT** STRING ( **AS** IDENTIFIER )? **;**          ;
 
-topDecl          ::= sourceDecl | outputDecl | transformDecl
-                   | funcDecl  | typeDecl  | sharedDecl | **;**              ;
-
-# ─────────────────────────────────────────────────────────────────
-# 1. Source & Output declarations  –   adapter-centric
-# ─────────────────────────────────────────────────────────────────
-
-# A script may contain **zero or more** SOURCE declarations.
-# If none are present, the compiler implicitly injects:
-#     SOURCE $ USING preloaded();
-# which makes the pre-loaded in-memory tree available via the
-# root symbol “$” (and its alias INPUT).
-sourceSection   ::= sourceDecl*                                   ;
-
-sourceDecl  ::= **SOURCE** IDENTIFIER adapterSpec? **;**        ;
-#            e.g.  SOURCE orders USING jsonFile("orders.json");
-#                  SOURCE input;              # defaults to preloaded()
+topDecl          ::= outputDecl | transformDecl | funcDecl
+                   | typeDecl  | sharedDecl | **;**              ;
 
 outputDecl  ::= **OUTPUT** adapterSpec? templateBlock           ;
 #            e.g.  OUTPUT USING xmlFile("out.xml") { … }
@@ -44,9 +29,7 @@ adapterCall ::= IDENTIFIER "(" argList? ")"                    ;
 #             └──────┬──────┘
 #              adapter name      (jsonFile, xmlFile, rdfEndpoint, …)
 
-# Examples (not grammar):
-#   SOURCE orders  USING jsonFile("orders.json");
-#   SOURCE rdfTax  USING rdfEndpoint("https://…");
+# Example (not grammar):
 #   OUTPUT         USING xmlFile("out.xml") { … }
 #   OUTPUT { … }                      # → defaults to jsonStream(stdout)
 
@@ -58,7 +41,7 @@ transformDecl    ::= annotation* **TRANSFORM** IDENTIFIER? transformMode?
                      block                                                   ;
 
 annotation       ::= **@** IDENTIFIER                                        ;
-transformMode    ::= "{" ( **stream** | **buffer** ) "}"                    ;
+transformMode    ::= "{" **buffer** "}"                                    ;
 
 #---------------------------------------------------------------------------
 # Shared memory

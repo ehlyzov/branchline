@@ -1,0 +1,80 @@
+name: Release Artifacts
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+env:
+  TAG_NAME: ${{ github.event.release.tag_name || github.ref_name || 'snapshot' }}
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.release.outputs.upload_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: playground/package-lock.json
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Create draft release (workflow dispatch)
+        id: release
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: ${{ env.TAG_NAME }}
+          draft: true
+          prerelease: true
+
+      - name: Use published release upload URL
+        id: release-url
+        if: github.event_name == 'release'
+        run: echo "upload_url=${{ github.event.release.upload_url }}" >> $GITHUB_OUTPUT
+
+      - name: Build JS CLI tarball
+        run: ./gradlew --no-daemon :cli:packageJsCli
+
+      - name: Build JVM fat jar
+        run: ./gradlew --no-daemon :cli:blShadowJar
+
+      - name: Upload JS CLI tarball
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          asset_path: cli/build/distributions/branchline-cli-js-${{ env.TAG_NAME || 'snapshot' }}.tgz
+          asset_name: branchline-cli-js-${{ env.TAG_NAME || 'snapshot' }}.tgz
+          asset_content_type: application/gzip
+
+      - name: Upload JVM CLI fat jar
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          asset_path: cli/build/libs/branchline-cli-all.jar
+          asset_name: branchline-cli-${{ env.TAG_NAME || 'snapshot' }}-all.jar
+          asset_content_type: application/java-archive
