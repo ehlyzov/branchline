@@ -44,13 +44,25 @@ cd branchline-public
   ./gradlew :cli:packageJsCli
   # outputs cli/build/distributions/branchline-cli-js-<version>.tgz
   ```
+  Unpack the tarball and run `bin/bl.cjs` in CI or from custom tooling.
+  
+## Bring Branchline into your project
+- **During development/CI:** call the Gradle helpers above to run `.bl` scripts directly.
+- **Vendor the JS CLI:** produce the tarball and check it into build artifacts or Docker images so consumers do not need Node/npm installs.
+- **No published packages yet:** Maven Central/npm/GitHub Packages are not used currently; if you need a pullable artifact, vendor the tarball or build from source.
+
+Example (CI script using the tarball):
+```bash
+./gradlew :cli:packageJsCli
+tar -xzf cli/build/distributions/branchline-cli-js-*.tgz -C ./dist
+./dist/bin/bl.cjs path/to/program.bl --input data.json
+```
 
 ## Verify with a tiny program
 Create `hello.bl`:
 ```branchline
-SOURCE msg;
 TRANSFORM Hello {
-    LET greet = "Hello, " + msg.name;
+    LET greet = "Hello, " + input.name;
     OUTPUT { greeting: greet };
 }
 ```

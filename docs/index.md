@@ -30,6 +30,26 @@ cd branchline-public
 ```
 Need more detail? See [Install Branchline](guides/install.md) and [First steps](guides/first-steps.md).
 
+## Use Branchline in your project
+- **CLI (JVM/Node):** Use the Gradle helpers above during development or CI. Keep your `.bl` scripts in your repo and call the CLI from your build/test steps.
+- **JS tarball:** `./gradlew :cli:packageJsCli` produces `cli/build/distributions/branchline-cli-js-<version>.tgz`. Add it to your build artifacts, unpack it in CI, and run `bin/bl.cjs` with `--input`/`--input-format`.
+- **Vendoring:** You can vendor the packaged CLI into your own tools or Docker images; no Maven/npm packages are published yet, so bundling the tarball (or building from source) is the current path.
+
+### Simplest program
+```branchline
+TRANSFORM Hello {
+    OUTPUT { greeting: "Hello, " + input.name };
+}
+```
+Run it on JVM:
+```bash
+./gradlew :cli:runBl --args "hello.bl --input sample.json"
+```
+Or on Node:
+```bash
+./gradlew :cli:jsNodeProductionRun --args="hello.bl --input sample.json"
+```
+
 ## Language highlights
 - **Straightforward data paths:** `$` or `INPUT` to navigate payloads; dot, slice, predicate, wildcard support.
 - **Built-in tracing:** `EXPLAIN`, `CHECKPOINT`, and `ASSERT` surface provenance.

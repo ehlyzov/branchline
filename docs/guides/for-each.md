@@ -8,18 +8,18 @@ title: FOR EACH Loops
 
 ## Basic loop
 ```branchline
-FOR EACH item IN row.items {
+FOR EACH item IN input.items {
     OUTPUT { name: item.name };
 }
 ```
 
-The loop reads `row.items` and outputs each element's `name` field.
+The loop reads `input.items` and outputs each element's `name` field.
 
 ## Filtering items
 An optional `WHERE` clause keeps only matching elements.
 
 ```branchline
-FOR EACH item IN row.items WHERE item.qty > 1 {
+FOR EACH item IN input.items WHERE item.qty > 1 {
     OUTPUT { name: item.name, qty: item.qty };
 }
 ```
@@ -31,7 +31,7 @@ Use `SET` to update accumulators as you iterate:
 ```branchline
 LET totals = { count: 0, sum: 0 };
 
-FOR EACH item IN row.items WHERE item.qty > 0 {
+FOR EACH item IN input.items WHERE item.qty > 0 {
     SET totals.count = totals.count + 1;
     SET totals.sum = totals.sum + item.qty;
 }

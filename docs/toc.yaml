@@ -48,8 +48,6 @@ items:
         href: guides/array-comprehension.md
       - name: TRY/CATCH
         href: guides/try-catch.md
-      - name: Parallelism
-        href: guides/parallelism.md
   - name: Architecture
     items:
       - name: VM Overview

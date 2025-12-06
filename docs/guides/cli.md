@@ -35,6 +35,23 @@ The `bl.cjs` launcher delegates to the compiled Kotlin/JS runtime and respects t
 
 `./gradlew :cli:packageJsCli` produces a gzipped tarball under `cli/build/distributions/`. The archive includes the CLI entry point, compiled Kotlin/JS artifacts, the `package.json` manifest, and the `node_modules/` tree so consumers do not need to install dependencies separately.
 
+### JVM fat jar
+- Build a standalone jar you can run with `java -jar` (no Gradle on the consumer side):
+  ```bash
+  ./gradlew :cli:blShadowJar
+  java -jar cli/build/libs/branchline-cli-all.jar path/to/program.bl --input data.json
+  ```
+- The jar sets `io.branchline.cli.BlJvmMain` as the entry point. Use `--input-format xml` for XML.
+
+### Using the CLI without Gradle on consumers
+- Download or produce the tarball once (from CI artifacts or a release), unpack it, and run the launcher directly:
+  ```bash
+  tar -xzf branchline-cli-js-*.tgz -C ./branchline-cli
+  ./branchline-cli/bin/bl.cjs path/to/program.bl --input data.json
+  ```
+- Check the unpacked bundle into a Docker image or internal artifact store so downstream users do not need the Gradle build.
+- You can host both the JS tarball and the JVM fat jar on GitHub Releases; consumers download the asset they need and run it directly.
+
 ## CI smoke test
 
 The CLI JVM test suite now runs a Node-based smoke test to ensure the packaged bundle executes JSON inputs successfully. This guards against regressions in the packaging flow and verifies the Node wrapper stays in sync with the shared CLI surface.

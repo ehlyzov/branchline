@@ -20,7 +20,7 @@ If `riskyCall()` throws, the fallback block produces an error object.
 Add `RETRY n TIMES` to re-run the expression before giving up.
 
 ```branchline
-TRY fetch(row.id)
+TRY fetch(input.id)
 CATCH(e) RETRY 3 TIMES -> { err: "failed" };
 ```
 
@@ -28,7 +28,7 @@ The call is attempted three additional times. If all attempts fail, the fallback
 
 ## With backoff
 ```branchline
-TRY CALL remoteService(row) -> response
+TRY CALL remoteService(input) -> response
 CATCH(err) RETRY 2 TIMES BACKOFF 500ms -> {
     error: err.message ?? "service failed"
 };
@@ -38,7 +38,7 @@ Adds a fixed backoff between attempts. (Host must support `CALL` and backoff sem
 ## Guardrails with ASSERT
 Combine `ASSERT` to fail fast on bad states:
 ```branchline
-LET result = TRY risky(row) CATCH(e) -> NULL;
+LET result = TRY risky(input) CATCH(e) -> NULL;
 ASSERT(result != NULL, "Risky call failed");
 ```
 

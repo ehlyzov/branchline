@@ -52,12 +52,10 @@ Reserved words. Each links to a page with usage examples.
 
 | Keyword | Description | Usage |
 |---|---|---|
-| `SOURCE` | Declare a data source. | [example](statements.md#source) |
 | `OUTPUT` | Specify pipeline output. | [example](statements.md#output) |
 | `USING` | Reference an adapter or module. | [example](statements.md#using) |
 | `TRANSFORM` | Define a transformation step. | [example](statements.md#transform) |
-| `STREAM` | Declare a stream block. | [example](statements.md#stream) |
-| `BUFFER` | Declare a buffer block. | [example](statements.md#buffer) |
+| `BUFFER` | Declare a buffer block. | [example](statements.md#transform) |
 | `FOR` / `EACH` | Start a loop over items. | [example](statements.md#for) |
 | `IF` / `THEN` / `ELSE` | Conditional branching. | [example](statements.md#if) |
 | `ENUM` | Define an enumeration. | [example](statements.md#enum) |
@@ -97,18 +95,16 @@ Reserved words. Each links to a page with usage examples.
 # Summary
 
 Branchline uses a small set of tokens. Keywords are written in upper case and
-include `SOURCE`, `OUTPUT`, `TRANSFORM`, `SHARED`, `FUNC`, `TYPE`, `LET`,
+include `OUTPUT`, `TRANSFORM`, `BUFFER`, `SHARED`, `FUNC`, `TYPE`, `LET`,
 `IF`, `FOR`, `TRY`, `CALL`, `AWAIT`, and `SUSPEND`, among others
 as seen throughout the grammar【F:language/src/test/kotlin/v2/ebnf.txt†L22-L90】.
 
 Names are expressed using identifiers:
-`sourceDecl ::= SOURCE IDENTIFIER adapterSpec? ;` and
 `funcDecl ::= FUNC IDENTIFIER "(" paramList? ")" funcBody`
-show identifiers applied to declarations【F:language/src/test/kotlin/v2/ebnf.txt†L22-L63】.
+shows identifiers applied to declarations【F:language/src/test/kotlin/v2/ebnf.txt†L45-L63】.
 
 Literals support numbers, strings, booleans, and null via the rule
 `literal ::= NUMBER | STRING | TRUE | FALSE | NULL`【F:language/src/test/kotlin/v2/ebnf.txt†L112-L116】.
 
 Punctuation such as parentheses, braces, brackets, commas, and semicolons
 structure programs and appear in the production rules.
-

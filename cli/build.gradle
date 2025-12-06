@@ -1,5 +1,6 @@
 plugins {
     id 'org.jetbrains.kotlin.multiplatform'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 kotlin {
@@ -106,6 +107,17 @@ tasks.register('packageJsCli', org.gradle.api.tasks.bundling.Tar) {
     archiveExtension.set('tgz')
     compression = org.gradle.api.tasks.bundling.Compression.GZIP
     from(jsCliPackageDir)
+}
+
+// Fat jar for JVM CLI (java -jar branchline-cli-all.jar)
+tasks.register('blShadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    group = 'distribution'
+    description = 'Assemble a standalone JVM CLI jar with all dependencies.'
+    archiveBaseName.set('branchline-cli')
+    archiveClassifier.set('all')
+    manifest { attributes 'Main-Class': 'io.branchline.cli.BlJvmMain' }
+    from(kotlin.targets.jvm.compilations.main.output)
+    configurations = [project.configurations.jvmRuntimeClasspath]
 }
 
 tasks.named('jvmTest') {
