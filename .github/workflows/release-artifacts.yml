@@ -59,14 +59,32 @@ jobs:
       - name: Build JVM fat jar
         run: ./gradlew --no-daemon :cli:blShadowJar
 
+      - name: Capture artifact paths
+        run: |
+          JS_TARBALL=$(ls cli/build/distributions/branchline-cli-js-*.tgz | head -1)
+          if [ -z "$JS_TARBALL" ]; then
+            echo "JS tarball not found" >&2
+            exit 1
+          fi
+          echo "JS_TARBALL_PATH=$JS_TARBALL" >> $GITHUB_ENV
+          echo "JS_TARBALL_NAME=branchline-cli-js-${TAG_NAME}.tgz" >> $GITHUB_ENV
+
+          JVM_JAR=$(ls cli/build/libs/branchline-cli-all.jar)
+          if [ -z "$JVM_JAR" ]; then
+            echo "JVM fat jar not found" >&2
+            exit 1
+          fi
+          echo "JVM_JAR_PATH=$JVM_JAR" >> $GITHUB_ENV
+          echo "JVM_JAR_NAME=branchline-cli-${TAG_NAME}-all.jar" >> $GITHUB_ENV
+
       - name: Upload JS CLI tarball
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
-          asset_path: cli/build/distributions/branchline-cli-js-${{ env.TAG_NAME || 'snapshot' }}.tgz
-          asset_name: branchline-cli-js-${{ env.TAG_NAME || 'snapshot' }}.tgz
+          asset_path: ${{ env.JS_TARBALL_PATH }}
+          asset_name: ${{ env.JS_TARBALL_NAME }}
           asset_content_type: application/gzip
 
       - name: Upload JVM CLI fat jar
@@ -75,6 +93,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
-          asset_path: cli/build/libs/branchline-cli-all.jar
-          asset_name: branchline-cli-${{ env.TAG_NAME || 'snapshot' }}-all.jar
+          asset_path: ${{ env.JVM_JAR_PATH }}
+          asset_name: ${{ env.JVM_JAR_NAME }}
           asset_content_type: application/java-archive
