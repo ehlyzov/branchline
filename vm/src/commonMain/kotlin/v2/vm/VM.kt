@@ -325,8 +325,8 @@ class VM(
             is Instruction.NEG -> unaryArithmetic { negateNumber(it) }
 
             // Comparison Operations
-            is Instruction.EQ -> binaryComparison { l, r -> l == r }
-            is Instruction.NEQ -> binaryComparison { l, r -> l != r }
+            is Instruction.EQ -> binaryComparison { l, r -> equalsValues(l, r) }
+            is Instruction.NEQ -> binaryComparison { l, r -> !equalsValues(l, r) }
             is Instruction.LT -> binaryComparison { l, r -> compareValues(l, r) < 0 }
             is Instruction.LE -> binaryComparison { l, r -> compareValues(l, r) <= 0 }
             is Instruction.GT -> binaryComparison { l, r -> compareValues(l, r) > 0 }
@@ -467,8 +467,8 @@ class VM(
             Opcode.NEG -> unaryArithmetic { negateNumber(it) }
 
             // Comparison Operations
-            Opcode.EQ -> binaryComparison { l, r -> l == r }
-            Opcode.NEQ -> binaryComparison { l, r -> l != r }
+            Opcode.EQ -> binaryComparison { l, r -> equalsValues(l, r) }
+            Opcode.NEQ -> binaryComparison { l, r -> !equalsValues(l, r) }
             Opcode.LT -> binaryComparison { l, r -> compareValues(l, r) < 0 }
             Opcode.LE -> binaryComparison { l, r -> compareValues(l, r) <= 0 }
             Opcode.GT -> binaryComparison { l, r -> compareValues(l, r) > 0 }
@@ -591,7 +591,14 @@ class VM(
     private fun Any?.asBool(): Boolean = when (this) {
         null -> false
         is Boolean -> this
-        is Number -> this.toDouble() != 0.0
+        is Int -> this != 0
+        is Long -> this != 0L
+        is Short -> this.toInt() != 0
+        is Byte -> this.toInt() != 0
+        is Double -> this != 0.0
+        is Float -> this != 0f
+        is BLBigInt -> this.signum() != 0
+        is BLBigDec -> this.signum() != 0
         else -> true
     }
 
@@ -725,9 +732,48 @@ class VM(
 
     internal fun compareValues(left: Any?, right: Any?): Int {
         return when {
-            isNumeric(left) && isNumeric(right) -> toBLBigDec(left).compareTo(toBLBigDec(right))
+            isNumeric(left) && isNumeric(right) -> {
+                val leftIsBig = isBigInt(left) || isBigDec(left)
+                val rightIsBig = isBigInt(right) || isBigDec(right)
+                if (leftIsBig || rightIsBig) {
+                    toBLBigDec(left).compareTo(toBLBigDec(right))
+                } else if ((left is Int || left is Long || left is Short || left is Byte) &&
+                    (right is Int || right is Long || right is Short || right is Byte)
+                ) {
+                    toLongPrimitive(left).compareTo(toLongPrimitive(right))
+                } else if (left is Double || right is Double || left is Float || right is Float) {
+                    (left as Number).toDouble().compareTo((right as Number).toDouble())
+                } else {
+                    toBLBigDec(left).compareTo(toBLBigDec(right))
+                }
+            }
             else -> left.toString().compareTo(right.toString())
         }
+    }
+
+    internal fun equalsValues(left: Any?, right: Any?): Boolean {
+        if (!isNumeric(left) || !isNumeric(right)) return left == right
+        val leftIsBig = isBigInt(left) || isBigDec(left)
+        val rightIsBig = isBigInt(right) || isBigDec(right)
+        if (leftIsBig || rightIsBig) {
+            return toBLBigDec(left).compareTo(toBLBigDec(right)) == 0
+        }
+        return when {
+            (left is Int || left is Long || left is Short || left is Byte) &&
+                (right is Int || right is Long || right is Short || right is Byte) ->
+                toLongPrimitive(left) == toLongPrimitive(right)
+            left is Double || right is Double || left is Float || right is Float ->
+                (left as Number).toDouble() == (right as Number).toDouble()
+            else -> toBLBigDec(left).compareTo(toBLBigDec(right)) == 0
+        }
+    }
+
+    private fun toLongPrimitive(n: Any?): Long = when (n) {
+        is Long -> n
+        is Int -> n.toLong()
+        is Short -> n.toLong()
+        is Byte -> n.toLong()
+        else -> error("Expected integer primitive, got ${n?.let { it::class.simpleName } ?: "null"}")
     }
 
     // === Binary Operations Helpers ===

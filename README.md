@@ -23,13 +23,14 @@ OUTPUT {
 
 ## CLI
 
-Branchline ships with experimental CLI helpers for both JVM and Node runtimes.
+Branchline ships with experimental CLI helpers for JVM and Node runtimes. Running any CLI with no arguments now prints a detailed help screen (`-h`/`--help` also supported).
 
-**JVM binaries**
+**Quick usage (JVM)**
 
-- Run a script: `./gradlew :cli:runBl --args "path/to/program.bl --input sample.json"`
-- Compile to bytecode: `./gradlew :cli:runBlc --args "path/to/program.bl --output build/program.blc"`
-- Execute bytecode (VM): `./gradlew :cli:runBlvm --args "build/program.blc --input sample.json"`
+- Run a script: `./gradlew :cli:runBl --args "examples/hello.bl --input fixtures/hello.json"`
+- Compile to bytecode: `./gradlew :cli:runBlc --args "examples/hello.bl --output build/hello.blc"`
+- Execute bytecode (VM): `./gradlew :cli:runBlvm --args "build/hello.blc --input fixtures/hello.json"`
+- Pipe input via stdin: `cat fixtures/hello.json | ./gradlew :cli:runBl --args "examples/hello.bl --input -" --quiet`
 
 **Node bundle**
 
@@ -39,6 +40,12 @@ Branchline ships with experimental CLI helpers for both JVM and Node runtimes.
 The Gradle build also produces a distributable archive via `./gradlew :cli:packageJsCli` (tarball under `cli/build/distributions/`) that bundles the CLI entry point, compiled Kotlin/JS artifacts, and the packaged `node_modules/` dependencies.
 
 Both runtimes accept `--input-format xml` for XML payloads.
+
+**Release artifacts**
+
+- CLI: `branchline-cli-js-<tag>.tgz` (Node), `branchline-cli-<tag>-all.jar` (JVM, fat jar).
+- Libraries: `branchline-interpreter-<tag>-jvm.jar`, `branchline-vm-<tag>-jvm.jar`, plus JS packages `branchline-interpreter-<tag>-js.tgz` and `branchline-vm-<tag>-js.tgz` for Node/JS runtimes.
+- Download from GitHub Releases or build locally with `./gradlew :cli:packageJsCli :cli:blShadowJar :interpreter:jvmJar :vm:jvmJar :interpreter:jsNodeProductionLibraryDistribution :vm:jsNodeProductionLibraryDistribution`.
 
 ## Project Status
 

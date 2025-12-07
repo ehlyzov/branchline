@@ -18,8 +18,10 @@ async function main() {
     process.exit(1);
   }
 
-  const cliBin = await resolveCliBin();
-  await ensureCliDependencies(cliBin);
+  const cliRunner = await resolveCliRunner();
+  if (cliRunner.kind === 'js') {
+    await ensureCliDependencies(cliRunner.path);
+  }
   const moduleRoot = join(repoRoot, modulePath);
   const reportsRoot = join(moduleRoot, 'build', 'test-results');
   const reportsDir = join(moduleRoot, 'build', 'reports');
@@ -48,7 +50,7 @@ async function main() {
   const collected = [];
   for (const file of xmlFiles) {
     try {
-      const result = await runBranchline(cliBin, fileSummaryScript, {
+      const result = await runBranchline(cliRunner, fileSummaryScript, {
         inputPath: file,
         inputFormat: 'xml',
       });
@@ -70,7 +72,7 @@ async function main() {
 
   let summary;
   try {
-    summary = await runBranchline(cliBin, summaryScript, { inputPath: summaryInputPath });
+    summary = await runBranchline(cliRunner, summaryScript, { inputPath: summaryInputPath });
   } catch (error) {
     console.error('Failed to summarize Branchline results:', error.message);
     await setOutputs({ status: 'error', tests: 'summary evaluation failed', color: colorFor('error') });
@@ -110,7 +112,7 @@ async function safeReadDir(path) {
   }
 }
 
-function runBranchline(cliBin, scriptPath, { inputPath, inputFormat } = {}) {
+function runBranchline(cliRunner, scriptPath, { inputPath, inputFormat } = {}) {
   const cliArgs = [scriptPath];
   if (inputPath) {
     cliArgs.push('--input', inputPath);
@@ -120,7 +122,11 @@ function runBranchline(cliBin, scriptPath, { inputPath, inputFormat } = {}) {
   }
 
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [cliBin, ...cliArgs], {
+    const spawnArgs =
+      cliRunner.kind === 'jvm'
+        ? ['-jar', cliRunner.path, ...cliArgs]
+        : [cliRunner.path, ...cliArgs];
+    const child = spawn(cliRunner.kind === 'jvm' ? 'java' : process.execPath, spawnArgs, {
       cwd: repoRoot,
       env: process.env,
     });
@@ -165,19 +171,29 @@ function buildReportEntry(path, result) {
   return { path };
 }
 
-async function resolveCliBin() {
-  const override = process.env.BRANCHLINE_CLI_BIN;
-  if (override) {
-    return override;
+async function resolveCliRunner() {
+  const jarOverride = process.env.BRANCHLINE_CLI_JAR;
+  if (jarOverride) {
+    return { kind: 'jvm', path: jarOverride };
   }
 
-  const packagedBin = join(repoRoot, 'cli', 'build', 'cliJsPackage', 'bin', 'bl.cjs');
-  if (await pathExists(packagedBin)) {
-    return packagedBin;
+  const binOverride = process.env.BRANCHLINE_CLI_BIN;
+  if (binOverride) {
+    return { kind: 'js', path: binOverride };
+  }
+
+  const packagedJar = join(repoRoot, 'cli', 'build', 'libs', 'branchline-cli-all.jar');
+  if (await pathExists(packagedJar)) {
+    return { kind: 'jvm', path: packagedJar };
+  }
+
+  const packagedJs = join(repoRoot, 'cli', 'build', 'cliJsPackage', 'bin', 'bl.cjs');
+  if (await pathExists(packagedJs)) {
+    return { kind: 'js', path: packagedJs };
   }
 
   throw new Error(
-    'Branchline JS CLI not found. Run `./gradlew :cli:prepareJsCliPackage` (or set BRANCHLINE_CLI_BIN) before executing this script.',
+    'No Branchline CLI found. Provide BRANCHLINE_CLI_JAR (preferred) or BRANCHLINE_CLI_BIN, or build the CLI before running this script.',
   );
 }
 

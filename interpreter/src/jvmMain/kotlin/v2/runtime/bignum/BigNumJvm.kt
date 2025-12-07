@@ -36,3 +36,4 @@ actual operator fun BLBigDec.compareTo(other: BLBigDec): Int = this.compareTo(ot
 actual fun BLBigDec.toPlainString(): String = this.toPlainString()
 actual fun BLBigDec.toBLBigInt(): BLBigInt = this.toBigInteger()
 actual fun BLBigDec.toDouble(): Double = this.toDouble()
+actual fun BLBigDec.signum(): Int = this.signum()

@@ -20,6 +20,7 @@ This draft lays out the revamped Branchline docs and playground experience, focu
 2) Toggle tracing to see `EXPLAIN` output.  
 3) Paste your own JSON (or XML) into the input pane and tweak the program.  
 4) To run locally via CLI: `./gradlew :cli:runBl --args "path/to/program.bl --input sample.json"` (JVM) or `./gradlew :cli:jsNodeProductionRun --args="path/to/program.bl --input sample.json"` (Node).
+5) New CLI UX: running without arguments prints the full help screen (`-h`/`--help`), and release artifacts now include CLI bundles plus interpreter/VM libraries for JVM and JS/Node (published by `release-artifacts.yml`).
 
 ---
 

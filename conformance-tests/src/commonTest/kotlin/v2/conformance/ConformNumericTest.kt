@@ -40,4 +40,30 @@ class ConformNumericTest {
         val run = buildRunnerFromProgramMP(programOf("7 % 3"))
         assertEquals(mapOf("v" to 1), run(emptyMap()))
     }
+
+    @Test
+    fun cross_type_equality_and_ordering_interpreter() {
+        val program = """
+            TRANSFORM Compare {
+                LET a = input.a;
+                LET dec = input.dec;
+                LET gtZero = dec > 0;
+                LET eqBigInt = a == 1;
+                LET eqBigDec = dec == 1;
+                LET ltMixed = 1.1 < input.c;
+                OUTPUT { eqBigInt: eqBigInt, eqBigDec: eqBigDec, ltMixed: ltMixed, gtZero: gtZero };
+            }
+        """.trimIndent()
+        val run = buildRunnerFromProgramMP(program, runSema = true)
+        val input = mapOf<String, Any?>(
+            "a" to v2.runtime.bignum.blBigIntOfLong(1),
+            "dec" to v2.runtime.bignum.blBigDecOfDouble(1.0),
+            "c" to 2,
+        )
+        val result = run(input) as Map<*, *>
+        assertEquals(true, result["eqBigInt"])
+        assertEquals(true, result["eqBigDec"])
+        assertEquals(true, result["ltMixed"])
+        assertEquals(true, result["gtZero"])
+    }
 }

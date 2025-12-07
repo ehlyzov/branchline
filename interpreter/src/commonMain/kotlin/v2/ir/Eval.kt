@@ -55,6 +55,53 @@ private fun toBLBigDec(n: Any?): BLBigDec = when {
     else -> error("Expected numeric, got ${n?.let { it::class.simpleName } ?: "null"}")
 }
 
+private fun numericEquals(a: Any?, b: Any?): Boolean {
+    if (!isNumeric(a) || !isNumeric(b)) return a == b
+    val left = a
+    val right = b
+    val leftIsBig = isBigInt(left) || isBigDec(left)
+    val rightIsBig = isBigInt(right) || isBigDec(right)
+    if (leftIsBig || rightIsBig) {
+        return toBLBigDec(left).compareTo(toBLBigDec(right)) == 0
+    }
+    return when {
+        left is Int && right is Int -> left == right
+        left is Long && right is Long -> left == right
+        (left is Int || left is Long || left is Short || left is Byte) &&
+            (right is Int || right is Long || right is Short || right is Byte) -> toLongPrimitive(left) == toLongPrimitive(right)
+        left is Double || right is Double || left is Float || right is Float ->
+            (left as Number).toDouble() == (right as Number).toDouble()
+        else -> toBLBigDec(left).compareTo(toBLBigDec(right)) == 0
+    }
+}
+
+private fun numericCompare(a: Any?, b: Any?): Int {
+    require(isNumeric(a) && isNumeric(b)) { "Expected numeric operands" }
+    val left = a
+    val right = b
+    val leftIsBig = isBigInt(left) || isBigDec(left)
+    val rightIsBig = isBigInt(right) || isBigDec(right)
+    if (leftIsBig || rightIsBig) {
+        return toBLBigDec(left).compareTo(toBLBigDec(right))
+    }
+    return when {
+        (left is Int || left is Long || left is Short || left is Byte) &&
+            (right is Int || right is Long || right is Short || right is Byte) ->
+            toLongPrimitive(left).compareTo(toLongPrimitive(right))
+        left is Double || right is Double || left is Float || right is Float ->
+            (left as Number).toDouble().compareTo((right as Number).toDouble())
+        else -> toBLBigDec(left).compareTo(toBLBigDec(right))
+    }
+}
+
+private fun toLongPrimitive(n: Any?): Long = when (n) {
+    is Long -> n
+    is Int -> n.toLong()
+    is Short -> n.toLong()
+    is Byte -> n.toLong()
+    else -> error("Expected integer primitive, got ${n?.let { it::class.simpleName } ?: "null"}")
+}
+
 private fun addNum(a: Any?, b: Any?): Any = when {
     isBigInt(a) || isBigInt(b) -> toBLBigInt(a) + toBLBigInt(b)
     isBigDec(a) || isBigDec(b) -> toBLBigDec(a) + toBLBigDec(b)
@@ -113,9 +160,14 @@ private fun divNum(a: Any?, b: Any?): Any {
 fun Any?.asBool(): Boolean = when {
     this == null -> false
     this is Boolean -> this
-    this is Number -> this.toDouble() != 0.0
+    this is Int -> this != 0
+    this is Long -> this != 0L
+    this is Short -> this.toInt() != 0
+    this is Byte -> this.toInt() != 0
+    this is Double -> this != 0.0
+    this is Float -> this != 0f
     isBigInt(this) -> (this as BLBigInt).signum() != 0
-    isBigDec(this) -> toBLBigDec(this).compareTo(blBigDecOfLong(0)) != 0
+    isBigDec(this) -> (this as BLBigDec).signum() != 0
     else -> true
 }
 
@@ -364,11 +416,7 @@ private class Evaluator(
             }
             TokenType.LT, TokenType.LE, TokenType.GT, TokenType.GE -> {
                 val r = eval(e.right, env)
-                val cmp = if (isNumeric(l) && isNumeric(r)) {
-                    toBLBigDec(l).compareTo(toBLBigDec(r))
-                } else {
-                    l.toString().compareTo(r.toString())
-                }
+                val cmp = if (isNumeric(l) && isNumeric(r)) numericCompare(l, r) else l.toString().compareTo(r.toString())
                 when (e.token.type) {
                     TokenType.LT -> cmp < 0
                     TokenType.LE -> cmp <= 0
@@ -384,8 +432,8 @@ private class Evaluator(
                     addAll(r)
                 }
             }
-            TokenType.EQ -> l == eval(e.right, env)
-            TokenType.NEQ -> l != eval(e.right, env)
+            TokenType.EQ -> numericEquals(l, eval(e.right, env))
+            TokenType.NEQ -> !numericEquals(l, eval(e.right, env))
             TokenType.AND -> if (!l.asBool()) false else eval(e.right, env).asBool()
             TokenType.OR -> if (l.asBool()) true else eval(e.right, env).asBool()
             TokenType.COALESCE -> l ?: eval(e.right, env)

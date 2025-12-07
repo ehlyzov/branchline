@@ -35,3 +35,10 @@ expect operator fun BLBigDec.compareTo(other: BLBigDec): Int
 expect fun BLBigDec.toPlainString(): String
 expect fun BLBigDec.toBLBigInt(): BLBigInt
 expect fun BLBigDec.toDouble(): Double
+expect fun BLBigDec.signum(): Int
+
+// Shared constants to avoid allocations in hot paths
+val BL_BIG_DEC_ZERO: BLBigDec by lazy { blBigDecOfLong(0) }
+val BL_BIG_DEC_ONE: BLBigDec by lazy { blBigDecOfLong(1) }
+val BL_BIG_INT_ZERO: BLBigInt by lazy { blBigIntOfLong(0) }
+val BL_BIG_INT_ONE: BLBigInt by lazy { blBigIntOfLong(1) }

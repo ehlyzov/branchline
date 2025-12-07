@@ -55,11 +55,18 @@ jobs:
         run: ./gradlew --no-daemon :interpreter:clean :interpreter:allTests
         continue-on-error: true
 
-      - name: Prepare Branchline JS CLI
+      - name: Download Branchline CLI (JVM)
         if: ${{ always() }}
         run: |
-          ./gradlew --no-daemon :cli:prepareJsCliPackage
-          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage
+          set -euo pipefail
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest"
+          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" | jq -r '.assets[] | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url' | head -n1)
+          if [ -z "$URL" ]; then
+            echo "No CLI jar found in latest release" >&2
+            exit 1
+          fi
+          curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -o branchline-cli.jar "$URL"
+          echo "BRANCHLINE_CLI_JAR=$PWD/branchline-cli.jar" >> $GITHUB_ENV
 
       - name: Summarize interpreter tests
         id: summary
@@ -125,11 +132,18 @@ jobs:
         run: ./gradlew --no-daemon :vm:clean :vm:allTests
         continue-on-error: true
 
-      - name: Prepare Branchline JS CLI
+      - name: Download Branchline CLI (JVM)
         if: ${{ always() }}
         run: |
-          ./gradlew --no-daemon :cli:prepareJsCliPackage
-          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage
+          set -euo pipefail
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest"
+          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" | jq -r '.assets[] | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url' | head -n1)
+          if [ -z "$URL" ]; then
+            echo "No CLI jar found in latest release" >&2
+            exit 1
+          fi
+          curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -o branchline-cli.jar "$URL"
+          echo "BRANCHLINE_CLI_JAR=$PWD/branchline-cli.jar" >> $GITHUB_ENV
 
       - name: Summarize VM tests
         id: summary
@@ -195,11 +209,18 @@ jobs:
         run: ./gradlew --no-daemon :conformance-tests:clean :conformance-tests:allTests
         continue-on-error: true
 
-      - name: Prepare Branchline JS CLI
+      - name: Download Branchline CLI (JVM)
         if: ${{ always() }}
         run: |
-          ./gradlew --no-daemon :cli:prepareJsCliPackage
-          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage
+          set -euo pipefail
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest"
+          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" | jq -r '.assets[] | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url' | head -n1)
+          if [ -z "$URL" ]; then
+            echo "No CLI jar found in latest release" >&2
+            exit 1
+          fi
+          curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -o branchline-cli.jar "$URL"
+          echo "BRANCHLINE_CLI_JAR=$PWD/branchline-cli.jar" >> $GITHUB_ENV
 
       - name: Summarize conformance tests
         id: summary
@@ -251,11 +272,18 @@ jobs:
         run: ./gradlew --no-daemon :cli:jvmTest :cli:jsNodeTest
         continue-on-error: true
 
-      - name: Prepare Branchline JS CLI
+      - name: Download Branchline CLI (JVM)
         if: ${{ always() }}
         run: |
-          ./gradlew --no-daemon :cli:prepareJsCliPackage
-          npm install --no-audit --no-fund --prefix cli/build/cliJsPackage
+          set -euo pipefail
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest"
+          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" | jq -r '.assets[] | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url' | head -n1)
+          if [ -z "$URL" ]; then
+            echo "No CLI jar found in latest release" >&2
+            exit 1
+          fi
+          curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -o branchline-cli.jar "$URL"
+          echo "BRANCHLINE_CLI_JAR=$PWD/branchline-cli.jar" >> $GITHUB_ENV
 
       - name: Summarize CLI tests
         id: summary

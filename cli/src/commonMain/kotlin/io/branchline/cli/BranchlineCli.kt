@@ -38,6 +38,15 @@ enum class CliCommand { RUN, COMPILE, EXECUTE }
 
 object BranchlineCli {
     fun run(args: List<String>, platform: PlatformKind, defaultCommand: CliCommand? = null): Int {
+        if (args.isEmpty()) {
+            printHelp(defaultCommand)
+            return 1
+        }
+        if (args.size == 1 && (args[0] == "--help" || args[0] == "-h" || args[0] == "help")) {
+            printHelp(defaultCommand)
+            return 0
+        }
+
         val parseResult = try {
             parseArgs(args, defaultCommand)
         } catch (ex: CliException) {
@@ -50,6 +59,42 @@ object BranchlineCli {
             CliCommand.COMPILE -> executeCompile(parseResult.compile!!)
             CliCommand.EXECUTE -> executeExec(parseResult.exec!!)
         }
+    }
+
+    private fun printHelp(defaultCommand: CliCommand?) {
+        val defaultHint = when (defaultCommand) {
+            CliCommand.RUN -> " (default: run)"
+            CliCommand.COMPILE -> " (default: compile)"
+            CliCommand.EXECUTE -> " (default: exec)"
+            null -> ""
+        }
+        println(
+            """
+            Branchline CLI$defaultHint
+            
+            Usage:
+              bl [run] <script.bl> [--input <path>|-] [--input-format json|xml] [--transform <name>]
+              blc <script.bl> [--output <artifact.blc>] [--transform <name>]
+              blvm <artifact.blc> [--input <path>|-] [--input-format json|xml] [--transform <name>]
+            
+            Commands:
+              run       Compile + execute a Branchline script and print JSON output. Default when no subcommand is provided.
+              compile   Compile a script to a bytecode artifact (.blc) that embeds the chosen transform.
+              exec      Execute a compiled artifact through the VM. Use --transform to override the embedded transform.
+            
+            Options:
+              --input PATH        Read JSON/XML input from PATH; use '-' to read from stdin.
+              --input-format FMT  'json' (default) or 'xml'.
+              --transform NAME    Choose a TRANSFORM block by name; defaults to the first transform in the script.
+              --output PATH       (compile) write the compiled artifact to PATH. Prints to stdout when omitted.
+            
+            Examples:
+              bl examples/hello.bl --input fixtures/hello.json
+              bl run pipeline.bl --transform Trace --input-format xml --input -
+              blc scripts/order.bl --output build/order.blc
+              blvm build/order.blc --input data.json
+            """.trimIndent(),
+        )
     }
 
     private fun executeRun(options: RunOptions, platform: PlatformKind): Int {

@@ -115,7 +115,7 @@ tasks.register('blShadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.S
     description = 'Assemble a standalone JVM CLI jar with all dependencies.'
     archiveBaseName.set('branchline-cli')
     archiveClassifier.set('all')
-    manifest { attributes 'Main-Class': 'io.branchline.cli.BlJvmMain' }
+    manifest { attributes 'Main-Class': 'io.branchline.cli.BlJvmMainKt' }
     from(kotlin.targets.jvm.compilations.main.output)
     configurations = [project.configurations.jvmRuntimeClasspath]
 }

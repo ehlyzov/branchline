@@ -59,6 +59,9 @@ jobs:
       - name: Build JVM fat jar
         run: ./gradlew --no-daemon :cli:blShadowJar
 
+      - name: Build library artifacts (JVM + JS)
+        run: ./gradlew --no-daemon :interpreter:jvmJar :vm:jvmJar :interpreter:jsNodeProductionLibraryDistribution :vm:jsNodeProductionLibraryDistribution
+
       - name: Capture artifact paths
         run: |
           JS_TARBALL=$(ls cli/build/distributions/branchline-cli-js-*.tgz | head -1)
@@ -76,6 +79,38 @@ jobs:
           fi
           echo "JVM_JAR_PATH=$JVM_JAR" >> $GITHUB_ENV
           echo "JVM_JAR_NAME=branchline-cli-${TAG_NAME}-all.jar" >> $GITHUB_ENV
+
+          INTERP_JVM=$(ls interpreter/build/libs/interpreter-jvm-*.jar | head -1)
+          if [ -z "$INTERP_JVM" ]; then
+            echo "Interpreter JVM jar not found" >&2
+            exit 1
+          fi
+          echo "INTERPRETER_JVM_PATH=$INTERP_JVM" >> $GITHUB_ENV
+          echo "INTERPRETER_JVM_NAME=branchline-interpreter-${TAG_NAME}-jvm.jar" >> $GITHUB_ENV
+
+          VM_JVM=$(ls vm/build/libs/vm-jvm-*.jar | head -1)
+          if [ -z "$VM_JVM" ]; then
+            echo "VM JVM jar not found" >&2
+            exit 1
+          fi
+          echo "VM_JVM_PATH=$VM_JVM" >> $GITHUB_ENV
+          echo "VM_JVM_NAME=branchline-vm-${TAG_NAME}-jvm.jar" >> $GITHUB_ENV
+
+          INTERP_JS=$(ls interpreter/build/distributions/*.tgz | head -1)
+          if [ -z "$INTERP_JS" ]; then
+            echo "Interpreter JS package not found" >&2
+            exit 1
+          fi
+          echo "INTERPRETER_JS_PATH=$INTERP_JS" >> $GITHUB_ENV
+          echo "INTERPRETER_JS_NAME=branchline-interpreter-${TAG_NAME}-js.tgz" >> $GITHUB_ENV
+
+          VM_JS=$(ls vm/build/distributions/*.tgz | head -1)
+          if [ -z "$VM_JS" ]; then
+            echo "VM JS package not found" >&2
+            exit 1
+          fi
+          echo "VM_JS_PATH=$VM_JS" >> $GITHUB_ENV
+          echo "VM_JS_NAME=branchline-vm-${TAG_NAME}-js.tgz" >> $GITHUB_ENV
 
       - name: Upload JS CLI tarball
         uses: actions/upload-release-asset@v1
@@ -96,3 +131,43 @@ jobs:
           asset_path: ${{ env.JVM_JAR_PATH }}
           asset_name: ${{ env.JVM_JAR_NAME }}
           asset_content_type: application/java-archive
+
+      - name: Upload interpreter JVM jar
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          asset_path: ${{ env.INTERPRETER_JVM_PATH }}
+          asset_name: ${{ env.INTERPRETER_JVM_NAME }}
+          asset_content_type: application/java-archive
+
+      - name: Upload VM JVM jar
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          asset_path: ${{ env.VM_JVM_PATH }}
+          asset_name: ${{ env.VM_JVM_NAME }}
+          asset_content_type: application/java-archive
+
+      - name: Upload interpreter JS package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          asset_path: ${{ env.INTERPRETER_JS_PATH }}
+          asset_name: ${{ env.INTERPRETER_JS_NAME }}
+          asset_content_type: application/gzip
+
+      - name: Upload VM JS package
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          asset_path: ${{ env.VM_JS_PATH }}
+          asset_name: ${{ env.VM_JS_NAME }}
+          asset_content_type: application/gzip

@@ -4,17 +4,48 @@ title: Branchline CLI
 
 # Branchline CLI
 
-The Branchline CLI module ships multiplatform entry points that wrap the interpreter, compiler, and VM APIs. Both the JVM and Node bundles share the same command surface:
+The Branchline CLI wraps the interpreter, compiler, and VM APIs. Both JVM and Node bundles expose the same commands:
 
-- `run` (default) — execute a `.bl` script directly.
-- `compile` — produce a bytecode artifact that embeds the source and selected transform.
+- `run` (default) — compile and execute a `.bl` script directly.
+- `compile` — produce a bytecode artifact (.blc) that embeds the source and selected transform.
 - `exec` — evaluate a compiled artifact through the VM without recompiling the source.
 
-All commands accept structured inputs via `--input <path>` and support XML payloads with `--input-format xml`.
+Calling a CLI with no arguments now prints a full help screen (`-h`/`--help` also work). All commands accept structured inputs via `--input <path>` and support XML payloads with `--input-format xml`.
+
+## Command modes and when to use them
+
+- **run**: quickest way to try a Branchline script; compiles + executes in one step. Use in dev loops or CI smoke tests.
+- **compile**: produces a portable `.blc` artifact with bytecode + embedded source/transform. Use when you want to freeze a script at build time or ship it separately.
+- **exec**: runs a `.blc` through the VM. Use when the source is already compiled, or when you want to lock a transform/version while letting inputs vary. `--transform` overrides the embedded transform at execution time.
+
+Transform selection: all modes default to the first `TRANSFORM` block. Pass `--transform <name>` to pick another.
+
+Input handling: `--input <path>` reads JSON/XML; `--input -` reads stdin so you can pipe data into the CLI. `--input-format xml` parses XML into objects (attributes as `@attr`, text as `#text`).
+
+## Copy/paste quickstart
+
+Create `hello.bl`:
+
+```branchline
+TRANSFORM Hello {
+    OUTPUT { greeting: "Hello, " + input.name };
+}
+```
+
+Create `input.json`:
+
+```json
+{ "name": "Branchline" }
+```
+
+- Run directly (JVM): `./gradlew :cli:runBl --args "hello.bl --input input.json"`
+- Compile: `./gradlew :cli:runBlc --args "hello.bl --output build/hello.blc"`
+- Execute compiled artifact: `./gradlew :cli:runBlvm --args "build/hello.blc --input input.json"`
+- Pipe stdin: `cat input.json | ./gradlew :cli:runBl --args "hello.bl --input -" --quiet`
 
 ## JVM binaries
 
-Run the Gradle helpers to launch the JVM entry points:
+Run the Gradle helpers to launch the JVM entry points (each helper sets the default command automatically):
 
 - `./gradlew :cli:runBl --args "path/to/program.bl --input sample.json"`
 - `./gradlew :cli:runBlc --args "path/to/program.bl --output build/program.blc"`
@@ -33,7 +64,26 @@ The `bl.cjs` launcher delegates to the compiled Kotlin/JS runtime and respects t
 
 ## Distribution archive
 
-`./gradlew :cli:packageJsCli` produces a gzipped tarball under `cli/build/distributions/`. The archive includes the CLI entry point, compiled Kotlin/JS artifacts, the `package.json` manifest, and the `node_modules/` tree so consumers do not need to install dependencies separately.
+`./gradlew :cli:packageJsCli` produces a gzipped tarball under `cli/build/distributions/`. The archive includes the CLI entry point, compiled Kotlin/JS artifacts, the `package.json` manifest, and the `node_modules/` tree so consumers do not need to install dependencies separately. `./gradlew :cli:blShadowJar` creates a standalone JVM jar (`branchline-cli-<tag>-all.jar`) runnable with `java -jar`.
+
+## Release artifacts for apps and automation
+
+- **CLI**: `branchline-cli-js-<tag>.tgz` (Node) and `branchline-cli-<tag>-all.jar` (JVM).
+- **Libraries**:
+  - JVM: `branchline-interpreter-<tag>-jvm.jar`, `branchline-vm-<tag>-jvm.jar`.
+  - JS/Node: `branchline-interpreter-<tag>-js.tgz`, `branchline-vm-<tag>-js.tgz` (installable via `npm install ./branchline-interpreter-<tag>-js.tgz`).
+- GitHub Releases publish all of the above via the `release-artifacts` workflow. Build locally with:
+
+```bash
+./gradlew :cli:packageJsCli :cli:blShadowJar \
+    :interpreter:jvmJar :vm:jvmJar \
+    :interpreter:jsNodeProductionLibraryDistribution :vm:jsNodeProductionLibraryDistribution
+```
+
+### Embedding the libraries
+
+- **Kotlin/JVM apps**: add the JARs to your classpath, then use the `v2` interpreter/VM APIs directly.
+- **Node/JS apps**: unpack the `*-js.tgz` tarball and import from `kotlin/branchline-interpreter.js` or `kotlin/branchline-vm.js`, or point `npm install` at the tarball path to pull it into `node_modules/`.
 
 ### JVM fat jar
 - Build a standalone jar you can run with `java -jar` (no Gradle on the consumer side):

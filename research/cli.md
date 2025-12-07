@@ -9,6 +9,7 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - Ship JVM-first helpers (`blc`, `blvm`) that respectively compile Branchline source to bytecode and execute precompiled bytecode.
 - Allow the CLIs to accept structured inputs in JSON out of the box and add an XML ingestion path.
 - Make the tools scriptable in CI so workflows no longer need to wire Gradle tasks directly.
+- Ship release artifacts for both the CLI and the underlying interpreter/VM libraries (JVM + JS/Node) so consumers can embed Branchline without building from source.
 
 ## Execution Plan
 
@@ -55,6 +56,10 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - Tests: `./gradlew :cli:jvmTest :cli:jsNodeTest` (JVM suite now includes a Node smoke test for the packaged CLI).
 - XML input is supported on JVM/JS through `--input-format xml` (JS runtime relies on `fast-xml-parser`).
 - CI summaries run `.github/scripts/junit-summary.mjs`, which shells into the packaged CLI for per-file metrics and delegates aggregate rollups to `cli/scripts/junit-summary.bl`.
+- Running any entry point without arguments now prints the full help screen (also via `-h/--help`).
+- Release artifacts (published by `release-artifacts.yml`):
+  - CLI: `branchline-cli-js-<tag>.tgz`, `branchline-cli-<tag>-all.jar`.
+  - Libraries: `branchline-interpreter-<tag>-jvm.jar`, `branchline-vm-<tag>-jvm.jar`, and JS/Node packages `branchline-interpreter-<tag>-js.tgz`, `branchline-vm-<tag>-js.tgz`.
 
 ### JS runtime numeric quirks (JUnit summary flow)
 
