@@ -56,61 +56,74 @@ jobs:
       - name: Build JS CLI tarball
         run: ./gradlew --no-daemon :cli:packageJsCli
 
+      - name: List JS CLI artifacts
+        run: ls -alh cli/build/distributions || true
+
       - name: Build JVM fat jar
         run: ./gradlew --no-daemon :cli:blShadowJar
 
-      - name: Build library artifacts (JVM + JS)
-        run: ./gradlew --no-daemon :interpreter:jvmJar :vm:jvmJar :interpreter:jsNodeProductionLibraryDistribution :vm:jsNodeProductionLibraryDistribution
+      - name: List JVM CLI artifacts
+        run: ls -alh cli/build/libs || true
+
+      - name: Build library artifacts (JVM + interpreter JS)
+        run: ./gradlew --no-daemon :interpreter:jvmJar :vm:jvmJar :interpreter:packageInterpreterJs
+
+      - name: List library artifacts
+        run: |
+          ls -alh interpreter/build/libs || true
+          ls -alh interpreter/build/distributions || true
+          ls -alh vm/build/libs || true
 
       - name: Capture artifact paths
         run: |
-          JS_TARBALL=$(ls cli/build/distributions/branchline-cli-js-*.tgz | head -1)
-          if [ -z "$JS_TARBALL" ]; then
-            echo "JS tarball not found" >&2
+          set -euo pipefail
+          shopt -s nullglob
+
+          JS_TARBALL="$GITHUB_WORKSPACE/cli/build/distributions/branchline-cli-js-${TAG_NAME}.tgz"
+          if [ ! -f "$JS_TARBALL" ]; then
+            echo "JS tarball not found at $JS_TARBALL" >&2
             exit 1
           fi
           echo "JS_TARBALL_PATH=$JS_TARBALL" >> $GITHUB_ENV
           echo "JS_TARBALL_NAME=branchline-cli-js-${TAG_NAME}.tgz" >> $GITHUB_ENV
 
-          JVM_JAR=$(ls cli/build/libs/branchline-cli-all.jar)
-          if [ -z "$JVM_JAR" ]; then
-            echo "JVM fat jar not found" >&2
-            exit 1
+          JVM_JAR="$GITHUB_WORKSPACE/cli/build/libs/branchline-cli-${TAG_NAME}-all.jar"
+          if [ ! -f "$JVM_JAR" ]; then
+            jars=($GITHUB_WORKSPACE/cli/build/libs/branchline-cli-*-all.jar)
+            if [ ${#jars[@]} -eq 0 ]; then
+              echo "JVM fat jar not found" >&2
+              exit 1
+            fi
+            JVM_JAR="${jars[0]}"
           fi
           echo "JVM_JAR_PATH=$JVM_JAR" >> $GITHUB_ENV
           echo "JVM_JAR_NAME=branchline-cli-${TAG_NAME}-all.jar" >> $GITHUB_ENV
 
-          INTERP_JVM=$(ls interpreter/build/libs/interpreter-jvm-*.jar | head -1)
-          if [ -z "$INTERP_JVM" ]; then
+          interp_jars=($GITHUB_WORKSPACE/interpreter/build/libs/interpreter-jvm-*.jar)
+          if [ ${#interp_jars[@]} -eq 0 ]; then
             echo "Interpreter JVM jar not found" >&2
             exit 1
           fi
+          INTERP_JVM="${interp_jars[0]}"
           echo "INTERPRETER_JVM_PATH=$INTERP_JVM" >> $GITHUB_ENV
           echo "INTERPRETER_JVM_NAME=branchline-interpreter-${TAG_NAME}-jvm.jar" >> $GITHUB_ENV
 
-          VM_JVM=$(ls vm/build/libs/vm-jvm-*.jar | head -1)
-          if [ -z "$VM_JVM" ]; then
+          vm_jars=($GITHUB_WORKSPACE/vm/build/libs/vm-jvm-*.jar)
+          if [ ${#vm_jars[@]} -eq 0 ]; then
             echo "VM JVM jar not found" >&2
             exit 1
           fi
+          VM_JVM="${vm_jars[0]}"
           echo "VM_JVM_PATH=$VM_JVM" >> $GITHUB_ENV
           echo "VM_JVM_NAME=branchline-vm-${TAG_NAME}-jvm.jar" >> $GITHUB_ENV
 
-          INTERP_JS=$(ls interpreter/build/distributions/*.tgz | head -1)
-          if [ -z "$INTERP_JS" ]; then
-            echo "Interpreter JS package not found" >&2
+          INTERP_TGZ="$GITHUB_WORKSPACE/interpreter/build/distributions/branchline-interpreter-${TAG_NAME}-js.tgz"
+          if [ ! -f "$INTERP_TGZ" ]; then
+            echo "Interpreter JS package not found at $INTERP_TGZ" >&2
             exit 1
           fi
-          echo "INTERPRETER_JS_PATH=$INTERP_JS" >> $GITHUB_ENV
+          echo "INTERPRETER_JS_PATH=$INTERP_TGZ" >> $GITHUB_ENV
           echo "INTERPRETER_JS_NAME=branchline-interpreter-${TAG_NAME}-js.tgz" >> $GITHUB_ENV
-
-          VM_JS=$(ls vm/build/distributions/*.tgz | head -1)
-          if [ -z "$VM_JS" ]; then
-            echo "VM JS package not found" >&2
-            exit 1
-          fi
-          echo "VM_JS_PATH=$VM_JS" >> $GITHUB_ENV
-          echo "VM_JS_NAME=branchline-vm-${TAG_NAME}-js.tgz" >> $GITHUB_ENV
 
       - name: Upload JS CLI tarball
         uses: actions/upload-release-asset@v1
@@ -160,14 +173,4 @@ jobs:
           upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
           asset_path: ${{ env.INTERPRETER_JS_PATH }}
           asset_name: ${{ env.INTERPRETER_JS_NAME }}
-          asset_content_type: application/gzip
-
-      - name: Upload VM JS package
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
-          asset_path: ${{ env.VM_JS_PATH }}
-          asset_name: ${{ env.VM_JS_NAME }}
           asset_content_type: application/gzip

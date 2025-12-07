@@ -63,3 +63,17 @@ kotlin {
         }
     }
 }
+
+def jsProductionLibraryDir = layout.buildDirectory.dir("dist/js/productionLibrary")
+
+tasks.register('packageInterpreterJs', org.gradle.api.tasks.bundling.Tar) {
+    group = 'distribution'
+    description = 'Package the JS production library for Node distribution.'
+    dependsOn 'jsNodeProductionLibraryDistribution'
+    archiveBaseName.set('branchline-interpreter')
+    archiveVersion.set(project.version.toString())
+    archiveClassifier.set('js')
+    archiveExtension.set('tgz')
+    compression = org.gradle.api.tasks.bundling.Compression.GZIP
+    from(jsProductionLibraryDir)
+}
