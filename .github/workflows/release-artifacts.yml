@@ -118,7 +118,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
-          asset_path: ${{ env.JS_TARBALL_PATH }}
+          asset_path: ${{ github.workspace }}/cli/build/distributions/branchline-cli-js-${{ env.TAG_NAME }}.tgz
           asset_name: ${{ env.JS_TARBALL_NAME }}
           asset_content_type: application/gzip
 
@@ -128,7 +128,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
-          asset_path: ${{ env.JVM_JAR_PATH }}
+          asset_path: ${{ github.workspace }}/cli/build/libs/branchline-cli-${{ env.TAG_NAME }}-all.jar
           asset_name: ${{ env.JVM_JAR_NAME }}
           asset_content_type: application/java-archive
 
