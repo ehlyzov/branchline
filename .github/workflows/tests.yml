@@ -59,8 +59,9 @@ jobs:
         if: ${{ always() }}
         run: |
           set -euo pipefail
-          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest"
-          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" | jq -r '.assets[] | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url' | head -n1)
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=5"
+          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" \
+            | jq -r '[.[] | select(.draft == false) | .assets[]? | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url] | first // ""')
           if [ -z "$URL" ]; then
             echo "No CLI jar found in latest release" >&2
             exit 1
@@ -136,8 +137,9 @@ jobs:
         if: ${{ always() }}
         run: |
           set -euo pipefail
-          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest"
-          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" | jq -r '.assets[] | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url' | head -n1)
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=5"
+          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" \
+            | jq -r '[.[] | select(.draft == false) | .assets[]? | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url] | first // ""')
           if [ -z "$URL" ]; then
             echo "No CLI jar found in latest release" >&2
             exit 1
@@ -213,8 +215,9 @@ jobs:
         if: ${{ always() }}
         run: |
           set -euo pipefail
-          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest"
-          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" | jq -r '.assets[] | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url' | head -n1)
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=5"
+          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" \
+            | jq -r '[.[] | select(.draft == false) | .assets[]? | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url] | first // ""')
           if [ -z "$URL" ]; then
             echo "No CLI jar found in latest release" >&2
             exit 1
@@ -276,8 +279,9 @@ jobs:
         if: ${{ always() }}
         run: |
           set -euo pipefail
-          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/latest"
-          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" | jq -r '.assets[] | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url' | head -n1)
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=5"
+          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" \
+            | jq -r '[.[] | select(.draft == false) | .assets[]? | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url] | first // ""')
           if [ -z "$URL" ]; then
             echo "No CLI jar found in latest release" >&2
             exit 1
