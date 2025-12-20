@@ -105,7 +105,11 @@ unary            ::= ( "!" | "-" | **AWAIT** | **SUSPEND** ) unary
                    | primary                                                ;
 
 primary          ::= literal | pathExpr | IDENTIFIER | funCall | arrayLit
-                   | objectLit | "(" expression ")" | lambdaExpr            ;
+                   | objectLit | caseExpr | "(" expression ")" | lambdaExpr ;
+
+caseExpr         ::= **CASE** "{" caseWhen+ caseElse "}"                    ;
+caseWhen         ::= **WHEN** expression **THEN** expression                ;
+caseElse         ::= **ELSE** expression                                    ;
 
 literal          ::= NUMBER | STRING | **TRUE** | **FALSE** | **NULL**       ;
 

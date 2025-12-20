@@ -8,6 +8,7 @@ import v2.ArrayCompExpr
 import v2.BinaryExpr
 import v2.BlockBody
 import v2.CallExpr
+import v2.CaseExpr
 import v2.CodeBlock
 import v2.ComputedProperty
 import v2.Connection
@@ -284,6 +285,14 @@ class SemanticAnalyzer(
             is IfElseExpr -> {
                 checkExpr(expr.condition)
                 checkExpr(expr.thenBranch)
+                checkExpr(expr.elseBranch)
+            }
+
+            is CaseExpr -> {
+                expr.whens.forEach { whenExpr ->
+                    checkExpr(whenExpr.condition)
+                    checkExpr(whenExpr.result)
+                }
                 checkExpr(expr.elseBranch)
             }
 

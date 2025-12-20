@@ -1,0 +1,25 @@
+{
+  "title": "Expressions: CASE",
+  "description": "Choose the first matching branch with CASE/WHEN/ELSE.",
+  "program": [
+    "LET totals = input.totals;",
+    "LET failed = totals.failures + totals.errors;",
+    "LET status = CASE {",
+    "    WHEN totals.tests == 0 THEN \"error\"",
+    "    WHEN failed == 0 THEN \"passing\"",
+    "    ELSE \"failing\"",
+    "};",
+    "",
+    "OUTPUT {",
+    "    status: status,",
+    "    failed: failed",
+    "}"
+  ],
+  "input": {
+    "totals": {
+      "tests": 12,
+      "failures": 0,
+      "errors": 0
+    }
+  }
+}

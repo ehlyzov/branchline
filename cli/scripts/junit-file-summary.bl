@@ -1,48 +1,13 @@
 TRANSFORM FileSummary {
-    LET suites = [];
-
-    LET direct = input.testsuite;
-    IF direct != NULL THEN {
-        LET normalized = IF IS_OBJECT(direct) THEN [direct] ELSE direct;
-        FOR suite IN normalized {
-            SET suites = APPEND(suites, suite);
-        }
-    }
-
+    LET direct = LISTIFY(input.testsuite);
     LET container = input.testsuites ?? input;
-    IF container != NULL THEN {
-        LET branch = container.testsuite;
-        IF branch == NULL THEN {
-            LET normalizedContainer = IF IS_OBJECT(container) THEN [container] ELSE container;
-            FOR suite IN normalizedContainer {
-                SET suites = APPEND(suites, suite);
-            }
-        } ELSE {
-            LET normalizedBranch = IF IS_OBJECT(branch) THEN [branch] ELSE branch;
-            FOR suite IN normalizedBranch {
-                SET suites = APPEND(suites, suite);
-            }
-        }
-    }
+    LET branch = IF container == NULL THEN []
+        ELSE IF container.testsuite == NULL THEN LISTIFY(container)
+        ELSE LISTIFY(container.testsuite);
+    LET suites = FLATTEN([direct, branch]);
 
-    LET digitMap = {
-        "0": 0,
-        "1": 1,
-        "2": 2,
-        "3": 3,
-        "4": 4,
-        "5": 5,
-        "6": 6,
-        "7": 7,
-        "8": 8,
-        "9": 9
-    };
-
+    LET totals = { tests: 0, failures: 0, errors: 0, skipped: 0 };
     LET suiteCount = 0;
-    LET totalTests = 0;
-    LET totalFailures = 0;
-    LET totalErrors = 0;
-    LET totalSkipped = 0;
 
     FOR suite IN suites {
         SET suiteCount = suiteCount + 1;
@@ -54,67 +19,36 @@ TRANSFORM FileSummary {
             { key: "skipped", value: suite["@skipped"] }
         ];
 
-        LET parsed = { tests: 0, failures: 0, errors: 0, skipped: 0 };
         FOR attr IN attrs {
-            LET text = STRING(attr.value ?? "0");
-            LET digits = MATCH(text, "[0-9]");
-            LET value = 0;
-            FOR digit IN digits {
-                LET mapped = digitMap[digit];
-                IF mapped == NULL THEN {
-                    SET value = 0;
-                } ELSE {
-                    SET value = value * 10 + mapped;
-                }
-            }
-
-            IF attr.key == "tests" THEN {
-                SET parsed.tests = value;
-            } ELSE {
-                IF attr.key == "failures" THEN {
-                    SET parsed.failures = value;
-                } ELSE {
-                    IF attr.key == "errors" THEN {
-                        SET parsed.errors = value;
-                    } ELSE {
-                        IF attr.key == "skipped" THEN {
-                            SET parsed.skipped = value;
-                        }
-                    }
-                }
-            }
+            LET value = PARSE_INT(attr.value, 0);
+            SET totals = PUT(totals, attr.key, GET(totals, attr.key, 0) + value);
         }
-
-        SET totalTests = totalTests + parsed.tests;
-        SET totalFailures = totalFailures + parsed.failures;
-        SET totalErrors = totalErrors + parsed.errors;
-        SET totalSkipped = totalSkipped + parsed.skipped;
     }
 
-    LET failed = totalFailures + totalErrors;
-    LET status = IF totalTests == 0 THEN "error"
-        ELSE IF failed == 0 THEN "passing"
-        ELSE "failing";
+    LET failed = totals.failures + totals.errors;
+    LET status = CASE {
+        WHEN totals.tests == 0 THEN "error"
+        WHEN failed == 0 THEN "passing"
+        ELSE "failing"
+    };
 
-    LET summary = STRING(totalTests) + " tests";
+    LET summary = STRING(totals.tests) + " tests";
     IF failed > 0 THEN {
         SET summary = summary + ", " + STRING(failed) + " failed";
     }
-    IF totalSkipped > 0 THEN {
-        SET summary = summary + ", " + STRING(totalSkipped) + " skipped";
+    IF totals.skipped > 0 THEN {
+        SET summary = summary + ", " + STRING(totals.skipped) + " skipped";
     }
 
-    LET color = IF status == "passing" THEN "44cc11"
-        ELSE IF status == "failing" THEN "e05d44"
-        ELSE IF status == "error" THEN "f39c12"
-        ELSE "9f9f9f";
+    LET colors = { passing: "44cc11", failing: "e05d44", error: "f39c12" };
+    LET color = GET(colors, status, "9f9f9f");
 
     OUTPUT {
         suites: suiteCount,
-        tests: totalTests,
-        failures: totalFailures,
-        errors: totalErrors,
-        skipped: totalSkipped,
+        tests: totals.tests,
+        failures: totals.failures,
+        errors: totals.errors,
+        skipped: totals.skipped,
         failed: failed,
         status: status,
         summary: summary,

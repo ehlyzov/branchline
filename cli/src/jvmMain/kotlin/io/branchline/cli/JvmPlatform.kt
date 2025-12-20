@@ -71,7 +71,7 @@ private fun elementToValue(element: Element): Any? {
             val existing = values[node.tagName]
             values[node.tagName] = when (existing) {
                 null -> value
-                is MutableList<*> -> (existing as MutableList<Any?>).apply { add(value) }
+                is List<*> -> existing.toMutableList().apply { add(value) }
                 else -> mutableListOf(existing, value)
             }
         }

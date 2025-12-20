@@ -25,7 +25,7 @@ kotlin {
             dependencies {
                 implementation project(':interpreter')
                 implementation project(':vm')
-                implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
+                implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0-RC'
             }
         }
         commonTest {
@@ -62,6 +62,37 @@ def jvmCompilation = kotlin.targets.jvm.compilations.main
 
 def jsProductionKotlinDir = layout.buildDirectory.dir("compileSync/js/main/productionExecutable/kotlin")
 def jsCliPackageDir = layout.buildDirectory.dir("cliJsPackage")
+def resolveNpmExecutable = {
+    def envNpmBin = System.getenv("NPM_BIN") ?: System.getenv("NVM_BIN")
+    if (envNpmBin) {
+        def npm = new File(envNpmBin, "npm")
+        if (npm.exists()) return npm.absolutePath
+    }
+
+    def pathEnv = System.getenv("PATH") ?: ""
+    for (def entry : pathEnv.split(File.pathSeparator)) {
+        if (!entry) continue
+        def npm = new File(entry, "npm")
+        if (npm.exists()) return npm.absolutePath
+    }
+
+    def home = System.getProperty("user.home")
+    def nvmRoots = [
+        new File(home, ".local/share/nvm"),
+        new File(home, ".nvm"),
+    ]
+    for (def root : nvmRoots) {
+        if (!root.exists()) continue
+        def candidates = root.listFiles()?.findAll { it.isDirectory() }
+            ?.collect { new File(it, "bin/npm") }
+            ?.findAll { it.exists() }
+        if (candidates && !candidates.isEmpty()) {
+            return candidates.sort { it.parentFile.parentFile.name }.last().absolutePath
+        }
+    }
+
+    return null
+}
 
 tasks.register('prepareJsCliPackage') {
     group = 'build'
@@ -91,9 +122,13 @@ tasks.register('prepareJsCliPackage') {
         pkgFile.text = resolved
 
         // Install production dependencies so the packaged CLI ships a self-contained node_modules tree
+        def npmExecutable = resolveNpmExecutable()
+        if (npmExecutable == null) {
+            throw new GradleException("npm executable not found; ensure NVM_BIN or PATH includes npm.")
+        }
         exec {
             workingDir targetRoot
-            commandLine 'npm', 'install', '--production', '--ignore-scripts', '--no-audit', '--no-fund'
+            commandLine npmExecutable, 'install', '--production', '--ignore-scripts', '--no-audit', '--no-fund'
         }
     }
 }

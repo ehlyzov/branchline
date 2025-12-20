@@ -13,7 +13,7 @@ expect fun isBigDec(x: Any?): Boolean
 fun toBigInt(n: Number): BLBigInt {
     val any = n as Any
     return when {
-        any is BLBigInt -> any as BLBigInt
+        any is BLBigInt -> any
         else -> blBigIntOfLong(n.toLong())
     }
 }
@@ -21,7 +21,7 @@ fun toBigInt(n: Number): BLBigInt {
 fun toBigDec(n: Number): BLBigDec {
     val any = n as Any
     return when {
-        any is BLBigDec -> any as BLBigDec
+        any is BLBigDec -> any
         any is BLBigInt -> blBigDecOfLong(n.toLong())
         n is Double -> blBigDecOfDouble(n)
         n is Float -> blBigDecOfDouble(n.toDouble())

@@ -16,6 +16,8 @@ class StdCoreModule : StdModule {
         r.fn("COLLECT", ::fnCOLLECT)
         r.fn("PRINT", ::fnPRINT)
         r.fn("IS_OBJECT", ::fnIS_OBJECT)
+        r.fn("LISTIFY", ::fnLISTIFY)
+        r.fn("GET", ::fnGET)
     }
 }
 
@@ -54,13 +56,16 @@ private fun fnPUT(args: List<Any?>): Any {
                     addAll(coll)
                     this[i] = value
                 }
+
                 i == coll.size -> ArrayList<Any?>(coll.size + 1).apply {
                     addAll(coll)
                     add(value)
                 }
+
                 else -> error("PUT: index $i out of bounds 0..${coll.size}")
             }
         }
+
         else -> error("PUT: unsupported collection")
     }
 }
@@ -79,6 +84,7 @@ private fun fnDELETE(args: List<Any?>): Any {
                 addAll(coll.subList(i + 1, coll.size))
             }
         }
+
         else -> error("DELETE: unsupported collection")
     }
 }
@@ -130,6 +136,7 @@ private fun fnWALK(args: List<Any?>): Any {
                             yield(entry(newPath, k, v, newPath.size, false))
                         }
                     }
+
                     is Int -> {
                         val idx = ch
 
@@ -145,6 +152,7 @@ private fun fnWALK(args: List<Any?>): Any {
                             yield(entry(newPath, idx, v, newPath.size, false))
                         }
                     }
+
                     else -> error("WALK: unexpected child element ${ch?.let { it::class.simpleName }}")
                 }
             }
@@ -195,3 +203,20 @@ private fun fnIS_OBJECT(args: List<Any?>): Boolean {
     return x is Map<*, *>
 }
 
+private fun fnLISTIFY(args: List<Any?>): Any {
+    require(args.size == 1) { "LISTIFY(x)" }
+    return when (val v = args[0]) {
+        null -> emptyList<Any?>()
+        is List<*> -> v
+        is Map<*, *> -> listOf(v)
+        else -> error("LISTIFY: arg must be list, object, or null")
+    }
+}
+
+private fun fnGET(args: List<Any?>): Any? {
+    require(args.size == 2 || args.size == 3) { "GET(obj, key[, default])" }
+    val obj = args[0] as? Map<*, *> ?: error("GET: first arg must be object")
+    val key = asObjectKey(args[1])
+    val fallback = if (args.size == 3) args[2] else null
+    return if (obj.containsKey(key)) obj[key] else fallback
+}

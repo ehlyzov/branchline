@@ -43,6 +43,18 @@ Literals represent constant values like numbers, strings, booleans, and null.
 
 The `UNION` keyword creates union type expressions.
 
+## Case {#case}
+
+`CASE` selects the first matching branch from top to bottom. `ELSE` is required.
+
+```branchline
+LET status = CASE {
+    WHEN totals.tests == 0 THEN "error"
+    WHEN failed == 0 THEN "passing"
+    ELSE "failing"
+};
+```
+
 ## Operator hierarchy
 
 ```
@@ -63,7 +75,10 @@ unary       ::= ( "!" | "-" | AWAIT | SUSPEND ) unary | primary
 
 ```
 primary ::= literal | pathExpr | IDENTIFIER | funCall | arrayLit
-          | objectLit | "(" expression ")" | lambdaExpr
+          | objectLit | caseExpr | "(" expression ")" | lambdaExpr
+caseExpr ::= CASE "{" caseWhen+ caseElse "}"
+caseWhen ::= WHEN expression THEN expression
+caseElse ::= ELSE expression
 literal ::= NUMBER | STRING | TRUE | FALSE | NULL
 ```
 【F:language/src/test/kotlin/v2/ebnf.txt†L112-L116】

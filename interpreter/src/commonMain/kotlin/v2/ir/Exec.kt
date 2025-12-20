@@ -199,7 +199,7 @@ class Exec(
                 when (p) {
                     is LiteralProperty -> {
                         val key = unwrapKey(p.key)
-                        val value = Debug.captureOutputField(key ?: "<key>") {
+                        val value = Debug.captureOutputField(key) {
                             eval(p.value, env)
                         }
                         put(key, value)
@@ -208,7 +208,7 @@ class Exec(
                     is ComputedProperty -> {
                         val keyValue = eval(p.keyExpr, env)
                         val key = mapKeyFromDynamic(keyValue)
-                        val value = Debug.captureOutputField(key ?: "<key>") {
+                        val value = Debug.captureOutputField(key) {
                             eval(p.value, env)
                         }
                         put(key, value)
@@ -358,8 +358,7 @@ class Exec(
     private fun resolveInitList(initExpr: Expr?, env: MutableMap<String, Any?>): List<Any?> {
         val iv = initExpr?.let { eval(it, env) } ?: emptyList<Any?>()
         require(iv is List<*>) { "INIT for APPEND TO must evaluate to a list (got ${iv::class.simpleName})" }
-        @Suppress("UNCHECKED_CAST")
-        return iv as List<Any?>
+        return iv
     }
 
     // --- MODIFY: apply applier at a static path
@@ -440,12 +439,9 @@ class Exec(
             null -> {
                 val iv = n.init?.let { eval(it, env) } ?: emptyList<Any?>()
                 require(iv is List<*>) { "INIT for APPEND TO must evaluate to a list" }
-                @Suppress("UNCHECKED_CAST")
-                (iv as List<Any?>)
+                iv
             }
-            is List<*> ->
-                @Suppress("UNCHECKED_CAST")
-                (cur as List<Any?>)
+            is List<*> -> cur
             else -> error("APPEND TO expects list in variable '${n.name}'")
         }
         val appended = ArrayList<Any?>(base.size + 1).apply {
@@ -583,8 +579,7 @@ class Exec(
                 require(
                     e is Map<*, *>
                 ) { "Expected list of objects in OUTPUT, got ${e?.let { it::class.simpleName } ?: "null"}" }
-                @Suppress("UNCHECKED_CAST")
-                out += normalizeMapKeys(e as Map<*, *>)
+                out += normalizeMapKeys(e )
             }
 
             else -> error("Expected object or list of objects in OUTPUT, got ${v::class.simpleName}")

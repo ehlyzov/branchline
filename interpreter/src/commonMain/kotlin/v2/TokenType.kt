@@ -15,7 +15,7 @@ enum class TokenType {
 
     // Keywords
     SOURCE, OUTPUT, USING, TRANSFORM, STREAM, BUFFER,
-    FOR, EACH, IF, THEN, ELSE, AS, ENUM, LET, IN,
+    FOR, EACH, CASE, WHEN, IF, THEN, ELSE, AS, ENUM, LET, IN,
     AWAIT, SUSPEND, CALL, TRUE, FALSE, NULL,
     PARALLEL, ONBLOCK, FOREACH, INPUT, PIPE,
     ABORT, THROW, TRY, CATCH, RETRY, TIMES, BACKOFF,
@@ -25,4 +25,3 @@ enum class TokenType {
     // End of file
     EOF
 }
-

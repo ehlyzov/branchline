@@ -38,14 +38,14 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-test'
                 implementation 'org.junit.jupiter:junit-jupiter-params:5.10.2'
                 implementation 'net.jqwik:jqwik:1.8.5'
-                implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
+                implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0-RC'
             }
         }
         jsTest {
             dependencies {
                 implementation 'org.jetbrains.kotlin:kotlin-test'
                 implementation project(':interpreter')
-                implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0'
+                implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0-RC'
             }
         }
     }

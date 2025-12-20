@@ -45,7 +45,7 @@ class PlaygroundFacadeTest {
             }
             """.trimIndent()
         )
-        val actual = Json.parseToJsonElement(result.outputJson!!)
+        val actual = Json.parseToJsonElement(result.outputJson)
         assertEquals(expected, actual)
     }
 
@@ -63,7 +63,7 @@ class PlaygroundFacadeTest {
         assertFalse(result.success)
         assertNull(result.outputJson)
         assertNotNull(result.errorMessage)
-        assertTrue(result.errorMessage!!.isNotBlank())
+        assertTrue(result.errorMessage.isNotBlank())
     }
 
     @Test
@@ -88,7 +88,7 @@ class PlaygroundFacadeTest {
 
         assertTrue(result.success)
         assertNotNull(result.outputJson)
-        val json = Json.parseToJsonElement(result.outputJson!!)
+        val json = Json.parseToJsonElement(result.outputJson)
         assertEquals(
             Json.parseToJsonElement("""{"greeting":"Hello, Grace"}"""),
             json

@@ -559,6 +559,10 @@ private class Evaluator(
         }
     }
 
+    private fun handleCase(e: CaseExpr, env: Env): Any? {
+        return eval(lowerCaseExpr(e), env)
+    }
+
     private fun handleAccess(e: AccessExpr, env: Env): Any? {
         // вычисляем базу (handleIdentifier уже сам эмитит Read(e.name, ...) при включённом трассере)
         var cur = eval(e.base, env)
@@ -668,6 +672,7 @@ private class Evaluator(
             is UnaryExpr -> handleUnary(e, env)
             is BinaryExpr -> handleBinary(e, env)
             is IfElseExpr -> handleIfElse(e, env)
+            is CaseExpr -> handleCase(e, env)
             is AccessExpr -> {
                 if (Debug.tracer != null) {
                     handleAccessTraced(e, env)

@@ -1,6 +1,6 @@
 plugins {
-    id 'org.jetbrains.kotlin.jvm' version '2.2.0' apply false
-    id 'org.jetbrains.kotlin.plugin.serialization' version '2.2.0' apply false
+    id 'org.jetbrains.kotlin.jvm' version '2.3.0' apply false
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.3.0' apply false
     id 'io.gitlab.arturbosch.detekt' version '1.23.6' apply false
     id 'me.champeau.jmh' version '0.7.3' apply false
     id 'jacoco'
@@ -21,7 +21,7 @@ subprojects {
     apply plugin: 'jacoco'
 
     group = 'io.github.ehlyzov.branchline-public'
-    version = 'v0.9.0-alpha'
+    version = 'v0.9.1-alpha'
 
     detekt {
         config = files("$rootDir/detekt.yml")
@@ -47,7 +47,7 @@ subprojects {
     // Configure Kotlin toolchains/options depending on plugin used
     plugins.withId('org.jetbrains.kotlin.jvm') {
         kotlin {
-            jvmToolchain(21)
+            jvmToolchain(23)
             compilerOptions {
                 freeCompilerArgs.add("-Xnested-type-aliases")
                 freeCompilerArgs.add("-Xexpect-actual-classes")
@@ -56,12 +56,12 @@ subprojects {
     }
     plugins.withId('org.jetbrains.kotlin.multiplatform') {
         kotlin {
-            jvmToolchain(21)
+            jvmToolchain(23)
         }
     }
 
     jacoco {
-        toolVersion = '0.8.11'
+        toolVersion = '0.8.13'
     }
 
     tasks.matching { it.name == 'jacocoTestReport' }.configureEach { report ->

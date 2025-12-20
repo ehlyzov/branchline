@@ -214,9 +214,19 @@ data class IfElseExpr(
     override val token: Token,
 ) : Expr
 
+public data class CaseWhen(
+    val condition: Expr,
+    val result: Expr,
+)
+
+public data class CaseExpr(
+    val whens: List<CaseWhen>,
+    val elseBranch: Expr,
+    override val token: Token,
+) : Expr
+
 data class SharedStateAwaitExpr(
     val resource: String,
     val key: String,
     override val token: Token,
 ) : Expr
-

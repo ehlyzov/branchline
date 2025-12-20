@@ -10,6 +10,7 @@ Utilities for working with objects and arrays.
 - `KEYS(coll)` → list of keys/indices. Lists return indices `[0,1,...]`. Errors on non list/object.
 - `VALUES(obj)` → list of values from an object. Errors if not an object.
 - `ENTRIES(obj)` → list of `{ key, value }` pairs. Errors if not an object.
+- `GET(obj, key[, default])` → value at key or `default` when missing. Errors if not an object.
 
 Run it: [KEYS/VALUES/ENTRIES example](../playground.md?example=stdlib-core-keys-values).
 
@@ -29,8 +30,10 @@ Run it: [WALK example](../playground.md?example=stdlib-core-walk).
 ## Normalize iterables
 - `COLLECT(iterable)` → list from a sequence/iterable. Errors on unsupported types.
 - `IS_OBJECT(x)` → boolean indicating object-ness (maps only).
+- `LISTIFY(x)` → `[]` for `null`, list as-is, or `[object]`. Errors on unsupported types.
 
 Run it: [APPEND/PREPEND/COLLECT example](../playground.md?example=stdlib-core-append-prepend).
+Run it: [LISTIFY/GET example](../playground.md?example=stdlib-core-listify-get).
 
 ## Side effects
 - `PRINT(...args)` → writes to stdout, returns `null`. Use in CLI/runtime environments; not demonstrated in the playground because browser consoles do not display the call reliably.

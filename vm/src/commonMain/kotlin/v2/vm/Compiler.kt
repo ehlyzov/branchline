@@ -169,6 +169,7 @@ class Compiler(
             is ObjectExpr -> compileObjectExpr(expr)
             is LambdaExpr -> compileLambdaExpr(expr)
             is IfElseExpr -> compileIfElseExpr(expr)
+            is CaseExpr -> compileExpr(lowerCaseExpr(expr))
             is InvokeExpr -> compileInvokeExpr(expr)
             is SharedStateAwaitExpr -> {
                 // Push args so that VM pops into (resource, key) in correct order
@@ -199,9 +200,11 @@ class Compiler(
         val before = instructions.size
         // Fast-path: SET root.staticKey = value
         val target = node.target
-        if (target is AccessExpr && target.base is IdentifierExpr && target.segs.size == 1 && target.segs[0] is AccessSeg.Static) {
-            val root = (target.base as IdentifierExpr).name
-            val key = (target.segs[0] as AccessSeg.Static).key
+        val baseIdent = target.base as? IdentifierExpr
+        val staticSeg = target.segs.singleOrNull() as? AccessSeg.Static
+        if (baseIdent != null && staticSeg != null) {
+            val root = baseIdent.name
+            val key = staticSeg.key
             // stack: value
             compileExpr(node.value)
             // load container and arrange (container, value)
@@ -243,9 +246,11 @@ class Compiler(
         val before = instructions.size
         // Fast-path: APPEND TO root.staticKey elem INIT init
         val target = node.target
-        if (target is AccessExpr && target.base is IdentifierExpr && target.segs.size == 1 && target.segs[0] is AccessSeg.Static) {
-            val root = (target.base as IdentifierExpr).name
-            val key = (target.segs[0] as AccessSeg.Static).key
+        val baseIdent = target.base as? IdentifierExpr
+        val staticSeg = target.segs.singleOrNull() as? AccessSeg.Static
+        if (baseIdent != null && staticSeg != null) {
+            val root = baseIdent.name
+            val key = staticSeg.key
             // stack: elem
             compileExpr(node.value)
             // push init (or empty [])

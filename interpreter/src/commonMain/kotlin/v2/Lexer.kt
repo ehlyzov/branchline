@@ -16,6 +16,8 @@ class Lexer(private val source: String) {
         "BUFFER" to TokenType.BUFFER,
         "FOR" to TokenType.FOR,
         "EACH" to TokenType.EACH,
+        "CASE" to TokenType.CASE,
+        "WHEN" to TokenType.WHEN,
         "IF" to TokenType.IF,
         "THEN" to TokenType.THEN,
         "ELSE" to TokenType.ELSE,

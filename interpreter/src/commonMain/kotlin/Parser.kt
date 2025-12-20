@@ -603,7 +603,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
                        right.segs[0] is AccessSeg.Static &&
                        (right.segs[0] as AccessSeg.Static).key is ObjKey.Name) {
                 // This looks like AWAIT resource.key - treat as SharedState await
-                val resourceName = (right.base as IdentifierExpr).name
+                val resourceName = right.base.name
                 val keyName = ((right.segs[0] as AccessSeg.Static).key as ObjKey.Name).v
                 SharedStateAwaitExpr(resourceName, keyName, awaitTok)
             } else {
@@ -722,6 +722,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     private fun parsePrimary(): Expr {
         val tok = advance()
         return when (tok.type) {
+            TokenType.CASE -> parseCase(tok)
             TokenType.APPEND -> {
                 val t = previous()
                 // опционально: подсказка, если дальше не '('
@@ -753,6 +754,24 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
 
             else -> error(tok, "Unexpected token in expression")
         }
+    }
+
+    private fun parseCase(caseTok: Token): Expr {
+        consume(TokenType.LEFT_BRACE, "Expect '{' after CASE")
+        val whens = mutableListOf<CaseWhen>()
+        while (match(TokenType.WHEN)) {
+            val condition = parseExpression()
+            consume(TokenType.THEN, "Expect THEN after CASE WHEN condition")
+            val result = parseExpression()
+            whens += CaseWhen(condition, result)
+        }
+        if (whens.isEmpty()) {
+            error(caseTok, "CASE requires at least one WHEN")
+        }
+        consume(TokenType.ELSE, "Expect ELSE in CASE")
+        val elseExpr = parseExpression()
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after CASE")
+        return CaseExpr(whens, elseExpr, caseTok)
     }
 
     private fun looksLikeLambdaAt(idxStart: Int = current): Boolean {

@@ -238,6 +238,15 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
             val elseBranch = renderExprForDebug(expr.elseBranch, values)
             "(if $cond $thenBranch $elseBranch)"
         }
+        is v2.CaseExpr -> {
+            val whens = expr.whens.joinToString(" ") { whenExpr ->
+                val cond = renderExprForDebug(whenExpr.condition, values)
+                val result = renderExprForDebug(whenExpr.result, values)
+                "when $cond then $result"
+            }
+            val elseBranch = renderExprForDebug(expr.elseBranch, values)
+            "(case $whens else $elseBranch)"
+        }
         is v2.LambdaExpr -> "<lambda>"
         else -> expr::class.simpleName ?: "<expr>"
     }
@@ -496,7 +505,7 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
                         }
                     }
                 }
-                if (event.name != null) lastByVar[event.name!!] = event
+                if (event.name != null) lastByVar[event.name] = event
             }
 
             is TraceEvent.Call -> {

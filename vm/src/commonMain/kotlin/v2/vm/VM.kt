@@ -78,7 +78,7 @@ class VM(
     private val loopStack = ArrayDeque<LoopState>()
 
     // Debugging
-    private inline fun currentTracer(): Tracer? = tracer ?: Debug.tracer
+    private fun currentTracer(): Tracer? = tracer ?: Debug.tracer
 
     private inline fun <T> tracedCall(
         kind: String,

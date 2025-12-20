@@ -1,0 +1,37 @@
+{
+  "title": "Stdlib: LISTIFY, GET, INT, PARSE_INT",
+  "description": "Normalize input shapes, use safe lookups, and parse integers strictly or tolerantly.",
+  "program": [
+    "LET suitesFromObject = LISTIFY(input.testsuite);",
+    "LET suitesFromList = LISTIFY(input.suites);",
+    "LET colors = { passing: \"44cc11\", failing: \"e05d44\" };",
+    "LET color = GET(colors, input.status, \"9f9f9f\");",
+    "LET strictInt = INT(input.strict);",
+    "LET parsedInt = PARSE_INT(input.messy, 0);",
+    "",
+    "OUTPUT {",
+    "    suites_from_object: LENGTH(suitesFromObject),",
+    "    suites_from_list: LENGTH(suitesFromList),",
+    "    color: color,",
+    "    strict_int: strictInt,",
+    "    parsed_int: parsedInt",
+    "}"
+  ],
+  "input": {
+    "testsuite": {
+      "@tests": "12",
+      "@failures": "0"
+    },
+    "suites": [
+      {
+        "@tests": "3"
+      },
+      {
+        "@tests": "5"
+      }
+    ],
+    "status": "passing",
+    "strict": "0042",
+    "messy": "x1y2"
+  }
+}
