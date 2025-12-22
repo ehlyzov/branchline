@@ -66,6 +66,7 @@ jobs:
             echo "No CLI jar found in latest release" >&2
             exit 1
           fi
+          echo "Using CLI: $URL"
           curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -o branchline-cli.jar "$URL"
           echo "BRANCHLINE_CLI_JAR=$PWD/branchline-cli.jar" >> $GITHUB_ENV
 
