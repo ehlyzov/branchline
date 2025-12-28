@@ -263,7 +263,6 @@ public class TransformShapeSynthesizer(
         is v2.BinaryExpr -> mergeSequential(analyzeExpr(expr.left), analyzeExpr(expr.right))
         is v2.SharedStateAwaitExpr -> ShapeState.empty()
         is v2.LambdaExpr -> analyzeLambdaExpr(expr)
-        else -> ShapeState.empty()
     }
 
     private fun analyzeIdentifier(expr: IdentifierExpr): ShapeState {

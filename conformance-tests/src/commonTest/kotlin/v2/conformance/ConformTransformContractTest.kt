@@ -36,7 +36,11 @@ class ConformTransformContractTest {
     fun infers_union_shapes_across_branches() {
         val program = """
             TRANSFORM T {
-                IF input.flag THEN OUTPUT { value: 1 } ELSE OUTPUT { value: "one" }
+                IF input.flag {
+                    OUTPUT { value: 1 }
+                } ELSE {
+                    OUTPUT { value: "one" }
+                }
             }
         """.trimIndent()
         val contract = synthesizeContract(program)
@@ -53,7 +57,11 @@ class ConformTransformContractTest {
     fun infers_optional_output_field_when_missing_in_branch() {
         val program = """
             TRANSFORM T {
-                IF input.flag THEN OUTPUT { value: 1 } ELSE OUTPUT { }
+                IF input.flag {
+                    OUTPUT { value: 1 }
+                } ELSE {
+                    OUTPUT { }
+                }
             }
         """.trimIndent()
         val contract = synthesizeContract(program)
