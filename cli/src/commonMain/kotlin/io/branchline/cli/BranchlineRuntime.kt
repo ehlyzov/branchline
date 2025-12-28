@@ -15,6 +15,7 @@ import v2.COMPAT_INPUT_ALIASES
 import v2.ir.Exec
 import v2.ir.ToIR
 import v2.ir.TransformRegistry
+import v2.ir.buildTransformDescriptors
 import v2.ir.makeEval
 import v2.sema.SemanticAnalyzer
 import v2.std.StdLib
@@ -28,7 +29,7 @@ class BranchlineProgram(private val source: String) {
     private val hostFns: Map<String, (List<Any?>) -> Any?>
     private val funcs: Map<String, FuncDecl>
     private val transforms: List<TransformDecl>
-    private val namedTransforms: Map<String, TransformDecl>
+    private val namedDescriptors: Map<String, v2.ir.TransformDescriptor>
     private val registry: TransformRegistry
     private val eval: (v2.Expr, MutableMap<String, Any?>) -> Any?
 
@@ -46,14 +47,14 @@ class BranchlineProgram(private val source: String) {
         if (transforms.isEmpty()) {
             throw CliException("Program must declare at least one TRANSFORM block")
         }
-        namedTransforms = transforms.mapNotNull { decl -> decl.name?.let { it to decl } }.toMap()
-        registry = TransformRegistry(funcs, hostFns, namedTransforms)
+        namedDescriptors = buildTransformDescriptors(transforms, hostFns.keys)
+        registry = TransformRegistry(funcs, hostFns, namedDescriptors)
         eval = makeEval(hostFns, funcs, registry, tracer = null)
     }
 
     fun selectTransform(name: String?): TransformDecl {
         if (name == null) return transforms.first()
-        val match = namedTransforms[name]
+        val match = namedDescriptors[name]?.decl
         if (match != null) return match
         throw CliException("Transform '$name' not found")
     }

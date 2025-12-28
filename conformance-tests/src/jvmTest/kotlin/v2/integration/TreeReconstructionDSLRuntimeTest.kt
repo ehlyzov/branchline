@@ -9,6 +9,7 @@ import v2.*
 import v2.ir.Exec
 import v2.ir.ToIR
 import v2.ir.TransformRegistry
+import v2.ir.buildTransformDescriptors
 import v2.ir.makeEval
 import v2.std.DefaultSharedStore
 import v2.std.SharedResourceKind
@@ -62,10 +63,11 @@ class TreeReconstructionDSLRuntimeTest {
 
         val funcs = program.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
         val hostFns = v2.std.StdLib.fns
-        val transforms = program.decls.filterIsInstance<TransformDecl>().associateBy { it.name ?: "" }
+        val transforms = program.decls.filterIsInstance<TransformDecl>()
+        val descriptors = buildTransformDescriptors(transforms, hostFns.keys)
 
         val ir = ToIR(funcs, hostFns).compile(transform.body.statements)
-        val registry = TransformRegistry(funcs, hostFns, transforms)
+        val registry = TransformRegistry(funcs, hostFns, descriptors)
 
         val sharedStore = DefaultSharedStore().apply {
             addResource("nodeParents", SharedResourceKind.SINGLE)
