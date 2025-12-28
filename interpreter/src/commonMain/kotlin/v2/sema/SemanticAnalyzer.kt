@@ -2,8 +2,10 @@ package v2.sema
 
 import v2.AbortStmt
 import v2.AccessSeg
+import v2.AccessExpr
 import v2.AppendToStmt
 import v2.AppendToVarStmt
+import v2.ArrayExpr
 import v2.ArrayCompExpr
 import v2.BinaryExpr
 import v2.BlockBody
@@ -24,8 +26,10 @@ import v2.IBig
 import v2.IdentifierExpr
 import v2.IfElseExpr
 import v2.IfStmt
+import v2.InvokeExpr
 import v2.Mode
 import v2.LetStmt
+import v2.LambdaExpr
 import v2.LiteralProperty
 import v2.ModifyStmt
 import v2.NodeDecl
@@ -44,8 +48,19 @@ import v2.Token
 import v2.TokenType
 import v2.TopLevelDecl
 import v2.TransformDecl
+import v2.TransformSignature
 import v2.TryCatchStmt
 import v2.TypeDecl
+import v2.TypeKind
+import v2.TypeRef
+import v2.PrimitiveType
+import v2.PrimitiveTypeRef
+import v2.ArrayTypeRef
+import v2.RecordFieldType
+import v2.RecordTypeRef
+import v2.UnionTypeRef
+import v2.EnumTypeRef
+import v2.NamedTypeRef
 import v2.UnaryExpr
 import v2.DEFAULT_INPUT_ALIAS
 import v2.COMPAT_INPUT_ALIASES
@@ -53,10 +68,15 @@ import v2.COMPAT_INPUT_ALIASES
 class SemanticException(msg: String, val token: Token) :
     RuntimeException("[${token.line}:${token.column}] $msg near '${token.lexeme}'")
 
+data class SemanticWarning(val message: String, val token: Token)
+
 /** Один прогон поверх готового AST. Создаёт таблицу символов и валидирует. */
 class SemanticAnalyzer(
     private val hostFns: Set<String> = emptySet(),
+    private val strictContracts: Boolean = false,
 ) {
+
+    public val warnings: MutableList<SemanticWarning> = mutableListOf()
 
     /** для top-level: FUNC / SHARED / TYPE / SOURCE / TRANSFORM / OUTPUT */
     private val globals = mutableMapOf<String, TopLevelDecl>()
@@ -65,9 +85,16 @@ class SemanticAnalyzer(
     private val scopes = ArrayDeque<MutableSet<String>>() // LIFO
 
     private var currentTransformMode: Mode? = null
+    private var currentTransformSignature: TransformSignature? = null
+    private var currentInputContract: TypeRef? = null
+    private var currentOutputContract: TypeRef? = null
+
+    private val resolvedTypeCache = mutableMapOf<String, TypeRef>()
+    private val resolvingTypeNames = mutableSetOf<String>()
 
     /** Запуск. Бросает SemanticException при первой найденной ошибке. */
     fun analyze(prog: Program) {
+        warnings.clear()
         collectGlobals(prog)
         prog.decls.forEach { checkTopLevel(it) }
     }
@@ -108,10 +135,19 @@ class SemanticAnalyzer(
     private fun checkTopLevel(decl: TopLevelDecl) = when (decl) {
         is TransformDecl -> {
             val prev = currentTransformMode // save
+            val prevSignature = currentTransformSignature
+            val prevInput = currentInputContract
+            val prevOutput = currentOutputContract
             currentTransformMode = decl.mode
+            currentTransformSignature = decl.signature
+            currentInputContract = decl.signature?.input?.let { resolveTypeRef(it) }
+            currentOutputContract = decl.signature?.output?.let { resolveTypeRef(it) }
             decl.body as CodeBlock
             checkBlock(decl.body)
             currentTransformMode = prev // restore
+            currentTransformSignature = prevSignature
+            currentInputContract = prevInput
+            currentOutputContract = prevOutput
         }
 
         is FuncDecl -> when (val b = decl.body) {
@@ -226,7 +262,10 @@ class SemanticAnalyzer(
             true
         }
 
-        is OutputStmt -> checkExpr(stmt.template)
+        is OutputStmt -> {
+            checkExpr(stmt.template)
+            validateOutputTemplate(stmt.template)
+        }
         is IfStmt -> {
             checkExpr(stmt.condition)
             checkBlock(stmt.thenBlock)
@@ -325,6 +364,30 @@ class SemanticAnalyzer(
                 checkExpr(expr.mapExpr)
                 scopes.removeLast()
             }
+
+            is AccessExpr -> {
+                checkExpr(expr.base)
+                expr.segs.forEach { seg ->
+                    if (seg is AccessSeg.Dynamic) {
+                        checkExpr(seg.keyExpr)
+                    }
+                }
+                validateInputAccess(expr)
+            }
+
+            is InvokeExpr -> {
+                checkExpr(expr.target)
+                expr.args.forEach { checkExpr(it) }
+            }
+
+            is LambdaExpr -> {
+                when (val body = expr.body) {
+                    is ExprBody -> withScope(expr.params) { checkExpr(body.expr) }
+                    is BlockBody -> checkBlock(body.block, expr.params)
+                }
+            }
+
+            is ArrayExpr -> expr.elements.forEach { checkExpr(it) }
             // StringExpr / NumberExpr – ничего проверять
             else -> Unit
         }
@@ -337,4 +400,237 @@ class SemanticAnalyzer(
                 scopes.any { name in it } || // LET / var цикла
                 name in globals || // SOURCE / SHARED / TYPE / FUNC
                 name in hostFns
+
+    private fun resolveTypeRef(typeRef: TypeRef): TypeRef =
+        resolveTypeRef(typeRef, resolvingTypeNames)
+
+    private fun resolveTypeRef(typeRef: TypeRef, resolving: MutableSet<String>): TypeRef = when (typeRef) {
+        is PrimitiveTypeRef -> typeRef
+        is EnumTypeRef -> typeRef
+        is ArrayTypeRef -> ArrayTypeRef(
+            elementType = resolveTypeRef(typeRef.elementType, resolving),
+            token = typeRef.token,
+        )
+        is RecordTypeRef -> {
+            val resolvedFields = typeRef.fields.map { field ->
+                RecordFieldType(
+                    name = field.name,
+                    type = resolveTypeRef(field.type, resolving),
+                    optional = field.optional,
+                    token = field.token,
+                )
+            }
+            RecordTypeRef(
+                fields = resolvedFields,
+                token = typeRef.token,
+            )
+        }
+        is UnionTypeRef -> {
+            val resolvedMembers = typeRef.members.map { member ->
+                resolveTypeRef(member, resolving)
+            }
+            UnionTypeRef(
+                members = resolvedMembers,
+                token = typeRef.token,
+            )
+        }
+        is NamedTypeRef -> resolveNamedType(typeRef, resolving)
+    }
+
+    private fun resolveNamedType(typeRef: NamedTypeRef, resolving: MutableSet<String>): TypeRef {
+        resolvedTypeCache[typeRef.name]?.let { return it }
+        val decl = globals[typeRef.name] as? TypeDecl
+            ?: throw SemanticException("Unknown type '${typeRef.name}'", typeRef.token)
+        if (!resolving.add(typeRef.name)) {
+            throw SemanticException("Cyclic type reference '${typeRef.name}'", typeRef.token)
+        }
+        val resolved = resolveTypeDecl(decl, resolving)
+        resolving.remove(typeRef.name)
+        resolvedTypeCache[typeRef.name] = resolved
+        return resolved
+    }
+
+    private fun resolveTypeDecl(typeDecl: TypeDecl, resolving: MutableSet<String>): TypeRef = when (typeDecl.kind) {
+        TypeKind.ENUM -> EnumTypeRef(typeDecl.defs, typeDecl.token)
+        TypeKind.UNION -> {
+            val members = typeDecl.defs.map { name ->
+                resolveTypeRef(typeRefFromName(name, typeDecl.token), resolving)
+            }
+            UnionTypeRef(
+                members = members,
+                token = typeDecl.token,
+            )
+        }
+    }
+
+    private fun typeRefFromName(name: String, token: Token): TypeRef {
+        val normalized = name.lowercase()
+        return when (normalized) {
+            "string", "text" -> PrimitiveTypeRef(PrimitiveType.TEXT, token)
+            "number" -> PrimitiveTypeRef(PrimitiveType.NUMBER, token)
+            "boolean" -> PrimitiveTypeRef(PrimitiveType.BOOLEAN, token)
+            "null" -> PrimitiveTypeRef(PrimitiveType.NULL, token)
+            "any" -> PrimitiveTypeRef(PrimitiveType.ANY, token)
+            else -> NamedTypeRef(name, token)
+        }
+    }
+
+    private fun validateInputAccess(expr: AccessExpr) {
+        val signature = currentTransformSignature ?: return
+        val inputType = currentInputContract ?: return
+        val baseIdent = expr.base as? IdentifierExpr ?: return
+        if (!isInputAlias(baseIdent.name)) return
+
+        var currentType = inputType
+        for (seg in expr.segs) {
+            if (seg is AccessSeg.Dynamic) return
+            val key = seg.key
+            currentType = when (val resolved = resolveTypeRef(currentType)) {
+                is PrimitiveTypeRef -> {
+                    if (resolved.kind == PrimitiveType.ANY || resolved.kind == PrimitiveType.ANY_NULLABLE) {
+                        return
+                    }
+                    reportContractMismatch(
+                        "Input contract does not allow access via ${renderKey(key)}",
+                        signature.tokenSpan.start,
+                    )
+                    return
+                }
+
+                is EnumTypeRef -> {
+                    reportContractMismatch(
+                        "Input contract does not allow access via ${renderKey(key)}",
+                        signature.tokenSpan.start,
+                    )
+                    return
+                }
+
+                is RecordTypeRef -> {
+                    if (key !is ObjKey.Name) {
+                        reportContractMismatch(
+                            "Input contract expects object fields, got index access ${renderKey(key)}",
+                            signature.tokenSpan.start,
+                        )
+                        return
+                    }
+                    val field = resolved.fields.firstOrNull { it.name == key.v }
+                    if (field == null) {
+                        reportContractMismatch(
+                            "Input contract does not declare field '${key.v}'",
+                            signature.tokenSpan.start,
+                        )
+                        return
+                    }
+                    field.type
+                }
+
+                is ArrayTypeRef -> {
+                    if (key is ObjKey.Name) {
+                        reportContractMismatch(
+                            "Input contract expects list access, got field '${key.v}'",
+                            signature.tokenSpan.start,
+                        )
+                        return
+                    }
+                    resolved.elementType
+                }
+
+                is UnionTypeRef -> return
+                is NamedTypeRef -> return
+            }
+        }
+    }
+
+    private fun validateOutputTemplate(expr: Expr) {
+        val signature = currentTransformSignature ?: return
+        val outputType = currentOutputContract ?: return
+        val resolved = resolveTypeRef(outputType)
+        when (resolved) {
+            is RecordTypeRef -> validateOutputObject(expr, resolved, signature.tokenSpan.end)
+            is ArrayTypeRef -> validateOutputArray(expr, resolved, signature.tokenSpan.end)
+            else -> Unit
+        }
+    }
+
+    private fun validateOutputObject(expr: Expr, typeRef: RecordTypeRef, token: Token) {
+        val obj = expr as? ObjectExpr
+        if (obj == null) {
+            reportContractMismatch("Output contract expects an object", token)
+            return
+        }
+        val declaredFields = typeRef.fields.associateBy { it.name }
+        val literalFields = obj.fields.mapNotNull { property ->
+            when (property) {
+                is LiteralProperty -> (property.key as? ObjKey.Name)?.v
+                is ComputedProperty -> null
+            }
+        }.toSet()
+
+        typeRef.fields.filter { !it.optional }.forEach { field ->
+            if (field.name !in literalFields) {
+                reportContractMismatch(
+                    "Output contract is missing required field '${field.name}'",
+                    token,
+                )
+            }
+        }
+
+        literalFields.filter { it !in declaredFields }.forEach { extra ->
+            reportContractMismatch(
+                "Output contract does not declare field '$extra'",
+                token,
+            )
+        }
+
+        obj.fields.forEach { property ->
+            val literal = property as? LiteralProperty ?: return@forEach
+            val name = (literal.key as? ObjKey.Name)?.v ?: return@forEach
+            val fieldType = declaredFields[name]?.type ?: return@forEach
+            val resolvedFieldType = resolveTypeRef(fieldType)
+            when (resolvedFieldType) {
+                is RecordTypeRef -> validateOutputObject(literal.value, resolvedFieldType, token)
+                is ArrayTypeRef -> validateOutputArray(literal.value, resolvedFieldType, token)
+                else -> Unit
+            }
+        }
+    }
+
+    private fun validateOutputArray(expr: Expr, typeRef: ArrayTypeRef, token: Token) {
+        when (expr) {
+            is ArrayExpr -> {
+                val elementType = resolveTypeRef(typeRef.elementType)
+                if (elementType is RecordTypeRef) {
+                    expr.elements.forEach { element ->
+                        validateOutputObject(element, elementType, token)
+                    }
+                }
+            }
+            is ArrayCompExpr -> {
+                val elementType = resolveTypeRef(typeRef.elementType)
+                if (elementType is RecordTypeRef && expr.mapExpr !is ObjectExpr) {
+                    reportContractMismatch(
+                        "Output contract expects object elements in list output",
+                        token,
+                    )
+                }
+            }
+            else -> reportContractMismatch("Output contract expects a list", token)
+        }
+    }
+
+    private fun reportContractMismatch(message: String, token: Token) {
+        if (strictContracts) {
+            throw SemanticException(message, token)
+        }
+        warnings += SemanticWarning(message, token)
+    }
+
+    private fun renderKey(key: ObjKey): String = when (key) {
+        is ObjKey.Name -> "'${key.v}'"
+        is ObjKey.Index -> "index"
+        else -> "key"
+    }
+
+    private fun isInputAlias(name: String): Boolean =
+        name == DEFAULT_INPUT_ALIAS || name in COMPAT_INPUT_ALIASES
 }
