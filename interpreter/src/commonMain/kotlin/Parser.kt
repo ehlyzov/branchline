@@ -127,15 +127,43 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val nameTok = if (check(TokenType.IDENTIFIER)) advance() else null
 
         val params = mutableListOf<String>()
-        if (nameTok != null && match(TokenType.LEFT_PAREN)) {
-            // список параметров внутри скобок
+        var signature: TransformSignature? = null
+        if (match(TokenType.LEFT_PAREN)) {
+            val sigStart = previous()
+            val paramTypes = mutableListOf<TransformParam>()
             if (!check(TokenType.RIGHT_PAREN)) {
                 do {
-                    val pTok = consume(TokenType.IDENTIFIER, "Expect parameter name")
-                    params += pTok.lexeme
+                    val paramTok = consume(TokenType.IDENTIFIER, "Expect parameter name in transform signature")
+                    consume(TokenType.COLON, "Expect ':' after transform parameter name")
+                    val paramType = parseTypeExpr()
+                    params += paramTok.lexeme
+                    paramTypes += TransformParam(paramTok.lexeme, paramType, paramTok)
                 } while (match(TokenType.COMMA))
             }
-            consume(TokenType.RIGHT_PAREN, "Expect ')' after transform parameters")
+            consume(TokenType.RIGHT_PAREN, "Expect ')' after transform signature parameters")
+            consume(TokenType.ARROW, "Expect '->' after transform signature")
+            val outputType = parseTypeExpr()
+            val sigEnd = previous()
+            val inputType = when (paramTypes.size) {
+                0 -> null
+                1 -> paramTypes.first().type
+                else -> RecordTypeRef(
+                    fields = paramTypes.map { param ->
+                        RecordFieldType(
+                            name = param.name,
+                            type = param.type,
+                            optional = false,
+                            token = param.token,
+                        )
+                    },
+                    token = paramTypes.first().token,
+                )
+            }
+            signature = TransformSignature(
+                input = inputType,
+                output = outputType,
+                tokenSpan = TokenSpan(sigStart, sigEnd),
+            )
         }
 
         // Optional mode block; only BUFFER supported. STREAM not supported yet.
@@ -153,7 +181,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
 
         val body: TransformBody = parseBlock()
 
-        return TransformDecl(nameTok?.lexeme, params, mode, body, start)
+        return TransformDecl(nameTok?.lexeme, params, signature, mode, body, start)
     }
 
     private fun parseAdapter(): AdapterSpec {
@@ -245,6 +273,98 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
 
         optionalSemicolon()
         return TypeDecl(nameTok.lexeme, kind, defs, typeTok)
+    }
+
+    private data class TransformParam(
+        val name: String,
+        val type: TypeRef,
+        val token: Token,
+    )
+
+    private fun parseTypeExpr(): TypeRef {
+        val first = parseTypeTerm()
+        val members = mutableListOf(first)
+        while (match(TokenType.PIPE)) {
+            members += parseTypeTerm()
+        }
+        return if (members.size == 1) {
+            first
+        } else {
+            UnionTypeRef(members, first.token)
+        }
+    }
+
+    private fun parseTypeTerm(): TypeRef = when {
+        match(TokenType.ENUM) -> parseEnumType(previous())
+        match(TokenType.LEFT_BRACE) -> parseRecordType(previous())
+        match(TokenType.LEFT_BRACKET) -> parseListType(previous())
+        match(TokenType.IDENTIFIER) -> parseSimpleType(previous())
+        else -> error(peek(), "Expect type")
+    }
+
+    private fun parseEnumType(start: Token): TypeRef {
+        consume(TokenType.LEFT_BRACE, "Expect '{' after enum")
+        val values = mutableListOf<String>()
+        if (!check(TokenType.RIGHT_BRACE)) {
+            while (true) {
+                val valueTok = consume(TokenType.IDENTIFIER, "Expect enum value")
+                values += valueTok.lexeme
+                if (!match(TokenType.COMMA)) break
+                if (check(TokenType.RIGHT_BRACE)) break
+            }
+        }
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after enum")
+        return EnumTypeRef(values, start)
+    }
+
+    private fun parseRecordType(start: Token): TypeRef {
+        val fields = mutableListOf<RecordFieldType>()
+        if (!check(TokenType.RIGHT_BRACE)) {
+            while (true) {
+                val fieldTok = consume(TokenType.IDENTIFIER, "Expect record field name")
+                val optional = match(TokenType.QUESTION)
+                consume(TokenType.COLON, "Expect ':' after record field name")
+                val fieldType = parseTypeExpr()
+                fields += RecordFieldType(
+                    name = fieldTok.lexeme,
+                    type = fieldType,
+                    optional = optional,
+                    token = fieldTok,
+                )
+                if (!match(TokenType.COMMA)) break
+                if (check(TokenType.RIGHT_BRACE)) break
+            }
+        }
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after record type")
+        return RecordTypeRef(fields, start)
+    }
+
+    private fun parseListType(start: Token): TypeRef {
+        val elementType = parseTypeExpr()
+        consume(TokenType.RIGHT_BRACKET, "Expect ']' after list type")
+        return ArrayTypeRef(elementType, start)
+    }
+
+    private fun parseSimpleType(typeTok: Token): TypeRef {
+        val normalized = typeTok.lexeme.lowercase()
+        return when (typeTok.lexeme) {
+            "_" -> {
+                val isNullable = match(TokenType.QUESTION)
+                PrimitiveTypeRef(
+                    if (isNullable) PrimitiveType.ANY_NULLABLE else PrimitiveType.ANY,
+                    typeTok,
+                )
+            }
+
+            else -> when (normalized) {
+                "string", "text" -> PrimitiveTypeRef(PrimitiveType.TEXT, typeTok)
+                "number" -> PrimitiveTypeRef(PrimitiveType.NUMBER, typeTok)
+                "boolean" -> PrimitiveTypeRef(PrimitiveType.BOOLEAN, typeTok)
+                "null" -> PrimitiveTypeRef(PrimitiveType.NULL, typeTok)
+                "any" -> PrimitiveTypeRef(PrimitiveType.ANY, typeTok)
+                else -> NamedTypeRef(typeTok.lexeme, typeTok)
+            }
+        }
     }
 
     // ------------------- statements & block -------------------------

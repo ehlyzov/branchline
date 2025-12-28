@@ -8,3 +8,7 @@ data class Token(
     val column: Int
 )
 
+public data class TokenSpan(
+    val start: Token,
+    val end: Token,
+)
