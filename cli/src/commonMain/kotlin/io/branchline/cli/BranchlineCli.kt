@@ -34,7 +34,17 @@ data class ExecOptions(
     val transformOverride: String?,
 )
 
-enum class CliCommand { RUN, COMPILE, EXECUTE }
+public data class SchemaOptions(
+    val scriptPath: String?,
+    val typeName: String?,
+    val allTypes: Boolean,
+    val outputPath: String?,
+    val importPath: String?,
+    val importName: String?,
+    val nullabilityStyle: v2.schema.NullabilityStyle,
+)
+
+public enum class CliCommand { RUN, COMPILE, EXECUTE, SCHEMA }
 
 object BranchlineCli {
     fun run(args: List<String>, platform: PlatformKind, defaultCommand: CliCommand? = null): Int {
@@ -58,6 +68,7 @@ object BranchlineCli {
             CliCommand.RUN -> executeRun(parseResult.run!!, platform)
             CliCommand.COMPILE -> executeCompile(parseResult.compile!!)
             CliCommand.EXECUTE -> executeExec(parseResult.exec!!)
+            CliCommand.SCHEMA -> executeSchema(parseResult.schema!!)
         }
     }
 
@@ -76,23 +87,34 @@ object BranchlineCli {
               bl [run] <script.bl> [--input <path>|-] [--input-format json|xml] [--transform <name>]
               blc <script.bl> [--output <artifact.blc>] [--transform <name>]
               blvm <artifact.blc> [--input <path>|-] [--input-format json|xml] [--transform <name>]
+              bl schema <script.bl> <TYPE_NAME> [--nullable] [--output <schema.json>]
+              bl schema <script.bl> --all [--nullable] [--output <schema.json>]
+              bl schema --import <schema.json> --name <TYPE_NAME> [--output <types.bl>]
             
             Commands:
               run       Compile + execute a Branchline script and print JSON output. Default when no subcommand is provided.
               compile   Compile a script to a bytecode artifact (.blc) that embeds the chosen transform.
               exec      Execute a compiled artifact through the VM. Use --transform to override the embedded transform.
+              schema    Emit JSON Schema for TYPE declarations or generate TYPE declarations from a JSON Schema file.
             
             Options:
               --input PATH        Read JSON/XML input from PATH; use '-' to read from stdin.
               --input-format FMT  'json' (default) or 'xml'.
               --transform NAME    Choose a TRANSFORM block by name; defaults to the first transform in the script.
               --output PATH       (compile) write the compiled artifact to PATH. Prints to stdout when omitted.
+              --all               (schema) emit a $defs block with all TYPE declarations.
+              --nullable          (schema) use 'nullable: true' instead of 'type: [\"null\", ...]'.
+              --import PATH       (schema) read a JSON Schema document and emit TYPE declarations.
+              --name NAME         (schema) name for the imported schema's TYPE declaration.
             
             Examples:
               bl examples/hello.bl --input fixtures/hello.json
               bl run pipeline.bl --transform Trace --input-format xml --input -
               blc scripts/order.bl --output build/order.blc
               blvm build/order.blc --input data.json
+              bl schema examples/types.bl Customer
+              bl schema examples/types.bl --all --output build/types.schema.json
+              bl schema --import schemas/customer.json --name Customer
             """.trimIndent(),
         )
     }
@@ -172,11 +194,54 @@ object BranchlineCli {
         }
     }
 
+    private fun executeSchema(options: SchemaOptions): Int {
+        return try {
+            if (options.importPath != null) {
+                val rawSchema = readTextFile(options.importPath)
+                val declarations = JsonSchemaCliInterop.importSchema(
+                    rawSchema = rawSchema,
+                    importName = options.importName!!,
+                    options = options,
+                )
+                val output = declarations.joinToString("\n\n") { renderTypeDecl(it) }
+                if (options.outputPath != null) {
+                    writeTextFile(options.outputPath, output)
+                } else {
+                    println(output)
+                }
+            } else {
+                val scriptPath = options.scriptPath
+                    ?: throw CliException("Script path is required for schema export")
+                val source = readTextFile(scriptPath)
+                val runtime = BranchlineProgram(source)
+                val typeDecls = runtime.typeDecls()
+                val outputSchema = JsonSchemaCliInterop.exportSchema(
+                    typeDecls = typeDecls,
+                    typeName = options.typeName,
+                    options = options,
+                )
+                if (options.outputPath != null) {
+                    writeTextFile(options.outputPath, outputSchema)
+                } else {
+                    println(outputSchema)
+                }
+            }
+            0
+        } catch (ex: CliException) {
+            printError(ex.message ?: "CLI error")
+            1
+        } catch (ex: Exception) {
+            printError(ex.message ?: ex.toString())
+            1
+        }
+    }
+
     private data class ParsedArgs(
         val command: CliCommand,
         val run: RunOptions? = null,
         val compile: CompileOptions? = null,
         val exec: ExecOptions? = null,
+        val schema: SchemaOptions? = null,
     )
 
     private fun parseArgs(args: List<String>, defaultCommand: CliCommand?): ParsedArgs {
@@ -185,6 +250,7 @@ object BranchlineCli {
             CliCommand.RUN -> ParsedArgs(command, run = parseRunArgs(args, startIndex))
             CliCommand.COMPILE -> ParsedArgs(command, compile = parseCompileArgs(args, startIndex))
             CliCommand.EXECUTE -> ParsedArgs(command, exec = parseExecArgs(args, startIndex))
+            CliCommand.SCHEMA -> ParsedArgs(command, schema = parseSchemaArgs(args, startIndex))
         }
     }
 
@@ -198,6 +264,7 @@ object BranchlineCli {
             "run" -> CliCommand.RUN to 1
             "compile", "c" -> CliCommand.COMPILE to 1
             "exec", "execute" -> CliCommand.EXECUTE to 1
+            "schema" -> CliCommand.SCHEMA to 1
             else -> (defaultCommand ?: CliCommand.RUN) to 0
         }
     }
@@ -294,6 +361,75 @@ object BranchlineCli {
         }
         if (artifact == null) throw CliException("Artifact path is required")
         return ExecOptions(artifact, input, format, transform)
+    }
+
+    private fun parseSchemaArgs(args: List<String>, startIndex: Int): SchemaOptions {
+        var script: String? = null
+        var typeName: String? = null
+        var output: String? = null
+        var importPath: String? = null
+        var importName: String? = null
+        var allTypes = false
+        var nullabilityStyle = v2.schema.NullabilityStyle.TYPE_UNION
+        var idx = startIndex
+        while (idx < args.size) {
+            val token = args[idx]
+            when {
+                token == "--all" -> {
+                    allTypes = true
+                    idx += 1
+                }
+                token == "--nullable" -> {
+                    nullabilityStyle = v2.schema.NullabilityStyle.NULLABLE_KEYWORD
+                    idx += 1
+                }
+                token == "--output" && idx + 1 < args.size -> {
+                    output = args[idx + 1]
+                    idx += 2
+                }
+                token == "--import" && idx + 1 < args.size -> {
+                    importPath = args[idx + 1]
+                    idx += 2
+                }
+                token == "--name" && idx + 1 < args.size -> {
+                    importName = args[idx + 1]
+                    idx += 2
+                }
+                token.startsWith("--") -> throw CliException("Unknown option '$token'")
+                script == null && importPath == null -> {
+                    script = token
+                    idx += 1
+                }
+                typeName == null && importPath == null -> {
+                    typeName = token
+                    idx += 1
+                }
+                else -> throw CliException("Unexpected argument '$token'")
+            }
+        }
+        if (importPath != null) {
+            if (script != null || typeName != null) {
+                throw CliException("Schema import does not accept script or type arguments")
+            }
+            if (importName == null) throw CliException("Schema import requires --name")
+        } else {
+            if (script == null) throw CliException("Script path is required")
+            if (!allTypes && typeName == null) {
+                throw CliException("Schema export requires a TYPE name or --all")
+            }
+            if (allTypes && typeName != null) {
+                throw CliException("Schema export cannot combine --all with a TYPE name")
+            }
+        }
+        return SchemaOptions(
+            scriptPath = script,
+            typeName = typeName,
+            allTypes = allTypes,
+            outputPath = output,
+            importPath = importPath,
+            importName = importName,
+            nullabilityStyle = nullabilityStyle,
+        )
     }
 }
 

@@ -10,6 +10,7 @@ import v2.ParseException
 import v2.Parser
 import v2.Program
 import v2.TransformDecl
+import v2.TypeDecl
 import v2.DEFAULT_INPUT_ALIAS
 import v2.COMPAT_INPUT_ALIASES
 import v2.ir.Exec
@@ -87,6 +88,8 @@ class BranchlineProgram(private val source: String) {
     fun rebuildTransform(name: String?): TransformDecl = selectTransform(name)
 
     fun source(): String = source
+
+    fun typeDecls(): List<TypeDecl> = program.decls.filterIsInstance<TypeDecl>()
 
     private fun compileIr(transform: TransformDecl) = ToIR(funcs, hostFns).compile(transform.body.statements)
 }
