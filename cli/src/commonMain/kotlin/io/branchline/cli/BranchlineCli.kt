@@ -77,6 +77,7 @@ object BranchlineCli {
             CliCommand.RUN -> " (default: run)"
             CliCommand.COMPILE -> " (default: compile)"
             CliCommand.EXECUTE -> " (default: exec)"
+            CliCommand.SCHEMA -> " (default: schema)"
             null -> ""
         }
         println(
@@ -102,7 +103,7 @@ object BranchlineCli {
               --input-format FMT  'json' (default) or 'xml'.
               --transform NAME    Choose a TRANSFORM block by name; defaults to the first transform in the script.
               --output PATH       (compile) write the compiled artifact to PATH. Prints to stdout when omitted.
-              --all               (schema) emit a $defs block with all TYPE declarations.
+              --all               (schema) emit a ${'$'}defs block with all TYPE declarations.
               --nullable          (schema) use 'nullable: true' instead of 'type: [\"null\", ...]'.
               --import PATH       (schema) read a JSON Schema document and emit TYPE declarations.
               --name NAME         (schema) name for the imported schema's TYPE declaration.
