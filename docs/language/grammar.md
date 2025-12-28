@@ -37,11 +37,14 @@ adapterCall ::= IDENTIFIER "(" argList? ")"                    ;
 # Transforms
 #---------------------------------------------------------------------------
 
-transformDecl    ::= annotation* **TRANSFORM** IDENTIFIER? transformMode?
-                     block                                                   ;
+transformDecl    ::= annotation* **TRANSFORM** IDENTIFIER? transformSig?
+                     transformMode? block                                     ;
 
 annotation       ::= **@** IDENTIFIER                                        ;
-transformMode    ::= "{" **buffer** "}"                                    ;
+transformMode    ::= "{" ( **stream** | **buffer** ) "}"                    ;
+transformSig     ::= "(" transformParamList? ")" "->" typeExpr              ;
+transformParamList ::= transformParam ( "," transformParam )*               ;
+transformParam   ::= IDENTIFIER ":" typeExpr                                 ;
 
 #---------------------------------------------------------------------------
 # Shared memory
@@ -58,11 +61,17 @@ paramList        ::= IDENTIFIER ( "," IDENTIFIER )*                          ;
 funcBody         ::= "=" expression | block                                  ;
 
 typeDecl         ::= **TYPE** IDENTIFIER "=" typeExpr **;**                  ;
-typeExpr         ::= **enum** "{" enumVal ("," enumVal)* "}"                 |
-                     simpleType ( "|" simpleType )*                          ;
+typeExpr         ::= typeTerm ( "|" typeTerm )*                              ;
+typeTerm         ::= enumType | recordType | listType
+                   | placeholderType | simpleType                            ;
+enumType         ::= **enum** "{" enumVal ("," enumVal)* "}"                 ;
 enumVal          ::= IDENTIFIER                                              ;
+recordType       ::= "{" recordField ("," recordField)* "}"                  ;
+recordField      ::= IDENTIFIER ["?"] ":" typeExpr                           ;
+listType         ::= "[" typeExpr "]"                                        ;
+placeholderType  ::= "_" ["?"]                                               ;
 simpleType       ::= **string** | **number** | **boolean** | **null**
-                   | **array** "<" simpleType ">" | IDENTIFIER               ;
+                   | IDENTIFIER                                              ;
 
 #---------------------------------------------------------------------------
 # Blocks  (braces **or** off-side  INDENT / DEDENT tokens)

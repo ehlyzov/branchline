@@ -20,11 +20,22 @@ block that describes the resulting structure【F:language/src/test/kotlin/v2/ebn
 ## Transform declarations
 
 ```
-transformDecl ::= annotation* TRANSFORM IDENTIFIER? transformMode? block
+transformDecl ::= annotation* TRANSFORM IDENTIFIER? transformSig? transformMode? block
+transformSig  ::= "(" transformParamList? ")" "->" typeExpr
 ```
 
 Transforms process data from sources to outputs, optionally annotated or
-configured with a buffer mode header【F:language/src/test/kotlin/v2/ebnf.txt†L45-L49】.
+configured with a buffer mode header. Signatures can document parameter and
+result types. When a signature is omitted, both the input and output types
+default to `Any`. Use `_`/`_?` as placeholders for `Any`/`Any?` in signatures
+and type expressions【F:language/src/test/kotlin/v2/ebnf.txt†L45-L55】.
+
+Example signatures:
+
+```
+TRANSFORM X(input: _) -> _ { ... }
+TRANSFORM Enrich(user: { id: string, email?: string }) -> { user: string } { ... }
+```
 
 ## Shared declarations
 
@@ -48,8 +59,20 @@ and either an expression or block body【F:language/src/test/kotlin/v2/ebnf.txt�
 
 ```
 typeDecl ::= TYPE IDENTIFIER "=" typeExpr ;
-typeExpr ::= enum "{" enumVal ("," enumVal)* "}" | simpleType ( "|" simpleType )*
+typeExpr ::= typeTerm ( "|" typeTerm )*
 ```
 
-Type definitions describe new enums or compositions of built-in types
-such as `string`, `number`, `boolean`, `null`, and generic arrays【F:language/src/test/kotlin/v2/ebnf.txt†L65-L70】.
+Type definitions describe enums, unions, list types, placeholders, and record
+schemas with required or optional fields. Lists use `[TypeRef]` syntax, unions
+use `A | B`, and `_`/`_?` stand in for `Any`/`Any?`【F:language/src/test/kotlin/v2/ebnf.txt†L65-L75】.
+
+Examples:
+
+```
+TYPE User = { id: string, name: string, email?: string }
+TYPE Address = { street: string, location: { lat: number, lon: number } }
+TYPE Tags = [string]
+TYPE Status = enum { Active, Suspended, Deleted }
+TYPE IdOrName = string | number
+TYPE Flexible = _?
+```
