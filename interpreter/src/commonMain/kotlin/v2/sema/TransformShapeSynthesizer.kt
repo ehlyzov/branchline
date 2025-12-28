@@ -371,7 +371,6 @@ public class TransformShapeSynthesizer(
     }
 
     private fun analyzeCaseExpr(expr: CaseExpr): ShapeState {
-        var acc = analyzeExpr(expr.subject)
         var branchState = ShapeState.empty()
         for (whenBranch in expr.whens) {
             val condState = analyzeExpr(whenBranch.condition)
@@ -380,7 +379,7 @@ public class TransformShapeSynthesizer(
         }
         val elseState = analyzeExpr(expr.elseBranch)
         branchState = mergeBranches(branchState, elseState)
-        return mergeSequential(acc, branchState)
+        return branchState
     }
 
     private fun analyzeExprWithScope(expr: Expr, scope: MutableSet<String>): ShapeState {
