@@ -75,14 +75,71 @@ data class OutputDecl(val adapter: AdapterSpec?, val template: Expr, val token: 
 data class TransformDecl(
     val name: String?,
     val params: List<String>,
+    val signature: TransformSignature?,
     val mode: Mode,
     val body: TransformBody,
     val token: Token,
 ) : TopLevelDecl
 
+public data class TransformSignature(
+    val input: TypeRef?,
+    val output: TypeRef?,
+    val tokenSpan: TokenSpan,
+)
+
 enum class Mode { STREAM, BUFFER }
 
 data class AdapterSpec(val name: String, val args: List<Expr>, val token: Token) : Ast
+
+public sealed interface TypeRef : Ast {
+    val token: Token
+}
+
+public enum class PrimitiveType {
+    TEXT,
+    NUMBER,
+    BOOLEAN,
+    NULL,
+    ANY,
+    ANY_NULLABLE,
+}
+
+public data class PrimitiveTypeRef(
+    val kind: PrimitiveType,
+    override val token: Token,
+) : TypeRef
+
+public data class ArrayTypeRef(
+    val elementType: TypeRef,
+    override val token: Token,
+) : TypeRef
+
+public data class RecordFieldType(
+    val name: String,
+    val type: TypeRef,
+    val optional: Boolean,
+    val token: Token,
+)
+
+public data class RecordTypeRef(
+    val fields: List<RecordFieldType>,
+    override val token: Token,
+) : TypeRef
+
+public data class UnionTypeRef(
+    val members: List<TypeRef>,
+    override val token: Token,
+) : TypeRef
+
+public data class EnumTypeRef(
+    val values: List<String>,
+    override val token: Token,
+) : TypeRef
+
+public data class NamedTypeRef(
+    val name: String,
+    override val token: Token,
+) : TypeRef
 
 sealed class Property
 

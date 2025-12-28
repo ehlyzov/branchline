@@ -12,6 +12,11 @@ class ParserTest {
 
     private fun parse(src: String): Program = Parser(Lexer(src).lex()).parse()
 
+    private fun parseTransform(src: String): TransformDecl {
+        val program = parse(src)
+        return program.decls.first() as TransformDecl
+    }
+
     private fun parseExpr(src: String): Expr {
         // строим минимальную программу и парсим
         val program = Parser(
@@ -166,6 +171,48 @@ class ParserTest {
     }
 
     @Test
+    fun `transform signature placeholders parsed`() {
+        val tr = parseTransform("TRANSFORM X(input: _) -> _? { }")
+        val signature = tr.signature
+        assertNotNull(signature)
+        signature as TransformSignature
+        assertEquals(listOf("input"), tr.params)
+        val input = signature.input as PrimitiveTypeRef
+        val output = signature.output as PrimitiveTypeRef
+        assertEquals(PrimitiveType.ANY, input.kind)
+        assertEquals(PrimitiveType.ANY_NULLABLE, output.kind)
+    }
+
+    @Test
+    fun `transform signature record and list types parsed`() {
+        val tr = parseTransform(
+            "TRANSFORM Enrich(user: { id: string, email?: string }) -> [string] { }"
+        )
+        val signature = tr.signature as TransformSignature
+        val input = signature.input as RecordTypeRef
+        assertEquals(2, input.fields.size)
+        assertEquals("id", input.fields[0].name)
+        assertFalse(input.fields[0].optional)
+        assertEquals("email", input.fields[1].name)
+        assertTrue(input.fields[1].optional)
+        val output = signature.output as ArrayTypeRef
+        val element = output.elementType as PrimitiveTypeRef
+        assertEquals(PrimitiveType.TEXT, element.kind)
+    }
+
+    @Test
+    fun `transform signature enum and union types parsed`() {
+        val tr = parseTransform("TRANSFORM X(status: enum { Active, Suspended }) -> string | number { }")
+        val signature = tr.signature as TransformSignature
+        val input = signature.input as EnumTypeRef
+        assertEquals(listOf("Active", "Suspended"), input.values)
+        val output = signature.output as UnionTypeRef
+        assertEquals(2, output.members.size)
+        assertTrue(output.members[0] is PrimitiveTypeRef)
+        assertTrue(output.members[1] is PrimitiveTypeRef)
+    }
+
+    @Test
     fun `unclosed transform block throws`() {
         assertThrows<ParseException> {
             parse("""
@@ -185,6 +232,22 @@ class ParserTest {
                 """.trimIndent()
             )
         }
+    }
+
+    @Test
+    fun `transform signature missing arrow throws`() {
+        val ex = assertThrows<ParseException> {
+            parse("TRANSFORM X(input: _) { }")
+        }
+        assertTrue(ex.message?.contains("->") == true)
+    }
+
+    @Test
+    fun `transform signature missing colon throws`() {
+        val ex = assertThrows<ParseException> {
+            parse("TRANSFORM X(input _) -> _ { }")
+        }
+        assertTrue(ex.message?.contains("':'") == true)
     }
 
     // ------------------------------------------------------------------
