@@ -28,6 +28,7 @@ import v2.DEFAULT_INPUT_ALIAS
 import v2.ir.Exec
 import v2.ir.ToIR
 import v2.ir.TransformRegistry
+import v2.ir.buildTransformDescriptors
 import v2.ir.makeEval
 import v2.runtime.bignum.BLBigDec
 import v2.runtime.bignum.BLBigInt
@@ -99,10 +100,11 @@ object PlaygroundFacade {
             SemanticAnalyzer(hostFns.keys).analyze(parsed)
 
             val ir = ToIR(funcs, hostFns).compile(transform.body.statements)
+            val descriptors = buildTransformDescriptors(transforms, hostFns.keys)
             val registry = TransformRegistry(
                 funcs,
                 hostFns,
-                transforms.mapNotNull { decl -> decl.name?.let { it to decl } }.toMap()
+                descriptors,
             )
             val eval = makeEval(hostFns, funcs, registry, tracer)
             val exec = Exec(ir, eval, tracer)

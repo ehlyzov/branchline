@@ -20,6 +20,7 @@ import v2.FuncDecl
 import v2.Lexer
 import v2.Parser
 import v2.TransformDecl
+import v2.ir.buildTransformDescriptors
 import v2.ir.compileStream
 import v2.sema.SemanticAnalyzer
 import v2.std.StdLib
@@ -61,11 +62,12 @@ class PlaygroundExamplesJvmTest {
                 val transforms = parsed.decls.filterIsInstance<TransformDecl>()
                 require(transforms.isNotEmpty()) { "No TRANSFORM found in $examplePath" }
                 val transform = transforms.first()
+                val descriptors = buildTransformDescriptors(transforms, StdLib.fns.keys)
                 val runner = compileStream(
                     t = transform,
                     funcs = funcs,
                     hostFns = StdLib.fns,
-                    transforms = transforms.mapNotNull { it.name?.let { name -> name to it } }.toMap(),
+                    transforms = descriptors,
                 )
 
                 val input = toKotlin(inputElement) as? Map<String, Any?> ?: emptyMap()

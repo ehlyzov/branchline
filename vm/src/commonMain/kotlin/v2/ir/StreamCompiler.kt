@@ -4,6 +4,7 @@ import v2.ExecutionEngine
 import v2.FuncDecl
 import v2.Mode
 import v2.TransformDecl
+import v2.ir.TransformDescriptor
 import v2.vm.VMExec
 
 private fun dumpIR(nodes: List<IRNode>, indent: String = "") {
@@ -47,7 +48,7 @@ fun compileStream(
     t: TransformDecl,
     funcs: Map<String, FuncDecl> = emptyMap(),
     hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
-    transforms: Map<String, TransformDecl> = emptyMap(), // обязателен!
+    transforms: Map<String, TransformDescriptor> = emptyMap(), // обязателен!
     engine: ExecutionEngine = ExecutionEngine.INTERPRETER,
 ): (Map<String, Any?>) -> Any? {
     require(t.mode == Mode.BUFFER) { "Only buffer mode is supported" }
