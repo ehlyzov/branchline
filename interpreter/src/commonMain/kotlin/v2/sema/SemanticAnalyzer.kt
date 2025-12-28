@@ -484,7 +484,7 @@ class SemanticAnalyzer(
         var currentType = inputType
         for (seg in expr.segs) {
             if (seg is AccessSeg.Dynamic) return
-            val key = seg.key
+            val key = (seg as AccessSeg.Static).key
             currentType = when (val resolved = resolveTypeRef(currentType)) {
                 is PrimitiveTypeRef -> {
                     if (resolved.kind == PrimitiveType.ANY || resolved.kind == PrimitiveType.ANY_NULLABLE) {
