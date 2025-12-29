@@ -271,7 +271,7 @@ jobs:
         run: ./gradlew --no-daemon :interpreter-benchmarks:jmh :vm-benchmarks:jmh
 
       - name: Enforce performance gates
-        run: node .github/scripts/jmh-gate.mjs .github/perf-gates.json interpreter-benchmarks/build/reports/jmh vm-benchmarks/build/reports/jmh
+        run: node .github/scripts/jmh-gate.mjs .github/perf-gates.json interpreter-benchmarks/build/results/jmh/results.json vm-benchmarks/build/results/jmh/results.json
 
   cli:
     name: CLI Tests
