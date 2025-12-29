@@ -16,3 +16,7 @@ jmh {
     timeOnIteration = '500ms'
     fork = 1
 }
+
+tasks.withType(me.champeau.jmh.JmhTask).configureEach {
+    jmhArgs = ['-prof', 'gc']
+}

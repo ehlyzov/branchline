@@ -48,10 +48,6 @@ class PlaygroundExamplesJsTest {
             try {
                 val text = fs.readFileSync(fullPath, "utf8") as String
                 val example = json.parseToJsonElement(text).jsonObject
-                val inputFormat = example["inputFormat"]?.jsonPrimitive?.content
-                if (inputFormat != null && !inputFormat.equals("json", ignoreCase = true)) {
-                    continue
-                }
                 val programLines = example["program"] ?: error("Missing program in $fullPath")
                 val body = programLines.jsonArray.joinToString("\n") { it.jsonPrimitive.content }
                 val hasTransform = Regex("\\bTRANSFORM\\b", RegexOption.IGNORE_CASE).containsMatchIn(body)

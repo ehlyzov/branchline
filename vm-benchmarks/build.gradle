@@ -18,6 +18,10 @@ jmh {
     fork = 1
 }
 
+tasks.withType(me.champeau.jmh.JmhTask).configureEach {
+    jmhArgs = ['-prof', 'gc']
+}
+
 tasks.register('vmOpcodeSnapshot', JavaExec) {
     group = 'verification'
     description = 'Writes opcode histograms for VM benchmarks to docs.'

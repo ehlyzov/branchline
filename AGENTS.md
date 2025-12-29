@@ -42,6 +42,7 @@ Language design priorities:
 ## Testing Guidelines
 - Tests live in each module’s `src/test/kotlin`; name unit tests `*Test` and integration scenarios `*IT`.
 - For multiplatform behavior, use `conformance-tests/src/commonTest`.
+- Never skip tests to hide failures; fix the root cause instead.
 
 ## Commit & PR Guidelines (when asked)
 - Keep commits atomic; include only files you touched.
