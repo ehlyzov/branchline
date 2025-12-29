@@ -16,6 +16,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
+import v2.ExecutionEngine
 import v2.FuncDecl
 import v2.Lexer
 import v2.Parser
@@ -68,11 +69,19 @@ class PlaygroundExamplesJvmTest {
                 require(transforms.isNotEmpty()) { "No TRANSFORM found in $examplePath" }
                 val transform = transforms.first()
                 val descriptors = buildTransformDescriptors(transforms, typeDecls, StdLib.fns.keys)
-                val runner = compileStream(
+                val runnerInterp = compileStream(
                     t = transform,
                     funcs = funcs,
                     hostFns = StdLib.fns,
                     transforms = descriptors,
+                    engine = ExecutionEngine.INTERPRETER,
+                )
+                val runnerVm = compileStream(
+                    t = transform,
+                    funcs = funcs,
+                    hostFns = StdLib.fns,
+                    transforms = descriptors,
+                    engine = ExecutionEngine.VM,
                 )
 
                 val input = toKotlin(inputElement) as? Map<String, Any?> ?: emptyMap()
@@ -82,8 +91,14 @@ class PlaygroundExamplesJvmTest {
                         putIfAbsent(name, emptyMap<String, Any?>())
                     }
                 }
-                val output = runner(seededInput)
-                assertTrue(output != null, "Example $examplePath produced null output")
+                val interpOutput = runnerInterp(input)
+                val vmOutput = runnerVm(input)
+                assertTrue(interpOutput != null, "Example $examplePath produced null output in interpreter")
+                assertTrue(vmOutput != null, "Example $examplePath produced null output in VM")
+                assertTrue(
+                    interpOutput == vmOutput,
+                    "Example $examplePath interpreter/VM mismatch. interp=$interpOutput vm=$vmOutput",
+                )
             } catch (ex: Throwable) {
                 failures += "$examplePath -> ${ex::class.simpleName}: ${ex.message}"
             }
