@@ -1,6 +1,7 @@
 package playground
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -8,7 +9,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-class PlaygroundFacadeTest {
+public class PlaygroundFacadeTest {
     private val fullProgram = """
         TRANSFORM Playground { OUTPUT {
                 greeting: "Hello, " + input.name
@@ -22,7 +23,7 @@ class PlaygroundFacadeTest {
     """.trimIndent()
 
     @Test
-    fun runWithValidJsonProducesExpectedOutput() {
+    public fun runWithValidJsonProducesExpectedOutput() {
         val result = PlaygroundFacade.run(
             bodyOnlyProgram,
             """
@@ -50,7 +51,7 @@ class PlaygroundFacadeTest {
     }
 
     @Test
-    fun runWithMalformedJsonReportsFailure() {
+    public fun runWithMalformedJsonReportsFailure() {
         val result = PlaygroundFacade.run(
             bodyOnlyProgram,
             """
@@ -67,7 +68,7 @@ class PlaygroundFacadeTest {
     }
 
     @Test
-    fun runWithNonObjectJsonReportsHelpfulError() {
+    public fun runWithNonObjectJsonReportsHelpfulError() {
         val result = PlaygroundFacade.run(bodyOnlyProgram, "\"Ada\"")
 
         assertFalse(result.success)
@@ -76,7 +77,7 @@ class PlaygroundFacadeTest {
     }
 
     @Test
-    fun fullProgramStillSupported() {
+    public fun fullProgramStillSupported() {
         val result = PlaygroundFacade.run(
             fullProgram,
             """
@@ -96,7 +97,7 @@ class PlaygroundFacadeTest {
     }
 
     @Test
-    fun tracingReportsCheckpoints() {
+    public fun tracingReportsCheckpoints() {
         val program = """
             LET status = input.status;
             CHECKPOINT("after status");
@@ -123,7 +124,32 @@ class PlaygroundFacadeTest {
     }
 
     @Test
-    fun assertFailureReportsHelpfulError() {
+    public fun contractsIncludeInputAndOutputShapesWhenEnabled() {
+        val result = PlaygroundFacade.run(
+            bodyOnlyProgram,
+            """
+            {
+              "name": "Ada"
+            }
+            """.trimIndent(),
+            includeContracts = true
+        )
+
+        assertTrue(result.success)
+        assertEquals("inferred", result.contractSource)
+        assertNotNull(result.inputContractJson)
+        assertNotNull(result.outputContractJson)
+
+        val inputContract = Json.parseToJsonElement(result.inputContractJson).jsonObject
+        val outputContract = Json.parseToJsonElement(result.outputContractJson).jsonObject
+        val inputFields = inputContract["fields"]?.jsonObject
+        val outputFields = outputContract["fields"]?.jsonObject
+        assertTrue(inputFields?.containsKey("name") == true)
+        assertTrue(outputFields?.containsKey("greeting") == true)
+    }
+
+    @Test
+    public fun assertFailureReportsHelpfulError() {
         val program = """
             ASSERT(input.ready, "Not ready for deploy");
             OUTPUT { status: "ok" }

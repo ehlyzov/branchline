@@ -33,6 +33,7 @@ type RawExample = {
   input: unknown;
   inputFormat?: InputFormat;
   trace?: boolean;
+  showContracts?: boolean;
   shared?: SharedStorageSpec[];
 };
 
@@ -48,6 +49,7 @@ type PlaygroundExample = {
   input: string;
   inputFormat: InputFormat;
   enableTracing: boolean;
+  enableContracts: boolean;
   shared: SharedStorageSpec[];
 };
 
@@ -79,6 +81,7 @@ function normalizeExample(id: string, raw: RawExample): PlaygroundExample {
     input: input || DEFAULT_INPUT,
     inputFormat,
     enableTracing: Boolean(raw.trace),
+    enableContracts: Boolean(raw.showContracts),
     shared: raw.shared ?? []
   };
 }
@@ -91,6 +94,9 @@ type WorkerResult = {
   column: number | null;
   explainJson: string | null;
   explainHuman: string | null;
+  inputContractJson: string | null;
+  outputContractJson: string | null;
+  contractSource: string | null;
 };
 
 type BranchlinePlaygroundProps = {
@@ -136,6 +142,10 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   const [traceHuman, setTraceHuman] = React.useState<string | null>(null);
   const [traceJson, setTraceJson] = React.useState<string | null>(null);
   const [isTracingEnabled, setIsTracingEnabled] = React.useState(false);
+  const [isContractsEnabled, setIsContractsEnabled] = React.useState(false);
+  const [inputContract, setInputContract] = React.useState<string | null>(null);
+  const [outputContract, setOutputContract] = React.useState<string | null>(null);
+  const [contractSource, setContractSource] = React.useState<string | null>(null);
   const tracingRef = React.useRef(isTracingEnabled);
   const examples = React.useMemo(() => {
     const items: PlaygroundExample[] = Object.entries(exampleModules).map(([path, module]) => {
@@ -172,14 +182,18 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     setError(null);
     setTraceHuman(null);
     setTraceJson(null);
+    setInputContract(null);
+    setOutputContract(null);
+    setContractSource(null);
     workerRef.current?.postMessage({
       code: program,
       input,
       trace: tracingRef.current,
       inputFormat,
+      includeContracts: isContractsEnabled,
       shared: selectedExample?.shared ?? []
     });
-  }, [inputFormat, selectedExample]);
+  }, [inputFormat, isContractsEnabled, selectedExample]);
 
   const resetExample = React.useCallback(() => {
     if (!selectedExample) {
@@ -204,11 +218,15 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     setOutput('');
     setTraceHuman(null);
     setTraceJson(null);
+    setInputContract(null);
+    setOutputContract(null);
+    setContractSource(null);
     if (outputRef.current) {
       outputRef.current.textContent = '';
     }
 
     setIsTracingEnabled(selectedExample.enableTracing);
+    setIsContractsEnabled(selectedExample.enableContracts);
   }, [inputFormat, selectedExample]);
 
   React.useEffect(() => {
@@ -267,6 +285,9 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         setOutput(result.outputJson ?? 'null');
         setTraceHuman(result.explainHuman ?? null);
         setTraceJson(result.explainJson ?? null);
+        setInputContract(result.inputContractJson ?? null);
+        setOutputContract(result.outputContractJson ?? null);
+        setContractSource(result.contractSource ?? null);
         if (outputRef.current) {
           outputRef.current.textContent = result.outputJson ?? 'null';
         }
@@ -281,6 +302,9 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         setOutput('');
         setTraceHuman(null);
         setTraceJson(null);
+        setInputContract(null);
+        setOutputContract(null);
+        setContractSource(null);
         if (outputRef.current) {
           outputRef.current.textContent = '';
         }
@@ -321,6 +345,14 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   React.useEffect(() => {
     tracingRef.current = isTracingEnabled;
   }, [isTracingEnabled]);
+
+  React.useEffect(() => {
+    if (!isContractsEnabled) {
+      setInputContract(null);
+      setOutputContract(null);
+      setContractSource(null);
+    }
+  }, [isContractsEnabled]);
 
   const hasTrace = Boolean(traceHuman || traceJson);
 
@@ -405,6 +437,14 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
             />
             <span>Enable tracing (EXPLAIN)</span>
           </label>
+          <label className="playground-toggle">
+            <input
+              type="checkbox"
+              checked={isContractsEnabled}
+              onChange={(event) => setIsContractsEnabled(event.target.checked)}
+            />
+            <span>Show input/output contracts</span>
+          </label>
           <button className="playground-button playground-button--ghost" onClick={resetExample}>
             Reset example
           </button>
@@ -469,28 +509,54 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
           {error ? (
             <div className="panel-error">{error}</div>
           ) : (
-            <div className={`results-grid${hasTrace ? ' results-grid--with-trace' : ''}`}>
-              <div className="results-pane">
-                <div className="panel-subheader">Program output</div>
-                <pre ref={outputRef} className="panel-output">
-                  {output || 'Run the playground to view JSON output.'}
-                </pre>
+            <>
+              <div className={`results-grid${hasTrace ? ' results-grid--with-trace' : ''}`}>
+                <div className="results-pane">
+                  <div className="panel-subheader">Program output</div>
+                  <pre ref={outputRef} className="panel-output">
+                    {output || 'Run the playground to view JSON output.'}
+                  </pre>
+                </div>
+                {hasTrace ? (
+                  <div className="results-pane results-pane--trace">
+                    <div className="panel-subheader">Trace explanations</div>
+                    {traceHuman ? (
+                      <pre className="panel-output panel-output--trace">{traceHuman}</pre>
+                    ) : null}
+                    {traceJson ? (
+                      <details className="panel-trace-structured">
+                        <summary>View structured provenance JSON</summary>
+                        <pre className="panel-output panel-output--trace">{traceJson}</pre>
+                      </details>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
-              {hasTrace ? (
-                <div className="results-pane results-pane--trace">
-                  <div className="panel-subheader">Trace explanations</div>
-                  {traceHuman ? (
-                    <pre className="panel-output panel-output--trace">{traceHuman}</pre>
-                  ) : null}
-                  {traceJson ? (
-                    <details className="panel-trace-structured">
-                      <summary>View structured provenance JSON</summary>
-                      <pre className="panel-output panel-output--trace">{traceJson}</pre>
-                    </details>
-                  ) : null}
+              {isContractsEnabled ? (
+                <div className="contracts-panel">
+                  <div className="contracts-header">
+                    <div className="panel-subheader">Input/output contracts</div>
+                    <span className="contracts-source">
+                      {contractSource ? `Source: ${contractSource}` : 'Run the playground to infer contracts.'}
+                    </span>
+                  </div>
+                  <div className="contracts-grid">
+                    <div className="contracts-pane">
+                      <div className="panel-subheader">Input contract</div>
+                      <pre className="panel-output panel-output--contract">
+                        {inputContract ?? 'Run the playground to view the inferred input contract.'}
+                      </pre>
+                    </div>
+                    <div className="contracts-pane">
+                      <div className="panel-subheader">Output contract</div>
+                      <pre className="panel-output panel-output--contract">
+                        {outputContract ?? 'Run the playground to view the inferred output contract.'}
+                      </pre>
+                    </div>
+                  </div>
                 </div>
               ) : null}
-            </div>
+            </>
           )}
         </section>
       </main>
