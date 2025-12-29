@@ -51,7 +51,17 @@ Both runtimes accept `--input-format xml` for XML payloads.
 
 ## Project Status
 
-> **Alpha:** the language is evolving quickly and backwards compatibility is not guaranteed yet.
+> **Alpha:** the language is evolving quickly and backwards compatibility is not guaranteed yet. Stability levels and the production readiness gate are documented in the [Release Readiness & Stability guide](docs/guides/release-readiness.md).
+
+## Release Readiness Gate
+
+Branchline uses a readiness gate before labeling a release **Production Ready**. The gate includes:
+
+- A fixed compatibility corpus that runs in the conformance test suite (JVM + JS).
+- Explicit stability levels (Stable/Beta/Experimental) for language features.
+- SLA-style targets for error rate and performance regression thresholds.
+
+See the [Release Readiness & Stability guide](docs/guides/release-readiness.md) for the full checklist, versioning policy, and deprecation plan.
 
 ## Motivation
 

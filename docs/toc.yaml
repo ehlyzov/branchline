@@ -52,6 +52,8 @@ items:
         href: guides/production-use.md
       - name: Migration Guides
         href: guides/migrations.md
+      - name: Release Readiness & Stability
+        href: guides/release-readiness.md
   - name: Architecture
     items:
       - name: VM Overview

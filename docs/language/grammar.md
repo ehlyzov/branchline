@@ -17,21 +17,7 @@ versionDecl      ::= "#!branchline" VERSION                                  ;
 
 importDecl       ::= **IMPORT** STRING ( **AS** IDENTIFIER )? **;**          ;
 
-topDecl          ::= outputDecl | transformDecl | funcDecl
-                   | typeDecl  | sharedDecl | **;**              ;
-
-outputDecl  ::= **OUTPUT** adapterSpec? templateBlock           ;
-#            e.g.  OUTPUT USING xmlFile("out.xml") { … }
-#                  OUTPUT { … }      # defaults to jsonStream(stdout)
-
-adapterSpec ::= **USING** adapterCall                          ;
-adapterCall ::= IDENTIFIER "(" argList? ")"                    ;
-#             └──────┬──────┘
-#              adapter name      (jsonFile, xmlFile, rdfEndpoint, …)
-
-# Example (not grammar):
-#   OUTPUT         USING xmlFile("out.xml") { … }
-#   OUTPUT { … }                      # → defaults to jsonStream(stdout)
+topDecl          ::= transformDecl | funcDecl | typeDecl | sharedDecl | **;** ;
 
 #---------------------------------------------------------------------------
 # Transforms
@@ -80,22 +66,35 @@ simpleType       ::= **string** | **number** | **boolean** | **null**
 block            ::= "{" statement* "}"  |  INDENT statement+ DEDENT         ;
 
 statement        ::= letStmt | ifStmt | forStmt | tryStmt | callStmt
+                   | setStmt | appendStmt | modifyStmt | returnStmt
                    | sharedWrite | suspendStmt | abortStmt | throwStmt
                    | nestedOutput | expressionStmt | **;**                   ;
 
 letStmt          ::= **LET** IDENTIFIER "=" expression **;**                 ;
 ifStmt           ::= **IF** expression block ( **ELSE** block )?             ;
-forStmt          ::= ( **FOR EACH** | **FOR** ) IDENTIFIER **IN** expression block ;
+forStmt          ::= ( **FOR EACH** | **FOR** ) IDENTIFIER **IN** expression
+                     ( **WHERE** expression )? block                        ;
 tryStmt          ::= **TRY** expression **CATCH** "(" IDENTIFIER ")" "=>" expression ;
 callStmt         ::= optAwait **CALL** IDENTIFIER "(" argList? ")" arrow IDENTIFIER **;** ;
 optAwait         ::= **AWAIT**?                                              ;
 arrow            ::= "->" | "=>"                                             ;
+setStmt          ::= **SET** setTarget "=" expression **;**                 ;
+appendStmt       ::= **APPEND** **TO** setTarget expression
+                     ( **INIT** expression )? **;**                          ;
+modifyStmt       ::= **MODIFY** modifyTarget modifyBlock                     ;
+returnStmt       ::= **RETURN** expression? **;**                            ;
 sharedWrite      ::= IDENTIFIER "[" expression? "]" "=" expression **;**     ;
 suspendStmt      ::= **SUSPEND** expression **;**                            ;
 abortStmt       ::= 'ABORT' expression? ';'                                  ;
 throwStmt       ::= 'THROW' expression? ';'                                  ;
-nestedOutput     ::= **OUTPUT** templateBlock                                ;
+nestedOutput     ::= **OUTPUT** expression                                   ;
 expressionStmt   ::= expression **;**                                        ;
+
+setTarget        ::= IDENTIFIER pathSeg*                                     ;
+modifyTarget     ::= IDENTIFIER ("." IDENTIFIER)*                            ;
+modifyBlock      ::= "{" modifyField (("," | ";") modifyField)* [(","|";")] "}" ;
+modifyField      ::= fieldKey ":" expression
+                   | "[" expression "]" ":" expression                       ;
 
 #---------------------------------------------------------------------------
 # Expressions  (standard precedence ladder +  ??  coalesce)
@@ -128,8 +127,8 @@ argList          ::= expression ( "," expression )*                          ;
 lambdaExpr       ::= "(" paramList? ")" "->" expression                      ;
 
 arrayLit         ::= "[" ( expression ("," expression)* )? "]"
-                   | "[" **FOR** "(" IDENTIFIER **IN** expression ")"
-                     ( **IF** expression )? "=>" expression "]"              ;
+                   | "[" expression **FOR EACH** IDENTIFIER **IN** expression
+                     ( **WHERE** expression )? "]"                           ;
 
 objectLit        ::= "{" fieldPair ("," fieldPair)* "}"                      ;
 fieldPair        ::= fieldKey ":" expression                                 ;
@@ -152,12 +151,8 @@ slice            ::= [ NUMBER ] ":" [ NUMBER ]                               ;
 predicate        ::= expression                                              ;
 
 #---------------------------------------------------------------------------
-# Templates  (JSON shown; XML/RDF T.B.D.)
+# Templates  (payloads are expressions)
 #---------------------------------------------------------------------------
-
-templateBlock    ::= objectLit | xmlTemplate | rdfTemplate                   ;
-xmlTemplate      ::= /* TBD */                                               ;
-rdfTemplate      ::= /* TBD */                                               ;
 ──────────────────────────────────────────────────────────────────────────────
 ```
 

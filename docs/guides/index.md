@@ -13,3 +13,4 @@ title: Guides
 - [TRY/CATCH](try-catch.md): Handle errors and add retry logic.
 - [Production Use](production-use.md): Best practices, error handling, and host integration patterns.
 - [Migration Guides](migrations.md): Per-release migration guidance once compatibility is introduced.
+- [Release Readiness & Stability](release-readiness.md): Versioning, compatibility rules, and readiness gates.

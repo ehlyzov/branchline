@@ -66,6 +66,9 @@ Or on Node:
 - Follow the [Production Use guide](guides/production-use.md) for operational best practices, error-handling recipes, and host integration patterns.
 - Track compatibility changes in the [Migration Guides](guides/migrations.md) once releases begin to carry upgrade notes.
 
+## Release readiness
+- Review the [Release Readiness & Stability guide](guides/release-readiness.md) for versioning policy, stability levels, compatibility checks, and SLA-style targets.
+
 ## What you can build
 - [Normalize XML test reports](playground.md?example=junit-badge-summary){ target="_blank" } into JSON summaries and badges.
 - [Enrich customer/order payloads](playground.md?example=customer-profile){ target="_blank" } with fallbacks and computed fields.
