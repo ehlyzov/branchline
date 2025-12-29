@@ -10,10 +10,10 @@ import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Element
 import org.xml.sax.InputSource
 
-actual fun readTextFile(path: String): String =
+public actual fun readTextFile(path: String): String =
     Files.readString(Path.of(path), StandardCharsets.UTF_8)
 
-actual fun writeTextFile(path: String, contents: String) {
+public actual fun writeTextFile(path: String, contents: String) {
     val target = Path.of(path)
     val parent = target.parent
     if (parent != null) {
@@ -22,7 +22,7 @@ actual fun writeTextFile(path: String, contents: String) {
     Files.writeString(target, contents, StandardCharsets.UTF_8)
 }
 
-actual fun readStdin(): String {
+public actual fun readStdin(): String {
     val reader = BufferedReader(InputStreamReader(System.`in`, StandardCharsets.UTF_8))
     return buildString {
         var line: String? = reader.readLine()
@@ -35,11 +35,15 @@ actual fun readStdin(): String {
     }
 }
 
-actual fun printError(message: String) {
+public actual fun printError(message: String) {
     System.err.println(message)
 }
 
-actual fun parseXmlInput(text: String): Map<String, Any?> {
+public actual fun printTrace(message: String) {
+    System.err.println(message)
+}
+
+public actual fun parseXmlInput(text: String): Map<String, Any?> {
     if (text.isBlank()) return emptyMap()
     val factory = DocumentBuilderFactory.newInstance().apply {
         isNamespaceAware = false

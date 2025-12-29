@@ -10,10 +10,10 @@ private val fs: dynamic = js("require('fs')")
 private val pathModule: dynamic = js("require('path')")
 private fun newXmlParser(): dynamic = js("(function(){var parserModule=require('fast-xml-parser');return new parserModule.XMLParser({ignoreAttributes:false,attributeNamePrefix:'@',textNodeName:'#text',trimValues:true,parseTagValue:false,parseAttributeValue:false});})()")
 
-actual fun readTextFile(path: String): String =
+public actual fun readTextFile(path: String): String =
     fs.readFileSync(path, "utf8") as String
 
-actual fun writeTextFile(path: String, contents: String) {
+public actual fun writeTextFile(path: String, contents: String) {
     val dir = pathModule.dirname(path)
     if (dir != null && dir as String != "") {
         fs.mkdirSync(dir, json("recursive" to true))
@@ -21,15 +21,19 @@ actual fun writeTextFile(path: String, contents: String) {
     fs.writeFileSync(path, contents, "utf8")
 }
 
-actual fun readStdin(): String {
+public actual fun readStdin(): String {
     return fs.readFileSync(0, "utf8") as String
 }
 
-actual fun printError(message: String) {
+public actual fun printError(message: String) {
     console.error(message)
 }
 
-actual fun parseXmlInput(text: String): Map<String, Any?> {
+public actual fun printTrace(message: String) {
+    console.error(message)
+}
+
+public actual fun parseXmlInput(text: String): Map<String, Any?> {
     if (text.trim().isEmpty()) return emptyMap()
     val parsed = newXmlParser().parse(text)
     val converted = dynamicToKotlin(parsed)

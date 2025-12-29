@@ -1,11 +1,13 @@
 package io.branchline.cli
 
-expect fun readTextFile(path: String): String
+public expect fun readTextFile(path: String): String
 
-expect fun writeTextFile(path: String, contents: String)
+public expect fun writeTextFile(path: String, contents: String)
 
-expect fun readStdin(): String
+public expect fun readStdin(): String
 
-expect fun printError(message: String)
+public expect fun printError(message: String)
 
-expect fun parseXmlInput(text: String): Map<String, Any?>
+public expect fun printTrace(message: String)
+
+public expect fun parseXmlInput(text: String): Map<String, Any?>

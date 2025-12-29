@@ -121,6 +121,13 @@ tasks.register('prepareJsCliPackage') {
         def pkgFile = new File(targetRoot, 'package.json')
         pkgFile.text = resolved
 
+        def lockTemplate = file("${projectDir}/js-package/package-lock.json.tpl")
+        if (!lockTemplate.exists()) {
+            throw new GradleException("Missing js-package/package-lock.json.tpl; generate it via npm install --package-lock-only.")
+        }
+        def lockResolved = lockTemplate.text.replace('__VERSION__', project.version.toString())
+        new File(targetRoot, 'package-lock.json').text = lockResolved
+
         // Install production dependencies so the packaged CLI ships a self-contained node_modules tree
         def npmExecutable = resolveNpmExecutable()
         if (npmExecutable == null) {
@@ -128,7 +135,7 @@ tasks.register('prepareJsCliPackage') {
         }
         exec {
             workingDir targetRoot
-            commandLine npmExecutable, 'install', '--production', '--ignore-scripts', '--no-audit', '--no-fund'
+            commandLine npmExecutable, 'ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'
         }
     }
 }

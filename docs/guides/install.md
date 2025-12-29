@@ -45,6 +45,16 @@ cd branchline-public
   # outputs cli/build/distributions/branchline-cli-js-<version>.tgz
   ```
   Unpack the tarball and run `bin/bl.cjs` in CI or from custom tooling.
+
+### Reproducible JS CLI bundle
+- The CLI bundle uses `cli/js-package/package-lock.json.tpl` for deterministic `node_modules` generation.
+- `./gradlew :cli:prepareJsCliPackage` runs `npm ci --omit=dev` against the lockfile and fails if the lockfile and `package.json` are out of sync.
+- To update dependencies, regenerate the lockfile with:
+  ```bash
+  node -e "const fs=require('fs');const v='v0.9.1-alpha';const tpl=fs.readFileSync('cli/js-package/package.json.tpl','utf8');fs.writeFileSync('cli/js-package/package.json',tpl.replace(/__VERSION__/g,v));"
+  npm install --package-lock-only --ignore-scripts --no-audit --no-fund --prefix cli/js-package
+  rm cli/js-package/package.json
+  ```
   
 ## Bring Branchline into your project
 - **During development/CI:** call the Gradle helpers above to run `.bl` scripts directly.

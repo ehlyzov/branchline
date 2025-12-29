@@ -21,11 +21,11 @@ public object JsonSchemaCliInterop {
         options: SchemaOptions,
     ): String {
         if (typeDecls.isEmpty()) {
-            throw CliException("No TYPE declarations found in the script")
+            throw CliException("No TYPE declarations found in the script", kind = CliErrorKind.INPUT)
         }
         val declsByName = typeDecls.associateBy { it.name }
         if (!options.allTypes && typeName != null && !declsByName.containsKey(typeName)) {
-            throw CliException("TYPE '$typeName' not found in the script")
+            throw CliException("TYPE '$typeName' not found in the script", kind = CliErrorKind.INPUT)
         }
         val schemaOptions = JsonSchemaOptions(nullabilityStyle = options.nullabilityStyle)
         val defs = LinkedHashMap<String, JsonElement>(declsByName.size)
@@ -48,7 +48,8 @@ public object JsonSchemaCliInterop {
         options: SchemaOptions,
     ): List<TypeDecl> {
         val element = json.parseToJsonElement(rawSchema)
-        val schema = element as? JsonObject ?: throw CliException("Schema must be a JSON object")
+        val schema = element as? JsonObject
+            ?: throw CliException("Schema must be a JSON object", kind = CliErrorKind.INPUT)
         val schemaOptions = JsonSchemaOptions(nullabilityStyle = options.nullabilityStyle)
         val defs = resolveDefinitions(schema)
         val typeDecls = LinkedHashMap<String, TypeDecl>()
@@ -96,11 +97,12 @@ private fun decodeSchemaDecl(
 ): TypeDecl = try {
     JsonSchemaCodec.decodeTypeDecl(name, schema, options)
 } catch (ex: JsonSchemaException) {
-    throw CliException(ex.message ?: "Schema import failed")
+    throw CliException(ex.message ?: "Schema import failed", kind = CliErrorKind.INPUT)
 }
 
 private fun extractRefName(ref: JsonElement): String {
-    val raw = (ref as? JsonPrimitive)?.content ?: throw CliException("Schema \$ref must be a string")
+    val raw = (ref as? JsonPrimitive)?.content
+        ?: throw CliException("Schema \$ref must be a string", kind = CliErrorKind.INPUT)
     val trimmed = raw.removePrefix("#/")
     return trimmed.split('/').last()
 }
