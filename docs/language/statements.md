@@ -77,24 +77,46 @@ The `TYPE` statement declares custom types.
 
 The `RETURN` statement exits from functions.
 
+```
+returnStmt ::= RETURN expression? ";"
+```
+
 ## Modify {#modify}
 
 The `MODIFY` statement changes existing values.
+
+```
+modifyStmt ::= MODIFY modifyTarget modifyBlock
+```
 
 ## Where {#where}
 
 The `WHERE` clause provides filtering conditions.
 
+```
+forStmt   ::= ( FOR EACH | FOR ) IDENTIFIER IN expression ( WHERE expression )? block
+arrayComp ::= "[" expression FOR EACH IDENTIFIER IN expression ( WHERE expression )? "]"
+```
+
 ## Set {#set}
 
 The `SET` statement performs assignments.
+
+```
+setStmt ::= SET setTarget "=" expression ";"
+```
 
 ## Init {#init}
 
 The `INIT` statement provides initial values.
 
 ```
+appendStmt ::= APPEND TO setTarget expression ( INIT expression )? ";"
+```
+
+```
 statement ::= letStmt | ifStmt | forStmt | tryStmt | callStmt
+            | setStmt | appendStmt | modifyStmt | returnStmt
             | sharedWrite | suspendStmt | abortStmt | throwStmt
             | nestedOutput | expressionStmt | ;
 ```
@@ -112,7 +134,8 @@ letStmt ::= LET IDENTIFIER "=" expression ";"
 
 ```
 ifStmt ::= IF expression block ( ELSE block )?
-forStmt ::= ( FOR EACH | FOR ) IDENTIFIER IN expression block
+forStmt ::= ( FOR EACH | FOR ) IDENTIFIER IN expression
+            ( WHERE expression )? block
 ```
 
 Conditionals and loops evaluate expressions to drive branching and iteration【F:language/src/test/kotlin/v2/ebnf.txt†L83-L85】.
@@ -130,11 +153,27 @@ occurs【F:language/src/test/kotlin/v2/ebnf.txt†L85-L85】.
 
 ```
 callStmt    ::= optAwait CALL IDENTIFIER "(" argList? ")" arrow IDENTIFIER ";"
+setStmt     ::= SET setTarget "=" expression ";"
+appendStmt  ::= APPEND TO setTarget expression ( INIT expression )? ";"
+modifyStmt  ::= MODIFY modifyTarget modifyBlock
+returnStmt  ::= RETURN expression? ";"
 sharedWrite ::= IDENTIFIER "[" expression? "]" "=" expression ";"
 ```
 
 Call statements invoke suspended functions, while `sharedWrite` mutates shared
 memory slots【F:language/src/test/kotlin/v2/ebnf.txt†L86-L90】.
+
+## Mutation statements
+
+```
+setStmt    ::= SET setTarget "=" expression ";"
+appendStmt ::= APPEND TO setTarget expression ( INIT expression )? ";"
+modifyStmt ::= MODIFY modifyTarget modifyBlock
+```
+
+`SET` assigns values to variables or paths, `APPEND TO` pushes values into lists
+(optionally seeding with `INIT`), and `MODIFY` applies updates to a static
+object path.
 
 ## Suspension and termination
 
@@ -150,7 +189,7 @@ expression【F:language/src/test/kotlin/v2/ebnf.txt†L90-L92】.
 ## Nested output and expressions
 
 ```
-nestedOutput   ::= OUTPUT templateBlock
+nestedOutput   ::= OUTPUT expression
 expressionStmt ::= expression ";"
 ```
 

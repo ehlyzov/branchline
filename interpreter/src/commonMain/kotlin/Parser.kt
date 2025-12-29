@@ -76,13 +76,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val decls = mutableListOf<TopLevelDecl>()
         while (!isAtEnd()) {
             when {
-                check(TokenType.SOURCE) -> {
-                    // Legacy SOURCE declarations are ignored; input binding defaults to `input`.
-                    // Consume the declaration to allow old programs to parse without effect.
-                    skipSource()
-                }
                 check(TokenType.TRANSFORM) -> decls += parseTransform()
-                check(TokenType.OUTPUT) -> decls += parseOutput()
                 check(TokenType.SHARED) -> decls += parseShared()
                 check(TokenType.FUNC) -> decls += parseFunc()
                 check(TokenType.TYPE) -> decls += parseType()
@@ -95,32 +89,6 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     }
 
     // ------------------- top‑level parsers --------------------------
-
-    private fun skipSource() {
-        advance() // SOURCE
-        if (check(TokenType.IDENTIFIER)) advance()
-        if (match(TokenType.USING)) {
-            advance() // adapter name
-            if (match(TokenType.LEFT_PAREN)) {
-                while (!check(TokenType.RIGHT_PAREN) && !isAtEnd()) {
-                    if (check(TokenType.COMMA)) {
-                        advance(); continue
-                    }
-                    parseExpression()
-                    if (!match(TokenType.COMMA)) break
-                }
-                consume(TokenType.RIGHT_PAREN, "Expect ')' after adapter args")
-            }
-        }
-        optionalSemicolon()
-    }
-
-    private fun parseOutput(): OutputDecl {
-        val start = advance() // OUTPUT
-        val adapter = if (match(TokenType.USING)) parseAdapter() else null
-        val template = parseExpression()
-        return OutputDecl(adapter, template, start)
-    }
 
     private fun parseTransform(): TransformDecl {
         val start = advance() // TRANSFORM

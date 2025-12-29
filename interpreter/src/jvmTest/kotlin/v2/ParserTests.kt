@@ -51,13 +51,10 @@ class ParserTest {
     }
 
     @Test
-    fun `adapter spec parsed`() {
-        val program = parse("OUTPUT USING kafka(\"topic\", \"dlq\") {}")
-        val output = program.decls.first() as OutputDecl
-        val adapter = output.adapter!!
-        assertEquals("kafka", adapter.name)
-        assertEquals(2, adapter.args.size)
-        assertTrue(adapter.args[0] is StringExpr)
+    fun `top-level output rejected`() {
+        assertThrows<ParseException> {
+            parse("OUTPUT USING kafka(\"topic\", \"dlq\") {}")
+        }
     }
 
     @Test
