@@ -15,6 +15,16 @@ construction.
 - Lambda syntax `(param[, ...]) -> expression` feeds higher-order stdlib functions (`MAP`, `FILTER`, `REDUCE`, etc).
 - Path expressions let you traverse JSON/XML structures quickly; combine slices `[start:end]` and predicates `[expr]` for selective access.
 
+## Constraints
+- `CASE` requires an `ELSE` branch.
+- `TRY` (from statements) evaluates expressions; wrap specific calls instead of large blocks.
+- `CALL`, `AWAIT`, and `SUSPEND` depend on host support and may error without it.
+
+## Performance tips
+- Cache expensive paths or function calls with `LET`.
+- Keep lambda bodies small; extract helpers with `FUNC` when reused across transforms.
+- Prefer `MAP`/`FILTER`/`REDUCE` for collection processing to keep intent clear.
+
 ## As {#as}
 
 The `AS` keyword provides aliasing and casting functionality.

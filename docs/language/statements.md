@@ -65,6 +65,15 @@ The `SHARED` statement declares shared memory resources.
 
 To wait for a shared entry from within a program, use the `AWAIT_SHARED(resource, key)` stdlib function (requires a configured shared store in the host). This cannot be demonstrated in the playground because no shared store is wired there.
 
+Example:
+
+```branchline
+SHARED session MANY;
+
+session["lastSeen"] = NOW();
+session["userId"] = input.user.id;
+```
+
 ## Functions {#func}
 
 The `FUNC` statement declares functions.
@@ -155,3 +164,15 @@ expressionStmt ::= expression ";"
 ```
 
 Nested `OUTPUT` blocks and bare expressions complete the statement set【F:language/src/test/kotlin/v2/ebnf.txt†L93-L94】.
+
+## Constraints
+
+- `TRY` wraps expressions and binds errors to the identifier in `CATCH`.
+- `CALL`, `AWAIT`, and `SUSPEND` require host support to execute.
+- `SHARED` resources must be declared before use and rely on host-provided storage.
+
+## Performance tips
+
+- Bind frequently used paths with `LET` to avoid repeated traversal.
+- Prefer `FOREACH`/comprehensions over manual index loops when shaping arrays.
+- Keep `OUTPUT` blocks focused; build intermediate objects with `LET` for clarity.

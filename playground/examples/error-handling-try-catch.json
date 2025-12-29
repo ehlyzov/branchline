@@ -1,0 +1,21 @@
+{
+  "title": "Error Handling: TRY/CATCH",
+  "description": "Use TRY/CATCH with ASSERT to guard calculations and emit a safe fallback payload.",
+  "program": [
+    "LET total = SUM(input.items);",
+    "LET guard = TRY ASSERT(total >= 0, \"total cannot be negative\")",
+    "CATCH(err) -> { ok: false, error: err };",
+    "",
+    "OUTPUT {",
+    "    total: total,",
+    "    guard: guard",
+    "}"
+  ],
+  "input": {
+    "items": [
+      120.0,
+      -160.0,
+      25.0
+    ]
+  }
+}

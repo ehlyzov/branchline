@@ -46,6 +46,13 @@ sharedDecl ::= SHARED IDENTIFIER ( SINGLE | MANY )? ;
 Shared memory exposes mutable storage that can be `SINGLE` or `MANY`
 valued【F:language/src/test/kotlin/v2/ebnf.txt†L55-L55】.
 
+Example:
+
+```branchline
+SHARED session MANY;
+SHARED cache SINGLE;
+```
+
 ## Function declarations
 
 ```
@@ -76,3 +83,10 @@ TYPE Status = enum { Active, Suspended, Deleted }
 TYPE IdOrName = string | number
 TYPE Flexible = _?
 ```
+
+## Constraints
+
+- Declarations are top-level; use `LET`/`SET` inside blocks for local state.
+- `SHARED` resources must be declared before first use in the program.
+- `TYPE` aliases define shapes but do not perform runtime validation unless the
+  host or tests enforce it.
