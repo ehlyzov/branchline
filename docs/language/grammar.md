@@ -161,4 +161,4 @@ rdfTemplate      ::= /* TBD */                                               ;
 ──────────────────────────────────────────────────────────────────────────────
 ```
 
-The grammar file above is exercised by tests to stay synchronized with the implementation【F:language/src/test/kotlin/v2/ebnf.txt†L1-L153】.
+The grammar file above is exercised by tests to stay synchronized with the implementation.

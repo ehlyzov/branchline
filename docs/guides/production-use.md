@@ -23,8 +23,8 @@ behavior, resilient error handling, and clean host integration.
 
 ### Safely wrap external calls
 ```branchline
-LET response = TRY CALL inventoryService(input) -> payload
-CATCH(err) RETRY 2 TIMES BACKOFF 250ms -> {
+LET response = TRY inventoryService(input)
+CATCH(err) RETRY 2 TIMES BACKOFF 250ms => {
     ok: false,
     error: err.message ?? "inventory lookup failed"
 };
@@ -40,7 +40,7 @@ OUTPUT { total: total };
 ### Convert failures into soft warnings
 ```branchline
 LET flagged = TRY ASSERT(input.ready, "missing readiness flag")
-CATCH(err) -> false;
+CATCH(err) => false;
 
 OUTPUT {
     ready: flagged,
@@ -57,7 +57,7 @@ transformation logic separate from transport.
 ### Callable host services
 `CALL` integrates with host-provided functions. Follow these patterns:
 - Validate arguments before `CALL`.
-- Wrap `CALL` in `TRY`/`CATCH` if failures should not abort the pipeline.
+- Prefer structured return values and guard them with `ASSERT`, `CASE`, or `TRY` when you need retries.
 - Translate host errors into a stable, user-friendly shape.
 
 ### Shared memory

@@ -65,6 +65,7 @@ Reserved words. Each links to a page with usage examples.
 | `THROW` | Throw an error. | [example](statements.md#throw) |
 | `TRY` / `CATCH` | Error handling block. | [example](statements.md#try) |
 | `RETRY` / `TIMES` / `BACKOFF` | Retry logic modifiers. | [example](statements.md#try) |
+| `CALL` | Invoke a host function. | [example](statements.md#call) |
 | `SHARED` / `SINGLE` / `MANY` | Resource qualifiers. | [example](statements.md#shared) |
 | `FUNC` | Declare a function. | [example](statements.md#func) |
 | `TYPE` | Declare a type. | [example](statements.md#type) |
@@ -82,7 +83,6 @@ Reserved words. Each links to a page with usage examples.
 | `LET` / `IN` | Local binding expression. | [example](expressions.md#let) |
 | `AWAIT` | Await asynchronous result. | [example](expressions.md#await) |
 | `SUSPEND` | Suspend execution. | [example](expressions.md#suspend) |
-| `CALL` | Invoke a host function. | [example](expressions.md#call) |
 | `TRUE` / `FALSE` | Boolean literals. | [example](expressions.md#literals) |
 | `NULL` | Null literal. | [example](expressions.md#literals) |
 | `UNION` | Union type expression. | [example](expressions.md#union) |
@@ -96,14 +96,14 @@ Reserved words. Each links to a page with usage examples.
 Branchline uses a small set of tokens. Keywords are written in upper case and
 include `OUTPUT`, `TRANSFORM`, `BUFFER`, `SHARED`, `FUNC`, `TYPE`, `LET`,
 `IF`, `FOR`, `TRY`, `CALL`, `AWAIT`, and `SUSPEND`, among others
-as seen throughout the grammar【F:language/src/test/kotlin/v2/ebnf.txt†L22-L90】.
+as seen throughout the grammar.
 
 Names are expressed using identifiers:
 `funcDecl ::= FUNC IDENTIFIER "(" paramList? ")" funcBody`
-shows identifiers applied to declarations【F:language/src/test/kotlin/v2/ebnf.txt†L45-L63】.
+shows identifiers applied to declarations.
 
 Literals support numbers, strings, booleans, and null via the rule
-`literal ::= NUMBER | STRING | TRUE | FALSE | NULL`【F:language/src/test/kotlin/v2/ebnf.txt†L112-L116】.
+`literal ::= NUMBER | STRING | TRUE | FALSE | NULL`.
 
 Punctuation such as parentheses, braces, brackets, commas, and semicolons
 structure programs and appear in the production rules.

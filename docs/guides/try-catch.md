@@ -10,7 +10,7 @@ Use `TRY` / `CATCH` to handle failures and optionally retry operations.
 
 ```branchline
 TRY riskyCall()
-CATCH(e) -> { err: e.message };
+CATCH(e) => { err: e.message };
 ```
 
 If `riskyCall()` throws, the fallback block produces an error object.
@@ -21,15 +21,15 @@ Add `RETRY n TIMES` to re-run the expression before giving up.
 
 ```branchline
 TRY fetch(input.id)
-CATCH(e) RETRY 3 TIMES -> { err: "failed" };
+CATCH(e) RETRY 3 TIMES => { err: "failed" };
 ```
 
 The call is attempted three additional times. If all attempts fail, the fallback runs.
 
 ## With backoff
 ```branchline
-TRY CALL remoteService(input) -> response
-CATCH(err) RETRY 2 TIMES BACKOFF 500ms -> {
+TRY remoteService(input)
+CATCH(err) RETRY 2 TIMES BACKOFF 500ms => {
     error: err.message ?? "service failed"
 };
 ```
@@ -38,7 +38,7 @@ Adds a fixed backoff between attempts. (Host must support `CALL` and backoff sem
 ## Guardrails with ASSERT
 Combine `ASSERT` to fail fast on bad states:
 ```branchline
-LET result = TRY risky(input) CATCH(e) -> NULL;
+LET result = TRY risky(input) CATCH(e) => NULL;
 ASSERT(result != NULL, "Risky call failed");
 ```
 
