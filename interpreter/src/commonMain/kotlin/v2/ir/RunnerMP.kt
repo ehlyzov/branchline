@@ -64,7 +64,8 @@ fun buildRunnerFromProgramMP(
     }
 
     val ir = ToIR(funcs, hostFns).compile(t.body.statements)
-    val descriptors = buildTransformDescriptors(transforms, hostFns.keys)
+    val typeDecls = prog.decls.filterIsInstance<v2.TypeDecl>()
+    val descriptors = buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
     val reg = TransformRegistry(funcs, hostFns, descriptors)
     val eval = makeEval(hostFns, funcs, reg, tracer)
     val exec = Exec(ir, eval, tracer)

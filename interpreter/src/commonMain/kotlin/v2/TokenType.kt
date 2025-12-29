@@ -1,5 +1,8 @@
 package v2
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 enum class TokenType {
     // Single-character tokens
     LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE,

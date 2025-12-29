@@ -64,7 +64,8 @@ class TreeReconstructionDSLRuntimeTest {
         val funcs = program.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
         val hostFns = v2.std.StdLib.fns
         val transforms = program.decls.filterIsInstance<TransformDecl>()
-        val descriptors = buildTransformDescriptors(transforms, hostFns.keys)
+        val typeDecls = program.decls.filterIsInstance<TypeDecl>()
+        val descriptors = buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
 
         val ir = ToIR(funcs, hostFns).compile(transform.body.statements)
         val registry = TransformRegistry(funcs, hostFns, descriptors)

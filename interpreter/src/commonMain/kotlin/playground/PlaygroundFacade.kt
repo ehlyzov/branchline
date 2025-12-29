@@ -100,7 +100,8 @@ object PlaygroundFacade {
             SemanticAnalyzer(hostFns.keys).analyze(parsed)
 
             val ir = ToIR(funcs, hostFns).compile(transform.body.statements)
-            val descriptors = buildTransformDescriptors(transforms, hostFns.keys)
+            val typeDecls = parsed.decls.filterIsInstance<v2.TypeDecl>()
+            val descriptors = buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
             val registry = TransformRegistry(
                 funcs,
                 hostFns,
