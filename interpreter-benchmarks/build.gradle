@@ -1,0 +1,18 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+    id 'me.champeau.jmh'
+}
+
+dependencies {
+    implementation project(':interpreter')
+}
+
+jmh {
+    resultFormat = 'JSON'
+    profilers = ['gc']
+    includes = ['v2.benchmarks.InterpreterTransformBenchmark.*']
+    warmupIterations = 2
+    iterations = 5
+    timeOnIteration = '500ms'
+    fork = 1
+}

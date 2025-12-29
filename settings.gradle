@@ -4,6 +4,7 @@ plugins {
 rootProject.name = 'branchline'
 
 include 'interpreter', 'vm', 'test-fixtures', 'conformance-tests', 'platform', 'cli'
+include 'interpreter-benchmarks', 'vm-benchmarks'
 
 if (file('platform-private').exists()) {
     include 'platform-private'
