@@ -102,6 +102,8 @@ Experiment with Branchline directly in your browser—no installs required. The 
 - [junit-badge-summary](?example=junit-badge-summary){ target="_blank" } — XML parsing and normalization
 - [order-shipment](?example=order-shipment){ target="_blank" } — object reshaping and path navigation
 - [pipeline-health-gating](?example=pipeline-health-gating){ target="_blank" } — ASSERT/CHECKPOINT with trace
+- [error-handling-try-catch](?example=error-handling-try-catch){ target="_blank" } — TRY/CATCH with ASSERT fallbacks
+- [shared-memory-basics](?example=shared-memory-basics){ target="_blank" } — SHARED declarations and writes
 - Standard library coverage:
   [stdlib-core-keys-values](?example=stdlib-core-keys-values){ target="_blank" },
   [stdlib-core-put-delete](?example=stdlib-core-put-delete){ target="_blank" },

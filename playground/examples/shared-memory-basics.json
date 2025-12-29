@@ -1,0 +1,21 @@
+{
+  "title": "Shared Memory: SHARED and Writes",
+  "description": "Declare shared memory and write session state. Reading/waiting requires host integration.",
+  "program": [
+    "SHARED session MANY;",
+    "",
+    "LET key = input.userId ?? \"guest\";",
+    "session[key] = {",
+    "    userId: key,",
+    "    lastSeen: NOW()",
+    "};",
+    "",
+    "OUTPUT {",
+    "    sharedKey: key,",
+    "    status: \"updated shared state\"",
+    "}"
+  ],
+  "input": {
+    "userId": "riley"
+  }
+}

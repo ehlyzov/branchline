@@ -59,11 +59,31 @@ The `THROW` statement raises an exception.
 
 The `TRY` statement handles errors and exceptions.
 
+## Call {#call}
+
+The `CALL` statement invokes host-provided functions and binds the result to
+an identifier.
+
+Example:
+
+```branchline
+CALL inventoryService(input) -> payload;
+```
+
 ## Shared {#shared}
 
 The `SHARED` statement declares shared memory resources.
 
 To wait for a shared entry from within a program, use the `AWAIT_SHARED(resource, key)` stdlib function (requires a configured shared store in the host). This cannot be demonstrated in the playground because no shared store is wired there.
+
+Example:
+
+```branchline
+SHARED session MANY;
+
+session["lastSeen"] = NOW();
+session["userId"] = input.user.id;
+```
 
 ## Functions {#func}
 
@@ -120,7 +140,6 @@ statement ::= letStmt | ifStmt | forStmt | tryStmt | callStmt
             | sharedWrite | suspendStmt | abortStmt | throwStmt
             | nestedOutput | expressionStmt | ;
 ```
-【F:language/src/test/kotlin/v2/ebnf.txt†L76-L94】
 
 ## Variable binding
 
@@ -128,7 +147,7 @@ statement ::= letStmt | ifStmt | forStmt | tryStmt | callStmt
 letStmt ::= LET IDENTIFIER "=" expression ";"
 ```
 
-`LET` introduces a new variable bound to the result of an expression【F:language/src/test/kotlin/v2/ebnf.txt†L82-L82】.
+`LET` introduces a new variable bound to the result of an expression.
 
 ## Control flow
 
@@ -138,7 +157,7 @@ forStmt ::= ( FOR EACH | FOR ) IDENTIFIER IN expression
             ( WHERE expression )? block
 ```
 
-Conditionals and loops evaluate expressions to drive branching and iteration【F:language/src/test/kotlin/v2/ebnf.txt†L83-L85】.
+Conditionals and loops evaluate expressions to drive branching and iteration.
 
 ## Error handling
 
@@ -147,7 +166,7 @@ tryStmt ::= TRY expression CATCH "(" IDENTIFIER ")" "=>" expression
 ```
 
 `TRY` evaluates an expression and binds an error to the given identifier if one
-occurs【F:language/src/test/kotlin/v2/ebnf.txt†L85-L85】.
+occurs.
 
 ## Calls and mutation
 
@@ -161,7 +180,7 @@ sharedWrite ::= IDENTIFIER "[" expression? "]" "=" expression ";"
 ```
 
 Call statements invoke suspended functions, while `sharedWrite` mutates shared
-memory slots【F:language/src/test/kotlin/v2/ebnf.txt†L86-L90】.
+memory slots.
 
 ## Mutation statements
 
@@ -184,7 +203,7 @@ throwStmt  ::= THROW expression? ";"
 ```
 
 These statements pause or terminate execution, optionally carrying an
-expression【F:language/src/test/kotlin/v2/ebnf.txt†L90-L92】.
+expression.
 
 ## Nested output and expressions
 
@@ -193,4 +212,16 @@ nestedOutput   ::= OUTPUT expression
 expressionStmt ::= expression ";"
 ```
 
-Nested `OUTPUT` blocks and bare expressions complete the statement set【F:language/src/test/kotlin/v2/ebnf.txt†L93-L94】.
+Nested `OUTPUT` blocks and bare expressions complete the statement set.
+
+## Constraints
+
+- `TRY` wraps expressions and binds errors to the identifier in `CATCH`.
+- `CALL`, `AWAIT`, and `SUSPEND` require host support to execute.
+- `SHARED` resources must be declared before use and rely on host-provided storage.
+
+## Performance tips
+
+- Bind frequently used paths with `LET` to avoid repeated traversal.
+- Prefer `FOREACH`/comprehensions over manual index loops when shaping arrays.
+- Keep `OUTPUT` blocks focused; build intermediate objects with `LET` for clarity.

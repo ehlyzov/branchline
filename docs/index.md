@@ -59,7 +59,12 @@ Or on Node:
 ## Learn the language
 - Start with the [Language Overview](language/index.md) and the [Getting Started guide](guides/getting-started.md).
 - Explore the standard library pages for runnable examples linked to the playground.
+- Review constraints and performance guidance in [Declarations](language/declarations.md), [Expressions](language/expressions.md), and [Statements](language/statements.md).
 - Use the playground to tweak code and inputs without installing anything.
+
+## Production and migration
+- Follow the [Production Use guide](guides/production-use.md) for operational best practices, error-handling recipes, and host integration patterns.
+- Track compatibility changes in the [Migration Guides](guides/migrations.md) once releases begin to carry upgrade notes.
 
 ## Release readiness
 - Review the [Release Readiness & Stability guide](guides/release-readiness.md) for versioning policy, stability levels, compatibility checks, and SLA-style targets.

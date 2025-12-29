@@ -4,7 +4,7 @@ title: Array Comprehensions
 
 # Array Comprehensions
 
-Array comprehensions build arrays from other collections using a `FOR` clause inside a literal【F:language/src/test/kotlin/v2/ebnf.txt†L122-L124】. They’re handy for concise reshaping without an explicit loop.
+Array comprehensions build arrays from other collections using a `FOR` clause inside a literal. They’re handy for concise reshaping without an explicit loop.
 
 ## Basic comprehension
 ```branchline

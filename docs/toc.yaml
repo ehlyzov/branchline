@@ -48,6 +48,10 @@ items:
         href: guides/array-comprehension.md
       - name: TRY/CATCH
         href: guides/try-catch.md
+      - name: Production Use
+        href: guides/production-use.md
+      - name: Migration Guides
+        href: guides/migrations.md
       - name: Release Readiness & Stability
         href: guides/release-readiness.md
   - name: Architecture
