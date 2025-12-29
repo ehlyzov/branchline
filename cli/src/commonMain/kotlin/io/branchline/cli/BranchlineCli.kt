@@ -112,6 +112,7 @@ object BranchlineCli {
             CliCommand.RUN -> " (default: run)"
             CliCommand.COMPILE -> " (default: compile)"
             CliCommand.EXECUTE -> " (default: exec)"
+            CliCommand.INSPECT -> " (default: inspect)"
             CliCommand.SCHEMA -> " (default: schema)"
             null -> ""
         }
