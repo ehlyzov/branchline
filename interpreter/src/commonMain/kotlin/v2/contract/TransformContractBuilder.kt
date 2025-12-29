@@ -78,6 +78,9 @@ public class TransformContractBuilder(
     private fun outputFromTypeRef(typeRef: TypeRef): SchemaGuarantee {
         val resolved = typeResolver.resolve(typeRef)
         if (resolved !is RecordTypeRef) {
+            if (resolved is UnionTypeRef) {
+                return outputFromUnion(resolved)
+            }
             val shape = shapeFromTypeRef(resolved)
             return SchemaGuarantee(
                 fields = linkedMapOf(),
@@ -88,6 +91,27 @@ public class TransformContractBuilder(
         return SchemaGuarantee(
             fields = outputFieldsFromRecord(resolved),
             mayEmitNull = false,
+            dynamicFields = emptyList(),
+        )
+    }
+
+    private fun outputFromUnion(typeRef: UnionTypeRef): SchemaGuarantee {
+        val resolvedMembers = typeRef.members.map { member -> typeResolver.resolve(member) }
+        val nonNullMembers = resolvedMembers.filterNot { member ->
+            member is PrimitiveTypeRef && member.kind == PrimitiveType.NULL
+        }
+        val mayEmitNull = resolvedMembers.any { member -> shapeMayBeNull(shapeFromTypeRef(member)) }
+        val record = nonNullMembers.singleOrNull() as? RecordTypeRef
+        if (record != null) {
+            return SchemaGuarantee(
+                fields = outputFieldsFromRecord(record),
+                mayEmitNull = mayEmitNull,
+                dynamicFields = emptyList(),
+            )
+        }
+        return SchemaGuarantee(
+            fields = linkedMapOf(),
+            mayEmitNull = mayEmitNull,
             dynamicFields = emptyList(),
         )
     }
