@@ -61,6 +61,9 @@ Or on Node:
 - Explore the standard library pages for runnable examples linked to the playground.
 - Use the playground to tweak code and inputs without installing anything.
 
+## Release readiness
+- Review the [Release Readiness & Stability guide](guides/release-readiness.md) for versioning policy, stability levels, compatibility checks, and SLA-style targets.
+
 ## What you can build
 - [Normalize XML test reports](playground.md?example=junit-badge-summary){ target="_blank" } into JSON summaries and badges.
 - [Enrich customer/order payloads](playground.md?example=customer-profile){ target="_blank" } with fallbacks and computed fields.
