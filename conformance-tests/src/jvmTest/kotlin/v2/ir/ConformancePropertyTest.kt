@@ -16,12 +16,12 @@ private fun runBothEngines(body: String, row: Map<String, Any?>): Pair<Any?, Any
     return interp to vm
 }
 
-private data class ListIndexInput(
+data class ListIndexInput(
     val items: List<Int>,
     val index: Int,
 )
 
-private data class MergeInput(
+data class MergeInput(
     val base: Map<String, Int>,
     val key: String,
     val value: Int,
