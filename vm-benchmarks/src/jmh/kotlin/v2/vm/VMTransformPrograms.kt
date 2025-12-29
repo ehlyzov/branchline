@@ -17,8 +17,8 @@ public object VMTransformPrograms {
 
     public val arrayComprehension: String = """
         TRANSFORM T {
-            LET expensive = [FOR (o IN input.orders) IF o.total > 150 => o.id];
-            LET skus = [FOR (i IN input.orders[0].items) => i.sku];
+            LET expensive = [o.id FOR EACH o IN input.orders WHERE o.total > 150];
+            LET skus = [i.sku FOR EACH i IN input.orders[0].items];
             OUTPUT {
                 expensive: expensive,
                 skus: skus,
