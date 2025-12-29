@@ -61,7 +61,6 @@ Reserved words. Each links to a page with usage examples.
 | `ENUM` | Define an enumeration. | [example](statements.md#enum) |
 | `FOREACH` | Loop shortcut. | [example](statements.md#foreach) |
 | `INPUT` | Reference pipeline input. | [example](statements.md#input) |
-| `PARALLEL` / `ONBLOCK` | Run blocks concurrently. | [example](statements.md#parallel) |
 | `ABORT` | Abort execution. | [example](statements.md#abort) |
 | `THROW` | Throw an error. | [example](statements.md#throw) |
 | `TRY` / `CATCH` | Error handling block. | [example](statements.md#try) |

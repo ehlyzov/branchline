@@ -11,7 +11,7 @@ Statements control execution and side effects within blocks.
 - Guard code with `IF` and `TRY/CATCH`; pair `ASSERT`/`THROW` for explicit failures.
 - `FOR`/`FOR EACH` iterate collections; comprehensions in expressions provide a shorthand for building arrays.
 - `OUTPUT { ... }` shapes final payloads; nested `OUTPUT` is allowed for intermediate blocks.
-- `CALL` bridges to host functions; `AWAIT`/`SUSPEND`/`PARALLEL` require host support for async/concurrency.
+- `CALL` bridges to host functions; `AWAIT`/`SUSPEND` require host support for async/concurrency.
 
 ## Output {#output}
 
@@ -46,10 +46,6 @@ The `FOREACH` statement provides a shortcut for iteration.
 ## Input {#input}
 
 The `INPUT` keyword references the pipeline input data (alias: `input`).
-
-## Parallel {#parallel}
-
-The `PARALLEL` statement enables concurrent execution.
 
 ## Abort {#abort}
 

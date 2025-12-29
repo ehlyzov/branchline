@@ -27,7 +27,7 @@
   - Control flow: `IF/ELSE`, `FOR` / `FOR EACH` / `FOREACH`, comprehensions, `WHERE` usage, `TRY/CATCH`, `RETRY` modifiers, `ASSERT/THROW/ABORT`.
   - Functions: `FUNC` forms, parameters, returns, higher-order usage, lambda syntax, `APPLY`, `CALL` for host invocations.
   - Modules/adapters: `SOURCE`, `OUTPUT`, `USING`, transform modes (`STREAM`/`BUFFER`), annotations, `INIT`, `SHARED` with `SINGLE`/`MANY`, `AWAIT_SHARED`.
-  - Concurrency/suspension: `SUSPEND`, `AWAIT`, `PARALLEL`/`ONBLOCK`, shared memory considerations.
+  - Concurrency/suspension: `SUSPEND`, `AWAIT`, shared memory considerations.
   - Paths and selectors: `$`/`INPUT`, dot access, wildcards, slices, predicates; edge cases (missing fields, null coalescing, pattern for XML attributes).
   - Error handling and tracing: `TRY/CATCH`, `CHECKPOINT`, `EXPLAIN`, provenance expectations.
   - Each subsection should include: what it is, when to use, rules/pitfalls, and a runnable snippet linked to the playground.
