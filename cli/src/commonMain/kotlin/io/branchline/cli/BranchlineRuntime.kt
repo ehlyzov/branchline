@@ -13,12 +13,15 @@ import v2.TransformDecl
 import v2.TypeDecl
 import v2.DEFAULT_INPUT_ALIAS
 import v2.COMPAT_INPUT_ALIASES
+import v2.contract.TransformContract
+import v2.contract.TransformContractBuilder
 import v2.ir.Exec
 import v2.ir.ToIR
 import v2.ir.TransformRegistry
 import v2.ir.buildTransformDescriptors
 import v2.ir.makeEval
 import v2.sema.SemanticAnalyzer
+import v2.sema.TypeResolver
 import v2.std.StdLib
 import v2.vm.Bytecode
 import v2.vm.BytecodeIO
@@ -30,9 +33,11 @@ class BranchlineProgram(private val source: String) {
     private val hostFns: Map<String, (List<Any?>) -> Any?>
     private val funcs: Map<String, FuncDecl>
     private val transforms: List<TransformDecl>
+    private val typeDecls: List<TypeDecl>
     private val namedDescriptors: Map<String, v2.ir.TransformDescriptor>
     private val registry: TransformRegistry
     private val eval: (v2.Expr, MutableMap<String, Any?>) -> Any?
+    private val contractBuilder: TransformContractBuilder
 
     init {
         val tokens = Lexer(source).lex()
@@ -45,10 +50,13 @@ class BranchlineProgram(private val source: String) {
         SemanticAnalyzer(hostFns.keys).analyze(program)
         funcs = program.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
         transforms = program.decls.filterIsInstance<TransformDecl>()
+        typeDecls = program.decls.filterIsInstance<TypeDecl>()
         if (transforms.isEmpty()) {
             throw CliException("Program must declare at least one TRANSFORM block")
         }
-        namedDescriptors = buildTransformDescriptors(transforms, hostFns.keys)
+        val typeResolver = TypeResolver(typeDecls)
+        contractBuilder = TransformContractBuilder(typeResolver, hostFns.keys)
+        namedDescriptors = buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
         registry = TransformRegistry(funcs, hostFns, namedDescriptors)
         eval = makeEval(hostFns, funcs, registry, tracer = null)
     }
@@ -92,6 +100,9 @@ class BranchlineProgram(private val source: String) {
 
     fun typeDecls(): List<TypeDecl> = program.decls.filterIsInstance<TypeDecl>()
 
+    fun contractForTransform(transform: TransformDecl): TransformContract =
+        contractBuilder.build(transform)
+
     private fun compileIr(transform: TransformDecl) = ToIR(funcs, hostFns).compile(transform.body.statements)
 }
 
@@ -101,6 +112,7 @@ data class CompiledArtifact(
     val transform: String?,
     val script: String,
     val bytecode: BytecodeIO.SerializedBytecode,
+    val contract: TransformContract? = null,
 )
 
 object ArtifactCodec {

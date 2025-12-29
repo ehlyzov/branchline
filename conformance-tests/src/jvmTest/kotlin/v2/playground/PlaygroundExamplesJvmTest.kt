@@ -20,6 +20,7 @@ import v2.FuncDecl
 import v2.Lexer
 import v2.Parser
 import v2.TransformDecl
+import v2.TypeDecl
 import v2.ir.buildTransformDescriptors
 import v2.ir.compileStream
 import v2.sema.SemanticAnalyzer
@@ -60,9 +61,10 @@ class PlaygroundExamplesJvmTest {
                 SemanticAnalyzer(StdLib.fns.keys).analyze(parsed)
                 val funcs = parsed.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
                 val transforms = parsed.decls.filterIsInstance<TransformDecl>()
+                val typeDecls = parsed.decls.filterIsInstance<TypeDecl>()
                 require(transforms.isNotEmpty()) { "No TRANSFORM found in $examplePath" }
                 val transform = transforms.first()
-                val descriptors = buildTransformDescriptors(transforms, StdLib.fns.keys)
+                val descriptors = buildTransformDescriptors(transforms, typeDecls, StdLib.fns.keys)
                 val runner = compileStream(
                     t = transform,
                     funcs = funcs,

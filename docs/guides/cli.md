@@ -9,6 +9,7 @@ The Branchline CLI wraps the interpreter, compiler, and VM APIs. Both JVM and No
 - `run` (default) — compile and execute a `.bl` script directly.
 - `compile` — produce a bytecode artifact (.blc) that embeds the source and selected transform.
 - `exec` — evaluate a compiled artifact through the VM without recompiling the source.
+- `inspect` — report explicit signatures vs inferred contracts (including mismatch warnings).
 
 Calling a CLI with no arguments now prints a full help screen (`-h`/`--help` also work). All commands accept structured inputs via `--input <path>` and support XML payloads with `--input-format xml`.
 
@@ -17,6 +18,7 @@ Calling a CLI with no arguments now prints a full help screen (`-h`/`--help` als
 - **run**: quickest way to try a Branchline script; compiles + executes in one step. Use in dev loops or CI smoke tests.
 - **compile**: produces a portable `.blc` artifact with bytecode + embedded source/transform. Use when you want to freeze a script at build time or ship it separately.
 - **exec**: runs a `.blc` through the VM. Use when the source is already compiled, or when you want to lock a transform/version while letting inputs vary. `--transform` overrides the embedded transform at execution time.
+- **inspect**: compares explicit transform signatures to inferred contracts. Use to validate input/output expectations and review contract warnings.
 
 Transform selection: all modes default to the first `TRANSFORM` block. Pass `--transform <name>` to pick another.
 
@@ -41,6 +43,7 @@ Create `input.json`:
 - Run directly (JVM): `./gradlew :cli:runBl --args "hello.bl --input input.json"`
 - Compile: `./gradlew :cli:runBlc --args "hello.bl --output build/hello.blc"`
 - Execute compiled artifact: `./gradlew :cli:runBlvm --args "build/hello.blc --input input.json"`
+- Inspect contracts: `./gradlew :cli:runBl --args "inspect hello.bl --contracts"`
 - Pipe stdin: `cat input.json | ./gradlew :cli:runBl --args "hello.bl --input -" --quiet`
 
 ## JVM binaries
