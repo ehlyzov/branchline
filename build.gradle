@@ -73,48 +73,50 @@ subprojects {
         }
     }
 
-    tasks.withType(Test).configureEach { testTask ->
-        def reportTask = tasks.register("${testTask.name}JacocoReport", JacocoReport) {
-            dependsOn testTask
-            executionData(testTask)
-            classDirectories.setFrom(
-                files(
-                    fileTree(dir: "$buildDir/classes/kotlin/jvm/main"),
-                    fileTree(dir: "$buildDir/classes/kotlin/main"),
-                    fileTree(dir: "$buildDir/classes/java/main"),
+    afterEvaluate {
+        tasks.withType(Test).forEach { testTask ->
+            def reportTask = tasks.register("${testTask.name}JacocoReport", JacocoReport) {
+                dependsOn testTask
+                executionData(testTask)
+                classDirectories.setFrom(
+                    files(
+                        fileTree(dir: "$buildDir/classes/kotlin/jvm/main"),
+                        fileTree(dir: "$buildDir/classes/kotlin/main"),
+                        fileTree(dir: "$buildDir/classes/java/main"),
+                    )
                 )
-            )
-            sourceDirectories.setFrom(files("src/main/kotlin", "src/jvmMain/kotlin", "src/commonMain/kotlin"))
-            reports { r ->
-                r.xml.required.set(true)
-                r.html.required.set(true)
+                sourceDirectories.setFrom(files("src/main/kotlin", "src/jvmMain/kotlin", "src/commonMain/kotlin"))
+                reports { r ->
+                    r.xml.required.set(true)
+                    r.html.required.set(true)
+                }
+                onlyIf { classDirectories.files.any { it.exists() } }
             }
-            onlyIf { classDirectories.files.any { it.exists() } }
-        }
 
-        def verifyTask = tasks.register("${testTask.name}JacocoCoverageVerification", JacocoCoverageVerification) {
-            dependsOn testTask
-            executionData(testTask)
-            classDirectories.setFrom(
-                files(
-                    fileTree(dir: "$buildDir/classes/kotlin/jvm/main"),
-                    fileTree(dir: "$buildDir/classes/kotlin/main"),
-                    fileTree(dir: "$buildDir/classes/java/main"),
+            def verifyTask = tasks.register("${testTask.name}JacocoCoverageVerification", JacocoCoverageVerification) {
+                dependsOn testTask
+                executionData(testTask)
+                classDirectories.setFrom(
+                    files(
+                        fileTree(dir: "$buildDir/classes/kotlin/jvm/main"),
+                        fileTree(dir: "$buildDir/classes/kotlin/main"),
+                        fileTree(dir: "$buildDir/classes/java/main"),
+                    )
                 )
-            )
-            sourceDirectories.setFrom(files("src/main/kotlin", "src/jvmMain/kotlin", "src/commonMain/kotlin"))
-            violationRules {
-                rule {
-                    limit {
-                        minimum = 0.2
+                sourceDirectories.setFrom(files("src/main/kotlin", "src/jvmMain/kotlin", "src/commonMain/kotlin"))
+                violationRules {
+                    rule {
+                        limit {
+                            minimum = 0.2
+                        }
                     }
                 }
+                onlyIf { classDirectories.files.any { it.exists() } }
             }
-            onlyIf { classDirectories.files.any { it.exists() } }
-        }
 
-        tasks.named("check").configure {
-            dependsOn verifyTask
+            tasks.named("check").configure {
+                dependsOn verifyTask
+            }
         }
     }
 }
