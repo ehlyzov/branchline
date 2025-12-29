@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation project(':vm')
+    implementation project(':interpreter')
 }
 
 jmh {

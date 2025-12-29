@@ -1,9 +1,5 @@
 package v2.vm
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import v2.FuncDecl
 import v2.Lexer
 import v2.Parser
@@ -14,35 +10,24 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 
-@Serializable
+public fun main(args: Array<String>) {
+    require(args.isNotEmpty()) { "Output path is required" }
+    val outputPath = Path.of(args[0])
+    val generatedAt = Instant.now().toString()
+    val snapshots = listOf(
+        snapshot("pathExpressions", VMTransformPrograms.pathExpressions),
+        snapshot("arrayComprehension", VMTransformPrograms.arrayComprehension),
+        snapshot("typicalTransform", VMTransformPrograms.typicalTransform),
+    )
+    Files.createDirectories(outputPath.parent)
+    Files.writeString(outputPath, renderReport(generatedAt, snapshots))
+}
+
 private data class OpcodeSnapshot(
     val name: String,
     val instructions: Int,
     val histogram: Map<String, Int>,
 )
-
-@Serializable
-private data class OpcodeReport(
-    val generatedAt: String,
-    @SerialName("benchmarks")
-    val snapshots: List<OpcodeSnapshot>,
-)
-
-public fun main(args: Array<String>) {
-    require(args.isNotEmpty()) { "Output path is required" }
-    val outputPath = Path.of(args[0])
-    val report = OpcodeReport(
-        generatedAt = Instant.now().toString(),
-        snapshots = listOf(
-            snapshot("pathExpressions", VMTransformPrograms.pathExpressions),
-            snapshot("arrayComprehension", VMTransformPrograms.arrayComprehension),
-            snapshot("typicalTransform", VMTransformPrograms.typicalTransform),
-        ),
-    )
-    val json = Json { prettyPrint = true }.encodeToString(report)
-    Files.createDirectories(outputPath.parent)
-    Files.writeString(outputPath, json)
-}
 
 private fun snapshot(name: String, program: String): OpcodeSnapshot {
     val hostFns = StdLib.fns
@@ -70,4 +55,39 @@ private fun buildHistogram(bytecode: Bytecode): Map<String, Int> {
         counts[key] = count + 1
     }
     return counts
+}
+
+private fun renderReport(generatedAt: String, snapshots: List<OpcodeSnapshot>): String {
+    val builder = StringBuilder()
+    builder.append("{\n")
+    builder.append("  \"generatedAt\": \"").append(escapeJson(generatedAt)).append("\",\n")
+    builder.append("  \"benchmarks\": [\n")
+    snapshots.forEachIndexed { index, snap ->
+        builder.append("    {\n")
+        builder.append("      \"name\": \"").append(escapeJson(snap.name)).append("\",\n")
+        builder.append("      \"instructions\": ").append(snap.instructions).append(",\n")
+        builder.append("      \"histogram\": {\n")
+        val entries = snap.histogram.entries.toList()
+        entries.forEachIndexed { idx, entry ->
+            builder.append("        \"").append(escapeJson(entry.key)).append("\": ").append(entry.value)
+            if (idx < entries.lastIndex) builder.append(",")
+            builder.append('\n')
+        }
+        builder.append("      }\n")
+        builder.append("    }")
+        if (index < snapshots.lastIndex) builder.append(',')
+        builder.append('\n')
+    }
+    builder.append("  ]\n")
+    builder.append("}\n")
+    return builder.toString()
+}
+
+private fun escapeJson(value: String): String {
+    return value
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t")
 }
