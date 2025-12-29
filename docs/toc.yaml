@@ -48,6 +48,8 @@ items:
         href: guides/array-comprehension.md
       - name: TRY/CATCH
         href: guides/try-catch.md
+      - name: Release Readiness & Stability
+        href: guides/release-readiness.md
   - name: Architecture
     items:
       - name: VM Overview

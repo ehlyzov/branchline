@@ -87,7 +87,13 @@ public data class SchemaOptions(
     val nullabilityStyle: v2.schema.NullabilityStyle,
 )
 
-public enum class CliCommand { RUN, COMPILE, EXECUTE, INSPECT, SCHEMA }
+public data class ContractDiffOptions(
+    val oldPath: String,
+    val newPath: String,
+    val typeName: String?,
+)
+
+public enum class CliCommand { RUN, COMPILE, EXECUTE, INSPECT, SCHEMA, CONTRACT_DIFF }
 
 public object BranchlineCli {
     fun run(args: List<String>, platform: PlatformKind, defaultCommand: CliCommand? = null): Int {
@@ -134,6 +140,7 @@ public object BranchlineCli {
                 CliCommand.EXECUTE -> executeExec(parseResult.exec!!)
                 CliCommand.INSPECT -> executeInspect(parseResult.inspect!!)
                 CliCommand.SCHEMA -> executeSchema(parseResult.schema!!)
+                CliCommand.CONTRACT_DIFF -> executeContractDiff(parseResult.contractDiff!!)
             }
         } catch (ex: CliException) {
             handleCliError(
@@ -155,6 +162,7 @@ public object BranchlineCli {
             CliCommand.EXECUTE -> " (default: exec)"
             CliCommand.INSPECT -> " (default: inspect)"
             CliCommand.SCHEMA -> " (default: schema)"
+            CliCommand.CONTRACT_DIFF -> " (default: contract-diff)"
             null -> ""
         }
         println(
@@ -169,6 +177,7 @@ public object BranchlineCli {
               bl schema <script.bl> <TYPE_NAME> [--nullable] [--output <schema.json>]
               bl schema <script.bl> --all [--nullable] [--output <schema.json>]
               bl schema --import <schema.json> --name <TYPE_NAME> [--output <types.bl>]
+              bl contract-diff <old> <new> [--type <TYPE_NAME>]
             
             Commands:
               run       Compile + execute a Branchline script and print JSON output. Default when no subcommand is provided.
@@ -176,6 +185,7 @@ public object BranchlineCli {
               exec      Execute a compiled artifact through the VM. Use --transform to override the embedded transform.
               inspect   Show inferred and explicit contract information for transforms.
               schema    Emit JSON Schema for TYPE declarations or generate TYPE declarations from a JSON Schema file.
+              contract-diff  Compare two TYPE declarations or schema files for breaking changes.
             
             Options:
               --input PATH        Read JSON/XML input from PATH; use '-' to read from stdin.
@@ -191,6 +201,7 @@ public object BranchlineCli {
               --nullable          (schema) use 'nullable: true' instead of 'type: [\"null\", ...]'.
               --import PATH       (schema) read a JSON Schema document and emit TYPE declarations.
               --name NAME         (schema) name for the imported schema's TYPE declaration.
+              --type NAME         (contract-diff) TYPE declaration name when comparing Branchline scripts.
               --version           Print the CLI version.
             
             Examples:
@@ -202,6 +213,7 @@ public object BranchlineCli {
               bl schema examples/types.bl Customer
               bl schema examples/types.bl --all --output build/types.schema.json
               bl schema --import schemas/customer.json --name Customer
+              bl contract-diff schemas/order-v1.json schemas/order-v2.json
             """.trimIndent(),
         )
     }
@@ -319,6 +331,22 @@ public object BranchlineCli {
         return ExitCode.SUCCESS.code
     }
 
+    private fun executeContractDiff(options: ContractDiffOptions): Int {
+        return try {
+            val oldDefinition = loadTypeDefinition(options.oldPath, options.typeName)
+            val newDefinition = loadTypeDefinition(options.newPath, options.typeName)
+            val report = renderContractDiff(oldDefinition, newDefinition)
+            println(report)
+            0
+        } catch (ex: CliException) {
+            printError(ex.message ?: "CLI error")
+            1
+        } catch (ex: Exception) {
+            printError(ex.message ?: ex.toString())
+            1
+        }
+    }
+
     private data class ParsedArgs(
         val command: CliCommand,
         val run: RunOptions? = null,
@@ -326,6 +354,7 @@ public object BranchlineCli {
         val exec: ExecOptions? = null,
         val inspect: InspectOptions? = null,
         val schema: SchemaOptions? = null,
+        val contractDiff: ContractDiffOptions? = null,
     )
 
     private data class GlobalOptions(
@@ -376,6 +405,7 @@ public object BranchlineCli {
             CliCommand.EXECUTE -> ParsedArgs(command, exec = parseExecArgs(args, startIndex))
             CliCommand.INSPECT -> ParsedArgs(command, inspect = parseInspectArgs(args, startIndex))
             CliCommand.SCHEMA -> ParsedArgs(command, schema = parseSchemaArgs(args, startIndex))
+            CliCommand.CONTRACT_DIFF -> ParsedArgs(command, contractDiff = parseContractDiffArgs(args, startIndex))
         }
     }
 
@@ -391,6 +421,7 @@ public object BranchlineCli {
             "exec", "execute" -> CliCommand.EXECUTE to 1
             "inspect" -> CliCommand.INSPECT to 1
             "schema" -> CliCommand.SCHEMA to 1
+            "contract-diff" -> CliCommand.CONTRACT_DIFF to 1
             else -> (defaultCommand ?: CliCommand.RUN) to 0
         }
     }
@@ -632,6 +663,40 @@ public object BranchlineCli {
             importPath = importPath,
             importName = importName,
             nullabilityStyle = nullabilityStyle,
+        )
+    }
+
+    private fun parseContractDiffArgs(args: List<String>, startIndex: Int): ContractDiffOptions {
+        var oldPath: String? = null
+        var newPath: String? = null
+        var typeName: String? = null
+        var idx = startIndex
+        while (idx < args.size) {
+            val token = args[idx]
+            when {
+                token == "--type" && idx + 1 < args.size -> {
+                    typeName = args[idx + 1]
+                    idx += 2
+                }
+                token.startsWith("--") -> throw CliException("Unknown option '$token'")
+                oldPath == null -> {
+                    oldPath = token
+                    idx += 1
+                }
+                newPath == null -> {
+                    newPath = token
+                    idx += 1
+                }
+                else -> throw CliException("Unexpected argument '$token'")
+            }
+        }
+        if (oldPath == null || newPath == null) {
+            throw CliException("contract-diff requires <old> and <new> inputs")
+        }
+        return ContractDiffOptions(
+            oldPath = oldPath,
+            newPath = newPath,
+            typeName = typeName,
         )
     }
 

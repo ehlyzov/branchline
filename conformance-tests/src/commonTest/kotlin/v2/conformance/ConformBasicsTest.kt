@@ -38,4 +38,16 @@ class ConformBasicsTest {
         val out = runner(mapOf("items" to listOf(1, 2, 3)))
         assertEquals(mapOf("arr" to listOf(1, 2, 3)), out)
     }
+
+    @Test
+    fun function_return_statement() {
+        val program = """
+            FUNC addOne(x) { RETURN x + 1; }
+            TRANSFORM T { OUTPUT { v: addOne(2) }
+            }
+        """.trimIndent()
+        val runner = buildRunnerFromProgramMP(program)
+        val out = runner(emptyMap())
+        assertEquals(mapOf("v" to 3), out)
+    }
 }

@@ -11,3 +11,4 @@ title: Guides
 - [FOR EACH Loops](for-each.md): Iterate over collections with optional filtering.
 - [Array Comprehensions](array-comprehension.md): Build arrays with inline loops.
 - [TRY/CATCH](try-catch.md): Handle errors and add retry logic.
+- [Release Readiness & Stability](release-readiness.md): Versioning, compatibility rules, and readiness gates.
