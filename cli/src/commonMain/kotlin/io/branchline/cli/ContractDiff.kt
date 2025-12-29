@@ -76,8 +76,8 @@ private fun looksLikeJsonSchema(path: String, raw: String): Boolean {
     if (path.lowercase().endsWith(".json")) return true
     val trimmed = raw.trimStart()
     if (!trimmed.startsWith("{")) return false
-    return raw.contains("\"\\$schema\"") ||
-        raw.contains("\"\\$defs\"") ||
+    return raw.contains("\"${'$'}schema\"") ||
+        raw.contains("\"${'$'}defs\"") ||
         raw.contains("\"definitions\"") ||
         raw.contains("\"properties\"") ||
         raw.contains("\"anyOf\"")
