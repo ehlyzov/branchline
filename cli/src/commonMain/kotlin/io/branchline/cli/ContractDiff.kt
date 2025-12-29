@@ -164,7 +164,7 @@ private fun diffRecordTypes(
 ) {
     val oldFields = oldType.fields.associateBy { it.name }
     val newFields = newType.fields.associateBy { it.name }
-    val fieldNames = (oldFields.keys + newFields.keys).toSortedSet()
+    val fieldNames = (oldFields.keys + newFields.keys).sorted()
     for (fieldName in fieldNames) {
         val oldField = oldFields[fieldName]
         val newField = newFields[fieldName]
