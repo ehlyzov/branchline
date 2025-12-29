@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-public class InterpreterTransformBenchmark {
+public open class InterpreterTransformBenchmark {
     @Param("small", "medium", "large")
     public lateinit var dataset: String
 

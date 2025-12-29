@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.SampleTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-public class VMTransformBenchmark {
+public open class VMTransformBenchmark {
     @Param("small", "medium", "large")
     public lateinit var dataset: String
 
