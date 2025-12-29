@@ -32,8 +32,6 @@ class Lexer(private val source: String) {
         "TRUE" to TokenType.TRUE,
         "FALSE" to TokenType.FALSE,
         "NULL" to TokenType.NULL,
-        "PARALLEL" to TokenType.PARALLEL,
-        "ONBLOCK" to TokenType.ONBLOCK,
         "FOREACH" to TokenType.FOREACH,
         "ABORT" to TokenType.ABORT,
         "THROW" to TokenType.THROW,

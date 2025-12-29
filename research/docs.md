@@ -134,7 +134,6 @@ Use `--input-format xml` if providing XML.
 ### Concurrency & suspension
 - `SUSPEND expr;` to yield.
 - `AWAIT` on asynchronous operations in expressions.
-- `PARALLEL/ONBLOCK` for concurrent blocks.
 - `SHARED name [SINGLE|MANY];` with `AWAIT_SHARED(resource, key)` to wait for shared store entries.
 
 ### Error handling & tracing
