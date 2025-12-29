@@ -24,42 +24,51 @@ import v2.contract.SchemaRequirement
 import v2.contract.TransformContract
 import v2.contract.TransformContractBuilder
 import v2.contract.ValueShape
+import v2.debug.CollectingTracer
+import v2.debug.TraceOptions
+import v2.debug.TraceReport
+import v2.debug.humanize
 import v2.sema.SemanticAnalyzer
 import v2.sema.SemanticWarning
 import v2.sema.TypeResolver
 import v2.std.StdLib
 import v2.vm.BytecodeIO
 
-enum class PlatformKind { JVM, JS }
+public enum class PlatformKind { JVM, JS }
 
-enum class InputFormat { JSON, XML;
+public enum class InputFormat { JSON, XML;
     companion object {
         fun parse(value: String): InputFormat = when (value.lowercase()) {
             "json" -> JSON
             "xml" -> XML
-            else -> throw CliException("Unknown input format '$value'")
+            else -> throw CliException("Unknown input format '$value'", kind = CliErrorKind.USAGE)
         }
     }
 }
 
-data class RunOptions(
+public data class RunOptions(
     val scriptPath: String,
     val inputPath: String?,
     val inputFormat: InputFormat,
     val transformName: String?,
+    val outputFormat: OutputFormat,
+    val traceFormat: TraceFormat?,
 )
 
-data class CompileOptions(
+public data class CompileOptions(
     val scriptPath: String,
     val outputPath: String?,
     val transformName: String?,
+    val outputFormat: OutputFormat,
 )
 
-data class ExecOptions(
+public data class ExecOptions(
     val artifactPath: String,
     val inputPath: String?,
     val inputFormat: InputFormat,
     val transformOverride: String?,
+    val outputFormat: OutputFormat,
+    val traceFormat: TraceFormat?,
 )
 
 public data class InspectOptions(
@@ -80,30 +89,62 @@ public data class SchemaOptions(
 
 public enum class CliCommand { RUN, COMPILE, EXECUTE, INSPECT, SCHEMA }
 
-object BranchlineCli {
+public object BranchlineCli {
     fun run(args: List<String>, platform: PlatformKind, defaultCommand: CliCommand? = null): Int {
-        if (args.isEmpty()) {
-            printHelp(defaultCommand)
-            return 1
+        val (normalizedArgs, globalOptions) = try {
+            parseGlobalOptions(args)
+        } catch (ex: CliException) {
+            return handleCliError(
+                CliError(ex.message ?: "CLI error", ex.kind, null),
+                ErrorFormat.TEXT,
+            )
         }
-        if (args.size == 1 && (args[0] == "--help" || args[0] == "-h" || args[0] == "help")) {
-            printHelp(defaultCommand)
-            return 0
+
+        if (normalizedArgs.isEmpty()) {
+            return handleCliError(
+                CliError("No arguments provided", CliErrorKind.USAGE, null),
+                globalOptions.errorFormat,
+            )
         }
+
+        if (normalizedArgs.size == 1 && (normalizedArgs[0] == "--help" || normalizedArgs[0] == "-h" || normalizedArgs[0] == "help")) {
+            printHelp(defaultCommand)
+            return ExitCode.SUCCESS.code
+        }
+        if (normalizedArgs.size == 1 && (normalizedArgs[0] == "--version" || normalizedArgs[0] == "-v")) {
+            printVersion()
+            return ExitCode.SUCCESS.code
+        }
+
+        val errorFormat = globalOptions.errorFormat
 
         val parseResult = try {
-            parseArgs(args, defaultCommand)
+            parseArgs(normalizedArgs, defaultCommand)
         } catch (ex: CliException) {
-            printError(ex.message ?: "CLI error")
-            return 1
+            return handleCliError(
+                CliError(ex.message ?: "CLI error", ex.kind, null),
+                errorFormat,
+            )
         }
 
-        return when (val command = parseResult.command) {
-            CliCommand.RUN -> executeRun(parseResult.run!!, platform)
-            CliCommand.COMPILE -> executeCompile(parseResult.compile!!)
-            CliCommand.EXECUTE -> executeExec(parseResult.exec!!)
-            CliCommand.INSPECT -> executeInspect(parseResult.inspect!!)
-            CliCommand.SCHEMA -> executeSchema(parseResult.schema!!)
+        return try {
+            when (val command = parseResult.command) {
+                CliCommand.RUN -> executeRun(parseResult.run!!, platform)
+                CliCommand.COMPILE -> executeCompile(parseResult.compile!!)
+                CliCommand.EXECUTE -> executeExec(parseResult.exec!!)
+                CliCommand.INSPECT -> executeInspect(parseResult.inspect!!)
+                CliCommand.SCHEMA -> executeSchema(parseResult.schema!!)
+            }
+        } catch (ex: CliException) {
+            handleCliError(
+                CliError(ex.message ?: "CLI error", ex.kind, parseResult.command),
+                errorFormat,
+            )
+        } catch (ex: Exception) {
+            handleCliError(
+                CliError(ex.message ?: ex.toString(), CliErrorKind.RUNTIME, parseResult.command),
+                errorFormat,
+            )
         }
     }
 
@@ -121,9 +162,9 @@ object BranchlineCli {
             Branchline CLI$defaultHint
             
             Usage:
-              bl [run] <script.bl> [--input <path>|-] [--input-format json|xml] [--transform <name>]
-              blc <script.bl> [--output <artifact.blc>] [--transform <name>]
-              blvm <artifact.blc> [--input <path>|-] [--input-format json|xml] [--transform <name>]
+              bl [run] <script.bl> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact] [--trace] [--trace-format text|json]
+              blc <script.bl> [--output <artifact.blc>] [--transform <name>] [--output-format json|json-compact]
+              blvm <artifact.blc> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact] [--trace] [--trace-format text|json]
               bl inspect <script.bl> --contracts [--transform <name>]
               bl schema <script.bl> <TYPE_NAME> [--nullable] [--output <schema.json>]
               bl schema <script.bl> --all [--nullable] [--output <schema.json>]
@@ -141,11 +182,16 @@ object BranchlineCli {
               --input-format FMT  'json' (default) or 'xml'.
               --transform NAME    Choose a TRANSFORM block by name; defaults to the first transform in the script.
               --output PATH       (compile) write the compiled artifact to PATH. Prints to stdout when omitted.
+              --output-format FMT Format for CLI JSON output ('json' or 'json-compact').
+              --trace             Emit a trace summary to stderr after execution.
+              --trace-format FMT  Trace output format ('text' or 'json').
+              --error-format FMT  Error output format ('text' or 'json').
               --contracts         (inspect) print explicit vs inferred contracts with mismatch warnings.
               --all               (schema) emit a ${'$'}defs block with all TYPE declarations.
               --nullable          (schema) use 'nullable: true' instead of 'type: [\"null\", ...]'.
               --import PATH       (schema) read a JSON Schema document and emit TYPE declarations.
               --name NAME         (schema) name for the imported schema's TYPE declaration.
+              --version           Print the CLI version.
             
             Examples:
               bl examples/hello.bl --input fixtures/hello.json
@@ -161,152 +207,116 @@ object BranchlineCli {
     }
 
     private fun executeRun(options: RunOptions, platform: PlatformKind): Int {
-        return try {
-            val source = readTextFile(options.scriptPath)
-            val runtime = BranchlineProgram(source)
-            val transform = runtime.selectTransform(options.transformName)
-            val input = loadInput(options.inputPath, options.inputFormat)
-            val result = runtime.execute(transform, input)
-            println(formatJson(result, pretty = true))
-            0
-        } catch (ex: CliException) {
-            printError(ex.message ?: "CLI error")
-            1
-        } catch (ex: Exception) {
-            printError(ex.message ?: ex.toString())
-            1
-        }
+        val traceSession = createTraceSession(options.traceFormat)
+        val source = readTextFileOrThrow(options.scriptPath)
+        val runtime = BranchlineProgram(source, traceSession?.tracer)
+        val transform = runtime.selectTransform(options.transformName)
+        val input = loadInput(options.inputPath, options.inputFormat)
+        val result = runtime.execute(transform, input)
+        println(formatJson(result, pretty = options.outputFormat.pretty))
+        traceSession?.emit()
+        return ExitCode.SUCCESS.code
     }
 
     private fun executeCompile(options: CompileOptions): Int {
-        return try {
-            val source = readTextFile(options.scriptPath)
-            val runtime = BranchlineProgram(source)
-            val transform = runtime.selectTransform(options.transformName)
-            val contract = runtime.contractForTransform(transform)
-            val bytecode = runtime.compileBytecode(transform)
-            val artifact = CompiledArtifact(
-                version = 1,
-                transform = transform.name,
-                script = source,
-                bytecode = BytecodeIO.serializeBytecode(bytecode),
-                contract = contract,
-            )
-            val payload = ArtifactCodec.encode(artifact)
-            if (options.outputPath != null) {
-                writeTextFile(options.outputPath, payload)
-            } else {
-                println(payload)
-            }
-            0
-        } catch (ex: CliException) {
-            printError(ex.message ?: "CLI error")
-            1
-        } catch (ex: Exception) {
-            printError(ex.message ?: ex.toString())
-            1
+        val source = readTextFileOrThrow(options.scriptPath)
+        val runtime = BranchlineProgram(source)
+        val transform = runtime.selectTransform(options.transformName)
+        val contract = runtime.contractForTransform(transform)
+        val bytecode = runtime.compileBytecode(transform)
+        val artifact = CompiledArtifact(
+            version = 1,
+            transform = transform.name,
+            script = source,
+            bytecode = BytecodeIO.serializeBytecode(bytecode),
+            contract = contract,
+        )
+        val payload = ArtifactCodec.encode(artifact, pretty = options.outputFormat.pretty)
+        if (options.outputPath != null) {
+            writeTextFileOrThrow(options.outputPath, payload)
+        } else {
+            println(payload)
         }
+        return ExitCode.SUCCESS.code
     }
 
     private fun executeExec(options: ExecOptions): Int {
-        return try {
-            val raw = readTextFile(options.artifactPath)
-            val artifact = ArtifactCodec.decode(raw)
-            val runtime = BranchlineProgram(artifact.script)
-            val transformName = options.transformOverride ?: artifact.transform
-            val transform = runtime.selectTransform(transformName)
-            val bytecode = BytecodeIO.deserializeBytecode(artifact.bytecode)
-            val vmExec = runtime.prepareVmExec(transform, bytecode)
-            val input = loadInput(options.inputPath, options.inputFormat)
-            val env = HashMap<String, Any?>(input.size + 1).apply {
-                this[v2.DEFAULT_INPUT_ALIAS] = input
-                putAll(input)
-                for (alias in v2.COMPAT_INPUT_ALIASES) {
-                    this[alias] = input
-                }
+        val traceSession = createTraceSession(options.traceFormat)
+        val raw = readTextFileOrThrow(options.artifactPath)
+        val artifact = ArtifactCodec.decode(raw)
+        val runtime = BranchlineProgram(artifact.script, traceSession?.tracer)
+        val transformName = options.transformOverride ?: artifact.transform
+        val transform = runtime.selectTransform(transformName)
+        val bytecode = BytecodeIO.deserializeBytecode(artifact.bytecode)
+        val vmExec = runtime.prepareVmExec(transform, bytecode)
+        val input = loadInput(options.inputPath, options.inputFormat)
+        val env = HashMap<String, Any?>(input.size + 1).apply {
+            this[v2.DEFAULT_INPUT_ALIAS] = input
+            putAll(input)
+            for (alias in v2.COMPAT_INPUT_ALIASES) {
+                this[alias] = input
             }
-            val result = vmExec.run(env as MutableMap<String, Any?>, stringifyKeys = true)
-            println(formatJson(result, pretty = true))
-            0
-        } catch (ex: CliException) {
-            printError(ex.message ?: "CLI error")
-            1
-        } catch (ex: Exception) {
-            printError(ex.message ?: ex.toString())
-            1
         }
+        val result = vmExec.run(env as MutableMap<String, Any?>, stringifyKeys = true)
+        println(formatJson(result, pretty = options.outputFormat.pretty))
+        traceSession?.emit()
+        return ExitCode.SUCCESS.code
     }
 
     private fun executeInspect(options: InspectOptions): Int {
-        return try {
-            if (!options.showContracts) {
-                throw CliException("Inspect requires --contracts")
-            }
-            val source = readTextFile(options.scriptPath)
-            val tokens = Lexer(source).lex()
-            val program = Parser(tokens, source).parse()
-            val hostFns = StdLib.fns
-            val analyzer = SemanticAnalyzer(hostFns.keys)
-            analyzer.analyze(program)
-            val transforms = program.decls.filterIsInstance<TransformDecl>()
-            if (transforms.isEmpty()) {
-                throw CliException("Program must declare at least one TRANSFORM block")
-            }
-            val typeDecls = program.decls.filterIsInstance<TypeDecl>()
-            val contractBuilder = TransformContractBuilder(TypeResolver(typeDecls), hostFns.keys)
-            val selected = selectTransforms(transforms, options.transformName)
-            val report = renderContractInspection(selected, contractBuilder, analyzer.warnings)
-            println(report)
-            0
-        } catch (ex: CliException) {
-            printError(ex.message ?: "CLI error")
-            1
-        } catch (ex: Exception) {
-            printError(ex.message ?: ex.toString())
-            1
+        if (!options.showContracts) {
+            throw CliException("Inspect requires --contracts", kind = CliErrorKind.USAGE)
         }
+        val source = readTextFileOrThrow(options.scriptPath)
+        val tokens = Lexer(source).lex()
+        val program = Parser(tokens, source).parse()
+        val hostFns = StdLib.fns
+        val analyzer = SemanticAnalyzer(hostFns.keys)
+        analyzer.analyze(program)
+        val transforms = program.decls.filterIsInstance<TransformDecl>()
+        if (transforms.isEmpty()) {
+            throw CliException("Program must declare at least one TRANSFORM block", kind = CliErrorKind.INPUT)
+        }
+        val typeDecls = program.decls.filterIsInstance<TypeDecl>()
+        val contractBuilder = TransformContractBuilder(TypeResolver(typeDecls), hostFns.keys)
+        val selected = selectTransforms(transforms, options.transformName)
+        val report = renderContractInspection(selected, contractBuilder, analyzer.warnings)
+        println(report)
+        return ExitCode.SUCCESS.code
     }
 
     private fun executeSchema(options: SchemaOptions): Int {
-        return try {
-            if (options.importPath != null) {
-                val rawSchema = readTextFile(options.importPath)
-                val declarations = JsonSchemaCliInterop.importSchema(
-                    rawSchema = rawSchema,
-                    importName = options.importName!!,
-                    options = options,
-                )
-                val output = declarations.joinToString("\n\n") { renderTypeDecl(it) }
-                if (options.outputPath != null) {
-                    writeTextFile(options.outputPath, output)
-                } else {
-                    println(output)
-                }
+        if (options.importPath != null) {
+            val rawSchema = readTextFileOrThrow(options.importPath)
+            val declarations = JsonSchemaCliInterop.importSchema(
+                rawSchema = rawSchema,
+                importName = options.importName!!,
+                options = options,
+            )
+            val output = declarations.joinToString("\n\n") { renderTypeDecl(it) }
+            if (options.outputPath != null) {
+                writeTextFileOrThrow(options.outputPath, output)
             } else {
-                val scriptPath = options.scriptPath
-                    ?: throw CliException("Script path is required for schema export")
-                val source = readTextFile(scriptPath)
-                val runtime = BranchlineProgram(source)
-                val typeDecls = runtime.typeDecls()
-                val outputSchema = JsonSchemaCliInterop.exportSchema(
-                    typeDecls = typeDecls,
-                    typeName = options.typeName,
-                    options = options,
-                )
-                if (options.outputPath != null) {
-                    writeTextFile(options.outputPath, outputSchema)
-                } else {
-                    println(outputSchema)
-                }
+                println(output)
             }
-            0
-        } catch (ex: CliException) {
-            printError(ex.message ?: "CLI error")
-            1
-        } catch (ex: Exception) {
-            printError(ex.message ?: ex.toString())
-            1
+        } else {
+            val scriptPath = options.scriptPath
+                ?: throw CliException("Script path is required for schema export", kind = CliErrorKind.USAGE)
+            val source = readTextFileOrThrow(scriptPath)
+            val runtime = BranchlineProgram(source)
+            val typeDecls = runtime.typeDecls()
+            val outputSchema = JsonSchemaCliInterop.exportSchema(
+                typeDecls = typeDecls,
+                typeName = options.typeName,
+                options = options,
+            )
+            if (options.outputPath != null) {
+                writeTextFileOrThrow(options.outputPath, outputSchema)
+            } else {
+                println(outputSchema)
+            }
         }
+        return ExitCode.SUCCESS.code
     }
 
     private data class ParsedArgs(
@@ -317,6 +327,46 @@ object BranchlineCli {
         val inspect: InspectOptions? = null,
         val schema: SchemaOptions? = null,
     )
+
+    private data class GlobalOptions(
+        val errorFormat: ErrorFormat,
+    )
+
+    private data class TraceSession(
+        val tracer: CollectingTracer,
+        val format: TraceFormat,
+    ) {
+        fun emit() {
+            val payload = renderTrace(tracer, format)
+            if (payload.isNotBlank()) {
+                printTrace(payload)
+            }
+        }
+    }
+
+    private fun parseGlobalOptions(args: List<String>): Pair<List<String>, GlobalOptions> {
+        var errorFormat = ErrorFormat.TEXT
+        val remaining = mutableListOf<String>()
+        var idx = 0
+        while (idx < args.size) {
+            val token = args[idx]
+            when {
+                token == "--error-format" && idx + 1 < args.size -> {
+                    errorFormat = ErrorFormat.parse(args[idx + 1])
+                    idx += 2
+                }
+                token == "--error-format" -> throw CliException(
+                    "--error-format requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                else -> {
+                    remaining += token
+                    idx += 1
+                }
+            }
+        }
+        return remaining to GlobalOptions(errorFormat)
+    }
 
     private fun parseArgs(args: List<String>, defaultCommand: CliCommand?): ParsedArgs {
         val (command, startIndex) = determineCommand(args, defaultCommand)
@@ -350,6 +400,8 @@ object BranchlineCli {
         var input: String? = null
         var transform: String? = null
         var format = InputFormat.JSON
+        var outputFormat = OutputFormat.JSON
+        var traceFormat: TraceFormat? = null
         var idx = startIndex
         while (idx < args.size) {
             val token = args[idx]
@@ -366,6 +418,24 @@ object BranchlineCli {
                     transform = args[idx + 1]
                     idx += 2
                 }
+                token == "--output-format" && idx + 1 < args.size -> {
+                    outputFormat = OutputFormat.parse(args[idx + 1])
+                    idx += 2
+                }
+                token == "--trace" -> {
+                    if (traceFormat == null) {
+                        traceFormat = TraceFormat.TEXT
+                    }
+                    idx += 1
+                }
+                token == "--trace-format" && idx + 1 < args.size -> {
+                    traceFormat = TraceFormat.parse(args[idx + 1])
+                    idx += 2
+                }
+                token == "--trace-format" -> throw CliException(
+                    "--trace-format requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
                 token.startsWith("--") -> throw CliException("Unknown option '$token'")
                 script == null -> {
                     script = token
@@ -375,13 +445,14 @@ object BranchlineCli {
             }
         }
         if (script == null) throw CliException("Script path is required")
-        return RunOptions(script, input, format, transform)
+        return RunOptions(script, input, format, transform, outputFormat, traceFormat)
     }
 
     private fun parseCompileArgs(args: List<String>, startIndex: Int): CompileOptions {
         var script: String? = null
         var output: String? = null
         var transform: String? = null
+        var outputFormat = OutputFormat.JSON
         var idx = startIndex
         while (idx < args.size) {
             val token = args[idx]
@@ -394,6 +465,10 @@ object BranchlineCli {
                     transform = args[idx + 1]
                     idx += 2
                 }
+                token == "--output-format" && idx + 1 < args.size -> {
+                    outputFormat = OutputFormat.parse(args[idx + 1])
+                    idx += 2
+                }
                 token.startsWith("--") -> throw CliException("Unknown option '$token'")
                 script == null -> {
                     script = token
@@ -403,7 +478,7 @@ object BranchlineCli {
             }
         }
         if (script == null) throw CliException("Script path is required")
-        return CompileOptions(script, output, transform)
+        return CompileOptions(script, output, transform, outputFormat)
     }
 
     private fun parseExecArgs(args: List<String>, startIndex: Int): ExecOptions {
@@ -411,6 +486,8 @@ object BranchlineCli {
         var input: String? = null
         var format = InputFormat.JSON
         var transform: String? = null
+        var outputFormat = OutputFormat.JSON
+        var traceFormat: TraceFormat? = null
         var idx = startIndex
         while (idx < args.size) {
             val token = args[idx]
@@ -427,6 +504,24 @@ object BranchlineCli {
                     transform = args[idx + 1]
                     idx += 2
                 }
+                token == "--output-format" && idx + 1 < args.size -> {
+                    outputFormat = OutputFormat.parse(args[idx + 1])
+                    idx += 2
+                }
+                token == "--trace" -> {
+                    if (traceFormat == null) {
+                        traceFormat = TraceFormat.TEXT
+                    }
+                    idx += 1
+                }
+                token == "--trace-format" && idx + 1 < args.size -> {
+                    traceFormat = TraceFormat.parse(args[idx + 1])
+                    idx += 2
+                }
+                token == "--trace-format" -> throw CliException(
+                    "--trace-format requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
                 token.startsWith("--") -> throw CliException("Unknown option '$token'")
                 artifact == null -> {
                     artifact = token
@@ -436,7 +531,7 @@ object BranchlineCli {
             }
         }
         if (artifact == null) throw CliException("Artifact path is required")
-        return ExecOptions(artifact, input, format, transform)
+        return ExecOptions(artifact, input, format, transform, outputFormat, traceFormat)
     }
 
     private fun parseInspectArgs(args: List<String>, startIndex: Int): InspectOptions {
@@ -539,18 +634,60 @@ object BranchlineCli {
             nullabilityStyle = nullabilityStyle,
         )
     }
+
+    private fun printVersion() {
+        println("Branchline CLI ${CliVersion.CURRENT}")
+    }
+
+    private fun createTraceSession(format: TraceFormat?): TraceSession? {
+        if (format == null) return null
+        return TraceSession(
+            tracer = CollectingTracer(TraceOptions()),
+            format = format,
+        )
+    }
 }
 
 private fun loadInput(path: String?, format: InputFormat): Map<String, Any?> {
     val text = when {
         path == null -> ""
-        path == "-" -> readStdin()
-        else -> readTextFile(path)
+        path == "-" -> readStdinOrThrow()
+        else -> readTextFileOrThrow(path)
     }
     if (text.isBlank()) return emptyMap()
-    return when (format) {
-        InputFormat.JSON -> parseJsonInput(text)
-        InputFormat.XML -> parseXmlInput(text)
+    return try {
+        when (format) {
+            InputFormat.JSON -> parseJsonInput(text)
+            InputFormat.XML -> parseXmlInput(text)
+        }
+    } catch (ex: CliException) {
+        throw ex
+    } catch (ex: Exception) {
+        throw CliException(ex.message ?: "Invalid input", kind = CliErrorKind.INPUT)
+    }
+}
+
+private fun readTextFileOrThrow(path: String): String {
+    return try {
+        readTextFile(path)
+    } catch (ex: Exception) {
+        throw CliException("Failed to read file '$path': ${ex.message ?: ex}", kind = CliErrorKind.IO)
+    }
+}
+
+private fun writeTextFileOrThrow(path: String, contents: String) {
+    try {
+        writeTextFile(path, contents)
+    } catch (ex: Exception) {
+        throw CliException("Failed to write file '$path': ${ex.message ?: ex}", kind = CliErrorKind.IO)
+    }
+}
+
+private fun readStdinOrThrow(): String {
+    return try {
+        readStdin()
+    } catch (ex: Exception) {
+        throw CliException("Failed to read stdin: ${ex.message ?: ex}", kind = CliErrorKind.IO)
     }
 }
 
@@ -561,7 +698,7 @@ private fun selectTransforms(
     if (name == null) return transforms
     val matches = transforms.filter { it.name == name }
     if (matches.isEmpty()) {
-        throw CliException("Transform '$name' not found")
+        throw CliException("Transform '$name' not found", kind = CliErrorKind.INPUT)
     }
     return matches
 }
@@ -751,3 +888,74 @@ private fun renderContractWarnings(warnings: List<SemanticWarning>): String {
 
 private fun indentLines(lines: List<String>, indent: String): List<String> =
     lines.map { line -> "$indent$line" }
+
+private fun handleCliError(error: CliError, format: ErrorFormat): Int {
+    val payload = when (format) {
+        ErrorFormat.TEXT -> error.message
+        ErrorFormat.JSON -> formatJson(
+            mapOf(
+                "error" to mapOf(
+                    "message" to error.message,
+                    "kind" to error.kind.id,
+                    "exitCode" to error.kind.exitCode.code,
+                    "command" to error.command?.name?.lowercase(),
+                ),
+                "version" to CliVersion.CURRENT,
+            ),
+            pretty = false,
+        )
+    }
+    printError(payload)
+    return error.kind.exitCode.code
+}
+
+private fun renderTrace(tracer: CollectingTracer, format: TraceFormat): String {
+    return when (format) {
+        TraceFormat.TEXT -> tracer.humanize("Trace")
+        TraceFormat.JSON -> {
+            val report = TraceReport.from(tracer)
+            formatJson(traceReportToMap(report), pretty = false)
+        }
+    }
+}
+
+private fun traceReportToMap(report: TraceReport.TraceReportData): Map<String, Any?> {
+    val timelineSample = report.timelineSample.map { entry ->
+        mapOf(
+            "at" to entry.at.toString(),
+            "kind" to entry.kind,
+            "label" to entry.label,
+        )
+    }
+    val hotspots = report.hotspots.map { hotspot ->
+        mapOf(
+            "kind" to hotspot.kind,
+            "name" to hotspot.name,
+            "calls" to hotspot.calls,
+            "total" to hotspot.total.toString(),
+            "mean" to hotspot.mean.toString(),
+        )
+    }
+    val watches = report.watches.mapValues { (_, info) ->
+        mapOf(
+            "last" to info.last,
+            "changes" to info.changes,
+        )
+    }
+    val checkpoints = report.checkpoints.map { checkpoint ->
+        mapOf(
+            "at" to checkpoint.at.toString(),
+            "label" to checkpoint.label,
+        )
+    }
+    return mapOf(
+        "totalEvents" to report.totalEvents,
+        "duration" to report.duration.toString(),
+        "timelineSample" to timelineSample,
+        "hotspots" to hotspots,
+        "watches" to watches,
+        "checkpoints" to checkpoints,
+        "explanations" to report.explanations,
+        "instructions" to report.instructions,
+    )
+}

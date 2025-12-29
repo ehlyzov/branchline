@@ -27,8 +27,12 @@ import v2.vm.Bytecode
 import v2.vm.BytecodeIO
 import v2.vm.Compiler
 import v2.vm.VMExec
+import v2.debug.Tracer
 
-class BranchlineProgram(private val source: String) {
+public class BranchlineProgram(
+    private val source: String,
+    private val tracer: Tracer? = null,
+) {
     private val program: Program
     private val hostFns: Map<String, (List<Any?>) -> Any?>
     private val funcs: Map<String, FuncDecl>
@@ -44,7 +48,7 @@ class BranchlineProgram(private val source: String) {
         try {
             program = Parser(tokens, source).parse()
         } catch (ex: ParseException) {
-            throw CliException(ex.message ?: "Parser error")
+            throw CliException(ex.message ?: "Parser error", kind = CliErrorKind.INPUT)
         }
         hostFns = StdLib.fns
         SemanticAnalyzer(hostFns.keys).analyze(program)
@@ -52,25 +56,25 @@ class BranchlineProgram(private val source: String) {
         transforms = program.decls.filterIsInstance<TransformDecl>()
         typeDecls = program.decls.filterIsInstance<TypeDecl>()
         if (transforms.isEmpty()) {
-            throw CliException("Program must declare at least one TRANSFORM block")
+            throw CliException("Program must declare at least one TRANSFORM block", kind = CliErrorKind.INPUT)
         }
         val typeResolver = TypeResolver(typeDecls)
         contractBuilder = TransformContractBuilder(typeResolver, hostFns.keys)
         namedDescriptors = buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
         registry = TransformRegistry(funcs, hostFns, namedDescriptors)
-        eval = makeEval(hostFns, funcs, registry, tracer = null)
+        eval = makeEval(hostFns, funcs, registry, tracer = tracer)
     }
 
     fun selectTransform(name: String?): TransformDecl {
         if (name == null) return transforms.first()
         val match = namedDescriptors[name]?.decl
         if (match != null) return match
-        throw CliException("Transform '$name' not found")
+        throw CliException("Transform '$name' not found", kind = CliErrorKind.INPUT)
     }
 
     fun execute(transform: TransformDecl, input: Map<String, Any?>): Any? {
         val ir = compileIr(transform)
-        val exec = Exec(ir, eval)
+        val exec = Exec(ir, eval, tracer)
         val env = HashMap<String, Any?>(input.size + 1).apply {
             this[DEFAULT_INPUT_ALIAS] = input
             putAll(input)
@@ -89,7 +93,7 @@ class BranchlineProgram(private val source: String) {
 
     fun prepareVmExec(transform: TransformDecl, bytecode: Bytecode): VMExec {
         val ir = compileIr(transform)
-        return VMExec(ir, eval, tracer = null, hostFns = hostFns, funcs = funcs, precompiled = bytecode)
+        return VMExec(ir, eval, tracer = tracer, hostFns = hostFns, funcs = funcs, precompiled = bytecode)
     }
 
     fun renderTransforms(): List<String> = transforms.map { it.name ?: "<anonymous>" }
@@ -107,7 +111,7 @@ class BranchlineProgram(private val source: String) {
 }
 
 @Serializable
-data class CompiledArtifact(
+public data class CompiledArtifact(
     val version: Int = 1,
     val transform: String?,
     val script: String,
@@ -115,14 +119,20 @@ data class CompiledArtifact(
     val contract: TransformContract? = null,
 )
 
-object ArtifactCodec {
-    private val json = Json { prettyPrint = true }
+public object ArtifactCodec {
+    private val prettyJson = Json { prettyPrint = true }
+    private val compactJson = Json
 
-    fun encode(artifact: CompiledArtifact): String =
-        json.encodeToString(CompiledArtifact.serializer(), artifact)
+    fun encode(artifact: CompiledArtifact, pretty: Boolean = true): String {
+        val serializer = if (pretty) prettyJson else compactJson
+        return serializer.encodeToString(CompiledArtifact.serializer(), artifact)
+    }
 
     fun decode(raw: String): CompiledArtifact =
-        json.decodeFromString(CompiledArtifact.serializer(), raw)
+        compactJson.decodeFromString(CompiledArtifact.serializer(), raw)
 }
 
-class CliException(message: String) : RuntimeException(message)
+public class CliException(
+    message: String,
+    val kind: CliErrorKind = CliErrorKind.USAGE,
+) : RuntimeException(message)

@@ -1,0 +1,3 @@
+TRANSFORM Hello {
+    OUTPUT { greeting: "Hello, " + input.name };
+}

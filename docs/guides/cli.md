@@ -13,6 +13,18 @@ The Branchline CLI wraps the interpreter, compiler, and VM APIs. Both JVM and No
 
 Calling a CLI with no arguments now prints a full help screen (`-h`/`--help` also work). All commands accept structured inputs via `--input <path>` and support XML payloads with `--input-format xml`.
 
+**CLI version:** `v0.9.1-alpha` (matches the current Gradle module version).
+
+## Stable flags (output, tracing, errors)
+
+These flags are part of the stable CLI surface for automation and CI:
+
+- `--output-format json|json-compact` — choose pretty or compact JSON for CLI output (applies to `run`, `exec`, and `compile`).
+- `--trace` — emit a trace summary to stderr after execution.
+- `--trace-format text|json` — format the trace summary (`text` for human-readable, `json` for tooling).
+- `--error-format text|json` — format errors for logs or CI parsers.
+- `--version` — print the CLI version.
+
 ## Command modes and when to use them
 
 - **run**: quickest way to try a Branchline script; compiles + executes in one step. Use in dev loops or CI smoke tests.
@@ -23,6 +35,8 @@ Calling a CLI with no arguments now prints a full help screen (`-h`/`--help` als
 Transform selection: all modes default to the first `TRANSFORM` block. Pass `--transform <name>` to pick another.
 
 Input handling: `--input <path>` reads JSON/XML; `--input -` reads stdin so you can pipe data into the CLI. `--input-format xml` parses XML into objects (attributes as `@attr`, text as `#text`).
+
+Output handling: `--output-format json` emits pretty JSON and `--output-format json-compact` emits minified JSON for CI diffs.
 
 ## Copy/paste quickstart
 
@@ -108,3 +122,15 @@ The `bl.cjs` launcher delegates to the compiled Kotlin/JS runtime and respects t
 ## CI smoke test
 
 The CLI JVM test suite now runs a Node-based smoke test to ensure the packaged bundle executes JSON inputs successfully. This guards against regressions in the packaging flow and verifies the Node wrapper stays in sync with the shared CLI surface.
+
+## Exit codes
+
+The CLI uses stable exit codes so CI scripts can distinguish failure modes:
+
+| Exit code | Meaning |
+| --- | --- |
+| 0 | Success |
+| 64 | Usage error (invalid flags, missing arguments) |
+| 65 | Input error (invalid script, schema, or input data) |
+| 70 | Runtime error (execution or unexpected failure) |
+| 74 | I/O error (file or stdin/stdout issues) |
