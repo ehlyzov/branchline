@@ -202,6 +202,9 @@ private fun encodeNullableSchema(schema: JsonObject, options: JsonSchemaOptions)
 private fun encodeTypeName(name: String, typeDecls: Map<String, TypeDecl>): JsonObject {
     val primitive = primitiveTypeName(name)
     if (primitive != null) {
+        if (primitive == "any") {
+            return JsonObject(emptyMap())
+        }
         return JsonObject(mapOf("type" to JsonPrimitive(primitive)))
     }
     return if (typeDecls.containsKey(name)) {
