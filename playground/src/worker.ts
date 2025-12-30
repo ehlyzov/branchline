@@ -10,6 +10,7 @@ type WorkerRequest = {
   input: string;
   trace: boolean;
   inputFormat: InputFormat;
+  includeContracts: boolean;
   shared: SharedStorageSpec[];
 };
 
@@ -21,6 +22,9 @@ type WorkerResponse = {
   column: number | null;
   explainJson: string | null;
   explainHuman: string | null;
+  inputContractJson: string | null;
+  outputContractJson: string | null;
+  contractSource: string | null;
 };
 
 import kotlinStdlibUrl from '../../interpreter/build/dist/js/productionLibrary/kotlin-kotlin-stdlib.js?url';
@@ -32,11 +36,12 @@ import interpreterUrl from '../../interpreter/build/dist/js/productionLibrary/br
 import { XMLParser } from 'fast-xml-parser';
 
 type PlaygroundFacade = {
-  run(program: string, inputJson: string, enableTracing: boolean): WorkerResponse;
+  run(program: string, inputJson: string, enableTracing: boolean, includeContracts: boolean): WorkerResponse;
   runWithShared?(
     program: string,
     inputJson: string,
     enableTracing: boolean,
+    includeContracts: boolean,
     sharedJsonConfig: string | null
   ): WorkerResponse;
 };
@@ -113,7 +118,7 @@ function loadFacade(): Promise<PlaygroundFacade> {
 }
 
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
-  const { code, input, trace, inputFormat, shared } = event.data;
+  const { code, input, trace, inputFormat, includeContracts, shared } = event.data;
   const sharedOffset = shared.length ? shared.length + 1 : 0;
   const wrapperAdjustment = computeWrapperAdjustment(code, sharedOffset);
   try {
@@ -121,8 +126,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     const payload = prepareInput(input, inputFormat);
     const sharedJson = shared.length ? JSON.stringify(shared) : null;
     const result = runner.runWithShared
-      ? runner.runWithShared(code, payload, trace, sharedJson)
-      : runner.run(code, payload, trace);
+      ? runner.runWithShared(code, payload, trace, includeContracts, sharedJson)
+      : runner.run(code, payload, trace, includeContracts);
     const adjusted = adjustResultForWrapper(result, wrapperAdjustment);
     self.postMessage(adjusted satisfies WorkerResponse);
   } catch (error) {
@@ -134,7 +139,10 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       line: null,
       column: null,
       explainJson: null,
-      explainHuman: null
+      explainHuman: null,
+      inputContractJson: null,
+      outputContractJson: null,
+      contractSource: null
     };
     self.postMessage(fallback);
   }

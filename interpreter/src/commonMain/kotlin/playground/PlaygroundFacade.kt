@@ -26,6 +26,7 @@ import v2.ParseException
 import v2.Parser
 import v2.TransformDecl
 import v2.DEFAULT_INPUT_ALIAS
+import v2.contract.TransformContractBuilder
 import v2.ir.Exec
 import v2.ir.ToIR
 import v2.ir.TransformRegistry
@@ -34,6 +35,7 @@ import v2.ir.makeEval
 import v2.runtime.bignum.BLBigDec
 import v2.runtime.bignum.BLBigInt
 import v2.sema.SemanticAnalyzer
+import v2.sema.TypeResolver
 import v2.std.StdLib
 import v2.std.SharedResourceKind
 import v2.std.SharedStoreProvider
@@ -68,14 +70,20 @@ object PlaygroundFacade {
         StdLib.fns + debugHostFns
     }
 
-    fun run(program: String, inputJson: String, enableTracing: Boolean = false): PlaygroundResult {
-        return runWithShared(program, inputJson, enableTracing, null)
+    public fun run(
+        program: String,
+        inputJson: String,
+        enableTracing: Boolean = false,
+        includeContracts: Boolean = false,
+    ): PlaygroundResult {
+        return runWithShared(program, inputJson, enableTracing, includeContracts, null)
     }
 
     fun runWithShared(
         program: String,
         inputJson: String,
         enableTracing: Boolean = false,
+        includeContracts: Boolean = false,
         sharedJsonConfig: String? = null,
     ): PlaygroundResult {
         val tracer = if (enableTracing) {
@@ -101,7 +109,10 @@ object PlaygroundFacade {
                     line = null,
                     column = null,
                     explainJson = null,
-                    explainHuman = null
+                    explainHuman = null,
+                    inputContractJson = null,
+                    outputContractJson = null,
+                    contractSource = null,
                 )
                 for (spec in sharedSpecs) {
                     if (!store.hasResource(spec.name)) {
@@ -123,7 +134,10 @@ object PlaygroundFacade {
                     line = null,
                     column = null,
                     explainJson = null,
-                    explainHuman = null
+                    explainHuman = null,
+                    inputContractJson = null,
+                    outputContractJson = null,
+                    contractSource = null,
                 )
 
             val hostFns = playgroundHostFns
@@ -173,6 +187,15 @@ object PlaygroundFacade {
             val explanationMap = tracer?.let { Debug.explainOutput(result) }
             val explainJson = explanationMap?.let { prettyJson.encodeToString(toJsonElement(it)) }
             val explainHuman = tracer?.let { TraceReport.from(it) }?.let(::renderTraceSummary)
+            val contract = if (includeContracts) {
+                val typeResolver = TypeResolver(typeDecls)
+                TransformContractBuilder(typeResolver, hostFns.keys).build(transform)
+            } else {
+                null
+            }
+            val inputContractJson = contract?.let { prettyJson.encodeToString(it.input) }
+            val outputContractJson = contract?.let { prettyJson.encodeToString(it.output) }
+            val contractSource = contract?.source?.name?.lowercase()
 
             PlaygroundResult(
                 success = true,
@@ -181,7 +204,10 @@ object PlaygroundFacade {
                 line = null,
                 column = null,
                 explainJson = explainJson,
-                explainHuman = explainHuman
+                explainHuman = explainHuman,
+                inputContractJson = inputContractJson,
+                outputContractJson = outputContractJson,
+                contractSource = contractSource,
             )
         } catch (ex: ParseException) {
             PlaygroundResult(
@@ -191,7 +217,10 @@ object PlaygroundFacade {
                 line = ex.token.line,
                 column = ex.token.column,
                 explainJson = null,
-                explainHuman = null
+                explainHuman = null,
+                inputContractJson = null,
+                outputContractJson = null,
+                contractSource = null,
             )
         } catch (ex: v2.sema.SemanticException) {
             PlaygroundResult(
@@ -201,7 +230,10 @@ object PlaygroundFacade {
                 line = ex.token.line,
                 column = ex.token.column,
                 explainJson = null,
-                explainHuman = null
+                explainHuman = null,
+                inputContractJson = null,
+                outputContractJson = null,
+                contractSource = null,
             )
         } catch (ex: Throwable) {
             PlaygroundResult(
@@ -211,7 +243,10 @@ object PlaygroundFacade {
                 line = null,
                 column = null,
                 explainJson = null,
-                explainHuman = null
+                explainHuman = null,
+                inputContractJson = null,
+                outputContractJson = null,
+                contractSource = null,
             )
         } finally {
             Debug.tracer = priorTracer
@@ -348,14 +383,17 @@ $indented
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
-data class PlaygroundResult(
+public data class PlaygroundResult(
     val success: Boolean,
     val outputJson: String?,
     val errorMessage: String?,
     val line: Int?,
     val column: Int?,
     val explainJson: String?,
-    val explainHuman: String?
+    val explainHuman: String?,
+    val inputContractJson: String?,
+    val outputContractJson: String?,
+    val contractSource: String?,
 )
 
 @Serializable

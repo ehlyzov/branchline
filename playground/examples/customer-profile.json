@@ -1,6 +1,7 @@
 {
   "title": "Customer profile enrichment",
   "description": "Combine basic customer attributes into a normalized profile with a fallback loyalty tier.",
+  "showContracts": true,
   "program": [
     "LET fullName = input.first_name + \" \" + input.last_name;",
     "LET loyaltyTier = input.loyalty_tier ?? \"standard\";",
