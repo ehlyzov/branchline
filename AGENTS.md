@@ -28,6 +28,11 @@ Language design priorities:
 - Full build: `./gradlew clean build`.
 - Focused tasks: `./gradlew :interpreter:jvmTest`, `./gradlew :interpreter:jsTest`, `./gradlew :conformance-tests:jvmTest`, `./gradlew :conformance-tests:jsTest`.
 
+## Local Playground
+- Build assets: `./gradlew playgroundBuildAssets` (requires Node 18+ on PATH).
+- Serve from repo root: `ln -s docs/assets assets`, then `python3 -m http.server 8000`, and open `http://localhost:8000/playground/demo.html`.
+- Cleanup the symlink when done: `rm assets`.
+
 ## Coding Style & Naming Conventions
 - Use four-space indents, explicit visibility, and trailing commas where Kotlin allows them.
 - Import only what you use; no wildcard imports.
