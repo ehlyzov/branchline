@@ -97,12 +97,11 @@ class Lexer(private val source: String) {
                     startLine,
                     startCol
                 )
-                '=' -> add(
-                    if (match('=')) TokenType.EQ else TokenType.ASSIGN,
-                    if (peekPrev() == '=') "==" else "=",
-                    startLine,
-                    startCol
-                )
+                '=' -> when {
+                    match('>') -> add(TokenType.ARROW, "=>", startLine, startCol)
+                    match('=') -> add(TokenType.EQ, "==", startLine, startCol)
+                    else -> add(TokenType.ASSIGN, "=", startLine, startCol)
+                }
                 '<' -> add(
                     if (match('=')) TokenType.LE else TokenType.LT,
                     if (peekPrev() == '=') "<=" else "<",

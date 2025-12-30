@@ -1,6 +1,7 @@
 package playground
 
 import kotlinx.serialization.encodeToString
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -34,9 +35,15 @@ import v2.runtime.bignum.BLBigDec
 import v2.runtime.bignum.BLBigInt
 import v2.sema.SemanticAnalyzer
 import v2.std.StdLib
+import v2.std.SharedResourceKind
+import v2.std.SharedStoreProvider
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlin.collections.buildMap
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ListSerializer
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
@@ -44,6 +51,7 @@ object PlaygroundFacade {
     private const val INPUT_VAR = DEFAULT_INPUT_ALIAS
     private val prettyJson = Json { prettyPrint = true }
     private val compactJson = Json
+    private val sharedJson = Json { ignoreUnknownKeys = true }
 
     private val debugHostFns: Map<String, (List<Any?>) -> Any?> = mapOf(
         "EXPLAIN" to { args ->
@@ -61,6 +69,15 @@ object PlaygroundFacade {
     }
 
     fun run(program: String, inputJson: String, enableTracing: Boolean = false): PlaygroundResult {
+        return runWithShared(program, inputJson, enableTracing, null)
+    }
+
+    fun runWithShared(
+        program: String,
+        inputJson: String,
+        enableTracing: Boolean = false,
+        sharedJsonConfig: String? = null,
+    ): PlaygroundResult {
         val tracer = if (enableTracing) {
             CollectingTracer(
                 TraceOptions(
@@ -75,7 +92,24 @@ object PlaygroundFacade {
         val priorTracer = Debug.tracer
         return try {
             Debug.tracer = tracer
-            val effectiveProgram = wrapProgramIfNeeded(program)
+            val sharedSpecs = parseSharedSpecs(sharedJsonConfig)
+            if (sharedSpecs.isNotEmpty()) {
+                val store = SharedStoreProvider.store ?: return PlaygroundResult(
+                    success = false,
+                    outputJson = null,
+                    errorMessage = "SharedStore is not configured.",
+                    line = null,
+                    column = null,
+                    explainJson = null,
+                    explainHuman = null
+                )
+                for (spec in sharedSpecs) {
+                    if (!store.hasResource(spec.name)) {
+                        store.addResource(spec.name, spec.kind)
+                    }
+                }
+            }
+            val effectiveProgram = wrapProgramIfNeeded(program, sharedSpecs)
             val tokens = Lexer(effectiveProgram).lex()
             val parsed = Parser(tokens, effectiveProgram).parse()
 
@@ -115,7 +149,25 @@ object PlaygroundFacade {
                 this[INPUT_VAR] = msg
                 putAll(msg)
             }
+            val sharedSnapshot = SharedStoreProvider.store?.snapshot().orEmpty()
+            if (sharedSpecs.isNotEmpty()) {
+                for (spec in sharedSpecs) {
+                    val seed = sharedSnapshot[spec.name] ?: emptyMap()
+                    if (!env.containsKey(spec.name)) {
+                        env[spec.name] = LinkedHashMap(seed)
+                    }
+                }
+            }
             val result = exec.run(env, stringifyKeys = true)
+            if (sharedSpecs.isNotEmpty()) {
+                val store = SharedStoreProvider.store
+                if (store != null) {
+                    val delta = buildSharedDelta(sharedSpecs, sharedSnapshot, env)
+                    if (delta.isNotEmpty()) {
+                        GlobalScope.launch { store.commit(sharedSnapshot, delta) }
+                    }
+                }
+            }
             val jsonElement = toJsonElement(result)
             val output = prettyJson.encodeToString(jsonElement)
             val explanationMap = tracer?.let { Debug.explainOutput(result) }
@@ -166,19 +218,67 @@ object PlaygroundFacade {
         }
     }
 
-    private fun wrapProgramIfNeeded(body: String): String {
+    private fun wrapProgramIfNeeded(body: String, sharedSpecs: List<SharedStorageSpec>): String {
         val hasTransformKeyword = Regex("\\bTRANSFORM\\b", RegexOption.IGNORE_CASE).containsMatchIn(body)
+        val sharedDecls = renderSharedDecls(sharedSpecs)
+        val sharedPrefix = if (sharedDecls.isBlank()) "" else "$sharedDecls\n\n"
         if (hasTransformKeyword) return body
 
         val trimmed = body.trim().lines()
         val indented = trimmed.joinToString("\n") { line ->
             if (line.isBlank()) line else "    $line"
         }
-        return """
+        val wrapped = """
             TRANSFORM Playground {
 $indented
             }
         """.trimIndent()
+        return sharedPrefix + wrapped
+    }
+
+    private fun parseSharedSpecs(sharedJsonConfig: String?): List<SharedStorageSpec> {
+        if (sharedJsonConfig.isNullOrBlank()) return emptyList()
+        return sharedJson.decodeFromString(
+            ListSerializer(SharedStorageSpec.serializer()),
+            sharedJsonConfig
+        )
+    }
+
+    private fun renderSharedDecls(sharedSpecs: List<SharedStorageSpec>): String =
+        sharedSpecs.joinToString("\n") { spec ->
+            "SHARED ${spec.name} ${spec.kind.name};"
+        }
+
+    private fun buildSharedDelta(
+        sharedSpecs: List<SharedStorageSpec>,
+        snapshot: Map<String, Map<String, Any?>>,
+        env: Map<String, Any?>,
+    ): Map<String, Map<String, Any?>> {
+        val delta = LinkedHashMap<String, Map<String, Any?>>()
+        for (spec in sharedSpecs) {
+            val before = snapshot[spec.name] ?: emptyMap()
+            val afterRaw = env[spec.name] as? Map<*, *> ?: continue
+            val after = LinkedHashMap<String, Any?>().apply {
+                for ((k, v) in afterRaw) {
+                    this[k?.toString() ?: "null"] = v
+                }
+            }
+            val keys = LinkedHashSet<String>()
+            keys.addAll(before.keys)
+            keys.addAll(after.keys)
+            val resourceDelta = LinkedHashMap<String, Any?>()
+            for (key in keys) {
+                val beforeValue = before[key]
+                val afterValue = after[key]
+                if (beforeValue != afterValue) {
+                    resourceDelta[key] = afterValue
+                }
+            }
+            if (resourceDelta.isNotEmpty()) {
+                delta[spec.name] = resourceDelta
+            }
+        }
+        return delta
     }
 
     private fun parseInput(inputJson: String): Map<String, Any?> {
@@ -256,6 +356,12 @@ data class PlaygroundResult(
     val column: Int?,
     val explainJson: String?,
     val explainHuman: String?
+)
+
+@Serializable
+data class SharedStorageSpec(
+    val name: String,
+    val kind: SharedResourceKind = SharedResourceKind.MANY,
 )
 
 private fun renderTraceSummary(report: TraceReport.TraceReportData): String? {

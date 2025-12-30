@@ -512,7 +512,14 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     }
 
     // TRY / CATCH -----------------------------------------------------
-    private fun parseTryCatch(tryTok: Token): TryCatchStmt {
+    private data class TryCatchParts(
+        val tryExpr: Expr,
+        val exceptionName: String,
+        val retry: Int?,
+        val backoff: String?,
+    )
+
+    private fun parseTryCatchParts(): TryCatchParts {
         val tryExpr = parseExpression()
         consume(TokenType.CATCH, "Expect CATCH after TRY expression")
         consume(TokenType.LEFT_PAREN, "Expect '(' after CATCH")
@@ -530,6 +537,16 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
                 backoff = strTok.lexeme.trim('"')
             }
         }
+        return TryCatchParts(
+            tryExpr = tryExpr,
+            exceptionName = excTok.lexeme,
+            retry = retry,
+            backoff = backoff,
+        )
+    }
+
+    private fun parseTryCatch(tryTok: Token): TryCatchStmt {
+        val parts = parseTryCatchParts()
         consume(TokenType.ARROW, "Expect '->' after TRY/CATCH block")
         var fbExpr: Expr? = null
         var fbAbort: AbortStmt? = null
@@ -541,13 +558,27 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         }
         match(TokenType.SEMICOLON)
         return TryCatchStmt(
-            tryExpr,
-            excTok.lexeme,
-            retry,
-            backoff,
+            parts.tryExpr,
+            parts.exceptionName,
+            parts.retry,
+            parts.backoff,
             fbExpr,
             fbAbort,
             tryTok
+        )
+    }
+
+    private fun parseTryCatchExpr(tryTok: Token): TryCatchExpr {
+        val parts = parseTryCatchParts()
+        consume(TokenType.ARROW, "Expect '->' after TRY/CATCH expression")
+        val fallbackExpr = parseExpression()
+        return TryCatchExpr(
+            tryExpr = parts.tryExpr,
+            exceptionName = parts.exceptionName,
+            retry = parts.retry,
+            backoff = parts.backoff,
+            fallbackExpr = fallbackExpr,
+            token = tryTok,
         )
     }
 
@@ -811,6 +842,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val tok = advance()
         return when (tok.type) {
             TokenType.CASE -> parseCase(tok)
+            TokenType.TRY -> parseTryCatchExpr(tok)
             TokenType.APPEND -> {
                 val t = previous()
                 // опционально: подсказка, если дальше не '('

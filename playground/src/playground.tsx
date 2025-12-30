@@ -33,6 +33,7 @@ type RawExample = {
   input: unknown;
   inputFormat?: InputFormat;
   trace?: boolean;
+  shared?: SharedStorageSpec[];
 };
 
 type ExampleModule = {
@@ -47,6 +48,12 @@ type PlaygroundExample = {
   input: string;
   inputFormat: InputFormat;
   enableTracing: boolean;
+  shared: SharedStorageSpec[];
+};
+
+type SharedStorageSpec = {
+  name: string;
+  kind: 'SINGLE' | 'MANY';
 };
 
 const exampleModules = import.meta.glob<ExampleModule>('../examples/*.json', {
@@ -71,7 +78,8 @@ function normalizeExample(id: string, raw: RawExample): PlaygroundExample {
     program,
     input: input || DEFAULT_INPUT,
     inputFormat,
-    enableTracing: Boolean(raw.trace)
+    enableTracing: Boolean(raw.trace),
+    shared: raw.shared ?? []
   };
 }
 
@@ -164,8 +172,14 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     setError(null);
     setTraceHuman(null);
     setTraceJson(null);
-    workerRef.current?.postMessage({ code: program, input, trace: tracingRef.current, inputFormat });
-  }, [inputFormat]);
+    workerRef.current?.postMessage({
+      code: program,
+      input,
+      trace: tracingRef.current,
+      inputFormat,
+      shared: selectedExample?.shared ?? []
+    });
+  }, [inputFormat, selectedExample]);
 
   const resetExample = React.useCallback(() => {
     if (!selectedExample) {

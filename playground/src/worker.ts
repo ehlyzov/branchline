@@ -1,10 +1,16 @@
 type InputFormat = 'json' | 'xml';
 
+type SharedStorageSpec = {
+  name: string;
+  kind: 'SINGLE' | 'MANY';
+};
+
 type WorkerRequest = {
   code: string;
   input: string;
   trace: boolean;
   inputFormat: InputFormat;
+  shared: SharedStorageSpec[];
 };
 
 type WorkerResponse = {
@@ -25,6 +31,12 @@ import { XMLParser } from 'fast-xml-parser';
 
 type PlaygroundFacade = {
   run(program: string, inputJson: string, enableTracing: boolean): WorkerResponse;
+  runWithShared?(
+    program: string,
+    inputJson: string,
+    enableTracing: boolean,
+    sharedJsonConfig: string | null
+  ): WorkerResponse;
 };
 
 const INTERPRETER_GLOBAL = 'io.github.ehlyzov.branchline-public:interpreter';
@@ -97,12 +109,16 @@ function loadFacade(): Promise<PlaygroundFacade> {
 }
 
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
-  const { code, input, trace, inputFormat } = event.data;
-  const wrapperAdjustment = computeWrapperAdjustment(code);
+  const { code, input, trace, inputFormat, shared } = event.data;
+  const sharedOffset = shared.length ? shared.length + 1 : 0;
+  const wrapperAdjustment = computeWrapperAdjustment(code, sharedOffset);
   try {
     const runner = await loadFacade();
     const payload = prepareInput(input, inputFormat);
-    const result = runner.run(code, payload, trace) as WorkerResponse;
+    const sharedJson = shared.length ? JSON.stringify(shared) : null;
+    const result = runner.runWithShared
+      ? runner.runWithShared(code, payload, trace, sharedJson)
+      : runner.run(code, payload, trace);
     const adjusted = adjustResultForWrapper(result, wrapperAdjustment);
     self.postMessage(adjusted satisfies WorkerResponse);
   } catch (error) {
@@ -184,7 +200,7 @@ type WrapperAdjustment = {
   lastContentLine: number;
 };
 
-function computeWrapperAdjustment(code: string): WrapperAdjustment | null {
+function computeWrapperAdjustment(code: string, sharedOffset: number): WrapperAdjustment | null {
   if (/\bTRANSFORM\b/i.test(code)) {
     return null;
   }
@@ -209,7 +225,7 @@ function computeWrapperAdjustment(code: string): WrapperAdjustment | null {
   const indentedLines = trimmedLines.map((line) => line.trim().length > 0);
 
   return {
-    lineOffset: 3,
+    lineOffset: 3 + sharedOffset,
     lineMap,
     indentedLines,
     originalLineCount: originalLines.length || 1,

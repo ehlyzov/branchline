@@ -170,6 +170,7 @@ class Compiler(
             is LambdaExpr -> compileLambdaExpr(expr)
             is IfElseExpr -> compileIfElseExpr(expr)
             is CaseExpr -> compileExpr(lowerCaseExpr(expr))
+            is TryCatchExpr -> compileTryCatchExpr(expr)
             is InvokeExpr -> compileInvokeExpr(expr)
             is SharedStateAwaitExpr -> {
                 // Push args so that VM pops into (resource, key) in correct order
@@ -463,7 +464,7 @@ class Compiler(
 
         // Catch block
         setLabel(catchLabel)
-        emit(CATCH("exception", node.retry))
+        emit(CATCH(node.exceptionName, node.retry))
 
         // Handle fallback
         node.fallbackExpr?.let { fallback ->
@@ -474,6 +475,26 @@ class Compiler(
             compileExpr(abortExpr)
             emit(ABORT)
         }
+
+        setLabel(endLabel)
+    }
+
+    private fun compileTryCatchExpr(expr: TryCatchExpr) {
+        val catchLabel = generateLabel("catch_expr")
+        val endLabel = generateLabel("end_try_expr")
+
+        emit(TRY_START(0))
+        addUnresolvedJump(instructions.size - 1, catchLabel, "TRY_START")
+
+        compileExpr(expr.tryExpr)
+
+        emit(TRY_END)
+        emit(JUMP(0))
+        addUnresolvedJump(instructions.size - 1, endLabel, "JUMP")
+
+        setLabel(catchLabel)
+        emit(CATCH(expr.exceptionName, expr.retry ?: 0))
+        compileExpr(expr.fallbackExpr)
 
         setLabel(endLabel)
     }

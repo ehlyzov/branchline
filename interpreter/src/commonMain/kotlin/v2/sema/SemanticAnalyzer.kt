@@ -49,6 +49,7 @@ import v2.TokenType
 import v2.TopLevelDecl
 import v2.TransformDecl
 import v2.TransformSignature
+import v2.TryCatchExpr
 import v2.TryCatchStmt
 import v2.TypeDecl
 import v2.TypeKind
@@ -194,7 +195,9 @@ class SemanticAnalyzer(
                 ?: throw SemanticException("SET target must start with identifier", stmt.token)
 
             val inScope = scopes.any { baseIdent.name in it }
-            if (!inScope) throw SemanticException("Unknown variable '${baseIdent.name}' in same block", stmt.token)
+            if (!inScope && !isSharedResource(baseIdent.name)) {
+                throw SemanticException("Unknown variable '${baseIdent.name}' in same block", stmt.token)
+            }
 
             // Можно дополнительно проверить, что target не пустой (есть хотя бы один сегмент)
             if (stmt.target.segs.isEmpty()) {
@@ -256,7 +259,9 @@ class SemanticAnalyzer(
             val baseIdent = stmt.target.base as? IdentifierExpr
                 ?: throw SemanticException("APPEND TO target must start with identifier", stmt.token)
             val inScope = scopes.any { baseIdent.name in it }
-            if (!inScope) throw SemanticException("Unknown variable '${baseIdent.name}'", stmt.token)
+            if (!inScope && !isSharedResource(baseIdent.name)) {
+                throw SemanticException("Unknown variable '${baseIdent.name}'", stmt.token)
+            }
             checkExpr(stmt.value)
             stmt.init?.let { checkExpr(it) }
             true
@@ -282,12 +287,7 @@ class SemanticAnalyzer(
 
         is TryCatchStmt -> {
             checkExpr(stmt.tryExpr)
-            if (stmt.fallbackExpr != null) {
-                checkExpr(stmt.fallbackExpr)
-            }
-            if (stmt.fallbackAbort != null && stmt.fallbackAbort.value != null) {
-                checkExpr(stmt.fallbackAbort.value)
-            }
+            checkTryCatchFallback(stmt.exceptionName, stmt.fallbackExpr, stmt.fallbackAbort)
             Unit
             // retry/backoff sanity already parsed; nothing else yet
         }
@@ -333,6 +333,11 @@ class SemanticAnalyzer(
                     checkExpr(whenExpr.result)
                 }
                 checkExpr(expr.elseBranch)
+            }
+
+            is TryCatchExpr -> {
+                checkExpr(expr.tryExpr)
+                checkTryCatchFallback(expr.exceptionName, expr.fallbackExpr, null)
             }
 
             is UnaryExpr -> {
@@ -393,6 +398,17 @@ class SemanticAnalyzer(
         }
     }
 
+    private fun checkTryCatchFallback(
+        exceptionName: String,
+        fallbackExpr: Expr?,
+        fallbackAbort: AbortStmt?,
+    ) {
+        withScope(listOf(exceptionName)) {
+            fallbackExpr?.let { checkExpr(it) }
+            fallbackAbort?.value?.let { checkExpr(it) }
+        }
+    }
+
     private fun isIdentifierVisible(name: String): Boolean =
         name == "$" || // глобальный JSON-корень
                 name == DEFAULT_INPUT_ALIAS ||
@@ -400,6 +416,9 @@ class SemanticAnalyzer(
                 scopes.any { name in it } || // LET / var цикла
                 name in globals || // SOURCE / SHARED / TYPE / FUNC
                 name in hostFns
+
+    private fun isSharedResource(name: String): Boolean =
+        globals[name] is SharedDecl
 
     private fun resolveTypeRef(typeRef: TypeRef): TypeRef =
         resolveTypeRef(typeRef, resolvingTypeNames)
@@ -553,10 +572,17 @@ class SemanticAnalyzer(
     }
 
     private fun validateOutputObject(expr: Expr, typeRef: RecordTypeRef, token: Token) {
-        val obj = expr as? ObjectExpr
-        if (obj == null) {
-            reportContractMismatch("Output contract expects an object", token)
-            return
+        val obj = when (expr) {
+            is ObjectExpr -> expr
+            is TryCatchExpr -> {
+                validateOutputObject(expr.tryExpr, typeRef, token)
+                validateOutputObject(expr.fallbackExpr, typeRef, token)
+                return
+            }
+            else -> {
+                reportContractMismatch("Output contract expects an object", token)
+                return
+            }
         }
         val declaredFields = typeRef.fields.associateBy { it.name }
         val literalFields = obj.fields.mapNotNull { property ->
@@ -605,6 +631,10 @@ class SemanticAnalyzer(
                     }
                 }
             }
+            is TryCatchExpr -> {
+                validateOutputArray(expr.tryExpr, typeRef, token)
+                validateOutputArray(expr.fallbackExpr, typeRef, token)
+            }
             is ArrayCompExpr -> {
                 val elementType = resolveTypeRef(typeRef.elementType)
                 if (elementType is RecordTypeRef && expr.mapExpr !is ObjectExpr) {
@@ -628,7 +658,6 @@ class SemanticAnalyzer(
     private fun renderKey(key: ObjKey): String = when (key) {
         is ObjKey.Name -> "'${key.v}'"
         is ObjKey.Index -> "index"
-        else -> "key"
     }
 
     private fun isInputAlias(name: String): Boolean =

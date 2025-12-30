@@ -75,10 +75,10 @@ class LexerTest {
 
     @Test
     fun `recognizes composite tokens`() {
-        val input = "== != <= >= -> && || ??"
+        val input = "== != <= >= -> => && || ??"
         val expected = listOf(
             TokenType.EQ, TokenType.NEQ, TokenType.LE, TokenType.GE,
-            TokenType.ARROW, TokenType.AND, TokenType.OR, TokenType.COALESCE,
+            TokenType.ARROW, TokenType.ARROW, TokenType.AND, TokenType.OR, TokenType.COALESCE,
             TokenType.EOF
         )
         val actual = lex(input).map { it.type }

@@ -180,7 +180,7 @@ private fun encodeNullableSchema(schema: JsonObject, options: JsonSchemaOptions)
                 putAll(schema)
                 put(
                     "type",
-                    JsonArray(listOf(JsonPrimitive("null"), typeElement as JsonPrimitive)),
+                    JsonArray(listOf(JsonPrimitive("null"), typeElement)),
                 )
             }
             JsonObject(content)

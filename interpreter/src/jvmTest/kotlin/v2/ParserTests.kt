@@ -400,6 +400,18 @@ class ParserTest {
         assertEquals("e", tryStmt.exceptionName)
     }
 
+    @Test
+    fun `try catch expression parsed`() {
+        val src = """
+            TRANSFORM { LET guard = TRY risky() CATCH (err) => false;
+            }
+            """.trimIndent()
+        val prg = parse(src)
+        val letStmt = (prg.decls[0] as TransformDecl).body.statements[0] as LetStmt
+        val tryExpr = letStmt.expr as TryCatchExpr
+        assertEquals("err", tryExpr.exceptionName)
+    }
+
     // missing CATCH should throw
     @Test
     fun `try without catch throws`() {

@@ -4,7 +4,8 @@ title: Error Handling with TRY/CATCH
 
 # Error Handling with TRY/CATCH
 
-Use `TRY` / `CATCH` to handle failures and optionally retry operations.
+Use `TRY` / `CATCH` to handle failures and optionally retry operations. `TRY`
+is an expression, so it can be used in `LET`, `CASE`, or output templates.
 
 ## Catching failures
 
@@ -13,7 +14,9 @@ TRY riskyCall()
 CATCH(e) => { err: e.message };
 ```
 
-If `riskyCall()` throws, the fallback block produces an error object.
+If `riskyCall()` throws, the fallback block produces an error object. The
+identifier in `CATCH(...)` is bound to a small error object with `message` and
+`type` fields.
 
 ## Retrying
 

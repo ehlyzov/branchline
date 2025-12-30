@@ -23,6 +23,7 @@ data class IRSet(val target: AccessExpr, val value: Expr) : IRNode
 data class IRAppendTo(val target: AccessExpr, val value: Expr, val init: Expr?) : IRNode
 data class IRTryCatch(
     val tryExpr: Expr,
+    val exceptionName: String,
     val retry: Int,
     val fallbackExpr: Expr?,
     val fallbackAbort: Expr?
@@ -33,4 +34,3 @@ data class IRExprOutput(val expr: Expr) : IRNode
 data class IRExprStmt(val expr: Expr) : IRNode
 data class IRSetVar(val name: String, val value: Expr) : IRNode
 data class IRAppendVar(val name: String, val value: Expr, val init: Expr?) : IRNode
-

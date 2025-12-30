@@ -271,6 +271,15 @@ data class IfElseExpr(
     override val token: Token,
 ) : Expr
 
+data class TryCatchExpr(
+    val tryExpr: Expr,
+    val exceptionName: String,
+    val retry: Int?,
+    val backoff: String?,
+    val fallbackExpr: Expr,
+    override val token: Token,
+) : Expr
+
 public data class CaseWhen(
     val condition: Expr,
     val result: Expr,

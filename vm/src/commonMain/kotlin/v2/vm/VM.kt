@@ -1285,7 +1285,16 @@ class VM(
     private fun handleCatch(exceptionVar: String, retryCount: Int) {
         val frame = tryStack.peek() ?: return
         // Expose exception to environment if requested
-        environment[exceptionVar] = lastException?.message ?: lastException?.toString()
+        val err = lastException?.let { ex ->
+            mapOf(
+                "message" to (ex.message ?: ex.toString()),
+                "type" to (ex::class.simpleName ?: "Exception"),
+            )
+        } ?: mapOf(
+            "message" to "Unknown error",
+            "type" to "Exception",
+        )
+        environment[exceptionVar] = err
         if (frame.attempts < retryCount) {
             frame.attempts += 1
             // Reset stack to pre-try size

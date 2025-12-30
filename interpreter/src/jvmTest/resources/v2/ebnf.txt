@@ -62,10 +62,11 @@ letStmt          ::= **LET** IDENTIFIER "=" expression **;**                 ;
 ifStmt           ::= **IF** expression block ( **ELSE** block )?             ;
 forStmt          ::= ( **FOR EACH** | **FOR** ) IDENTIFIER **IN** expression
                      ( **WHERE** expression )? block                        ;
-tryStmt          ::= **TRY** expression **CATCH** "(" IDENTIFIER ")" "=>" expression ;
+tryStmt          ::= **TRY** expression **CATCH** "(" IDENTIFIER ")" retrySpec? arrow expression ;
 callStmt         ::= optAwait **CALL** IDENTIFIER "(" argList? ")" arrow IDENTIFIER **;** ;
 optAwait         ::= **AWAIT**?                                              ;
 arrow            ::= "->" | "=>"                                             ;
+retrySpec        ::= **RETRY** NUMBER **TIMES** ( **BACKOFF** STRING )?       ;
 setStmt          ::= **SET** setTarget "=" expression **;**                 ;
 appendStmt       ::= **APPEND** **TO** setTarget expression
                      ( **INIT** expression )? **;**                          ;
@@ -101,7 +102,8 @@ unary            ::= ( "!" | "-" | **AWAIT** | **SUSPEND** ) unary
                    | primary                                                ;
 
 primary          ::= literal | pathExpr | IDENTIFIER | funCall | arrayLit
-                   | objectLit | caseExpr | "(" expression ")" | lambdaExpr ;
+                   | objectLit | caseExpr | tryExpr | "(" expression ")" | lambdaExpr ;
+tryExpr          ::= **TRY** expression **CATCH** "(" IDENTIFIER ")" retrySpec? arrow expression ;
 
 caseExpr         ::= **CASE** "{" caseWhen+ caseElse "}"                    ;
 caseWhen         ::= **WHEN** expression **THEN** expression                ;

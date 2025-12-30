@@ -563,6 +563,23 @@ private class Evaluator(
         return eval(lowerCaseExpr(e), env)
     }
 
+    private fun handleTryCatchExpr(e: TryCatchExpr, env: Env): Any? {
+        val retries = e.retry ?: 0
+        var attempts = 0
+        while (true) {
+            try {
+                return eval(e.tryExpr, env)
+            } catch (ex: Exception) {
+                if (attempts++ >= retries) {
+                    val errorValue = buildErrorValue(ex)
+                    return withCatchBinding(env, e.exceptionName, errorValue) {
+                        eval(e.fallbackExpr, env)
+                    }
+                }
+            }
+        }
+    }
+
     private fun handleAccess(e: AccessExpr, env: Env): Any? {
         // вычисляем базу (handleIdentifier уже сам эмитит Read(e.name, ...) при включённом трассере)
         var cur = eval(e.base, env)
@@ -673,6 +690,7 @@ private class Evaluator(
             is BinaryExpr -> handleBinary(e, env)
             is IfElseExpr -> handleIfElse(e, env)
             is CaseExpr -> handleCase(e, env)
+            is TryCatchExpr -> handleTryCatchExpr(e, env)
             is AccessExpr -> {
                 if (Debug.tracer != null) {
                     handleAccessTraced(e, env)

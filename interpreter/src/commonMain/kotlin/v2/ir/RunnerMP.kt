@@ -1,7 +1,10 @@
 package v2.ir
 
 import v2.FuncDecl
+import v2.SharedDecl
 import v2.debug.Tracer
+import v2.std.SharedStoreProvider
+import v2.std.SharedResourceKind
 
 /**
  * Multiplatform-friendly helpers to run IR and build runners without relying on the VM or parser.
@@ -52,6 +55,18 @@ fun buildRunnerFromProgramMP(
 ): (Map<String, Any?>) -> Any? {
     val tokens = v2.Lexer(program).lex()
     val prog = v2.Parser(tokens, program).parse()
+    val sharedDecls = prog.decls.filterIsInstance<SharedDecl>()
+    SharedStoreProvider.store?.let { store ->
+        for (decl in sharedDecls) {
+            val kind = when (decl.kind) {
+                v2.SharedKind.SINGLE -> SharedResourceKind.SINGLE
+                v2.SharedKind.MANY -> SharedResourceKind.MANY
+            }
+            if (!store.hasResource(decl.name)) {
+                store.addResource(decl.name, kind)
+            }
+        }
+    }
 
     val funcs = prog.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
     val transforms = prog.decls.filterIsInstance<v2.TransformDecl>()

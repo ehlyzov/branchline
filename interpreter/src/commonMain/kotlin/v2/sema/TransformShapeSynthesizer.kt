@@ -36,6 +36,7 @@ import v2.SetVarStmt
 import v2.StringExpr
 import v2.Token
 import v2.TransformDecl
+import v2.TryCatchExpr
 import v2.TryCatchStmt
 import v2.UnaryExpr
 import v2.DEFAULT_INPUT_ALIAS
@@ -260,6 +261,7 @@ public class TransformShapeSynthesizer(
         is UnaryExpr -> analyzeExpr(expr.expr)
         is IfElseExpr -> analyzeIfElseExpr(expr)
         is CaseExpr -> analyzeCaseExpr(expr)
+        is TryCatchExpr -> analyzeTryCatchExpr(expr)
         is v2.BinaryExpr -> mergeSequential(analyzeExpr(expr.left), analyzeExpr(expr.right))
         is v2.SharedStateAwaitExpr -> ShapeState.empty()
         is v2.LambdaExpr -> analyzeLambdaExpr(expr)
@@ -381,6 +383,14 @@ public class TransformShapeSynthesizer(
         return branchState
     }
 
+    private fun analyzeTryCatchExpr(expr: TryCatchExpr): ShapeState {
+        val tryState = analyzeExpr(expr.tryExpr)
+        val fallbackScope = scopes.last().toMutableSet().apply { add(expr.exceptionName) }
+        val fallbackState = analyzeExprWithScope(expr.fallbackExpr, fallbackScope)
+        val optionalFallback = mergeBranches(fallbackState, ShapeState.empty())
+        return mergeSequential(tryState, optionalFallback)
+    }
+
     private fun analyzeExprWithScope(expr: Expr, scope: MutableSet<String>): ShapeState {
         scopes.addLast(scope)
         val state = analyzeExpr(expr)
@@ -477,6 +487,7 @@ public class TransformShapeSynthesizer(
         }
         is ArrayCompExpr -> ValueShape.ArrayShape(shapeFromExpr(expr.mapExpr))
         is IfElseExpr -> mergeValueShape(shapeFromExpr(expr.thenBranch), shapeFromExpr(expr.elseBranch))
+        is TryCatchExpr -> mergeValueShape(shapeFromExpr(expr.tryExpr), shapeFromExpr(expr.fallbackExpr))
         is CaseExpr -> {
             var acc = shapeFromExpr(expr.elseBranch)
             for (branch in expr.whens) {

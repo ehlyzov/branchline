@@ -1,0 +1,24 @@
+{
+  "title": "Shared Memory: Reads",
+  "description": "Reads session state from shared storage. Run \"Shared Memory: SHARED and Writes\" in another playground tab (same origin) to seed data, then run this example with the same userId.",
+  "shared": [
+    {
+      "name": "session",
+      "kind": "MANY"
+    }
+  ],
+  "program": [
+    "LET key = input.userId ?? \"guest\";",
+    "LET snapshot = session[key];",
+    "LET hasValue = snapshot != null;",
+    "",
+    "OUTPUT {",
+    "    sharedKey: key,",
+    "    found: hasValue,",
+    "    session: snapshot",
+    "}"
+  ],
+  "input": {
+    "userId": "riley"
+  }
+}

@@ -42,6 +42,7 @@ class ToIR(
         is TryCatchStmt -> listOf(
             IRTryCatch(
                 s.tryExpr,
+                s.exceptionName,
                 s.retry ?: 0,
                 s.fallbackExpr,
                 s.fallbackAbort?.value

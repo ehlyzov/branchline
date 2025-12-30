@@ -1,5 +1,7 @@
 package v2.std
 
-actual fun blockingAwait(store: SharedStore, resource: String, key: String): Any? =
-    throw UnsupportedOperationException("SharedStore.await is not supported in JS sync eval")
-
+actual fun blockingAwait(store: SharedStore, resource: String, key: String): Any? {
+    val resourceData = store.snapshot()[resource]
+        ?: error("Unknown shared resource: $resource")
+    return resourceData[key]
+}

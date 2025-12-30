@@ -238,6 +238,11 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
             val elseBranch = renderExprForDebug(expr.elseBranch, values)
             "(if $cond $thenBranch $elseBranch)"
         }
+        is v2.TryCatchExpr -> {
+            val tryExpr = renderExprForDebug(expr.tryExpr, values)
+            val fallbackExpr = renderExprForDebug(expr.fallbackExpr, values)
+            "(try $tryExpr catch $fallbackExpr)"
+        }
         is v2.CaseExpr -> {
             val whens = expr.whens.joinToString(" ") { whenExpr ->
                 val cond = renderExprForDebug(whenExpr.condition, values)

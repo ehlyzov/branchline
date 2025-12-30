@@ -543,16 +543,20 @@ class Exec(
             try {
                 eval(n.tryExpr, env)
                 break
-            } catch (_: Exception) {
+            } catch (ex: Exception) {
                 if (attempts++ >= n.retry) {
-                    if (n.fallbackAbort != null) {
-                        val obj = eval(n.fallbackAbort, env) as Map<*, *>
-                        @Suppress("UNCHECKED_CAST")
-                        out += obj as Map<Any, Any>
-                        return false
+                    val errorValue = buildErrorValue(ex)
+                    return withCatchBinding(env, n.exceptionName, errorValue) {
+                        if (n.fallbackAbort != null) {
+                            val obj = eval(n.fallbackAbort, env) as Map<*, *>
+                            @Suppress("UNCHECKED_CAST")
+                            out += obj as Map<Any, Any>
+                            false
+                        } else {
+                            n.fallbackExpr?.let { appendOutFromValue(eval(it, env), out) }
+                            true
+                        }
                     }
-                    n.fallbackExpr?.let { appendOutFromValue(eval(it, env), out) }
-                    break
                 }
             }
         }

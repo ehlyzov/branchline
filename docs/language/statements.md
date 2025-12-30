@@ -162,11 +162,13 @@ Conditionals and loops evaluate expressions to drive branching and iteration.
 ## Error handling
 
 ```
-tryStmt ::= TRY expression CATCH "(" IDENTIFIER ")" "=>" expression
+tryStmt ::= TRY expression CATCH "(" IDENTIFIER ")" retrySpec? arrow expression
+retrySpec ::= RETRY NUMBER TIMES ( BACKOFF STRING )?
 ```
 
 `TRY` evaluates an expression and binds an error to the given identifier if one
-occurs.
+occurs. The same syntax is available as an expression; see
+[Expressions](expressions.md#try).
 
 ## Calls and mutation
 

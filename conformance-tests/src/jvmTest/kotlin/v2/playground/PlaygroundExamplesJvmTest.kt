@@ -48,11 +48,14 @@ class PlaygroundExamplesJvmTest {
                 val example = json.parseToJsonElement(Files.readString(examplePath)).jsonObject
                 val programLines = example["program"] ?: error("Missing program in $examplePath")
                 val programBody = programLines.jsonArray.joinToString("\n") { it.jsonPrimitive.content }
-                val program = if (Regex("\\bTRANSFORM\\b", RegexOption.IGNORE_CASE).containsMatchIn(programBody)) {
+                val hasTransform = Regex("\\bTRANSFORM\\b", RegexOption.IGNORE_CASE).containsMatchIn(programBody)
+                val sharedDecls = renderSharedDecls(example)
+                val sharedPrefix = if (sharedDecls.isBlank()) "" else "$sharedDecls\n\n"
+                val program = if (hasTransform) {
                     programBody
                 } else {
                     val name = examplePath.fileName.toString().removeSuffix(".json")
-                    "TRANSFORM ${name.replace('-', '_')} {\n$programBody\n}"
+                    sharedPrefix + "TRANSFORM ${name.replace('-', '_')} {\n$programBody\n}"
                 }
                 val inputElement = example["input"] ?: JsonObject(emptyMap())
 
@@ -73,7 +76,13 @@ class PlaygroundExamplesJvmTest {
                 )
 
                 val input = toKotlin(inputElement) as? Map<String, Any?> ?: emptyMap()
-                val output = runner(input)
+                val sharedNames = sharedResourceNames(example)
+                val seededInput = LinkedHashMap<String, Any?>(input).apply {
+                    for (name in sharedNames) {
+                        putIfAbsent(name, emptyMap<String, Any?>())
+                    }
+                }
+                val output = runner(seededInput)
                 assertTrue(output != null, "Example $examplePath produced null output")
             } catch (ex: Throwable) {
                 failures += "$examplePath -> ${ex::class.simpleName}: ${ex.message}"
@@ -98,6 +107,23 @@ class PlaygroundExamplesJvmTest {
         is kotlinx.serialization.json.JsonArray -> elem.map { toKotlin(it) }
         is JsonObject -> LinkedHashMap<String, Any?>().apply {
             elem.forEach { (k, v) -> this[k] = toKotlin(v) }
+        }
+    }
+
+    private fun renderSharedDecls(example: JsonObject): String {
+        val shared = example["shared"]?.jsonArray ?: return ""
+        return shared.joinToString("\n") { entry ->
+            val obj = entry.jsonObject
+            val name = obj["name"]?.jsonPrimitive?.content ?: return@joinToString ""
+            val kind = obj["kind"]?.jsonPrimitive?.content ?: "MANY"
+            "SHARED $name $kind;"
+        }.trim()
+    }
+
+    private fun sharedResourceNames(example: JsonObject): List<String> {
+        val shared = example["shared"]?.jsonArray ?: return emptyList()
+        return shared.mapNotNull { entry ->
+            entry.jsonObject["name"]?.jsonPrimitive?.content
         }
     }
 }

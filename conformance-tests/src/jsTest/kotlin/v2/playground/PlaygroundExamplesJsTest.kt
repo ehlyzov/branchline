@@ -32,7 +32,7 @@ class PlaygroundExamplesJsTest {
     fun allExamplesExecute() {
         val examplesDir = findExamplesDir()
 
-        val files = (fs.readdirSync(examplesDir) as Array<String>).map { it as String }
+        val files = (fs.readdirSync(examplesDir) as Array<String>).asList()
         val failures = mutableListOf<String>()
 
         for (name in files) {
@@ -45,11 +45,14 @@ class PlaygroundExamplesJsTest {
                 val example = json.parseToJsonElement(text).jsonObject
                 val programLines = example["program"] ?: error("Missing program in $fullPath")
                 val body = programLines.jsonArray.joinToString("\n") { it.jsonPrimitive.content }
-                val program = if (Regex("\\bTRANSFORM\\b", RegexOption.IGNORE_CASE).containsMatchIn(body)) {
+                val hasTransform = Regex("\\bTRANSFORM\\b", RegexOption.IGNORE_CASE).containsMatchIn(body)
+                val sharedDecls = renderSharedDecls(example)
+                val sharedPrefix = if (sharedDecls.isBlank()) "" else "$sharedDecls\n\n"
+                val program = if (hasTransform) {
                     body
                 } else {
                     val namePart = name.removeSuffix(".json").replace('-', '_')
-                    "TRANSFORM $namePart {\n$body\n}"
+                    sharedPrefix + "TRANSFORM $namePart {\n$body\n}"
                 }
                 val inputElement = example["input"] ?: JsonObject(emptyMap())
 
@@ -64,7 +67,16 @@ class PlaygroundExamplesJsTest {
                 val runner = buildRunnerFromIRMP(ir, hostFns = StdLib.fns, funcs = funcs)
 
                 val input = toKotlin(inputElement) as? Map<String, Any?> ?: emptyMap()
-                val output = runner(input)
+                val sharedNames = sharedResourceNames(example)
+                val seededInput = linkedMapOf<String, Any?>().apply {
+                    putAll(input)
+                    for (name in sharedNames) {
+                        if (!containsKey(name)) {
+                            this[name] = emptyMap<String, Any?>()
+                        }
+                    }
+                }
+                val output = runner(seededInput)
                 assertTrue(output != null, "Example $fullPath produced null output")
             } catch (ex: Throwable) {
                 failures += "$fullPath -> ${ex::class.simpleName}: ${ex.message}"
@@ -101,6 +113,23 @@ class PlaygroundExamplesJsTest {
         is kotlinx.serialization.json.JsonArray -> elem.map { toKotlin(it) }
         is JsonObject -> linkedMapOf<String, Any?>().apply {
             elem.forEach { (k, v) -> this[k] = toKotlin(v) }
+        }
+    }
+
+    private fun renderSharedDecls(example: JsonObject): String {
+        val shared = example["shared"]?.jsonArray ?: return ""
+        return shared.joinToString("\n") { entry ->
+            val obj = entry.jsonObject
+            val name = obj["name"]?.jsonPrimitive?.content ?: return@joinToString ""
+            val kind = obj["kind"]?.jsonPrimitive?.content ?: "MANY"
+            "SHARED $name $kind;"
+        }.trim()
+    }
+
+    private fun sharedResourceNames(example: JsonObject): List<String> {
+        val shared = example["shared"]?.jsonArray ?: return emptyList()
+        return shared.mapNotNull { entry ->
+            entry.jsonObject["name"]?.jsonPrimitive?.content
         }
     }
 }

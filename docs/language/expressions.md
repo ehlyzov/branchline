@@ -17,7 +17,7 @@ construction.
 
 ## Constraints
 - `CASE` requires an `ELSE` branch.
-- `TRY` (from statements) evaluates expressions; wrap specific calls instead of large blocks.
+- `TRY`/`CATCH` is an expression; wrap specific calls instead of large blocks.
 - `AWAIT` and `SUSPEND` depend on host support and may error without it.
 
 ## Performance tips
@@ -85,10 +85,11 @@ unary       ::= ( "!" | "-" | AWAIT | SUSPEND ) unary | primary
 
 ```
 primary ::= literal | pathExpr | IDENTIFIER | funCall | arrayLit
-          | objectLit | caseExpr | "(" expression ")" | lambdaExpr
+          | objectLit | caseExpr | tryExpr | "(" expression ")" | lambdaExpr
 caseExpr ::= CASE "{" caseWhen+ caseElse "}"
 caseWhen ::= WHEN expression THEN expression
 caseElse ::= ELSE expression
+tryExpr  ::= TRY expression CATCH "(" IDENTIFIER ")" ( RETRY NUMBER TIMES ( BACKOFF STRING )? )? ( "->" | "=>" ) expression
 literal ::= NUMBER | STRING | TRUE | FALSE | NULL
 ```
 
@@ -125,6 +126,18 @@ LET squares2 = [n * n FOR EACH n IN nums];
 ```
 
 See the [Array Comprehensions guide](../guides/array-comprehension.md) for more examples.
+
+## Try/Catch {#try}
+
+`TRY` evaluates an expression and yields the fallback expression if it fails.
+The identifier in `CATCH(...)` is bound to an error object with `message` and
+`type` fields.
+
+```branchline
+LET total = SUM(input.items);
+LET guard = TRY ASSERT(total >= 0, "total cannot be negative")
+CATCH(err) => { ok: false, error: err.message };
+```
 
 ## Path expressions
 

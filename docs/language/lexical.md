@@ -63,7 +63,7 @@ Reserved words. Each links to a page with usage examples.
 | `INPUT` | Reference pipeline input. | [example](statements.md#input) |
 | `ABORT` | Abort execution. | [example](statements.md#abort) |
 | `THROW` | Throw an error. | [example](statements.md#throw) |
-| `TRY` / `CATCH` | Error handling block. | [example](statements.md#try) |
+| `TRY` / `CATCH` | Error handling expression/statement. | [example](statements.md#try) |
 | `RETRY` / `TIMES` / `BACKOFF` | Retry logic modifiers. | [example](statements.md#try) |
 | `CALL` | Invoke a host function. | [example](statements.md#call) |
 | `SHARED` / `SINGLE` / `MANY` | Resource qualifiers. | [example](statements.md#shared) |
