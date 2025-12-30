@@ -106,7 +106,7 @@ returnStmt ::= RETURN expression? ";"
 The `MODIFY` statement changes existing values.
 
 ```
-modifyStmt ::= MODIFY modifyTarget modifyBlock
+modifyStmt ::= MODIFY modifyTarget modifyBlock ";"
 ```
 
 ## Where {#where}
@@ -176,7 +176,7 @@ occurs. The same syntax is available as an expression; see
 callStmt    ::= optAwait CALL IDENTIFIER "(" argList? ")" arrow IDENTIFIER ";"
 setStmt     ::= SET setTarget "=" expression ";"
 appendStmt  ::= APPEND TO setTarget expression ( INIT expression )? ";"
-modifyStmt  ::= MODIFY modifyTarget modifyBlock
+modifyStmt  ::= MODIFY modifyTarget modifyBlock ";"
 returnStmt  ::= RETURN expression? ";"
 sharedWrite ::= IDENTIFIER "[" expression? "]" "=" expression ";"
 ```
@@ -189,7 +189,7 @@ memory slots.
 ```
 setStmt    ::= SET setTarget "=" expression ";"
 appendStmt ::= APPEND TO setTarget expression ( INIT expression )? ";"
-modifyStmt ::= MODIFY modifyTarget modifyBlock
+modifyStmt ::= MODIFY modifyTarget modifyBlock ";"
 ```
 
 `SET` assigns values to variables or paths, `APPEND TO` pushes values into lists

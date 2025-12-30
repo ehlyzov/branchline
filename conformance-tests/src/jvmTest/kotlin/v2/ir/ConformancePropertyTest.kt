@@ -89,8 +89,8 @@ class ConformancePropertyTest {
         val key = input.key
         val value = input.value
         val body = """
-            LET obj = row.base;
-            MODIFY obj { [row.key] : row.value };
+            LET obj = input.base;
+            MODIFY obj { [input.key] : input.value };
             OUTPUT { obj: obj };
         """.trimIndent()
         val expected = mapOf("obj" to mergeExpected(base, key, value))

@@ -30,6 +30,10 @@ import v2.std.StdLib
 class PlaygroundExamplesJvmTest {
 
     private val json = Json { ignoreUnknownKeys = true }
+    private val deterministicNow: (List<Any?>) -> Any? = { args ->
+        require(args.isEmpty()) { "NOW()" }
+        "2000-01-01T00:00:00Z"
+    }
 
     @Test
     fun `all playground examples execute without errors`() {
@@ -43,6 +47,7 @@ class PlaygroundExamplesJvmTest {
         }
 
         val failures = mutableListOf<String>()
+        val hostFns = StdLib.fns + mapOf("NOW" to deterministicNow)
 
         for (examplePath in exampleFiles) {
             try {
@@ -62,24 +67,24 @@ class PlaygroundExamplesJvmTest {
 
                 val tokens = Lexer(program).lex()
                 val parsed = Parser(tokens, program).parse()
-                SemanticAnalyzer(StdLib.fns.keys).analyze(parsed)
+                SemanticAnalyzer(hostFns.keys).analyze(parsed)
                 val funcs = parsed.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
                 val transforms = parsed.decls.filterIsInstance<TransformDecl>()
                 val typeDecls = parsed.decls.filterIsInstance<TypeDecl>()
                 require(transforms.isNotEmpty()) { "No TRANSFORM found in $examplePath" }
                 val transform = transforms.first()
-                val descriptors = buildTransformDescriptors(transforms, typeDecls, StdLib.fns.keys)
+                val descriptors = buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
                 val runnerInterp = compileStream(
                     t = transform,
                     funcs = funcs,
-                    hostFns = StdLib.fns,
+                    hostFns = hostFns,
                     transforms = descriptors,
                     engine = ExecutionEngine.INTERPRETER,
                 )
                 val runnerVm = compileStream(
                     t = transform,
                     funcs = funcs,
-                    hostFns = StdLib.fns,
+                    hostFns = hostFns,
                     transforms = descriptors,
                     engine = ExecutionEngine.VM,
                 )
@@ -91,8 +96,8 @@ class PlaygroundExamplesJvmTest {
                         putIfAbsent(name, emptyMap<String, Any?>())
                     }
                 }
-                val interpOutput = runnerInterp(input)
-                val vmOutput = runnerVm(input)
+                val interpOutput = runnerInterp(seededInput)
+                val vmOutput = runnerVm(seededInput)
                 assertTrue(interpOutput != null, "Example $examplePath produced null output in interpreter")
                 assertTrue(vmOutput != null, "Example $examplePath produced null output in VM")
                 assertTrue(

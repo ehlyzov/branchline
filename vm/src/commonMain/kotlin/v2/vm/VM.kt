@@ -17,9 +17,11 @@ import v2.runtime.bignum.BLBigInt
 import v2.runtime.bignum.blBigDecOfDouble
 import v2.runtime.bignum.blBigDecOfLong
 import v2.runtime.bignum.blBigIntOfLong
+import v2.runtime.bignum.bitLength
 import v2.runtime.bignum.signum
 import v2.runtime.bignum.toBLBigDec
 import v2.runtime.bignum.toBLBigInt
+import v2.runtime.bignum.toLong
 import v2.runtime.bignum.toPlainString
 import v2.runtime.bignum.plus
 import v2.runtime.bignum.minus
@@ -668,10 +670,24 @@ class VM(
         if (right is Number && right.toDouble() == 0.0) {
             throw VMException.DivisionByZero()
         }
-        return when {
-            isBigInt(left) || isBigInt(right) -> toBLBigInt(left) / toBLBigInt(right)
-            isBigDec(left) || isBigDec(right) -> toBLBigDec(left) / toBLBigDec(right)
-            else -> (left as Number).toDouble() / (right as Number).toDouble()
+        if (isBigDec(left) || isBigDec(right)) {
+            return toBLBigDec(left) / toBLBigDec(right)
+        }
+        val ai = toBLBigInt(left)
+        val bi = toBLBigInt(right)
+        if (bi.signum() == 0) {
+            throw VMException.DivisionByZero()
+        }
+        val rem = ai % bi
+        return if (rem.signum() == 0) {
+            val q = ai / bi
+            when {
+                q.bitLength() <= 31 -> q.toInt()
+                q.bitLength() <= 63 -> q.toLong()
+                else -> q
+            }
+        } else {
+            toBLBigDec(left) / toBLBigDec(right)
         }
     }
 

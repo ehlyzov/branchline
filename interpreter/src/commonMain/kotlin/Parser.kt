@@ -445,6 +445,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         }
 
         consume(TokenType.RIGHT_BRACE, "Expect '}' after MODIFY block")
+        optionalSemicolon()
         return ModifyStmt(targetPath, updates, lbrace)
     }
 

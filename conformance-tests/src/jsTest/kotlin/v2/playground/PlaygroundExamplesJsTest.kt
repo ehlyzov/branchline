@@ -27,6 +27,10 @@ class PlaygroundExamplesJsTest {
     private val json = Json { ignoreUnknownKeys = true }
     private val fs = js("require('fs')")
     private val path = js("require('path')")
+    private val deterministicNow: (List<Any?>) -> Any? = { args ->
+        require(args.isEmpty()) { "NOW()" }
+        "2000-01-01T00:00:00Z"
+    }
 
     @Test
     fun allExamplesExecute() {
@@ -34,6 +38,7 @@ class PlaygroundExamplesJsTest {
 
         val files = (fs.readdirSync(examplesDir) as Array<String>).asList()
         val failures = mutableListOf<String>()
+        val hostFns = StdLib.fns + mapOf("NOW" to deterministicNow)
 
         for (name in files) {
             val fullPath = path.join(examplesDir, name)
@@ -58,13 +63,13 @@ class PlaygroundExamplesJsTest {
 
                 val tokens = Lexer(program).lex()
                 val parsed = Parser(tokens, program).parse()
-                SemanticAnalyzer(StdLib.fns.keys).analyze(parsed)
+                SemanticAnalyzer(hostFns.keys).analyze(parsed)
                 val funcs = parsed.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
                 val transforms = parsed.decls.filterIsInstance<TransformDecl>()
                 require(transforms.isNotEmpty()) { "No TRANSFORM found in $fullPath" }
                 val transform = transforms.first()
-                val ir = ToIR(funcs, StdLib.fns).compile(transform.body.statements)
-                val runner = buildRunnerFromIRMP(ir, hostFns = StdLib.fns, funcs = funcs)
+                val ir = ToIR(funcs, hostFns).compile(transform.body.statements)
+                val runner = buildRunnerFromIRMP(ir, hostFns = hostFns, funcs = funcs)
 
                 val input = toKotlin(inputElement) as? Map<String, Any?> ?: emptyMap()
                 val sharedNames = sharedResourceNames(example)
