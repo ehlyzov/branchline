@@ -82,7 +82,7 @@ retrySpec        ::= **RETRY** NUMBER **TIMES** ( **BACKOFF** STRING )?       ;
 setStmt          ::= **SET** setTarget "=" expression **;**                 ;
 appendStmt       ::= **APPEND** **TO** setTarget expression
                      ( **INIT** expression )? **;**                          ;
-modifyStmt       ::= **MODIFY** modifyTarget modifyBlock                     ;
+modifyStmt       ::= **MODIFY** modifyTarget modifyBlock **;**               ;
 returnStmt       ::= **RETURN** expression? **;**                            ;
 sharedWrite      ::= IDENTIFIER "[" expression? "]" "=" expression **;**     ;
 suspendStmt      ::= **SUSPEND** expression **;**                            ;
