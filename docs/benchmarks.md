@@ -76,6 +76,16 @@ Outputs:
 - `build/benchmarks/jmh-summary.md` (summary table + interpreter/VM ratio table)
 - `build/benchmarks/jmh-summary.csv` (machine-readable summary)
 
+Latest published summaries are attached to the latest GitHub Release:
+https://github.com/ehlyzov/branchline-public/releases/latest
+
+Asset names:
+
+- `branchline-jmh-summary-<tag>.md`
+- `branchline-jmh-summary-<tag>.csv`
+- `branchline-jmh-interpreter-<tag>.json`
+- `branchline-jmh-vm-<tag>.json`
+
 Opcode histogram snapshot (for VM optimization tracking):
 
 ```bash
