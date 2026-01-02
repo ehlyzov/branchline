@@ -81,7 +81,10 @@ function resolveP95Ns(entry) {
 
 function resolveAllocBytes(entry) {
   const secondary = entry.secondaryMetrics ?? {};
-  const allocMetric = secondary['gc.alloc.rate.norm'];
+  const allocMetric =
+    secondary['gc.alloc.rate.norm'] ??
+    secondary['\u00b7gc.alloc.rate.norm'] ??
+    secondary['.gc.alloc.rate.norm'];
   if (!allocMetric) {
     throw new Error(`Missing gc.alloc.rate.norm for ${entry.benchmark}`);
   }
@@ -96,7 +99,7 @@ function toNs(value, unit) {
     case 'ns/op':
       return value;
     case 'us/op':
-    case 'µs/op':
+    case '\u00b5s/op':
       return value * 1_000;
     case 'ms/op':
       return value * 1_000_000;
@@ -112,7 +115,7 @@ function formatNs(value) {
     return `${(value / 1_000_000).toFixed(2)} ms/op`;
   }
   if (value >= 1_000) {
-    return `${(value / 1_000).toFixed(2)} µs/op`;
+    return `${(value / 1_000).toFixed(2)} \u00b5s/op`;
   }
   return `${value.toFixed(2)} ns/op`;
 }

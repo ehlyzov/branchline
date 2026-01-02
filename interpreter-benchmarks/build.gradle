@@ -17,6 +17,6 @@ jmh {
     fork = 1
 }
 
-tasks.withType(me.champeau.jmh.JmhTask).configureEach {
-    jmhArgs = ['-prof', 'gc']
+tasks.named('jmh', me.champeau.jmh.JMHTask).configure {
+    profilers = ['gc']
 }

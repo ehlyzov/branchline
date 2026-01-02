@@ -3,8 +3,13 @@ plugins {
 }
 rootProject.name = 'branchline'
 
-include 'interpreter', 'vm', 'test-fixtures', 'conformance-tests', 'platform', 'cli'
-include 'interpreter-benchmarks', 'vm-benchmarks'
+include 'interpreter'
+include 'vm'
+include 'test-fixtures'
+include 'conformance-tests'
+include 'cli'
+include 'interpreter-benchmarks'
+include 'vm-benchmarks'
 
 if (file('platform-private').exists()) {
     include 'platform-private'

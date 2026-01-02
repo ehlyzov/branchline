@@ -18,8 +18,8 @@ jmh {
     fork = 1
 }
 
-tasks.withType(me.champeau.jmh.JmhTask).configureEach {
-    jmhArgs = ['-prof', 'gc']
+tasks.named('jmh').configure {
+    profilers = ['gc']
 }
 
 tasks.register('vmOpcodeSnapshot', JavaExec) {

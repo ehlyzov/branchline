@@ -63,6 +63,18 @@ Branchline uses a readiness gate before labeling a release **Production Ready**.
 
 See the [Release Readiness & Stability guide](docs/guides/release-readiness.md) for the full checklist, versioning policy, and deprecation plan.
 
+## Performance Testing
+
+Branchline uses JMH benchmarks for the interpreter and VM with shared datasets.
+
+- Run locally: `./gradlew :interpreter-benchmarks:jmh :vm-benchmarks:jmh`.
+- Results: `interpreter-benchmarks/build/results/jmh/results.json` and
+  `vm-benchmarks/build/results/jmh/results.json`.
+- Release summary: `node .github/scripts/jmh-report.mjs build/benchmarks interpreter-benchmarks/build/results/jmh/results.json vm-benchmarks/build/results/jmh/results.json`.
+- Methodology and comparison guidance: `docs/benchmarks.md`.
+- Planned automation: publish per-release results and highlight regressions
+  without blocking the release.
+
 ## Motivation
 
 I created Branchline while exploring alternative ways to describe integration flows. I needed a language that:
