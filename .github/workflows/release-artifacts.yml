@@ -156,6 +156,14 @@ jobs:
           echo "JMH_SUMMARY_MD_PATH=$JMH_SUMMARY_MD" >> $GITHUB_ENV
           echo "JMH_SUMMARY_MD_NAME=branchline-jmh-summary-${TAG_NAME}.md" >> $GITHUB_ENV
 
+          JMH_SUMMARY_EMBED_MD="$GITHUB_WORKSPACE/build/benchmarks/jmh-summary-embed.md"
+          if [ ! -f "$JMH_SUMMARY_EMBED_MD" ]; then
+            echo "JMH summary embed markdown not found at $JMH_SUMMARY_EMBED_MD" >&2
+            exit 1
+          fi
+          echo "JMH_SUMMARY_EMBED_MD_PATH=$JMH_SUMMARY_EMBED_MD" >> $GITHUB_ENV
+          echo "JMH_SUMMARY_EMBED_MD_NAME=branchline-jmh-summary-embed-${TAG_NAME}.md" >> $GITHUB_ENV
+
           JMH_SUMMARY_CSV="$GITHUB_WORKSPACE/build/benchmarks/jmh-summary.csv"
           if [ ! -f "$JMH_SUMMARY_CSV" ]; then
             echo "JMH summary CSV not found at $JMH_SUMMARY_CSV" >&2
@@ -242,6 +250,16 @@ jobs:
           upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
           asset_path: ${{ env.JMH_SUMMARY_MD_PATH }}
           asset_name: ${{ env.JMH_SUMMARY_MD_NAME }}
+          asset_content_type: text/markdown
+
+      - name: Upload JMH summary (Embed Markdown)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          asset_path: ${{ env.JMH_SUMMARY_EMBED_MD_PATH }}
+          asset_name: ${{ env.JMH_SUMMARY_EMBED_MD_NAME }}
           asset_content_type: text/markdown
 
       - name: Upload JMH summary (CSV)

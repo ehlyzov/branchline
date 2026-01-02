@@ -74,6 +74,7 @@ node .github/scripts/jmh-report.mjs build/benchmarks \
 Outputs:
 
 - `build/benchmarks/jmh-summary.md` (summary table + interpreter/VM ratio table)
+- `build/benchmarks/jmh-summary-embed.md` (summary snippet for docs)
 - `build/benchmarks/jmh-summary.csv` (machine-readable summary)
 
 Latest published summaries are attached to the latest GitHub Release:
@@ -82,9 +83,18 @@ https://github.com/ehlyzov/branchline-public/releases/latest
 Asset names:
 
 - `branchline-jmh-summary-<tag>.md`
+- `branchline-jmh-summary-embed-<tag>.md`
 - `branchline-jmh-summary-<tag>.csv`
 - `branchline-jmh-interpreter-<tag>.json`
 - `branchline-jmh-vm-<tag>.json`
+
+## Latest release results
+
+This section is populated during the documentation build by downloading the
+latest release summary asset. Local builds will show the placeholder until a
+release publishes benchmark assets.
+
+--8<-- "benchmarks/latest.md"
 
 Opcode histogram snapshot (for VM optimization tracking):
 
@@ -117,42 +127,8 @@ To make comparisons reproducible, record:
 Release automation publishes per-tag JMH assets (raw JSON plus summary
 Markdown/CSV) so results can be compared across releases.
 
-## Report
-
-### Runtime (p95) and allocation baselines
-
-Populate this table from the JMH JSON output
-(`interpreter-benchmarks/build/results/jmh/results.json`,
-`vm-benchmarks/build/results/jmh/results.json`).
-
-| Runtime | Dataset | p95 (µs/op) | Alloc (B/op) | Notes |
-| --- | --- | ---: | ---: | --- |
-| Interpreter path expressions | Medium | — | — | |
-| Interpreter array comprehensions | Medium | — | — | |
-| Interpreter typical transform | Medium | — | — | |
-| VM path expressions | Medium | — | — | |
-| VM array comprehensions | Medium | — | — | |
-| VM typical transform | Medium | — | — | |
-
-### VM opcode sequences (before/after)
+## VM opcode snapshot
 
 Opcode histograms are written to `docs/benchmarks/vm-opcodes.json` by the
-`vmOpcodeSnapshot` task. Capture the "before" snapshot before landing an
-optimization, then re-run after and summarize differences here. The checked-in
-file is a placeholder until the snapshot task is executed locally.
-
-| Program | Before (instruction count) | After (instruction count) | Notes |
-| --- | ---: | ---: | --- |
-| Path expressions | — | — | |
-| Array comprehensions | — | — | |
-| Typical transform | — | — | |
-
-### VM allocation tracking (before/after)
-
-Track per-op allocation deltas using the `gc.alloc.rate.norm` metric from JMH.
-
-| Program | Before (B/op) | After (B/op) | Notes |
-| --- | ---: | ---: | --- |
-| Path expressions | — | — | |
-| Array comprehensions | — | — | |
-| Typical transform | — | — | |
+`vmOpcodeSnapshot` task. Capture a baseline before landing an optimization,
+then re-run after and compare instruction deltas.

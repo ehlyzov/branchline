@@ -64,9 +64,11 @@ const outputPath = path.resolve(outputDir);
 await fs.mkdir(outputPath, { recursive: true });
 
 const summaryMarkdown = buildMarkdown(rows);
+const embedMarkdown = buildEmbedMarkdown(rows);
 const summaryCsv = buildCsv(rows);
 
 await fs.writeFile(path.join(outputPath, 'jmh-summary.md'), summaryMarkdown, 'utf8');
+await fs.writeFile(path.join(outputPath, 'jmh-summary-embed.md'), embedMarkdown, 'utf8');
 await fs.writeFile(path.join(outputPath, 'jmh-summary.csv'), summaryCsv, 'utf8');
 
 console.log(`Wrote ${rows.length} rows to ${outputPath}`);
@@ -128,6 +130,32 @@ function buildMarkdown(items) {
   lines.push('');
   lines.push(`Generated: ${new Date().toISOString()}`);
   lines.push('');
+  lines.push(buildRuntimeSection(items));
+
+  const comparison = buildComparison(items);
+  if (comparison.length > 0) {
+    lines.push('');
+    lines.push(buildComparisonSection(comparison));
+  }
+
+  return `${lines.join('\n')}\n`;
+}
+
+function buildEmbedMarkdown(items) {
+  const lines = [];
+  lines.push(buildRuntimeSection(items));
+
+  const comparison = buildComparison(items);
+  if (comparison.length > 0) {
+    lines.push('');
+    lines.push(buildComparisonSection(comparison));
+  }
+
+  return `${lines.join('\n')}\n`;
+}
+
+function buildRuntimeSection(items) {
+  const lines = [];
   lines.push('## Runtime and allocation (mean, p95)');
   lines.push('');
   lines.push('| Runtime | Dataset | Mean (us/op) | p95 (us/op) | Alloc (B/op) | Params |');
@@ -141,22 +169,21 @@ function buildMarkdown(items) {
     const params = row.paramsText || 'n/a';
     lines.push(`| ${runtime} | ${dataset} | ${mean} | ${p95} | ${alloc} | ${params} |`);
   }
+  return lines.join('\n');
+}
 
-  const comparison = buildComparison(items);
-  if (comparison.length > 0) {
-    lines.push('');
-    lines.push('## Interpreter vs VM ratio (mean)');
-    lines.push('');
-    lines.push('| Benchmark | Dataset | Interpreter (us/op) | VM (us/op) | Ratio (VM/Interp) |');
-    lines.push('| --- | --- | ---: | ---: | ---: |');
-    for (const row of comparison) {
-      lines.push(
-        `| ${row.method} | ${titleCase(row.dataset)} | ${formatNumber(row.interpreter)} | ${formatNumber(row.vm)} | ${row.ratio.toFixed(2)}x |`,
-      );
-    }
+function buildComparisonSection(comparison) {
+  const lines = [];
+  lines.push('## Interpreter vs VM ratio (mean)');
+  lines.push('');
+  lines.push('| Benchmark | Dataset | Interpreter (us/op) | VM (us/op) | Ratio (VM/Interp) |');
+  lines.push('| --- | --- | ---: | ---: | ---: |');
+  for (const row of comparison) {
+    lines.push(
+      `| ${row.method} | ${titleCase(row.dataset)} | ${formatNumber(row.interpreter)} | ${formatNumber(row.vm)} | ${row.ratio.toFixed(2)}x |`,
+    );
   }
-
-  return `${lines.join('\n')}\n`;
+  return lines.join('\n');
 }
 
 function buildCsv(items) {
