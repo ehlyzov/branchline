@@ -246,6 +246,51 @@ jobs:
         if: ${{ steps.summary.outputs.status != 'passing' }}
         run: exit 1
 
+  performance:
+    name: Performance Gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '23'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run JMH benchmarks
+        run: ./gradlew --no-daemon :interpreter-benchmarks:jmh :vm-benchmarks:jmh
+
+      - name: Build performance summary
+        run: node .github/scripts/jmh-report.mjs build/benchmarks interpreter-benchmarks/build/results/jmh/results.json vm-benchmarks/build/results/jmh/results.json
+
+      - name: Evaluate performance gates (non-blocking)
+        id: perf-gates
+        run: node .github/scripts/jmh-gate.mjs .github/perf-gates.json interpreter-benchmarks/build/results/jmh/results.json vm-benchmarks/build/results/jmh/results.json > build/benchmarks/jmh-gates.txt 2>&1
+        continue-on-error: true
+
+      - name: Publish performance summary
+        if: ${{ always() }}
+        run: |
+          echo "## Performance Summary" >> "$GITHUB_STEP_SUMMARY"
+          cat build/benchmarks/jmh-summary.md >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Performance Gates" >> "$GITHUB_STEP_SUMMARY"
+          echo "Status: ${{ steps.perf-gates.outcome }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          cat build/benchmarks/jmh-gates.txt >> "$GITHUB_STEP_SUMMARY"
+          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+
   cli:
     name: CLI Tests
     runs-on: ubuntu-latest

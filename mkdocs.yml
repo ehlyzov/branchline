@@ -71,6 +71,8 @@ nav:
     - guides/parallelism.md
   - Architecture:
     - VM Overview: vm.md
+  - Performance:
+    - Benchmarks: benchmarks.md
 
 plugins:
   - search

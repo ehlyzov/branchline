@@ -58,5 +58,7 @@ items:
     items:
       - name: VM Overview
         href: vm.md
+      - name: Benchmarks
+        href: benchmarks.md
   - name: Playground
     href: playground.md

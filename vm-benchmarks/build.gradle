@@ -1,0 +1,32 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+    id 'me.champeau.jmh'
+}
+
+dependencies {
+    implementation project(':vm')
+    implementation project(':interpreter')
+}
+
+jmh {
+    resultFormat = 'JSON'
+    profilers = ['gc']
+    includes = ['v2.vm.VMTransformBenchmark.*']
+    warmupIterations = 2
+    iterations = 5
+    timeOnIteration = '500ms'
+    fork = 1
+}
+
+tasks.named('jmh').configure {
+    profilers = ['gc']
+}
+
+tasks.register('vmOpcodeSnapshot', JavaExec) {
+    group = 'verification'
+    description = 'Writes opcode histograms for VM benchmarks to docs.'
+    mainClass = 'v2.vm.VMOpcodeSnapshotKt'
+    classpath = sourceSets.jmh.runtimeClasspath
+    args = [file("$rootDir/docs/benchmarks/vm-opcodes.json").path]
+    dependsOn tasks.named('jmhClasses')
+}

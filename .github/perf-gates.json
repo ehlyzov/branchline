@@ -1,0 +1,40 @@
+{
+  "benchmarks": [
+    {
+      "name": "v2.benchmarks.InterpreterTransformBenchmark.pathExpressions",
+      "params": { "dataset": "medium" },
+      "p95Ns": 200000000,
+      "allocBytes": 8000000
+    },
+    {
+      "name": "v2.benchmarks.InterpreterTransformBenchmark.arrayComprehensions",
+      "params": { "dataset": "medium" },
+      "p95Ns": 200000000,
+      "allocBytes": 8000000
+    },
+    {
+      "name": "v2.benchmarks.InterpreterTransformBenchmark.typicalTransform",
+      "params": { "dataset": "medium" },
+      "p95Ns": 200000000,
+      "allocBytes": 8000000
+    },
+    {
+      "name": "v2.vm.VMTransformBenchmark.pathExpressions",
+      "params": { "dataset": "medium" },
+      "p95Ns": 100000000,
+      "allocBytes": 5000000
+    },
+    {
+      "name": "v2.vm.VMTransformBenchmark.arrayComprehensions",
+      "params": { "dataset": "medium" },
+      "p95Ns": 100000000,
+      "allocBytes": 5000000
+    },
+    {
+      "name": "v2.vm.VMTransformBenchmark.typicalTransform",
+      "params": { "dataset": "medium" },
+      "p95Ns": 100000000,
+      "allocBytes": 5000000
+    }
+  ]
+}

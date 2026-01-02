@@ -56,7 +56,7 @@ kotlin {
 }
 
 // JVM run task for VMLoop
- tasks.register('runVmLoop', JavaExec) {
+tasks.register('runVmLoop', JavaExec) {
     group = 'application'
     description = 'Runs v2.vm.VMLoopKt on JVM target.'
     mainClass = 'v2.vm.VMLoopKt'
