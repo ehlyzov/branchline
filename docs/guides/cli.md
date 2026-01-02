@@ -13,7 +13,7 @@ The Branchline CLI wraps the interpreter, compiler, and VM APIs. Both JVM and No
 
 Calling a CLI with no arguments now prints a full help screen (`-h`/`--help` also work). All commands accept structured inputs via `--input <path>` and support XML payloads with `--input-format xml`.
 
-**CLI version:** `v0.9.1-alpha` (matches the current Gradle module version).
+**CLI version:** `v0.10.0`.
 
 ## Stable flags (output, tracing, errors)
 
