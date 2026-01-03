@@ -1,9 +1,9 @@
-package v2.vm
+package io.github.ehlyzov.branchline.vm
 
-import v2.*
-import v2.ir.ToIR
-import v2.sema.SemanticAnalyzer
-import v2.std.StdLib
+import io.github.ehlyzov.branchline.*
+import io.github.ehlyzov.branchline.ir.ToIR
+import io.github.ehlyzov.branchline.sema.SemanticAnalyzer
+import io.github.ehlyzov.branchline.std.StdLib
 
 /**
  * Demo utility: compile a small program, run partially, snapshot, restore, and finish.
@@ -40,9 +40,9 @@ object VMSnapshotDemo {
         // Start VM and run a few steps
         val vm = VM(hostFns, funcs)
         val env = mutableMapOf<String, Any?>(
-            v2.DEFAULT_INPUT_ALIAS to emptyMap<String, Any?>()
+            io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS to emptyMap<String, Any?>()
         ).apply {
-            for (alias in v2.COMPAT_INPUT_ALIASES) this[alias] = emptyMap<String, Any?>()
+            for (alias in io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES) this[alias] = emptyMap<String, Any?>()
         }
         vm.begin(bytecode, env)
         vm.step(3) // run partially

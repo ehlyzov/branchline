@@ -1,6 +1,6 @@
 @file:Suppress("UnsafeCastFromDynamic")
 
-package v2.runtime.io
+package io.github.ehlyzov.branchline.runtime.io
 
 // Register browser fallbacks onto globalThis so generic jsMain actuals can delegate safely.
 @Suppress("UNUSED_VARIABLE")

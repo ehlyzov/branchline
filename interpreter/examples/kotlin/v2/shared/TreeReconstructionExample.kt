@@ -1,9 +1,9 @@
-package v2.shared
+package io.github.ehlyzov.branchline.shared
 
 import kotlinx.coroutines.*
-import v2.*
-import v2.std.*
-import v2.ir.*
+import io.github.ehlyzov.branchline.*
+import io.github.ehlyzov.branchline.std.*
+import io.github.ehlyzov.branchline.ir.*
 
 /**
  * Tree Reconstruction Example using SHARED SINGLE memory

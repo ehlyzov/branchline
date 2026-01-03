@@ -1,4 +1,5 @@
 TRANSFORM Summary {
+
     // Accept both XML-derived maps (attrs as strings) and JSON-derived native types.
     LET payload = input.reports ?? input.testsuites ?? input.testsuite ?? input;
     LET reports = LISTIFY(payload);

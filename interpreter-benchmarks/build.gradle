@@ -10,7 +10,7 @@ dependencies {
 jmh {
     resultFormat = 'JSON'
     profilers = ['gc']
-    includes = ['v2.benchmarks.InterpreterTransformBenchmark.*']
+    includes = ['io.github.ehlyzov.branchline.benchmarks.InterpreterTransformBenchmark.*']
     warmupIterations = 2
     iterations = 5
     timeOnIteration = '500ms'

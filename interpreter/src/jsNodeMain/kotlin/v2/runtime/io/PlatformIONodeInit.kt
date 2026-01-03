@@ -1,6 +1,6 @@
 @file:Suppress("UnsafeCastFromDynamic")
 
-package v2.runtime.io
+package io.github.ehlyzov.branchline.runtime.io
 
 // Register Node.js implementations on globalThis so jsMain actuals can delegate without static require in browser bundles.
 @Suppress("UNUSED_VARIABLE")

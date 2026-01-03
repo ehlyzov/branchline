@@ -1,0 +1,8 @@
+io.github.ehlyzov.branchline.std.StdCoreModule
+io.github.ehlyzov.branchline.std.StdArraysModule
+io.github.ehlyzov.branchline.std.StdAggModule
+io.github.ehlyzov.branchline.std.StdStringsModule
+io.github.ehlyzov.branchline.std.StdTimeModule
+io.github.ehlyzov.branchline.std.StdHofModule
+io.github.ehlyzov.branchline.std.StdDebugModule
+io.github.ehlyzov.branchline.std.StdSharedModule

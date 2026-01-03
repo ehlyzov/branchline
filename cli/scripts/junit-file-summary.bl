@@ -1,31 +1,33 @@
 TRANSFORM FileSummary {
     LET direct = LISTIFY(input.testsuite);
     LET container = input.testsuites ?? input;
-    LET branch = IF container == NULL THEN []
-        ELSE IF container.testsuite == NULL THEN LISTIFY(container)
-        ELSE LISTIFY(container.testsuite);
-    LET suites = FLATTEN([direct, branch]);
+    LET branch = CASE {
+        WHEN container == NULL THEN []
+        WHEN container.testsuite == NULL THEN LISTIFY(container)
+        ELSE LISTIFY(container.testsuite)
+    }
+    LET suites = FLATTEN([direct, branch])
 
-    LET totals = { tests: 0, failures: 0, errors: 0, skipped: 0 };
-    LET suiteCount = 0;
+    LET totals = { tests: 0, failures: 0, errors: 0, skipped: 0 }
+    LET suiteCount = 0
 
     FOR suite IN suites {
-        SET suiteCount = suiteCount + 1;
+        SET suiteCount = suiteCount + 1
 
         LET attrs = [
             { key: "tests", value: suite["@tests"] },
             { key: "failures", value: suite["@failures"] },
             { key: "errors", value: suite["@errors"] },
-            { key: "skipped", value: suite["@skipped"] }
-        ];
+            { key: "skipped", value: suite["@skipped"] },
+        ]
 
         FOR attr IN attrs {
-            LET value = PARSE_INT(attr.value, 0);
-            SET totals = PUT(totals, attr.key, GET(totals, attr.key, 0) + value);
+            LET value = PARSE_INT(attr.value, 0)
+            SET totals = PUT(totals, attr.key, GET(totals, attr.key, 0) + value)
         }
     }
 
-    LET failed = totals.failures + totals.errors;
+    LET failed = totals.failures + totals.errors
     LET status = CASE {
         WHEN totals.tests == 0 THEN "error"
         WHEN failed == 0 THEN "passing"
