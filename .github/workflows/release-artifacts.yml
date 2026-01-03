@@ -2,11 +2,10 @@ name: Release Artifacts
 
 on:
   release:
-    types: [published]
+    types: [published, prereleased]
+  push:
+    branches: [ main ]
   workflow_dispatch:
-
-env:
-  TAG_NAME: ${{ github.event.release.tag_name || github.ref_name || 'snapshot' }}
 
 permissions:
   contents: write
@@ -14,8 +13,7 @@ permissions:
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.release.outputs.upload_url }}
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message || '', '+performance'))
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,36 +34,79 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Create draft release (workflow dispatch)
-        id: release
-        if: github.event_name == 'workflow_dispatch'
-        uses: actions/create-release@v1
+      - name: Resolve release context
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.TAG_NAME }}
-          release_name: ${{ env.TAG_NAME }}
-          draft: true
-          prerelease: true
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
 
-      - name: Use published release upload URL
-        id: release-url
-        if: github.event_name == 'release'
-        run: echo "upload_url=${{ github.event.release.upload_url }}" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            echo "TAG_NAME=${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
+            echo "RELEASE_UPLOAD_URL=${{ github.event.release.upload_url }}" >> "$GITHUB_ENV"
+            echo "RUN_FULL_RELEASE=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            short_sha="${GITHUB_SHA::7}"
+            tag="perf-${short_sha}"
+            draft=false
+            prerelease=true
+            run_full_release=false
+          else
+            tag="${{ github.ref_name }}"
+            if [[ -z "$tag" ]]; then
+              tag="snapshot"
+            fi
+            draft=false
+            prerelease=true
+            run_full_release=true
+          fi
+
+          echo "TAG_NAME=$tag" >> "$GITHUB_ENV"
+          echo "RUN_FULL_RELEASE=$run_full_release" >> "$GITHUB_ENV"
+
+          api="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${tag}"
+          status=$(curl -sSL -o release.json -w "%{http_code}" -H "Authorization: Bearer $GH_TOKEN" "$api")
+          if [[ "$status" == "200" ]]; then
+            upload_url=$(jq -r '.upload_url' release.json)
+            echo "RELEASE_UPLOAD_URL=$upload_url" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          payload=$(jq -n --arg tag "$tag" --arg name "$tag" \
+            --argjson draft $draft --argjson prerelease $prerelease \
+            '{tag_name:$tag, name:$name, draft:$draft, prerelease:$prerelease}')
+          response=$(curl -sSL -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -d "$payload" "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases")
+          upload_url=$(echo "$response" | jq -r '.upload_url')
+          if [[ -z "$upload_url" || "$upload_url" == "null" ]]; then
+            echo "Failed to create release:" >&2
+            echo "$response" >&2
+            exit 1
+          fi
+          echo "RELEASE_UPLOAD_URL=$upload_url" >> "$GITHUB_ENV"
 
       - name: Build JS CLI tarball
+        if: env.RUN_FULL_RELEASE == 'true'
         run: ./gradlew --no-daemon :cli:packageJsCli
 
       - name: List JS CLI artifacts
+        if: env.RUN_FULL_RELEASE == 'true'
         run: ls -alh cli/build/distributions || true
 
       - name: Build JVM fat jar
+        if: env.RUN_FULL_RELEASE == 'true'
         run: ./gradlew --no-daemon :cli:blShadowJar
 
       - name: List JVM CLI artifacts
+        if: env.RUN_FULL_RELEASE == 'true'
         run: ls -alh cli/build/libs || true
 
       - name: Build library artifacts (JVM + interpreter JS)
+        if: env.RUN_FULL_RELEASE == 'true'
         run: ./gradlew --no-daemon :interpreter:jvmJar :vm:jvmJar :interpreter:packageInterpreterJs
 
       - name: Run JMH benchmarks
@@ -81,7 +122,9 @@ jobs:
           ls -alh vm/build/libs || true
           ls -alh build/benchmarks || true
 
-      - name: Capture artifact paths
+      - name: Capture release artifact paths
+        if: env.RUN_FULL_RELEASE == 'true'
+        shell: bash
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -132,6 +175,11 @@ jobs:
           echo "INTERPRETER_JS_PATH=$INTERP_TGZ" >> $GITHUB_ENV
           echo "INTERPRETER_JS_NAME=branchline-interpreter-${TAG_NAME}-js.tgz" >> $GITHUB_ENV
 
+      - name: Capture JMH artifact paths
+        shell: bash
+        run: |
+          set -euo pipefail
+
           INTERP_JMH_JSON="$GITHUB_WORKSPACE/interpreter-benchmarks/build/results/jmh/results.json"
           if [ ! -f "$INTERP_JMH_JSON" ]; then
             echo "Interpreter JMH results not found at $INTERP_JMH_JSON" >&2
@@ -156,14 +204,6 @@ jobs:
           echo "JMH_SUMMARY_MD_PATH=$JMH_SUMMARY_MD" >> $GITHUB_ENV
           echo "JMH_SUMMARY_MD_NAME=branchline-jmh-summary-${TAG_NAME}.md" >> $GITHUB_ENV
 
-          JMH_SUMMARY_EMBED_MD="$GITHUB_WORKSPACE/build/benchmarks/jmh-summary-embed.md"
-          if [ ! -f "$JMH_SUMMARY_EMBED_MD" ]; then
-            echo "JMH summary embed markdown not found at $JMH_SUMMARY_EMBED_MD" >&2
-            exit 1
-          fi
-          echo "JMH_SUMMARY_EMBED_MD_PATH=$JMH_SUMMARY_EMBED_MD" >> $GITHUB_ENV
-          echo "JMH_SUMMARY_EMBED_MD_NAME=branchline-jmh-summary-embed-${TAG_NAME}.md" >> $GITHUB_ENV
-
           JMH_SUMMARY_CSV="$GITHUB_WORKSPACE/build/benchmarks/jmh-summary.csv"
           if [ ! -f "$JMH_SUMMARY_CSV" ]; then
             echo "JMH summary CSV not found at $JMH_SUMMARY_CSV" >&2
@@ -173,51 +213,56 @@ jobs:
           echo "JMH_SUMMARY_CSV_NAME=branchline-jmh-summary-${TAG_NAME}.csv" >> $GITHUB_ENV
 
       - name: Upload JS CLI tarball
+        if: env.RUN_FULL_RELEASE == 'true'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: ${{ github.workspace }}/cli/build/distributions/branchline-cli-js-${{ env.TAG_NAME }}.tgz
           asset_name: ${{ env.JS_TARBALL_NAME }}
           asset_content_type: application/gzip
 
       - name: Upload JVM CLI fat jar
+        if: env.RUN_FULL_RELEASE == 'true'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: ${{ github.workspace }}/cli/build/libs/branchline-cli-${{ env.TAG_NAME }}-all.jar
           asset_name: ${{ env.JVM_JAR_NAME }}
           asset_content_type: application/java-archive
 
       - name: Upload interpreter JVM jar
+        if: env.RUN_FULL_RELEASE == 'true'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: ${{ env.INTERPRETER_JVM_PATH }}
           asset_name: ${{ env.INTERPRETER_JVM_NAME }}
           asset_content_type: application/java-archive
 
       - name: Upload VM JVM jar
+        if: env.RUN_FULL_RELEASE == 'true'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: ${{ env.VM_JVM_PATH }}
           asset_name: ${{ env.VM_JVM_NAME }}
           asset_content_type: application/java-archive
 
       - name: Upload interpreter JS package
+        if: env.RUN_FULL_RELEASE == 'true'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: ${{ env.INTERPRETER_JS_PATH }}
           asset_name: ${{ env.INTERPRETER_JS_NAME }}
           asset_content_type: application/gzip
@@ -227,7 +272,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: ${{ env.INTERPRETER_JMH_JSON_PATH }}
           asset_name: ${{ env.INTERPRETER_JMH_JSON_NAME }}
           asset_content_type: application/json
@@ -237,7 +282,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: ${{ env.VM_JMH_JSON_PATH }}
           asset_name: ${{ env.VM_JMH_JSON_NAME }}
           asset_content_type: application/json
@@ -247,19 +292,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: ${{ env.JMH_SUMMARY_MD_PATH }}
           asset_name: ${{ env.JMH_SUMMARY_MD_NAME }}
-          asset_content_type: text/markdown
-
-      - name: Upload JMH summary (Embed Markdown)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
-          asset_path: ${{ env.JMH_SUMMARY_EMBED_MD_PATH }}
-          asset_name: ${{ env.JMH_SUMMARY_EMBED_MD_NAME }}
           asset_content_type: text/markdown
 
       - name: Upload JMH summary (CSV)
@@ -267,7 +302,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.release.outputs.upload_url || steps.release-url.outputs.upload_url }}
+          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
           asset_path: ${{ env.JMH_SUMMARY_CSV_PATH }}
           asset_name: ${{ env.JMH_SUMMARY_CSV_NAME }}
           asset_content_type: text/csv

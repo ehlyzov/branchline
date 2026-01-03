@@ -21,7 +21,7 @@ subprojects {
     apply plugin: 'jacoco'
 
     group = 'io.github.ehlyzov.branchline-public'
-    version = 'v0.10.0'
+    version = 'v0.11.0-SNAPSHOT'
 
     detekt {
         config = files("$rootDir/detekt.yml")

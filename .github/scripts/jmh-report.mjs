@@ -64,11 +64,9 @@ const outputPath = path.resolve(outputDir);
 await fs.mkdir(outputPath, { recursive: true });
 
 const summaryMarkdown = buildMarkdown(rows);
-const embedMarkdown = buildEmbedMarkdown(rows);
 const summaryCsv = buildCsv(rows);
 
 await fs.writeFile(path.join(outputPath, 'jmh-summary.md'), summaryMarkdown, 'utf8');
-await fs.writeFile(path.join(outputPath, 'jmh-summary-embed.md'), embedMarkdown, 'utf8');
 await fs.writeFile(path.join(outputPath, 'jmh-summary.csv'), summaryCsv, 'utf8');
 
 console.log(`Wrote ${rows.length} rows to ${outputPath}`);
@@ -125,23 +123,6 @@ function titleCase(value) {
 }
 
 function buildMarkdown(items) {
-  const lines = [];
-  lines.push('# JMH Summary');
-  lines.push('');
-  lines.push(`Generated: ${new Date().toISOString()}`);
-  lines.push('');
-  lines.push(buildRuntimeSection(items));
-
-  const comparison = buildComparison(items);
-  if (comparison.length > 0) {
-    lines.push('');
-    lines.push(buildComparisonSection(comparison));
-  }
-
-  return `${lines.join('\n')}\n`;
-}
-
-function buildEmbedMarkdown(items) {
   const lines = [];
   lines.push(buildRuntimeSection(items));
 
