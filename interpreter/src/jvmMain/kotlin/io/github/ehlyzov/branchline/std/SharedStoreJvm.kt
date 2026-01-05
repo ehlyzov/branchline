@@ -66,7 +66,7 @@ private class SharedResource(
     }
 }
 
-class DefaultSharedStore : SharedStore {
+class DefaultSharedStore : SharedStore, SharedStoreSync {
     private val resources = ConcurrentHashMap<String, SharedResource>()
     private val globalLock = ReentrantReadWriteLock()
 
@@ -98,4 +98,13 @@ class DefaultSharedStore : SharedStore {
     override fun addResource(resource: String, kind: SharedResourceKind) {
         resources[resource] = SharedResource(resource, kind)
     }
+
+    override fun setOnceSync(resource: String, key: String, value: Any?): Boolean =
+        kotlinx.coroutines.runBlocking { setOnce(resource, key, value) }
+
+    override fun putSync(resource: String, key: String, value: Any?) {
+        kotlinx.coroutines.runBlocking { put(resource, key, value) }
+    }
 }
+
+actual fun createDefaultSharedStore(): SharedStore = DefaultSharedStore()

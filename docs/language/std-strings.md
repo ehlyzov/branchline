@@ -25,3 +25,11 @@ Run it: [STRING/NUMBER/BOOLEAN example](../playground.md?example=stdlib-strings-
 - `UPPER(str)` / `LOWER(str)` / `TRIM(str)` → casing and whitespace helpers.
 
 Run it: [Text helpers example](../playground.md?example=stdlib-strings-text).
+
+## Formatting
+- `FORMAT(template, args)` → interpolate placeholders in `template`.
+  - Use `{name}` for object fields and `{0}` for list indexes.
+  - Escape braces with `{{` and `}}`.
+  - Unknown placeholders are left as-is.
+
+Run it: [FORMAT example](../playground.md?example=stdlib-strings-format).

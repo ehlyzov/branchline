@@ -12,8 +12,17 @@ interface SharedStore {
     fun addResource(resource: String, kind: SharedResourceKind)
 }
 
+const val DEFAULT_SHARED_KEY = "value"
+
+interface SharedStoreSync {
+    fun setOnceSync(resource: String, key: String, value: Any?): Boolean
+    fun putSync(resource: String, key: String, value: Any?)
+}
+
 enum class SharedResourceKind { SINGLE, MANY }
 
 expect object SharedStoreProvider {
     var store: SharedStore?
 }
+
+expect fun createDefaultSharedStore(): SharedStore

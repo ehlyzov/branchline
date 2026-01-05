@@ -43,6 +43,8 @@ import io.github.ehlyzov.branchline.SourceDecl
 import io.github.ehlyzov.branchline.SetStmt
 import io.github.ehlyzov.branchline.SetVarStmt
 import io.github.ehlyzov.branchline.SharedDecl
+import io.github.ehlyzov.branchline.SharedKind
+import io.github.ehlyzov.branchline.SharedWriteStmt
 import io.github.ehlyzov.branchline.Stmt
 import io.github.ehlyzov.branchline.Token
 import io.github.ehlyzov.branchline.TokenType
@@ -265,6 +267,16 @@ class SemanticAnalyzer(
             checkExpr(stmt.value)
             stmt.init?.let { checkExpr(it) }
             true
+        }
+
+        is SharedWriteStmt -> {
+            val decl = globals[stmt.resource] as? SharedDecl
+                ?: throw SemanticException("Unknown shared resource '${stmt.resource}'", stmt.token)
+            if (stmt.key == null && decl.kind == SharedKind.MANY) {
+                throw SemanticException("Shared write to MANY requires a key", stmt.token)
+            }
+            stmt.key?.let { checkExpr(it) }
+            checkExpr(stmt.value)
         }
 
         is OutputStmt -> {

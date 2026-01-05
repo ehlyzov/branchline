@@ -113,7 +113,8 @@ jobs:
         run: ./gradlew --no-daemon :interpreter-benchmarks:jmh :vm-benchmarks:jmh
 
       - name: Build JMH summary
-        run: node .github/scripts/jmh-report.mjs build/benchmarks interpreter-benchmarks/build/results/jmh/results.json vm-benchmarks/build/results/jmh/results.json
+        run: |
+          ./gradlew --no-daemon :cli:runBl --args ".github/scripts/jmh-report.bl --shared-file jmh=interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir build/benchmarks --output-format json-compact"
 
       - name: List library artifacts
         run: |

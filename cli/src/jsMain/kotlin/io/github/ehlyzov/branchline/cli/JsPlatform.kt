@@ -21,6 +21,10 @@ public actual fun writeTextFile(path: String, contents: String) {
     fs.writeFileSync(path, contents, "utf8")
 }
 
+public actual fun appendTextFile(path: String, contents: String) {
+    fs.appendFileSync(path, contents, "utf8")
+}
+
 public actual fun readStdin(): String {
     return fs.readFileSync(0, "utf8") as String
 }
@@ -43,6 +47,55 @@ public actual fun parseXmlInput(text: String): Map<String, Any?> {
     }
     return emptyMap()
 }
+
+public actual fun getEnv(name: String): String? {
+    val process: dynamic = js("process")
+    val value = process.env[name]
+    return if (jsTypeOf(value) == "undefined") null else value as String
+}
+
+public actual fun getWorkingDirectory(): String {
+    val process: dynamic = js("process")
+    return process.cwd() as String
+}
+
+public actual fun isFile(path: String): Boolean = try {
+    fs.statSync(path).isFile() as Boolean
+} catch (ex: dynamic) {
+    false
+}
+
+public actual fun isDirectory(path: String): Boolean = try {
+    fs.statSync(path).isDirectory() as Boolean
+} catch (ex: dynamic) {
+    false
+}
+
+public actual fun listFilesRecursive(path: String): List<String> {
+    if (!isDirectory(path)) return emptyList()
+    val results = ArrayList<String>()
+    fun walk(dir: String) {
+        val entries = fs.readdirSync(dir, json("withFileTypes" to true)) as Array<dynamic>
+        for (entry in entries) {
+            val name = entry.name as String
+            val fullPath = pathModule.join(dir, name) as String
+            when {
+                entry.isDirectory() as Boolean -> walk(fullPath)
+                entry.isFile() as Boolean -> results.add(fullPath)
+            }
+        }
+    }
+    walk(path)
+    return results
+}
+
+public actual fun relativePath(base: String, path: String): String =
+    pathModule.relative(base, path) as String
+
+public actual fun fileName(path: String): String = pathModule.basename(path) as String
+
+public actual fun <T, R> parallelMap(limit: Int, items: List<T>, block: (T) -> R): List<R> =
+    items.map(block)
 
 private fun dynamicToKotlin(value: dynamic): Any? {
     if (value == null || jsTypeOf(value) == "undefined") return null

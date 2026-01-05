@@ -38,6 +38,41 @@ Input handling: `--input <path>` reads JSON/XML; `--input -` reads stdin so you 
 
 Output handling: `--output-format json` emits pretty JSON and `--output-format json-compact` emits minified JSON for CI diffs.
 
+### Output selection and file emission
+
+- `--output-path <path>` selects a nested value from the JSON output (ex: `summary.status`, `files[0].name`).
+- `--output-raw` prints the selected value without JSON encoding (useful for plain strings).
+- `--output-file <path>` writes the selected output to a file (path may be a file or directory; directory defaults to `output.json`).
+- `--output-lines <path>` writes output as JSON Lines (one line per list entry or one line for scalars; directory defaults to `output.jsonl`).
+- `--write-output` writes files described by `OUTPUT.files` (object map or list of `{ name, contents }`), paired with `--write-output-dir` or `--write-output-file`.
+- `--write-output-dir <dir>` writes `OUTPUT.files` entries into a directory by name.
+- `--write-output-file <name>=<path>` maps a specific `OUTPUT.files` entry to a path (repeatable).
+
+### Shared IO and fan-out
+
+The CLI can seed `SHARED` resources from files, directories, or globs and run per-file transforms in parallel.
+
+- `--shared-file <resource>=<path>` maps a single file into a shared resource.
+- `--shared-dir <resource>=<dir>` maps all files under a directory.
+- `--shared-glob <resource>=<glob>` maps files matched by a glob.
+- `--shared-format json|xml|text` parses shared files before storing (default: `text`).
+- `--shared-key relative|basename|custom` controls shared key naming (use `resource=key=path` when `custom`).
+- `--jobs <n>` enables fan-out parallelism across shared inputs.
+- `--summary-transform <name>` runs a summary transform with `{ reports, manifest }`.
+
+Example: summarize JUnit reports in parallel and write the summary to a file:
+
+```bash
+java -jar branchline-cli.jar .github/scripts/junit-summary.bl \
+  --transform FileSummary \
+  --summary-transform Summary \
+  --shared-glob "reports=interpreter/build/test-results/**/*.xml" \
+  --shared-format xml \
+  --shared-key relative \
+  --jobs 4 \
+  --output-file build/branchline-junit-summary.json
+```
+
 ## Copy/paste quickstart
 
 Create `hello.bl`:

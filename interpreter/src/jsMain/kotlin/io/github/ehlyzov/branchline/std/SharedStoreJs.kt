@@ -52,7 +52,25 @@ private class SharedResource(
         true
     }
 
+    fun setOnceSync(key: String, value: Any?): Boolean {
+        if (kind == SharedResourceKind.SINGLE && writtenKeys.contains(key)) {
+            return false
+        }
+        data[key] = value
+        if (kind == SharedResourceKind.SINGLE) writtenKeys.add(key)
+        notifyAwaiters(key, value)
+        persist()
+        return true
+    }
+
     suspend fun put(key: String, value: Any?) = mutex.withLock {
+        data[key] = value
+        if (kind == SharedResourceKind.SINGLE) writtenKeys.add(key)
+        notifyAwaiters(key, value)
+        persist()
+    }
+
+    fun putSync(key: String, value: Any?) {
         data[key] = value
         if (kind == SharedResourceKind.SINGLE) writtenKeys.add(key)
         notifyAwaiters(key, value)
@@ -111,7 +129,7 @@ private class SharedResource(
     }
 }
 
-class DefaultSharedStore : SharedStore {
+class DefaultSharedStore : SharedStore, SharedStoreSync {
     private val resources = mutableMapOf<String, SharedResource>()
     private val storage = if (hasLocalStorage()) localStorage() else null
 
@@ -142,7 +160,16 @@ class DefaultSharedStore : SharedStore {
     override fun addResource(resource: String, kind: SharedResourceKind) {
         resources[resource] = SharedResource(resource, kind, storage)
     }
+
+    override fun setOnceSync(resource: String, key: String, value: Any?): Boolean =
+        (resources[resource] ?: error("Unknown shared resource: $resource")).setOnceSync(key, value)
+
+    override fun putSync(resource: String, key: String, value: Any?) {
+        (resources[resource] ?: error("Unknown shared resource: $resource")).putSync(key, value)
+    }
 }
+
+actual fun createDefaultSharedStore(): SharedStore = DefaultSharedStore()
 
 private fun fromJsonElement(element: JsonElement): Any? = when (element) {
     is JsonNull -> null

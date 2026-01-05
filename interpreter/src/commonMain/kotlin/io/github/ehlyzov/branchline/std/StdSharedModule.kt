@@ -11,6 +11,18 @@ class StdSharedModule : StdModule {
             val store = SharedStoreProvider.store ?: error("SharedStore is not configured")
             blockingAwait(store, resource, key)
         }
+        r.fn("SHARED_WRITE") { args ->
+            require(args.size == 3) { "SHARED_WRITE(resource, key, value)" }
+            val resource = args[0] as? String ?: error("SHARED_WRITE: resource must be string")
+            val key = args[1] as? String ?: error("SHARED_WRITE: key must be string")
+            val value = args[2]
+            val store = SharedStoreProvider.store ?: error("SharedStore is not configured")
+            val sync = store as? SharedStoreSync ?: error("SharedStore does not support sync writes")
+            val ok = sync.setOnceSync(resource, key, value)
+            if (!ok) {
+                error("SHARED_WRITE: $resource[$key] is already set")
+            }
+            value
+        }
     }
 }
-

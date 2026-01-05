@@ -4,6 +4,7 @@ import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.SharedDecl
 import io.github.ehlyzov.branchline.debug.Tracer
+import io.github.ehlyzov.branchline.std.SharedResourceHandle
 import io.github.ehlyzov.branchline.std.SharedStoreProvider
 import io.github.ehlyzov.branchline.std.SharedResourceKind
 
@@ -22,7 +23,7 @@ fun runIR(
 ): Any? {
     // Set up a minimal registry for transforms. On JVM this delegates to the full actual; on JS we use the JS actual.
     val reg = TransformRegistry(funcs, hostFns, emptyMap())
-    val eval = makeEval(hostFns, funcs, reg, tracer)
+    val eval = makeEval(hostFns, funcs, reg, tracer, sharedStore = SharedStoreProvider.store)
     val exec = Exec(ir, eval, tracer)
     return exec.run(env, stringifyKeys)
 }
@@ -90,10 +91,15 @@ fun buildRunnerFromProgramMP(
         val env = HashMap<String, Any?>().apply {
             this[io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS] = input
             putAll(input)
-            for (alias in io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES) {
-                this[alias] = input
+        for (alias in io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES) {
+            this[alias] = input
+        }
+        for (decl in sharedDecls) {
+            if (!containsKey(decl.name)) {
+                this[decl.name] = SharedResourceHandle(decl.name)
             }
         }
+    }
         exec.run(env)
     }
 }

@@ -176,6 +176,13 @@ data class AppendToVarStmt(
     override val token: Token
 ) : Stmt
 
+data class SharedWriteStmt(
+    val resource: String,
+    val key: Expr?,
+    val value: Expr,
+    override val token: Token,
+) : Stmt
+
 data class ModifyStmt(val target: AccessExpr, val updates: List<Property>, override val token: Token) : Stmt
 
 data class OutputStmt(val template: Expr, override val token: Token) : Stmt

@@ -6,6 +6,8 @@ import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.ParseException
 import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.Program
+import io.github.ehlyzov.branchline.SharedDecl
+import io.github.ehlyzov.branchline.SharedKind
 import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
@@ -14,6 +16,9 @@ import io.github.ehlyzov.branchline.Expr
 import io.github.ehlyzov.branchline.contract.TransformContract
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
 import io.github.ehlyzov.branchline.ir.TransformRegistry
+import io.github.ehlyzov.branchline.std.SharedResourceHandle
+import io.github.ehlyzov.branchline.std.SharedResourceKind
+import io.github.ehlyzov.branchline.std.SharedStoreProvider
 import io.github.ehlyzov.branchline.std.StdLib
 import io.github.ehlyzov.branchline.vm.Bytecode
 import io.github.ehlyzov.branchline.vm.BytecodeIO
@@ -30,6 +35,7 @@ public class BranchlineProgram(
     private val funcs: Map<String, FuncDecl>
     private val transforms: List<TransformDecl>
     private val typeDecls: List<TypeDecl>
+    private val sharedDecls: List<SharedDecl>
     private val namedDescriptors: Map<String, TransformDescriptor>
     private val registry: TransformRegistry
     private val eval: (Expr, MutableMap<String, Any?>) -> Any?
@@ -47,14 +53,22 @@ public class BranchlineProgram(
         funcs = program.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
         transforms = program.decls.filterIsInstance<TransformDecl>()
         typeDecls = program.decls.filterIsInstance<TypeDecl>()
+        sharedDecls = program.decls.filterIsInstance<SharedDecl>()
         if (transforms.isEmpty()) {
             throw CliException("Program must declare at least one TRANSFORM block", kind = CliErrorKind.INPUT)
         }
+        registerSharedDecls()
         val typeResolver = _root_ide_package_.io.github.ehlyzov.branchline.sema.TypeResolver(typeDecls)
         contractBuilder = _root_ide_package_.io.github.ehlyzov.branchline.contract.TransformContractBuilder(typeResolver, hostFns.keys)
         namedDescriptors = _root_ide_package_.io.github.ehlyzov.branchline.ir.buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
         registry = TransformRegistry(funcs, hostFns, namedDescriptors)
-        eval = _root_ide_package_.io.github.ehlyzov.branchline.ir.makeEval(hostFns, funcs, registry, tracer = tracer)
+        eval = _root_ide_package_.io.github.ehlyzov.branchline.ir.makeEval(
+            hostFns,
+            funcs,
+            registry,
+            tracer = tracer,
+            sharedStore = SharedStoreProvider.store,
+        )
     }
 
     fun selectTransform(name: String?): TransformDecl {
@@ -67,13 +81,7 @@ public class BranchlineProgram(
     fun execute(transform: TransformDecl, input: Map<String, Any?>): Any? {
         val ir = compileIr(transform)
         val exec = _root_ide_package_.io.github.ehlyzov.branchline.ir.Exec(ir, eval, tracer)
-        val env = HashMap<String, Any?>(input.size + 1).apply {
-            this[DEFAULT_INPUT_ALIAS] = input
-            putAll(input)
-            for (alias in COMPAT_INPUT_ALIASES) {
-                this[alias] = input
-            }
-        }
+        val env = buildEnv(input)
         return exec.run(env, stringifyKeys = true)
     }
 
@@ -103,10 +111,38 @@ public class BranchlineProgram(
 
     fun typeDecls(): List<TypeDecl> = program.decls.filterIsInstance<TypeDecl>()
 
+    fun sharedDecls(): List<SharedDecl> = sharedDecls
+
     fun contractForTransform(transform: TransformDecl): TransformContract =
         contractBuilder.build(transform)
 
     private fun compileIr(transform: TransformDecl) = _root_ide_package_.io.github.ehlyzov.branchline.ir.ToIR(funcs, hostFns).compile(transform.body.statements)
+
+    fun buildEnv(input: Map<String, Any?>): MutableMap<String, Any?> =
+        HashMap<String, Any?>(input.size + sharedDecls.size + 1).apply {
+            this[DEFAULT_INPUT_ALIAS] = input
+            putAll(input)
+            for (alias in COMPAT_INPUT_ALIASES) {
+                this[alias] = input
+            }
+            for (decl in sharedDecls) {
+                if (!containsKey(decl.name)) {
+                    this[decl.name] = SharedResourceHandle(decl.name)
+                }
+            }
+        }
+
+    private fun registerSharedDecls() {
+        val store = SharedStoreProvider.store ?: return
+        for (decl in sharedDecls) {
+            if (store.hasResource(decl.name)) continue
+            val kind = when (decl.kind) {
+                SharedKind.SINGLE -> SharedResourceKind.SINGLE
+                SharedKind.MANY -> SharedResourceKind.MANY
+            }
+            store.addResource(decl.name, kind)
+        }
+    }
 }
 
 @Serializable

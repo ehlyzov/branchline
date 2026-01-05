@@ -85,6 +85,8 @@ session["lastSeen"] = NOW();
 session["userId"] = input.user.id;
 ```
 
+For `SINGLE` shared resources, you can omit the key (`cache[] = value`) and the default key is used. `MANY` resources require an explicit key.
+
 ## Functions {#func}
 
 The `FUNC` statement declares functions.

@@ -105,7 +105,7 @@ Update the playground index if it maintains a list.
 ## Script rewrites (post-implementation)
 Update CLI scripts to use `CASE` for readability:
 
-`cli/scripts/junit-summary.bl`:
+`.github/scripts/junit-summary.bl`:
 ```
 LET status = CASE {
     WHEN totals.tests == 0 THEN "error"
@@ -114,7 +114,7 @@ LET status = CASE {
 };
 ```
 
-`cli/scripts/junit-file-summary.bl`:
+`.github/scripts/junit-file-summary.bl`:
 ```
 LET status = CASE {
     WHEN totalTests == 0 THEN "error"

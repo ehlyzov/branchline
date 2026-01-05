@@ -359,6 +359,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             match(TokenType.TRY) -> parseTryCatch(previous())
             match(TokenType.RETURN) -> parseReturn()
             match(TokenType.ABORT) -> parseAbort()
+            isSharedWriteStart() -> parseSharedWrite()
             else -> {
                 val start = peek()
                 val expr = parseExpression()
@@ -376,6 +377,39 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val expr = parseExpression()
         optionalSemicolon()
         return LetStmt(nameTok.lexeme, expr, nameTok)
+    }
+
+    private fun isSharedWriteStart(): Boolean {
+        if (!check(TokenType.IDENTIFIER) || !checkNext(TokenType.LEFT_BRACKET)) return false
+        var idx = current + 2
+        var depth = 1
+        while (idx < toks.size) {
+            val tok = toks[idx]
+            when (tok.type) {
+                TokenType.LEFT_BRACKET -> depth += 1
+                TokenType.RIGHT_BRACKET -> {
+                    depth -= 1
+                    if (depth == 0) {
+                        return toks.getOrNull(idx + 1)?.type == TokenType.ASSIGN
+                    }
+                }
+                TokenType.EOF -> return false
+                else -> Unit
+            }
+            idx += 1
+        }
+        return false
+    }
+
+    private fun parseSharedWrite(): SharedWriteStmt {
+        val nameTok = consume(TokenType.IDENTIFIER, "Expect shared resource name")
+        consume(TokenType.LEFT_BRACKET, "Expect '[' after shared resource name")
+        val keyExpr = if (check(TokenType.RIGHT_BRACKET)) null else parseExpression()
+        consume(TokenType.RIGHT_BRACKET, "Expect ']' after shared key")
+        consume(TokenType.ASSIGN, "Expect '=' after shared key")
+        val valueExpr = parseExpression()
+        optionalSemicolon()
+        return SharedWriteStmt(nameTok.lexeme, keyExpr, valueExpr, nameTok)
     }
 
     private fun parseModify(): ModifyStmt {

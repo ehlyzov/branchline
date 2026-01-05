@@ -26,6 +26,12 @@ private fun fnKEYS(args: List<Any?>): Any {
     return when (val coll = args[0]) {
         is List<*> -> coll.indices.toList()
         is Map<*, *> -> coll.keys.toList()
+        is SharedResourceHandle -> {
+            val store = SharedStoreProvider.store ?: error("SharedStore is not configured")
+            val snapshot = store.snapshot()[coll.name]
+                ?: error("Unknown shared resource: ${coll.name}")
+            snapshot.keys.toList()
+        }
         else -> error("KEYS: arg must be list or object")
     }
 }

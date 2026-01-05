@@ -1,8 +1,6 @@
 package io.github.ehlyzov.branchline.cli
 
 import io.github.ehlyzov.branchline.ArrayTypeRef
-import io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES
-import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
 import io.github.ehlyzov.branchline.EnumTypeRef
 import io.github.ehlyzov.branchline.NamedTypeRef
 import io.github.ehlyzov.branchline.Parser
@@ -51,6 +49,16 @@ public data class RunOptions(
     val inputFormat: InputFormat,
     val transformName: String?,
     val outputFormat: OutputFormat,
+    val outputPath: String?,
+    val outputRaw: Boolean,
+    val outputFile: String?,
+    val outputLines: String?,
+    val writeOutput: Boolean,
+    val writeOutputDir: String?,
+    val writeOutputFiles: Map<String, String>,
+    val sharedOptions: SharedOptions,
+    val jobs: Int,
+    val summaryTransform: String?,
     val traceFormat: TraceFormat?,
 )
 
@@ -67,6 +75,16 @@ public data class ExecOptions(
     val inputFormat: InputFormat,
     val transformOverride: String?,
     val outputFormat: OutputFormat,
+    val outputPath: String?,
+    val outputRaw: Boolean,
+    val outputFile: String?,
+    val outputLines: String?,
+    val writeOutput: Boolean,
+    val writeOutputDir: String?,
+    val writeOutputFiles: Map<String, String>,
+    val sharedOptions: SharedOptions,
+    val jobs: Int,
+    val summaryTransform: String?,
     val traceFormat: TraceFormat?,
 )
 
@@ -169,9 +187,19 @@ public object BranchlineCli {
             Branchline CLI$defaultHint
             
             Usage:
-              bl [run] <script.bl> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact] [--trace] [--trace-format text|json]
+              bl [run] <script.bl> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact]
+                  [--output-path <path>] [--output-raw] [--output-file <path>] [--output-lines <path>] [--write-output]
+                  [--write-output-dir <dir>] [--write-output-file <name>=<path>]
+                  [--shared-file <resource>=<path>] [--shared-dir <resource>=<dir>] [--shared-glob <resource>=<glob>]
+                  [--shared-format json|xml|text] [--shared-key relative|basename|custom]
+                  [--jobs <n>] [--summary-transform <name>] [--trace] [--trace-format text|json]
               blc <script.bl> [--output <artifact.blc>] [--transform <name>] [--output-format json|json-compact]
-              blvm <artifact.blc> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact] [--trace] [--trace-format text|json]
+              blvm <artifact.blc> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact]
+                  [--output-path <path>] [--output-raw] [--output-file <path>] [--output-lines <path>] [--write-output]
+                  [--write-output-dir <dir>] [--write-output-file <name>=<path>]
+                  [--shared-file <resource>=<path>] [--shared-dir <resource>=<dir>] [--shared-glob <resource>=<glob>]
+                  [--shared-format json|xml|text] [--shared-key relative|basename|custom]
+                  [--jobs <n>] [--summary-transform <name>] [--trace] [--trace-format text|json]
               bl inspect <script.bl> --contracts [--transform <name>]
               bl schema <script.bl> <TYPE_NAME> [--nullable] [--output <schema.json>]
               bl schema <script.bl> --all [--nullable] [--output <schema.json>]
@@ -192,6 +220,20 @@ public object BranchlineCli {
               --transform NAME    Choose a TRANSFORM block by name; defaults to the first transform in the script.
               --output PATH       (compile) write the compiled artifact to PATH. Prints to stdout when omitted.
               --output-format FMT Format for CLI JSON output ('json' or 'json-compact').
+              --output-path PATH Select a field from the JSON output (e.g., 'summary.status' or 'files[0].name').
+              --output-raw      Print selected output without JSON encoding (useful for plain strings).
+              --output-file PATH Write the selected output to a file (directory defaults to output.json).
+              --output-lines PATH Write output as JSON Lines (directory defaults to output.jsonl).
+              --write-output    Write output files from OUTPUT.files entries.
+              --write-output-dir DIR Write OUTPUT.files entries to DIR using their names.
+              --write-output-file MAP Map OUTPUT.files entries by name (name=path). Repeatable.
+              --shared-file MAP Map a local file into a SHARED resource (resource=path).
+              --shared-dir MAP  Map files under a directory into a SHARED resource (resource=dir).
+              --shared-glob MAP Map glob-matched files into a SHARED resource (resource=glob).
+              --shared-format FMT Parse shared files as json|xml|text before storing.
+              --shared-key MODE Key naming: relative (default), basename, or custom (resource=key=path).
+              --jobs N          Fan out transforms across shared inputs with N parallel jobs.
+              --summary-transform NAME Run a summary transform after fan-out, fed { reports, manifest }.
               --trace             Emit a trace summary to stderr after execution.
               --trace-format FMT  Trace output format ('text' or 'json').
               --error-format FMT  Error output format ('text' or 'json').
@@ -219,14 +261,37 @@ public object BranchlineCli {
 
     private fun executeRun(options: RunOptions, platform: PlatformKind): Int {
         val traceSession = createTraceSession(options.traceFormat)
-        val source = readTextFileOrThrow(options.scriptPath)
-        val runtime = BranchlineProgram(source, traceSession?.tracer)
-        val transform = runtime.selectTransform(options.transformName)
-        val input = loadInput(options.inputPath, options.inputFormat)
-        val result = runtime.execute(transform, input)
-        println(formatJson(result, pretty = options.outputFormat.pretty))
-        traceSession?.emit()
-        return ExitCode.SUCCESS.code
+        return withSharedStore { store ->
+            val source = readTextFileOrThrow(options.scriptPath)
+            val runtime = BranchlineProgram(source, traceSession?.tracer)
+            val transform = runtime.selectTransform(options.transformName)
+            val input = loadInput(options.inputPath, options.inputFormat)
+            val sharedSeed = seedSharedStore(options.sharedOptions, runtime.sharedDecls(), store)
+            val summaryTransform = options.summaryTransform?.let { runtime.selectTransform(it) }
+            val result = runWithFanout(
+                jobs = options.jobs,
+                sharedSeed = sharedSeed,
+                baseInput = input,
+                summaryTransform = summaryTransform,
+                runTransform = { data -> runtime.execute(transform, data) },
+                runSummary = { data ->
+                    summaryTransform?.let { runtime.execute(it, data) }
+                },
+            ) ?: runtime.execute(transform, input)
+            emitOutput(
+                result = result,
+                format = options.outputFormat,
+                outputPath = options.outputPath,
+                outputRaw = options.outputRaw,
+                outputFile = options.outputFile,
+                outputLines = options.outputLines,
+                writeOutput = options.writeOutput,
+                writeOutputDir = options.writeOutputDir,
+                writeOutputMap = options.writeOutputFiles,
+            )
+            traceSession?.emit()
+            ExitCode.SUCCESS.code
+        }
     }
 
     private fun executeCompile(options: CompileOptions): Int {
@@ -253,25 +318,47 @@ public object BranchlineCli {
 
     private fun executeExec(options: ExecOptions): Int {
         val traceSession = createTraceSession(options.traceFormat)
-        val raw = readTextFileOrThrow(options.artifactPath)
-        val artifact = ArtifactCodec.decode(raw)
-        val runtime = BranchlineProgram(artifact.script, traceSession?.tracer)
-        val transformName = options.transformOverride ?: artifact.transform
-        val transform = runtime.selectTransform(transformName)
-        val bytecode = BytecodeIO.deserializeBytecode(artifact.bytecode)
-        val vmExec = runtime.prepareVmExec(transform, bytecode)
-        val input = loadInput(options.inputPath, options.inputFormat)
-        val env = HashMap<String, Any?>(input.size + 1).apply {
-            this[DEFAULT_INPUT_ALIAS] = input
-            putAll(input)
-            for (alias in COMPAT_INPUT_ALIASES) {
-                this[alias] = input
+        return withSharedStore { store ->
+            val raw = readTextFileOrThrow(options.artifactPath)
+            val artifact = ArtifactCodec.decode(raw)
+            val runtime = BranchlineProgram(artifact.script, traceSession?.tracer)
+            val transformName = options.transformOverride ?: artifact.transform
+            val transform = runtime.selectTransform(transformName)
+            val bytecode = BytecodeIO.deserializeBytecode(artifact.bytecode)
+            val vmExec = runtime.prepareVmExec(transform, bytecode)
+            val input = loadInput(options.inputPath, options.inputFormat)
+            val sharedSeed = seedSharedStore(options.sharedOptions, runtime.sharedDecls(), store)
+            val summaryTransform = options.summaryTransform?.let { runtime.selectTransform(it) }
+            val result = runWithFanout(
+                jobs = options.jobs,
+                sharedSeed = sharedSeed,
+                baseInput = input,
+                summaryTransform = summaryTransform,
+                runTransform = { data ->
+                    val env = runtime.buildEnv(data)
+                    vmExec.run(env, stringifyKeys = true)
+                },
+                runSummary = { data ->
+                    summaryTransform?.let { runtime.execute(it, data) }
+                },
+            ) ?: run {
+                val env = runtime.buildEnv(input)
+                vmExec.run(env, stringifyKeys = true)
             }
+            emitOutput(
+                result = result,
+                format = options.outputFormat,
+                outputPath = options.outputPath,
+                outputRaw = options.outputRaw,
+                outputFile = options.outputFile,
+                outputLines = options.outputLines,
+                writeOutput = options.writeOutput,
+                writeOutputDir = options.writeOutputDir,
+                writeOutputMap = options.writeOutputFiles,
+            )
+            traceSession?.emit()
+            ExitCode.SUCCESS.code
         }
-        val result = vmExec.run(env as MutableMap<String, Any?>, stringifyKeys = true)
-        println(formatJson(result, pretty = options.outputFormat.pretty))
-        traceSession?.emit()
-        return ExitCode.SUCCESS.code
     }
 
     private fun executeInspect(options: InspectOptions): Int {
@@ -434,6 +521,18 @@ public object BranchlineCli {
         var transform: String? = null
         var format = InputFormat.JSON
         var outputFormat = OutputFormat.JSON
+        var outputPath: String? = null
+        var outputRaw = false
+        var outputFile: String? = null
+        var outputLines: String? = null
+        var writeOutput = false
+        var writeOutputDir: String? = null
+        val writeOutputFiles = linkedMapOf<String, String>()
+        val sharedInputs = mutableListOf<SharedInputSpec>()
+        var sharedFormat = SharedInputFormat.TEXT
+        var sharedKeyMode = SharedKeyMode.RELATIVE
+        var jobs = 0
+        var summaryTransform: String? = null
         var traceFormat: TraceFormat? = null
         var idx = startIndex
         while (idx < args.size) {
@@ -455,6 +554,66 @@ public object BranchlineCli {
                     outputFormat = OutputFormat.parse(args[idx + 1])
                     idx += 2
                 }
+                token == "--output-path" && idx + 1 < args.size -> {
+                    outputPath = args[idx + 1]
+                    idx += 2
+                }
+                token == "--output-raw" -> {
+                    outputRaw = true
+                    idx += 1
+                }
+                token == "--output-file" && idx + 1 < args.size -> {
+                    outputFile = args[idx + 1]
+                    idx += 2
+                }
+                token == "--output-lines" && idx + 1 < args.size -> {
+                    outputLines = args[idx + 1]
+                    idx += 2
+                }
+                token == "--write-output" -> {
+                    writeOutput = true
+                    idx += 1
+                }
+                token == "--write-output-dir" && idx + 1 < args.size -> {
+                    writeOutputDir = args[idx + 1]
+                    idx += 2
+                }
+                token == "--write-output-file" && idx + 1 < args.size -> {
+                    val (name, path) = parseWriteOutputFileSpec(args[idx + 1])
+                    if (writeOutputFiles.containsKey(name)) {
+                        throw CliException("Duplicate write-output file mapping for '$name'", kind = CliErrorKind.USAGE)
+                    }
+                    writeOutputFiles[name] = path
+                    idx += 2
+                }
+                token == "--shared-file" && idx + 1 < args.size -> {
+                    sharedInputs += parseSharedSpec(SharedInputKind.FILE, args[idx + 1])
+                    idx += 2
+                }
+                token == "--shared-dir" && idx + 1 < args.size -> {
+                    sharedInputs += parseSharedSpec(SharedInputKind.DIR, args[idx + 1])
+                    idx += 2
+                }
+                token == "--shared-glob" && idx + 1 < args.size -> {
+                    sharedInputs += parseSharedSpec(SharedInputKind.GLOB, args[idx + 1])
+                    idx += 2
+                }
+                token == "--shared-format" && idx + 1 < args.size -> {
+                    sharedFormat = SharedInputFormat.parse(args[idx + 1])
+                    idx += 2
+                }
+                token == "--shared-key" && idx + 1 < args.size -> {
+                    sharedKeyMode = SharedKeyMode.parse(args[idx + 1])
+                    idx += 2
+                }
+                token == "--jobs" && idx + 1 < args.size -> {
+                    jobs = parseJobs(args[idx + 1])
+                    idx += 2
+                }
+                token == "--summary-transform" && idx + 1 < args.size -> {
+                    summaryTransform = args[idx + 1]
+                    idx += 2
+                }
                 token == "--trace" -> {
                     if (traceFormat == null) {
                         traceFormat = TraceFormat.TEXT
@@ -469,6 +628,46 @@ public object BranchlineCli {
                     "--trace-format requires a value",
                     kind = CliErrorKind.USAGE,
                 )
+                token == "--output-path" -> throw CliException(
+                    "--output-path requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--output-file" -> throw CliException(
+                    "--output-file requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--output-lines" -> throw CliException(
+                    "--output-lines requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--write-output-dir" -> throw CliException(
+                    "--write-output-dir requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--write-output-file" -> throw CliException(
+                    "--write-output-file requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--shared-file" || token == "--shared-dir" || token == "--shared-glob" -> throw CliException(
+                    "$token requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--shared-format" -> throw CliException(
+                    "--shared-format requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--shared-key" -> throw CliException(
+                    "--shared-key requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--jobs" -> throw CliException(
+                    "--jobs requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--summary-transform" -> throw CliException(
+                    "--summary-transform requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
                 token.startsWith("--") -> throw CliException("Unknown option '$token'")
                 script == null -> {
                     script = token
@@ -478,7 +677,35 @@ public object BranchlineCli {
             }
         }
         if (script == null) throw CliException("Script path is required")
-        return RunOptions(script, input, format, transform, outputFormat, traceFormat)
+        if (summaryTransform != null && jobs == 0) {
+            jobs = 1
+        }
+        if (writeOutputDir != null || writeOutputFiles.isNotEmpty()) {
+            writeOutput = true
+        }
+        if (writeOutput && writeOutputDir == null && writeOutputFiles.isEmpty()) {
+            throw CliException("write-output requires --write-output-dir or --write-output-file", kind = CliErrorKind.USAGE)
+        }
+        val sharedOptions = SharedOptions(sharedInputs, sharedFormat, sharedKeyMode)
+        validateSharedSpecs(sharedOptions)
+        return RunOptions(
+            scriptPath = script,
+            inputPath = input,
+            inputFormat = format,
+            transformName = transform,
+            outputFormat = outputFormat,
+            outputPath = outputPath,
+            outputRaw = outputRaw,
+            outputFile = outputFile,
+            outputLines = outputLines,
+            writeOutput = writeOutput,
+            writeOutputDir = writeOutputDir,
+            writeOutputFiles = writeOutputFiles,
+            sharedOptions = sharedOptions,
+            jobs = jobs,
+            summaryTransform = summaryTransform,
+            traceFormat = traceFormat,
+        )
     }
 
     private fun parseCompileArgs(args: List<String>, startIndex: Int): CompileOptions {
@@ -520,6 +747,18 @@ public object BranchlineCli {
         var format = InputFormat.JSON
         var transform: String? = null
         var outputFormat = OutputFormat.JSON
+        var outputPath: String? = null
+        var outputRaw = false
+        var outputFile: String? = null
+        var outputLines: String? = null
+        var writeOutput = false
+        var writeOutputDir: String? = null
+        val writeOutputFiles = linkedMapOf<String, String>()
+        val sharedInputs = mutableListOf<SharedInputSpec>()
+        var sharedFormat = SharedInputFormat.TEXT
+        var sharedKeyMode = SharedKeyMode.RELATIVE
+        var jobs = 0
+        var summaryTransform: String? = null
         var traceFormat: TraceFormat? = null
         var idx = startIndex
         while (idx < args.size) {
@@ -541,6 +780,66 @@ public object BranchlineCli {
                     outputFormat = OutputFormat.parse(args[idx + 1])
                     idx += 2
                 }
+                token == "--output-path" && idx + 1 < args.size -> {
+                    outputPath = args[idx + 1]
+                    idx += 2
+                }
+                token == "--output-raw" -> {
+                    outputRaw = true
+                    idx += 1
+                }
+                token == "--output-file" && idx + 1 < args.size -> {
+                    outputFile = args[idx + 1]
+                    idx += 2
+                }
+                token == "--output-lines" && idx + 1 < args.size -> {
+                    outputLines = args[idx + 1]
+                    idx += 2
+                }
+                token == "--write-output" -> {
+                    writeOutput = true
+                    idx += 1
+                }
+                token == "--write-output-dir" && idx + 1 < args.size -> {
+                    writeOutputDir = args[idx + 1]
+                    idx += 2
+                }
+                token == "--write-output-file" && idx + 1 < args.size -> {
+                    val (name, path) = parseWriteOutputFileSpec(args[idx + 1])
+                    if (writeOutputFiles.containsKey(name)) {
+                        throw CliException("Duplicate write-output file mapping for '$name'", kind = CliErrorKind.USAGE)
+                    }
+                    writeOutputFiles[name] = path
+                    idx += 2
+                }
+                token == "--shared-file" && idx + 1 < args.size -> {
+                    sharedInputs += parseSharedSpec(SharedInputKind.FILE, args[idx + 1])
+                    idx += 2
+                }
+                token == "--shared-dir" && idx + 1 < args.size -> {
+                    sharedInputs += parseSharedSpec(SharedInputKind.DIR, args[idx + 1])
+                    idx += 2
+                }
+                token == "--shared-glob" && idx + 1 < args.size -> {
+                    sharedInputs += parseSharedSpec(SharedInputKind.GLOB, args[idx + 1])
+                    idx += 2
+                }
+                token == "--shared-format" && idx + 1 < args.size -> {
+                    sharedFormat = SharedInputFormat.parse(args[idx + 1])
+                    idx += 2
+                }
+                token == "--shared-key" && idx + 1 < args.size -> {
+                    sharedKeyMode = SharedKeyMode.parse(args[idx + 1])
+                    idx += 2
+                }
+                token == "--jobs" && idx + 1 < args.size -> {
+                    jobs = parseJobs(args[idx + 1])
+                    idx += 2
+                }
+                token == "--summary-transform" && idx + 1 < args.size -> {
+                    summaryTransform = args[idx + 1]
+                    idx += 2
+                }
                 token == "--trace" -> {
                     if (traceFormat == null) {
                         traceFormat = TraceFormat.TEXT
@@ -555,6 +854,46 @@ public object BranchlineCli {
                     "--trace-format requires a value",
                     kind = CliErrorKind.USAGE,
                 )
+                token == "--output-path" -> throw CliException(
+                    "--output-path requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--output-file" -> throw CliException(
+                    "--output-file requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--output-lines" -> throw CliException(
+                    "--output-lines requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--write-output-dir" -> throw CliException(
+                    "--write-output-dir requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--write-output-file" -> throw CliException(
+                    "--write-output-file requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--shared-file" || token == "--shared-dir" || token == "--shared-glob" -> throw CliException(
+                    "$token requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--shared-format" -> throw CliException(
+                    "--shared-format requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--shared-key" -> throw CliException(
+                    "--shared-key requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--jobs" -> throw CliException(
+                    "--jobs requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--summary-transform" -> throw CliException(
+                    "--summary-transform requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
                 token.startsWith("--") -> throw CliException("Unknown option '$token'")
                 artifact == null -> {
                     artifact = token
@@ -564,7 +903,35 @@ public object BranchlineCli {
             }
         }
         if (artifact == null) throw CliException("Artifact path is required")
-        return ExecOptions(artifact, input, format, transform, outputFormat, traceFormat)
+        if (summaryTransform != null && jobs == 0) {
+            jobs = 1
+        }
+        if (writeOutputDir != null || writeOutputFiles.isNotEmpty()) {
+            writeOutput = true
+        }
+        if (writeOutput && writeOutputDir == null && writeOutputFiles.isEmpty()) {
+            throw CliException("write-output requires --write-output-dir or --write-output-file", kind = CliErrorKind.USAGE)
+        }
+        val sharedOptions = SharedOptions(sharedInputs, sharedFormat, sharedKeyMode)
+        validateSharedSpecs(sharedOptions)
+        return ExecOptions(
+            artifactPath = artifact,
+            inputPath = input,
+            inputFormat = format,
+            transformOverride = transform,
+            outputFormat = outputFormat,
+            outputPath = outputPath,
+            outputRaw = outputRaw,
+            outputFile = outputFile,
+            outputLines = outputLines,
+            writeOutput = writeOutput,
+            writeOutputDir = writeOutputDir,
+            writeOutputFiles = writeOutputFiles,
+            sharedOptions = sharedOptions,
+            jobs = jobs,
+            summaryTransform = summaryTransform,
+            traceFormat = traceFormat,
+        )
     }
 
     private fun parseInspectArgs(args: List<String>, startIndex: Int): InspectOptions {
@@ -734,7 +1101,285 @@ private fun loadInput(path: String?, format: InputFormat): Map<String, Any?> {
     }
 }
 
-private fun readTextFileOrThrow(path: String): String {
+private fun <T> withSharedStore(block: (io.github.ehlyzov.branchline.std.SharedStore) -> T): T {
+    val previous = io.github.ehlyzov.branchline.std.SharedStoreProvider.store
+    val store = io.github.ehlyzov.branchline.std.createDefaultSharedStore()
+    io.github.ehlyzov.branchline.std.SharedStoreProvider.store = store
+    return try {
+        block(store)
+    } finally {
+        io.github.ehlyzov.branchline.std.SharedStoreProvider.store = previous
+    }
+}
+
+private fun runWithFanout(
+    jobs: Int,
+    sharedSeed: SharedSeedResult,
+    baseInput: Map<String, Any?>,
+    summaryTransform: TransformDecl?,
+    runTransform: (Map<String, Any?>) -> Any?,
+    runSummary: (Map<String, Any?>) -> Any?,
+): Any? {
+    if (jobs <= 0) return null
+    if (sharedSeed.entries.isEmpty()) {
+        throw CliException("Fan-out requires shared inputs", kind = CliErrorKind.INPUT)
+    }
+    val resources = sharedSeed.entries.map { it.resource }.distinct()
+    if (resources.size > 1) {
+        throw CliException("Fan-out supports one shared resource at a time", kind = CliErrorKind.USAGE)
+    }
+    val resource = resources.first()
+    val entries = sharedSeed.entriesFor(resource)
+    val parallelism = jobs.coerceAtLeast(1)
+    val reports = parallelMap(parallelism, entries) { entry ->
+        val input = HashMap<String, Any?>(baseInput.size + 2).apply {
+            putAll(baseInput)
+            this["key"] = entry.key
+            this["resource"] = entry.resource
+        }
+        val result = runTransform(input)
+        buildFanoutEntry(entry, result)
+    }
+    if (summaryTransform == null) return reports
+    val summaryInput = HashMap<String, Any?>(baseInput.size + 2).apply {
+        putAll(baseInput)
+        this["reports"] = reports
+        this["manifest"] = mapOf(
+            "resource" to resource,
+            "keys" to entries.map { it.key },
+        )
+    }
+    return runSummary.invoke(summaryInput) ?: reports
+}
+
+private fun buildFanoutEntry(entry: SharedEntry, result: Any?): Map<String, Any?> {
+    val payload = LinkedHashMap<String, Any?>()
+    payload["path"] = entry.key
+    payload["resource"] = entry.resource
+    if (result is Map<*, *>) {
+        for ((k, v) in result) {
+            payload[k?.toString() ?: "null"] = v
+        }
+    } else {
+        payload["value"] = result
+    }
+    return payload
+}
+
+private fun emitOutput(
+    result: Any?,
+    format: OutputFormat,
+    outputPath: String?,
+    outputRaw: Boolean,
+    outputFile: String?,
+    outputLines: String?,
+    writeOutput: Boolean,
+    writeOutputDir: String?,
+    writeOutputMap: Map<String, String>,
+) {
+    if (writeOutput) {
+        writeOutputFiles(result, writeOutputDir, writeOutputMap)
+    }
+    val selected = if (outputPath == null) result else selectOutputByPath(result, outputPath)
+    val output = formatOutputValue(selected, format.pretty, outputRaw)
+    println(output)
+    if (outputFile != null) {
+        writeOutputFile(selected, format, outputRaw, outputFile)
+    }
+    if (outputLines != null) {
+        writeOutputLines(selected, outputRaw, outputLines)
+    }
+}
+
+private fun writeOutputFiles(
+    result: Any?,
+    outputDir: String?,
+    outputFiles: Map<String, String>,
+) {
+    val output = result as? Map<*, *> ?: throw CliException(
+        "write-output expects OUTPUT to be an object",
+        kind = CliErrorKind.RUNTIME,
+    )
+    val files = output.entries.firstOrNull { it.key?.toString() == "files" }?.value ?: throw CliException(
+        "write-output expects OUTPUT.files",
+        kind = CliErrorKind.RUNTIME,
+    )
+    val specs = parseOutputFileSpecs(files)
+    val seen = mutableSetOf<String>()
+    for (spec in specs) {
+        if (!seen.add(spec.name)) {
+            throw CliException("write-output expects unique file names ('${spec.name}')", kind = CliErrorKind.RUNTIME)
+        }
+        val target = resolveWriteOutputTarget(spec.name, outputDir, outputFiles)
+        writeTextFileOrThrow(target, spec.contents)
+    }
+}
+
+private fun writeOutputFile(value: Any?, format: OutputFormat, outputRaw: Boolean, path: String) {
+    val target = resolveOutputTarget(path, defaultName = "output.json")
+    val payload = formatOutputValue(value, format.pretty, outputRaw)
+    writeTextFileOrThrow(target, payload + "\n")
+}
+
+private fun writeOutputLines(value: Any?, outputRaw: Boolean, path: String) {
+    val target = resolveOutputTarget(path, defaultName = "output.jsonl")
+    val items = if (value is List<*>) value else listOf(value)
+    val lines = items.joinToString("\n") { formatOutputValue(it, pretty = false, raw = outputRaw) }
+    val content = if (lines.isBlank()) "" else lines + "\n"
+    writeTextFileOrThrow(target, content)
+}
+
+private fun resolveOutputTarget(path: String, defaultName: String): String {
+    val trimmed = path.trim()
+    if (trimmed.isBlank()) {
+        throw CliException("Output path must not be blank", kind = CliErrorKind.USAGE)
+    }
+    val isDirHint = trimmed.endsWith("/") || trimmed.endsWith("\\")
+    val base = trimmed.trimEnd('/', '\\')
+    return when {
+        isDirHint -> if (base.isBlank()) defaultName else "$base/$defaultName"
+        isDirectory(trimmed) -> "$trimmed/$defaultName"
+        else -> trimmed
+    }
+}
+
+private data class OutputFileSpec(
+    val name: String,
+    val contents: String,
+)
+
+private fun parseOutputFileSpecs(files: Any?): List<OutputFileSpec> = when (files) {
+    is Map<*, *> -> {
+        files.map { (key, value) ->
+            val name = key?.toString()?.trim()
+                ?: throw CliException("write-output expects files{} keys", kind = CliErrorKind.RUNTIME)
+            if (name.isBlank()) {
+                throw CliException("write-output expects files{} keys", kind = CliErrorKind.RUNTIME)
+            }
+            OutputFileSpec(name, value?.toString() ?: "")
+        }
+    }
+    is List<*> -> {
+        files.map { entry ->
+            val spec = entry as? Map<*, *> ?: throw CliException(
+                "write-output expects files[] objects",
+                kind = CliErrorKind.RUNTIME,
+            )
+            val name = spec["name"]?.toString()?.trim()
+                ?: spec["id"]?.toString()?.trim()
+                ?: throw CliException("write-output expects files[].name", kind = CliErrorKind.RUNTIME)
+            if (name.isBlank()) {
+                throw CliException("write-output expects files[].name", kind = CliErrorKind.RUNTIME)
+            }
+            val contents = spec["contents"]?.toString() ?: ""
+            OutputFileSpec(name, contents)
+        }
+    }
+    else -> throw CliException(
+        "write-output expects files[] or files{}",
+        kind = CliErrorKind.RUNTIME,
+    )
+}
+
+private fun resolveWriteOutputTarget(
+    name: String,
+    outputDir: String?,
+    outputFiles: Map<String, String>,
+): String {
+    val mapped = outputFiles[name]
+    if (mapped != null) {
+        return resolveOutputTarget(mapped, defaultName = name)
+    }
+    if (outputDir != null) {
+        return resolveWriteOutputDirTarget(outputDir, name)
+    }
+    throw CliException(
+        "write-output requires --write-output-dir or --write-output-file for '$name'",
+        kind = CliErrorKind.USAGE,
+    )
+}
+
+private fun resolveWriteOutputDirTarget(outputDir: String, name: String): String {
+    val base = outputDir.trim()
+    if (base.isBlank()) {
+        throw CliException("write-output-dir must not be blank", kind = CliErrorKind.USAGE)
+    }
+    val trimmedName = name.trim()
+    if (trimmedName.isBlank()) {
+        throw CliException("write-output expects non-empty file names", kind = CliErrorKind.RUNTIME)
+    }
+    if (isAbsolutePath(trimmedName) || containsParentSegment(trimmedName)) {
+        throw CliException("write-output-dir rejects absolute or parent paths: '$name'", kind = CliErrorKind.RUNTIME)
+    }
+    val separator = if (base.endsWith("/") || base.endsWith("\\")) "" else "/"
+    return base + separator + trimmedName
+}
+
+private fun isAbsolutePath(path: String): Boolean {
+    val normalized = path.replace('\\', '/')
+    if (normalized.startsWith("/")) {
+        return true
+    }
+    if (normalized.length >= 2 && normalized[1] == ':') {
+        return true
+    }
+    return false
+}
+
+private fun containsParentSegment(path: String): Boolean {
+    val normalized = path.replace('\\', '/')
+    return normalized.split('/').any { it == ".." }
+}
+
+private fun parseWriteOutputFileSpec(raw: String): Pair<String, String> {
+    val separator = raw.indexOf('=')
+    if (separator == -1) {
+        throw CliException("write-output-file expects name=path", kind = CliErrorKind.USAGE)
+    }
+    val name = raw.substring(0, separator).trim()
+    val path = raw.substring(separator + 1).trim()
+    if (name.isBlank() || path.isBlank()) {
+        throw CliException("write-output-file expects name=path", kind = CliErrorKind.USAGE)
+    }
+    return name to path
+}
+
+private fun parseSharedSpec(kind: SharedInputKind, raw: String): SharedInputSpec {
+    val first = raw.indexOf('=')
+    if (first == -1) throw CliException("Shared mapping must be resource=path", kind = CliErrorKind.USAGE)
+    val second = raw.indexOf('=', startIndex = first + 1)
+    return if (second == -1) {
+        SharedInputSpec(kind, raw.substring(0, first), raw.substring(first + 1))
+    } else {
+        SharedInputSpec(
+            kind,
+            raw.substring(0, first),
+            raw.substring(second + 1),
+            raw.substring(first + 1, second),
+        )
+    }
+}
+
+private fun validateSharedSpecs(sharedOptions: SharedOptions) {
+    if (sharedOptions.keyMode != SharedKeyMode.CUSTOM) return
+    val missing = sharedOptions.inputs.firstOrNull { it.customKey.isNullOrBlank() }
+    if (missing != null) {
+        throw CliException(
+            "Shared key mode custom requires '<resource>=<key>=<path>'",
+            kind = CliErrorKind.USAGE,
+        )
+    }
+}
+
+private fun parseJobs(raw: String): Int {
+    val value = raw.toIntOrNull() ?: throw CliException("Invalid jobs value '$raw'", kind = CliErrorKind.USAGE)
+    if (value < 1) {
+        throw CliException("jobs must be >= 1", kind = CliErrorKind.USAGE)
+    }
+    return value
+}
+
+internal fun readTextFileOrThrow(path: String): String {
     return try {
         readTextFile(path)
     } catch (ex: Exception) {
@@ -742,7 +1387,7 @@ private fun readTextFileOrThrow(path: String): String {
     }
 }
 
-private fun writeTextFileOrThrow(path: String, contents: String) {
+internal fun writeTextFileOrThrow(path: String, contents: String) {
     try {
         writeTextFile(path, contents)
     } catch (ex: Exception) {

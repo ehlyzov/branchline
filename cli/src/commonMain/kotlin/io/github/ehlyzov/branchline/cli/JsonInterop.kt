@@ -16,8 +16,7 @@ private val compactJson = Json
 
 fun parseJsonInput(text: String): Map<String, Any?> {
     if (text.isBlank()) return emptyMap()
-    val element = compactJson.parseToJsonElement(text)
-    val parsed = fromJsonElement(element)
+    val parsed = parseJsonValue(text)
     require(parsed is Map<*, *>) { "Input JSON must be an object" }
     val result = LinkedHashMap<String, Any?>(parsed.size)
     for ((key, value) in parsed) {
@@ -25,6 +24,12 @@ fun parseJsonInput(text: String): Map<String, Any?> {
         result[key] = value
     }
     return result
+}
+
+fun parseJsonValue(text: String): Any? {
+    if (text.isBlank()) return null
+    val element = compactJson.parseToJsonElement(text)
+    return fromJsonElement(element)
 }
 
 fun formatJson(value: Any?, pretty: Boolean = true): String {

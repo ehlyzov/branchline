@@ -73,7 +73,19 @@ jobs:
       - name: Summarize interpreter tests
         id: summary
         if: ${{ always() }}
-        run: node .github/scripts/junit-summary.mjs interpreter
+        run: |
+          java -jar "$BRANCHLINE_CLI_JAR" .github/scripts/junit-summary.bl \
+            --transform FileSummary \
+            --summary-transform Summary \
+            --shared-glob "reports=interpreter/build/test-results/**/*.xml" \
+            --shared-format xml \
+            --shared-key relative \
+            --jobs 4 \
+            --output-file build/branchline-junit-summary.json \
+            --output-format json-compact
+          echo "status=$(jq -r '.status' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
+          echo "tests=$(jq -r '.tests' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
+          echo "color=$(jq -r '.color' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
 
       - name: Update interpreter badge
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -151,7 +163,19 @@ jobs:
       - name: Summarize VM tests
         id: summary
         if: ${{ always() }}
-        run: node .github/scripts/junit-summary.mjs vm
+        run: |
+          java -jar "$BRANCHLINE_CLI_JAR" .github/scripts/junit-summary.bl \
+            --transform FileSummary \
+            --summary-transform Summary \
+            --shared-glob "reports=vm/build/test-results/**/*.xml" \
+            --shared-format xml \
+            --shared-key relative \
+            --jobs 4 \
+            --output-file build/branchline-junit-summary.json \
+            --output-format json-compact
+          echo "status=$(jq -r '.status' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
+          echo "tests=$(jq -r '.tests' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
+          echo "color=$(jq -r '.color' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
 
       - name: Update VM badge
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -229,7 +253,19 @@ jobs:
       - name: Summarize conformance tests
         id: summary
         if: ${{ always() }}
-        run: node .github/scripts/junit-summary.mjs conformance-tests
+        run: |
+          java -jar "$BRANCHLINE_CLI_JAR" .github/scripts/junit-summary.bl \
+            --transform FileSummary \
+            --summary-transform Summary \
+            --shared-glob "reports=conformance-tests/build/test-results/**/*.xml" \
+            --shared-format xml \
+            --shared-key relative \
+            --jobs 4 \
+            --output-file build/branchline-junit-summary.json \
+            --output-format json-compact
+          echo "status=$(jq -r '.status' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
+          echo "tests=$(jq -r '.tests' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
+          echo "color=$(jq -r '.color' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
 
       - name: Update conformance badge
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
@@ -293,7 +329,19 @@ jobs:
       - name: Summarize CLI tests
         id: summary
         if: ${{ always() }}
-        run: node .github/scripts/junit-summary.mjs cli
+        run: |
+          java -jar "$BRANCHLINE_CLI_JAR" .github/scripts/junit-summary.bl \
+            --transform FileSummary \
+            --summary-transform Summary \
+            --shared-glob "reports=cli/build/test-results/**/*.xml" \
+            --shared-format xml \
+            --shared-key relative \
+            --jobs 4 \
+            --output-file build/branchline-junit-summary.json \
+            --output-format json-compact
+          echo "status=$(jq -r '.status' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
+          echo "tests=$(jq -r '.tests' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
+          echo "color=$(jq -r '.color' build/branchline-junit-summary.json)" >> "$GITHUB_OUTPUT"
 
       - name: Update CLI badge
         if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}

@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Persistent SharedStore backed by MapDB.
  */
-class MapDBSharedStore(path: File) : SharedStore {
+class MapDBSharedStore(path: File) : SharedStore, SharedStoreSync {
     private val db: DB = DBMaker.fileDB(path).fileMmapEnableIfSupported().transactionEnable().closeOnJvmShutdown().make()
 
     private val kinds = db.hashMap("__kinds__", Serializer.STRING, Serializer.STRING).createOrOpen()
@@ -90,6 +90,13 @@ class MapDBSharedStore(path: File) : SharedStore {
         db.commit()
     }
 
+    override fun setOnceSync(resource: String, key: String, value: Any?): Boolean =
+        kotlinx.coroutines.runBlocking { setOnce(resource, key, value) }
+
+    override fun putSync(resource: String, key: String, value: Any?) {
+        kotlinx.coroutines.runBlocking { put(resource, key, value) }
+    }
+
     private fun kindOf(resource: String): SharedResourceKind =
         kinds[resource]?.let { SharedResourceKind.valueOf(it) }
             ?: throw IllegalArgumentException("Unknown shared resource: $resource")
@@ -103,4 +110,3 @@ class MapDBSharedStore(path: File) : SharedStore {
         awaiters.remove(id)?.forEach { it.complete(value) }
     }
 }
-

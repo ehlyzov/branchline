@@ -29,6 +29,7 @@ class StdStringsModule : StdModule {
         r.fn("UPPER", ::fnUPPER)
         r.fn("LOWER", ::fnLOWER)
         r.fn("TRIM", ::fnTRIM)
+        r.fn("FORMAT", ::fnFORMAT)
     }
 }
 
@@ -155,6 +156,81 @@ private fun fnTRIM(args: List<Any?>): Any {
     require(args.size == 1) { "TRIM(str)" }
     val s = args[0] as? String ?: error("TRIM: arg must be string")
     return s.trim()
+}
+
+private fun fnFORMAT(args: List<Any?>): Any {
+    require(args.size == 2) { "FORMAT(template, args)" }
+    val template = args[0] as? String ?: error("FORMAT: template must be string")
+    val values = args[1]
+    val list = values as? List<*>
+    val map = values as? Map<*, *>
+    if (list == null && map == null) {
+        error("FORMAT: args must be list or object")
+    }
+    val out = StringBuilder(template.length)
+    var i = 0
+    while (i < template.length) {
+        val ch = template[i]
+        when (ch) {
+            '{' -> {
+                if (i + 1 < template.length && template[i + 1] == '{') {
+                    out.append('{')
+                    i += 2
+                    continue
+                }
+                val end = template.indexOf('}', startIndex = i + 1)
+                if (end == -1) {
+                    out.append('{')
+                    i += 1
+                    continue
+                }
+                val key = template.substring(i + 1, end)
+                val resolved = resolveFormatValue(key, list, map)
+                if (resolved.found) {
+                    out.append(resolved.value?.toString() ?: "null")
+                } else {
+                    out.append('{').append(key).append('}')
+                }
+                i = end + 1
+            }
+            '}' -> {
+                if (i + 1 < template.length && template[i + 1] == '}') {
+                    out.append('}')
+                    i += 2
+                } else {
+                    out.append('}')
+                    i += 1
+                }
+            }
+            else -> {
+                out.append(ch)
+                i += 1
+            }
+        }
+    }
+    return out.toString()
+}
+
+private data class FormatValue(val found: Boolean, val value: Any?)
+
+private fun resolveFormatValue(
+    key: String,
+    list: List<*>?,
+    map: Map<*, *>?,
+): FormatValue {
+    if (list != null) {
+        val index = key.toIntOrNull()
+        if (index != null && index in list.indices) {
+            return FormatValue(true, list[index])
+        }
+    }
+    if (map != null) {
+        val match = map.keys.firstOrNull { it?.toString() == key }
+        if (match != null) {
+            return FormatValue(true, map[match])
+        }
+    }
+    return FormatValue(false, null)
 }
 
 private val intMin = blBigIntParse(Int.MIN_VALUE.toString())

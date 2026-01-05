@@ -1,6 +1,13 @@
+SHARED reports MANY;
+
 TRANSFORM FileSummary {
-    LET direct = LISTIFY(input.testsuite);
-    LET container = input.testsuites ?? input;
+    LET payload = CASE {
+        WHEN input.key == NULL THEN input
+        ELSE AWAIT_SHARED("reports", input.key)
+    };
+
+    LET direct = LISTIFY(payload.testsuite);
+    LET container = payload.testsuites ?? payload;
     LET branch = CASE {
         WHEN container == NULL THEN []
         WHEN container.testsuite == NULL THEN LISTIFY(container)

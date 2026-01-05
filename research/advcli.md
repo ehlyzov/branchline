@@ -21,15 +21,16 @@ Goal: replace `.github/scripts/*.mjs` with Branchline scripts executed by the CL
   - `--shared-key relative|basename|custom` to control key names.
 - To get the list of keys in a known `SHARED` slot use existing `KEYS` function, make sure that it works for SHARED too.
 - Add `--output-path` (or `--output-field`) to print a value from the JSON output, with `--output-raw` to avoid JSON encoding when needed. This covers the `{ "answer": 42 } -> 42` requirement.
-- Add `--write-output` mapping or a convention like `OUTPUT { files: [{ path, contents }] }` so the CLI writes files to disk for report generation (jmh report, junit summary artifacts).
-- Add `--github-output` or `--set-output` behavior to write selected output fields to the `GITHUB_OUTPUT` file when present.
+- Add `--output-file <path>` to write the selected output to disk (path can be a file or directory).
+- Add `--output-lines <path>` to write JSON Lines output when a transform produces a list (one line per element).
+- Add `--write-output-dir` / `--write-output-file` so the CLI writes `OUTPUT.files` entries to disk without paths embedded in transforms (ex: `OUTPUT { files: { "jmh-summary.md": markdown } }`).
 - Add `--jobs N` to process per-file transforms in parallel (fan-out in the CLI), then merge results with a summary transform. Cap concurrency for deterministic ordering and memory control.
 
 ## 4. Other important things
 - Create new Branchline scripts to replace the Node ones:
-  - `cli/scripts/jmh-report.bl` to emit markdown + csv strings.
-  - `cli/scripts/jmh-gate.bl` to emit pass/fail + failures list.
-  - Update `cli/scripts/junit-file-summary.bl` and `cli/scripts/junit-summary.bl` to read inputs from `SHARED` instead of filesystem paths.
+  - `.github/scripts/jmh-report.bl` to emit markdown + csv strings.
+  - `.github/scripts/jmh-gate.bl` to emit pass/fail + failures list.
+  - Update `.github/scripts/junit-file-summary.bl` and `.github/scripts/junit-summary.bl` to read inputs from `SHARED` instead of filesystem paths.
 - Update CI workflows to call `bl` with the new shared IO flags and remove `.github/scripts/*.mjs`.
 - Add CLI tests for shared mapping, output-path extraction, file-writing, and parallel fan-out; add conformance tests for any new language syntax.
 - Update docs in `docs/guides/cli.md` and `docs/language/` to explain shared IO, new stdlib functions, and the new CLI options.

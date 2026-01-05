@@ -1,0 +1,118 @@
+SHARED reports MANY;
+
+TRANSFORM Summary {
+
+    // Accept both XML-derived maps (attrs as strings) and JSON-derived native types.
+    LET payload = input.reports ?? input.testsuites ?? input.testsuite ?? input;
+    LET reports = LISTIFY(payload);
+
+    LET totals = { tests: 0, failures: 0, errors: 0, skipped: 0 };
+    LET count = 0;
+    LET failed = 0;
+
+    FOR report IN reports {
+        LET tests = report.tests ?? 0;
+        LET failures = report.failures ?? 0;
+        LET errors = report.errors ?? 0;
+        LET skipped = report.skipped ?? 0;
+
+        SET totals.tests = totals.tests + tests;
+        SET totals.failures = totals.failures + failures;
+        SET totals.errors = totals.errors + errors;
+        SET totals.skipped = totals.skipped + skipped;
+
+        SET failed = failed + failures + errors;
+        SET count = count + 1;
+    }
+
+    LET status = CASE {
+        WHEN totals.tests == 0 THEN "error"
+        WHEN failed == 0 THEN "passing"
+        ELSE "failing"
+    };
+
+    LET summary = STRING(totals.tests) + " tests";
+    IF failed > 0 THEN {
+        SET summary = summary + ", " + STRING(failed) + " failed";
+    }
+    IF totals.skipped > 0 THEN {
+        SET summary = summary + ", " + STRING(totals.skipped) + " skipped";
+    }
+
+    LET colors = { passing: "44cc11", failing: "e05d44", error: "f39c12" };
+    LET color = GET(colors, status, "9f9f9f");
+
+    OUTPUT {
+        status: status,
+        tests: summary,
+        color: color,
+        reports: count,
+        failed: failed,
+        totals: totals
+    };
+}
+
+TRANSFORM FileSummary {
+    LET payload = CASE {
+        WHEN input.key == NULL THEN input
+        ELSE AWAIT_SHARED("reports", input.key)
+    };
+
+    LET direct = LISTIFY(payload.testsuite);
+    LET container = payload.testsuites ?? payload;
+    LET branch = CASE {
+        WHEN container == NULL THEN []
+        WHEN container.testsuite == NULL THEN LISTIFY(container)
+        ELSE LISTIFY(container.testsuite)
+    }
+    LET suites = FLATTEN([direct, branch])
+
+    LET totals = { tests: 0, failures: 0, errors: 0, skipped: 0 }
+    LET suiteCount = 0
+
+    FOR suite IN suites {
+        SET suiteCount = suiteCount + 1
+
+        LET attrs = [
+            { key: "tests", value: suite["@tests"] },
+            { key: "failures", value: suite["@failures"] },
+            { key: "errors", value: suite["@errors"] },
+            { key: "skipped", value: suite["@skipped"] },
+        ]
+
+        FOR attr IN attrs {
+            LET value = PARSE_INT(attr.value, 0)
+            SET totals = PUT(totals, attr.key, GET(totals, attr.key, 0) + value)
+        }
+    }
+
+    LET failed = totals.failures + totals.errors
+    LET status = CASE {
+        WHEN totals.tests == 0 THEN "error"
+        WHEN failed == 0 THEN "passing"
+        ELSE "failing"
+    };
+
+    LET summary = STRING(totals.tests) + " tests";
+    IF failed > 0 THEN {
+        SET summary = summary + ", " + STRING(failed) + " failed";
+    }
+    IF totals.skipped > 0 THEN {
+        SET summary = summary + ", " + STRING(totals.skipped) + " skipped";
+    }
+
+    LET colors = { passing: "44cc11", failing: "e05d44", error: "f39c12" };
+    LET color = GET(colors, status, "9f9f9f");
+
+    OUTPUT {
+        suites: suiteCount,
+        tests: totals.tests,
+        failures: totals.failures,
+        errors: totals.errors,
+        skipped: totals.skipped,
+        failed: failed,
+        status: status,
+        summary: summary,
+        color: color
+    };
+}

@@ -1,6 +1,7 @@
 package io.github.ehlyzov.branchline.ir
 
 import io.github.ehlyzov.branchline.*
+import io.github.ehlyzov.branchline.std.DEFAULT_SHARED_KEY
 
 /** Линейно превращает список Stmt в список IR-нод. */
 class ToIR(
@@ -54,6 +55,15 @@ class ToIR(
         is ExprStmt -> listOf(IRExprStmt(s.expr))
         is SetVarStmt -> listOf(IRSetVar(s.name, s.value))
         is AppendToVarStmt -> listOf(IRAppendVar(s.name, s.value, s.init))
+        is SharedWriteStmt -> listOf(IRExprStmt(buildSharedWriteCall(s)))
         else -> error("Stmt kind ${s::class.simpleName} unsupported in STREAM")
+    }
+
+    private fun buildSharedWriteCall(stmt: SharedWriteStmt): Expr {
+        val token = stmt.token
+        val callee = IdentifierExpr("SHARED_WRITE", token)
+        val resourceExpr = StringExpr(stmt.resource, token)
+        val keyExpr = stmt.key ?: StringExpr(DEFAULT_SHARED_KEY, token)
+        return CallExpr(callee, listOf(resourceExpr, keyExpr, stmt.value), token)
     }
 }
