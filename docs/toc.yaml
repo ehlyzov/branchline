@@ -40,6 +40,8 @@ items:
         href: guides/install.md
       - name: Getting Started
         href: guides/getting-started.md
+      - name: Examples
+        href: guides/examples.md
       - name: Branchline CLI
         href: guides/cli.md
       - name: FOR EACH Loops

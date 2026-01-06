@@ -20,6 +20,7 @@ import io.github.ehlyzov.branchline.std.StdLib
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -29,6 +30,7 @@ import org.junit.jupiter.api.Test
 internal class ComplexGraphTransformsTest {
     @Test
     public fun `shortest path uses shared single state`() = runBlocking(Dispatchers.Default) {
+        val graph = buildShortestPathGraph(Random(0), nodeCount = 128, extraEdges = 256)
         val sharedStore = DefaultSharedStore().apply {
             addResource("distances", SharedResourceKind.SINGLE)
             addResource("parents", SharedResourceKind.SINGLE)
@@ -39,38 +41,40 @@ internal class ComplexGraphTransformsTest {
             val context = buildProgramContext(SHORTEST_PATH_DSL)
             val edgeExec = buildExec(context, "EdgeIngest", sharedStore)
             val queryExec = buildExec(context, "ShortestPath", sharedStore)
-            val source = 1
-            val target = 6
 
-            sharedStore.setOnce("distances", nodeKey(source), 0)
+            sharedStore.setOnce("distances", nodeKey(graph.start), 0)
 
-            val edges = listOf(
-                Edge(src = 2, dst = 4),
-                Edge(src = 4, dst = 6),
-                Edge(src = 1, dst = 2),
-                Edge(src = 1, dst = 3),
-                Edge(src = 3, dst = 5),
-            ).shuffled(Random(0))
-
-            val jobs = edges.map { edge ->
-                async {
-                    val output = edgeExec.run(edgeEnv(edge)) as Map<*, *>
-                    val toId = requireInt(output["dst"], "dst")
-                    val distance = requireInt(output["distance"], "distance")
-                    val parent = requireInt(output["parent"], "parent")
-                    val distanceWritten = sharedStore.setOnce("distances", nodeKey(toId), distance)
-                    val parentWritten = sharedStore.setOnce("parents", nodeKey(toId), parent)
-                    assertTrue(distanceWritten, "distance already set for node $toId")
-                    assertTrue(parentWritten, "parent already set for node $toId")
+            val edgesByLevel = graph.edges.groupBy { graph.levels[it.src] }.toSortedMap()
+            for ((_, edges) in edgesByLevel) {
+                val jobs = edges.map { edge ->
+                    async {
+                        val output = edgeExec.run(edgeEnv(edge)) as Map<*, *>
+                        val toId = requireInt(output["dst"], "dst")
+                        val distance = requireInt(output["distance"], "distance")
+                        val parent = requireInt(output["parent"], "parent")
+                        val distanceWritten = sharedStore.setOnce("distances", nodeKey(toId), distance)
+                        if (distanceWritten) {
+                            val parentWritten = sharedStore.setOnce("parents", nodeKey(toId), parent)
+                            assertTrue(parentWritten, "parent already set for node $toId")
+                        }
+                    }
                 }
+                jobs.awaitAll()
             }
-            jobs.awaitAll()
 
-            val queryOutput = queryExec.run(queryEnv(source, target)) as Map<*, *>
+            val queryOutput = queryExec.run(queryEnv(graph.start, graph.target)) as Map<*, *>
             val distance = requireInt(queryOutput["distance"], "distance")
             val path = requireIntList(queryOutput["path"], "path")
-            assertEquals(3, distance)
-            assertEquals(listOf(1, 2, 4, 6), path)
+            val expectedPath = buildPath(graph.start, graph.target, graph.parents)
+            assertEquals(graph.levels[graph.target], distance)
+            assertEquals(expectedPath, path)
+
+            val distancesSnapshot = sharedStore.snapshot()["distances"].orEmpty()
+            graph.levels.forEachIndexed { node, level ->
+                val stored = distancesSnapshot[nodeKey(node)]
+                    ?: error("Missing distance for node $node")
+                assertEquals(level, requireInt(stored, "distances[$node]"))
+            }
         } finally {
             SharedStoreProvider.store = previousStore
         }
@@ -78,6 +82,7 @@ internal class ComplexGraphTransformsTest {
 
     @Test
     public fun `weighted tree metrics combine root and leaf passes`() = runBlocking(Dispatchers.Default) {
+        val tree = buildWeightedTree(Random(1), nodeCount = 12)
         val sharedStore = DefaultSharedStore().apply {
             addResource("rootDistance", SharedResourceKind.SINGLE)
             addResource("leafDistance", SharedResourceKind.SINGLE)
@@ -87,55 +92,34 @@ internal class ComplexGraphTransformsTest {
         try {
             val context = buildProgramContext(WEIGHTED_TREE_DSL)
             val rootExec = buildExec(context, "RootDistanceIngest", sharedStore)
-            val leafExec = buildExec(context, "LeafDistanceIngest", sharedStore)
+            val leafExec = buildExec(context, "LeafDistanceNode", sharedStore)
             val metricsExec = buildExec(context, "EdgeMetrics", sharedStore)
 
-            val edges = listOf(
-                WeightedEdge(src = 0, dst = 1, weight = 0),
-                WeightedEdge(src = 1, dst = 2, weight = 5),
-                WeightedEdge(src = 2, dst = 3, weight = 7),
-                WeightedEdge(src = 3, dst = 0, weight = 11),
-            )
+            runRootDistancePass(tree, rootExec, sharedStore)
+            runLeafDistancePass(tree, leafExec, sharedStore)
 
-            val rootJobs = edges.shuffled(Random(1)).map { edge ->
-                async {
-                    val output = rootExec.run(edgeEnv(edge)) as Map<*, *>
-                    val toId = requireInt(output["dst"], "dst")
-                    val rootSum = requireInt(output["rootSum"], "rootSum")
-                    val stored = sharedStore.setOnce("rootDistance", nodeKey(toId), rootSum)
-                    assertTrue(stored, "rootDistance already set for node $toId")
-                }
-            }
-            rootJobs.awaitAll()
-
-            val leafJobs = edges.shuffled(Random(2)).map { edge ->
-                async {
-                    val output = leafExec.run(edgeEnv(edge)) as Map<*, *>
-                    val fromId = requireInt(output["src"], "src")
-                    val leafSum = requireInt(output["leafSum"], "leafSum")
-                    val stored = sharedStore.setOnce("leafDistance", nodeKey(fromId), leafSum)
-                    assertTrue(stored, "leafDistance already set for node $fromId")
-                }
-            }
-            leafJobs.awaitAll()
-
-            val expected = mapOf(
-                EdgeKey(src = 0, dst = 1) to ExpectedMetrics(rootSum = 0, leafSum = 23),
-                EdgeKey(src = 1, dst = 2) to ExpectedMetrics(rootSum = 5, leafSum = 23),
-                EdgeKey(src = 2, dst = 3) to ExpectedMetrics(rootSum = 12, leafSum = 18),
-                EdgeKey(src = 3, dst = 0) to ExpectedMetrics(rootSum = 23, leafSum = 11),
-            )
-
-            edges.forEach { edge ->
+            tree.edges.forEach { edge ->
                 val output = metricsExec.run(edgeEnv(edge)) as Map<*, *>
                 val fromId = requireInt(output["src"], "src")
                 val toId = requireInt(output["dst"], "dst")
                 val rootSum = requireInt(output["rootSum"], "rootSum")
                 val leafSum = requireInt(output["leafSum"], "leafSum")
-                val expectedMetrics = expected[EdgeKey(src = fromId, dst = toId)]
-                    ?: error("Missing expected metrics for edge ($fromId, $toId)")
-                assertEquals(expectedMetrics.rootSum, rootSum)
-                assertEquals(expectedMetrics.leafSum, leafSum)
+                assertEquals(tree.rootDistances[toId], rootSum)
+                assertEquals(tree.leafDistances[fromId], leafSum)
+            }
+
+            val rootSnapshot = sharedStore.snapshot()["rootDistance"].orEmpty()
+            tree.nodes.forEach { node ->
+                val stored = rootSnapshot[nodeKey(node)]
+                    ?: error("Missing rootDistance for node $node")
+                assertEquals(tree.rootDistances[node], requireInt(stored, "rootDistance[$node]"))
+            }
+
+            val leafSnapshot = sharedStore.snapshot()["leafDistance"].orEmpty()
+            tree.nodes.forEach { node ->
+                val stored = leafSnapshot[nodeKey(node)]
+                    ?: error("Missing leafDistance for node $node")
+                assertEquals(tree.leafDistances[node], requireInt(stored, "leafDistance[$node]"))
             }
         } finally {
             SharedStoreProvider.store = previousStore
@@ -143,58 +127,40 @@ internal class ComplexGraphTransformsTest {
     }
 
     @Test
-    public fun `rebuilds graph from streamed edges`() = runBlocking(Dispatchers.Default) {
+    public fun `reconstructs full tree from task 2 shared state`() = runBlocking(Dispatchers.Default) {
+        val tree = buildWeightedTree(Random(2), nodeCount = 10)
         val sharedStore = DefaultSharedStore().apply {
-            addResource("graph", SharedResourceKind.SINGLE)
+            addResource("rootDistance", SharedResourceKind.SINGLE)
+            addResource("leafDistance", SharedResourceKind.SINGLE)
+            addResource("children", SharedResourceKind.SINGLE)
         }
         val previousStore = SharedStoreProvider.store
         SharedStoreProvider.store = sharedStore
         try {
-            val context = buildProgramContext(GRAPH_REBUILD_DSL)
-            val rebuildExec = buildExec(context, "GraphRebuild", sharedStore)
-            val snapshotExec = buildExec(context, "GraphSnapshot", sharedStore)
+            val weightedContext = buildProgramContext(WEIGHTED_TREE_DSL)
+            val rootExec = buildExec(weightedContext, "RootDistanceIngest", sharedStore)
+            val leafExec = buildExec(weightedContext, "LeafDistanceNode", sharedStore)
 
-            val edges = listOf(
-                WeightedEdge(src = 0, dst = 1, weight = 0),
-                WeightedEdge(src = 1, dst = 2, weight = 5),
-                WeightedEdge(src = 2, dst = 3, weight = 7),
-                WeightedEdge(src = 3, dst = 0, weight = 11),
-            )
+            runRootDistancePass(tree, rootExec, sharedStore)
+            runLeafDistancePass(tree, leafExec, sharedStore)
 
-            edges.forEach { edge ->
-                val output = rebuildExec.run(edgeEnv(edge)) as Map<*, *>
-                val fromId = requireInt(output["src"], "src")
-                val toId = requireInt(output["dst"], "dst")
-                val weight = requireInt(output["weight"], "weight")
-                val stored = sharedStore.setOnce(
-                    "graph",
-                    nodeKey(fromId),
+            tree.nodes.forEach { nodeId ->
+                val children = tree.childrenByParent[nodeId].orEmpty().map { edge ->
                     mapOf(
-                        "to" to toId,
-                        "weight" to weight,
-                    ),
-                )
-                assertTrue(stored, "graph already set for node $fromId")
+                        "id" to edge.dst,
+                        "weight" to edge.weight,
+                    )
+                }
+                val stored = sharedStore.setOnce("children", nodeKey(nodeId), children)
+                assertTrue(stored, "children already set for node $nodeId")
             }
 
-            val snapshot = snapshotExec.run(nodesEnv(listOf(0, 1, 2, 3))) as Map<*, *>
-            val graph = requireList(snapshot["graph"], "graph")
-            val actual = LinkedHashMap<Int, WeightedEdgeInfo>(graph.size)
-            for (entry in graph) {
-                val entryMap = requireMap(entry, "graph entry")
-                val fromId = requireInt(entryMap["src"], "src")
-                val edgeMap = requireMap(entryMap["edge"], "edge")
-                val toId = requireInt(edgeMap["to"], "edge.to")
-                val weight = requireInt(edgeMap["weight"], "edge.weight")
-                actual[fromId] = WeightedEdgeInfo(to = toId, weight = weight)
-            }
+            val snapshotContext = buildProgramContext(TREE_SNAPSHOT_DSL)
+            val snapshotExec = buildExec(snapshotContext, "TreeSnapshot", sharedStore)
 
-            val expected = linkedMapOf(
-                0 to WeightedEdgeInfo(to = 1, weight = 0),
-                1 to WeightedEdgeInfo(to = 2, weight = 5),
-                2 to WeightedEdgeInfo(to = 3, weight = 7),
-                3 to WeightedEdgeInfo(to = 0, weight = 11),
-            )
+            val snapshot = snapshotExec.run(rootEnv(tree.rootId)) as Map<*, *>
+            val actual = parseTreeNode(snapshot["tree"])
+            val expected = buildExpectedTree(tree, tree.rootId)
             assertEquals(expected, actual)
         } finally {
             SharedStoreProvider.store = previousStore
@@ -213,19 +179,36 @@ private data class WeightedEdge(
     val weight: Int,
 )
 
-private data class EdgeKey(
-    val src: Int,
-    val dst: Int,
+private data class GraphSpec(
+    val start: Int,
+    val target: Int,
+    val edges: List<Edge>,
+    val levels: IntArray,
+    val parents: IntArray,
 )
 
-private data class ExpectedMetrics(
-    val rootSum: Int,
-    val leafSum: Int,
+private data class WeightedTreeSpec(
+    val rootId: Int,
+    val nodes: List<Int>,
+    val rootEdge: WeightedEdge,
+    val edges: List<WeightedEdge>,
+    val childrenByParent: Map<Int, List<WeightedEdge>>,
+    val depthByNode: IntArray,
+    val rootDistances: IntArray,
+    val leafDistances: IntArray,
+    val leafWeights: IntArray,
 )
 
-private data class WeightedEdgeInfo(
-    val to: Int,
+private data class ExpectedTreeEdge(
     val weight: Int,
+    val node: ExpectedTreeNode,
+)
+
+private data class ExpectedTreeNode(
+    val id: Int,
+    val rootDistance: Int,
+    val leafDistance: Int,
+    val children: List<ExpectedTreeEdge>,
 )
 
 private data class ProgramContext(
@@ -271,6 +254,278 @@ private fun buildExec(
     return Exec(ir, eval)
 }
 
+private fun buildShortestPathGraph(
+    random: Random,
+    nodeCount: Int,
+    extraEdges: Int,
+): GraphSpec {
+    val start = random.nextInt(nodeCount)
+    val parents = IntArray(nodeCount) { -1 }
+    val levels = IntArray(nodeCount) { -1 }
+    val childrenByParent = mutableMapOf<Int, MutableList<Int>>()
+    val remainingNodes = (0 until nodeCount).filter { it != start }.toMutableList()
+    val queue = ArrayDeque<Int>()
+    levels[start] = 0
+    queue.add(start)
+    var ensuredBranch = false
+
+    while (remainingNodes.isNotEmpty()) {
+        val parent = queue.removeFirst()
+        val remaining = remainingNodes.size
+        val maxChildren = minOf(3, remaining)
+        val minChildren = if (!ensuredBranch && parent == start && remaining >= 2) 2 else 1
+        val childCount = minChildren + random.nextInt(maxChildren - minChildren + 1)
+        repeat(childCount) {
+            val index = random.nextInt(remainingNodes.size)
+            val child = remainingNodes.removeAt(index)
+            parents[child] = parent
+            levels[child] = levels[parent] + 1
+            childrenByParent.getOrPut(parent) { mutableListOf() }.add(child)
+            queue.add(child)
+        }
+        ensuredBranch = true
+    }
+
+    val edges = mutableListOf<Edge>()
+    childrenByParent.forEach { (parent, childList) ->
+        childList.forEach { child ->
+            edges.add(Edge(src = parent, dst = child))
+        }
+    }
+
+    val edgeSet = edges.toMutableSet()
+    val targetEdges = edges.size + extraEdges
+    var attempts = 0
+    while (edgeSet.size < targetEdges && attempts < extraEdges * 10) {
+        val src = random.nextInt(nodeCount)
+        val dst = random.nextInt(nodeCount)
+        if (src == dst) {
+            attempts += 1
+            continue
+        }
+        if (levels[dst] > levels[src]) {
+            attempts += 1
+            continue
+        }
+        val edge = Edge(src = src, dst = dst)
+        if (edgeSet.add(edge)) {
+            edges.add(edge)
+        }
+        attempts += 1
+    }
+
+    val target = if (nodeCount > 1) {
+        val pick = random.nextInt(nodeCount - 1)
+        if (pick >= start) pick + 1 else pick
+    } else {
+        start
+    }
+    return GraphSpec(
+        start = start,
+        target = target,
+        edges = edges,
+        levels = levels,
+        parents = parents,
+    )
+}
+
+private fun buildWeightedTree(
+    random: Random,
+    nodeCount: Int,
+): WeightedTreeSpec {
+    val rootId = 1
+    val nodes = (1..nodeCount).toList()
+    val depthByNode = IntArray(nodeCount + 1) { -1 }
+    val childrenByParent = mutableMapOf<Int, MutableList<WeightedEdge>>()
+    val edges = mutableListOf<WeightedEdge>()
+    val queue = ArrayDeque<Int>()
+    depthByNode[rootId] = 0
+    queue.add(rootId)
+    var nextNode = rootId + 1
+    var ensuredBranch = false
+
+    while (nextNode <= nodeCount) {
+        val parent = queue.removeFirst()
+        val remaining = nodeCount - nextNode + 1
+        if (remaining <= 0) continue
+        val maxChildren = minOf(3, remaining)
+        val minChildren = if (!ensuredBranch && parent == rootId && remaining >= 2) 2 else 1
+        val childCount = minChildren + random.nextInt(maxChildren - minChildren + 1)
+        repeat(childCount) {
+            if (nextNode > nodeCount) return@repeat
+            val child = nextNode++
+            val weight = random.nextInt(1, 9)
+            val edge = WeightedEdge(src = parent, dst = child, weight = weight)
+            edges.add(edge)
+            childrenByParent.getOrPut(parent) { mutableListOf() }.add(edge)
+            depthByNode[child] = depthByNode[parent] + 1
+            queue.add(child)
+        }
+        ensuredBranch = true
+    }
+
+    val leafWeights = IntArray(nodeCount + 1)
+    nodes.forEach { node ->
+        val children = childrenByParent[node].orEmpty()
+        if (children.isEmpty()) {
+            val weight = random.nextInt(1, 9)
+            leafWeights[node] = weight
+        }
+    }
+
+    val rootEdge = WeightedEdge(src = 0, dst = rootId, weight = 0)
+    val rootDistances = IntArray(nodeCount + 1) { -1 }
+    rootDistances[rootId] = rootEdge.weight
+    val rootQueue = ArrayDeque<Int>()
+    rootQueue.add(rootId)
+    while (rootQueue.isNotEmpty()) {
+        val node = rootQueue.removeFirst()
+        val base = rootDistances[node]
+        childrenByParent[node].orEmpty().forEach { edge ->
+            rootDistances[edge.dst] = base + edge.weight
+            rootQueue.add(edge.dst)
+        }
+    }
+
+    val leafDistances = IntArray(nodeCount + 1) { -1 }
+    val nodesByDepth = nodes.sortedByDescending { depthByNode[it] }
+    nodesByDepth.forEach { node ->
+        val children = childrenByParent[node].orEmpty()
+        if (children.isEmpty()) {
+            leafDistances[node] = leafWeights[node]
+        } else {
+            var best = Int.MAX_VALUE
+            children.forEach { edge ->
+                val candidate = edge.weight + leafDistances[edge.dst]
+                if (candidate < best) {
+                    best = candidate
+                }
+            }
+            leafDistances[node] = best
+        }
+    }
+
+    return WeightedTreeSpec(
+        rootId = rootId,
+        nodes = nodes,
+        rootEdge = rootEdge,
+        edges = edges,
+        childrenByParent = childrenByParent,
+        depthByNode = depthByNode,
+        rootDistances = rootDistances,
+        leafDistances = leafDistances,
+        leafWeights = leafWeights,
+    )
+}
+
+private suspend fun runRootDistancePass(
+    tree: WeightedTreeSpec,
+    exec: Exec,
+    sharedStore: SharedStore,
+) {
+    val rootOutput = exec.run(edgeEnv(tree.rootEdge)) as Map<*, *>
+    val rootId = requireInt(rootOutput["dst"], "dst")
+    val rootSum = requireInt(rootOutput["rootSum"], "rootSum")
+    val rootStored = sharedStore.setOnce("rootDistance", nodeKey(rootId), rootSum)
+    assertTrue(rootStored, "rootDistance already set for node $rootId")
+
+    val edgesByDepth = tree.edges.groupBy { tree.depthByNode[it.src] }.toSortedMap()
+    for ((_, edges) in edgesByDepth) {
+        coroutineScope {
+            val jobs = edges.map { edge ->
+                async {
+                    val output = exec.run(edgeEnv(edge)) as Map<*, *>
+                    val toId = requireInt(output["dst"], "dst")
+                    val rootSumEdge = requireInt(output["rootSum"], "rootSum")
+                    val stored = sharedStore.setOnce("rootDistance", nodeKey(toId), rootSumEdge)
+                    assertTrue(stored, "rootDistance already set for node $toId")
+                }
+            }
+            jobs.awaitAll()
+        }
+    }
+}
+
+private suspend fun runLeafDistancePass(
+    tree: WeightedTreeSpec,
+    exec: Exec,
+    sharedStore: SharedStore,
+) {
+    val nodesByDepth = tree.nodes.sortedByDescending { tree.depthByNode[it] }
+    nodesByDepth.forEach { nodeId ->
+        val children = tree.childrenByParent[nodeId].orEmpty().map { edge ->
+            mapOf(
+                "id" to edge.dst,
+                "weight" to edge.weight,
+            )
+        }
+        val childEntries = if (children.isEmpty()) {
+            listOf(
+                mapOf(
+                    "id" to 0,
+                    "weight" to tree.leafWeights[nodeId],
+                )
+            )
+        } else {
+            children
+        }
+        val output = exec.run(nodeEnv(nodeId, childEntries)) as Map<*, *>
+        val outNode = requireInt(output["nodeId"], "nodeId")
+        val leafSum = requireInt(output["leafSum"], "leafSum")
+        val stored = sharedStore.setOnce("leafDistance", nodeKey(outNode), leafSum)
+        assertTrue(stored, "leafDistance already set for node $outNode")
+    }
+}
+
+private fun buildPath(start: Int, target: Int, parents: IntArray): List<Int> {
+    val path = ArrayDeque<Int>()
+    var node = target
+    while (node != start) {
+        path.addFirst(node)
+        val parent = parents[node]
+        require(parent >= 0) { "Missing parent for node $node" }
+        node = parent
+    }
+    path.addFirst(start)
+    return path.toList()
+}
+
+private fun buildExpectedTree(tree: WeightedTreeSpec, nodeId: Int): ExpectedTreeNode {
+    val childrenEdges = tree.childrenByParent[nodeId].orEmpty()
+    val children = childrenEdges.map { edge ->
+        ExpectedTreeEdge(
+            weight = edge.weight,
+            node = buildExpectedTree(tree, edge.dst),
+        )
+    }
+    return ExpectedTreeNode(
+        id = nodeId,
+        rootDistance = tree.rootDistances[nodeId],
+        leafDistance = tree.leafDistances[nodeId],
+        children = children,
+    )
+}
+
+private fun parseTreeNode(value: Any?): ExpectedTreeNode {
+    val nodeMap = requireMap(value, "tree")
+    val id = requireInt(nodeMap["id"], "id")
+    val rootDistance = requireInt(nodeMap["rootDistance"], "rootDistance")
+    val leafDistance = requireInt(nodeMap["leafDistance"], "leafDistance")
+    val childrenList = requireList(nodeMap["children"], "children")
+    val children = childrenList.mapIndexed { index, entry ->
+        val childMap = requireMap(entry, "children[$index]")
+        val weight = requireInt(childMap["weight"], "children[$index].weight")
+        val node = parseTreeNode(childMap["node"])
+        ExpectedTreeEdge(weight = weight, node = node)
+    }
+    return ExpectedTreeNode(
+        id = id,
+        rootDistance = rootDistance,
+        leafDistance = leafDistance,
+        children = children,
+    )
+}
+
 private fun edgeEnv(edge: Edge): MutableMap<String, Any?> {
     return mutableMapOf(
         "row" to mapOf(
@@ -290,6 +545,15 @@ private fun edgeEnv(edge: WeightedEdge): MutableMap<String, Any?> {
     )
 }
 
+private fun nodeEnv(nodeId: Int, children: List<Map<String, Any?>>): MutableMap<String, Any?> {
+    return mutableMapOf(
+        "row" to mapOf(
+            "nodeId" to nodeId,
+            "children" to children,
+        ),
+    )
+}
+
 private fun queryEnv(source: Int, target: Int): MutableMap<String, Any?> {
     return mutableMapOf(
         "row" to mapOf(
@@ -299,10 +563,10 @@ private fun queryEnv(source: Int, target: Int): MutableMap<String, Any?> {
     )
 }
 
-private fun nodesEnv(nodes: List<Int>): MutableMap<String, Any?> {
+private fun rootEnv(rootId: Int): MutableMap<String, Any?> {
     return mutableMapOf(
         "row" to mapOf(
-            "nodes" to nodes,
+            "root" to rootId,
         ),
     )
 }
@@ -396,14 +660,16 @@ private val WEIGHTED_TREE_DSL = """
         };
     }
 
-    TRANSFORM LeafDistanceIngest { LET edge = row;
-        LET fromId = edge.src;
-        LET toId = edge.dst;
-        LET weight = edge.weight;
-        LET leafSum = IF toId == 0 THEN weight ELSE (AWAIT_SHARED("leafDistance", NodeKey(toId)) + weight);
+    TRANSFORM LeafDistanceNode { LET node = row;
+        LET nodeId = node.nodeId;
+        LET children = node.children;
+        LET options = [
+            IF c.id == 0 THEN c.weight ELSE (c.weight + AWAIT_SHARED("leafDistance", NodeKey(c.id)))
+            FOR EACH c IN children
+        ];
+        LET leafSum = MIN(options);
         OUTPUT {
-            src: fromId,
-            dst: toId,
+            nodeId: nodeId,
             leafSum: leafSum
         };
     }
@@ -422,27 +688,34 @@ private val WEIGHTED_TREE_DSL = """
     }
 """.trimIndent()
 
-private val GRAPH_REBUILD_DSL = """
-    SHARED graph SINGLE;
+private val TREE_SNAPSHOT_DSL = """
+    SHARED rootDistance SINGLE;
+    SHARED leafDistance SINGLE;
+    SHARED children SINGLE;
 
     FUNC NodeKey(id) {
         RETURN "node:" + id;
     }
 
-    TRANSFORM GraphRebuild { LET edge = row;
-        LET fromId = edge.src;
-        LET toId = edge.dst;
-        LET weight = edge.weight;
-        OUTPUT {
-            src: fromId,
-            dst: toId,
-            weight: weight
+    FUNC BuildNode(id) {
+        LET rootSum = AWAIT_SHARED("rootDistance", NodeKey(id));
+        LET leafSum = AWAIT_SHARED("leafDistance", NodeKey(id));
+        LET kids = AWAIT_SHARED("children", NodeKey(id));
+        LET built = [
+            { weight: c.weight, node: BuildNode(c.id) }
+            FOR EACH c IN kids
+        ];
+        RETURN {
+            id: id,
+            rootDistance: rootSum,
+            leafDistance: leafSum,
+            children: built
         };
     }
 
-    TRANSFORM GraphSnapshot { LET query = row;
-        LET nodes = query.nodes;
-        LET entries = [ { src: n, edge: AWAIT_SHARED("graph", NodeKey(n)) } FOR EACH n IN nodes ];
-        OUTPUT { graph: entries };
+    TRANSFORM TreeSnapshot { LET query = row;
+        LET rootId = query.root;
+        LET tree = BuildNode(rootId);
+        OUTPUT { tree: tree };
     }
 """.trimIndent()
