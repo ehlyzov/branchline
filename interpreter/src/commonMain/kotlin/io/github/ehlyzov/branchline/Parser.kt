@@ -67,6 +67,39 @@ object NumOps {
 }
 
 class Parser(tokens: List<Token>, private val source: String? = null) {
+    private companion object {
+        private val SOFT_KEYWORD_TYPES: Set<TokenType> = setOf(
+            TokenType.ABORT,
+            TokenType.APPEND,
+            TokenType.AS,
+            TokenType.BACKOFF,
+            TokenType.BUFFER,
+            TokenType.CALL,
+            TokenType.ENUM,
+            TokenType.FOREACH,
+            TokenType.FUNC,
+            TokenType.INIT,
+            TokenType.LET,
+            TokenType.MANY,
+            TokenType.MODIFY,
+            TokenType.OUTPUT,
+            TokenType.RETRY,
+            TokenType.RETURN,
+            TokenType.SET,
+            TokenType.SHARED,
+            TokenType.SINGLE,
+            TokenType.SOURCE,
+            TokenType.STREAM,
+            TokenType.THROW,
+            TokenType.TIMES,
+            TokenType.TO,
+            TokenType.TRANSFORM,
+            TokenType.TYPE,
+            TokenType.UNION,
+            TokenType.USING,
+        )
+    }
+
     private val toks = tokens
     private var current = 0
 
@@ -92,7 +125,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
 
     private fun parseTransform(): TransformDecl {
         val start = advance() // TRANSFORM
-        val nameTok = if (check(TokenType.IDENTIFIER)) advance() else null
+        val nameTok = if (checkName()) advance() else null
 
         val params = mutableListOf<String>()
         var signature: TransformSignature? = null
@@ -101,7 +134,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             val paramTypes = mutableListOf<TransformParam>()
             if (!check(TokenType.RIGHT_PAREN)) {
                 do {
-                    val paramTok = consume(TokenType.IDENTIFIER, "Expect parameter name in transform signature")
+                    val paramTok = consumeName("Expect parameter name in transform signature")
                     consume(TokenType.COLON, "Expect ':' after transform parameter name")
                     val paramType = parseTypeExpr()
                     params += paramTok.lexeme
@@ -153,7 +186,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     }
 
     private fun parseAdapter(): AdapterSpec {
-        val nameTok = consume(TokenType.IDENTIFIER, "Expect adapter name after USING")
+        val nameTok = consumeName("Expect adapter name after USING")
         val args = mutableListOf<Expr>()
         if (match(TokenType.LEFT_PAREN)) {
             if (!check(TokenType.RIGHT_PAREN)) {
@@ -170,7 +203,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     // SHARED cache SINGLE ;
     private fun parseShared(): SharedDecl {
         val sharedTok = consume(TokenType.SHARED, "Expect 'SHARED'.")
-        val nameTok = consume(TokenType.IDENTIFIER, "Expect shared memory name.")
+        val nameTok = consumeName("Expect shared memory name.")
 
         val kind = when {
             match(TokenType.SINGLE) -> SharedKind.SINGLE
@@ -185,14 +218,14 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     // FUNC newId(prefix) = expr ;     |     FUNC sum(a,b) { … }
     private fun parseFunc(): FuncDecl {
         val funcTok = consume(TokenType.FUNC, "Expect 'FUNC'.")
-        val nameTok = consume(TokenType.IDENTIFIER, "Expect function name.")
+        val nameTok = consumeName("Expect function name.")
 
         // ( param, … )
         consume(TokenType.LEFT_PAREN, "Expect '(' after function name.")
         val params = mutableListOf<String>()
         if (!check(TokenType.RIGHT_PAREN)) {
             do {
-                params += consume(TokenType.IDENTIFIER, "Expect parameter name.").lexeme
+                params += consumeName("Expect parameter name.").lexeme
             } while (match(TokenType.COMMA))
         }
         consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
@@ -214,7 +247,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     // TYPE Color = enum { RED, GREEN } ;     |     TYPE Id = union String | Number ;
     private fun parseType(): TypeDecl {
         val typeTok = consume(TokenType.TYPE, "Expect 'TYPE'.")
-        val nameTok = consume(TokenType.IDENTIFIER, "Expect type name.")
+        val nameTok = consumeName("Expect type name.")
         consume(TokenType.ASSIGN, "Expect '=' after type name.")
 
         val defs = mutableListOf<String>()
@@ -222,7 +255,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             match(TokenType.ENUM) -> {
                 consume(TokenType.LEFT_BRACE, "Expect '{' after 'enum'.")
                 do {
-                    defs += consume(TokenType.IDENTIFIER, "Expect enum label.").lexeme
+                    defs += consumeName("Expect enum label.").lexeme
                 } while (match(TokenType.COMMA))
                 consume(TokenType.RIGHT_BRACE, "Expect '}' after enum body.")
                 TypeKind.ENUM
@@ -231,7 +264,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             match(TokenType.UNION) -> {
                 // последовательно <Ident> ( '|' <Ident> )*
                 do {
-                    defs += consume(TokenType.IDENTIFIER, "Expect union member type.").lexeme
+                    defs += consumeName("Expect union member type.").lexeme
                 } while (match(TokenType.PIPE))
                 TypeKind.UNION
             }
@@ -263,10 +296,13 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     }
 
     private fun parseTypeTerm(): TypeRef = when {
-        match(TokenType.ENUM) -> parseEnumType(previous())
+        check(TokenType.ENUM) && checkNext(TokenType.LEFT_BRACE) -> {
+            advance()
+            parseEnumType(previous())
+        }
         match(TokenType.LEFT_BRACE) -> parseRecordType(previous())
         match(TokenType.LEFT_BRACKET) -> parseListType(previous())
-        match(TokenType.IDENTIFIER) -> parseSimpleType(previous())
+        matchName() -> parseSimpleType(previous())
         else -> error(peek(), "Expect type")
     }
 
@@ -275,7 +311,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val values = mutableListOf<String>()
         if (!check(TokenType.RIGHT_BRACE)) {
             while (true) {
-                val valueTok = consume(TokenType.IDENTIFIER, "Expect enum value")
+                val valueTok = consumeName("Expect enum value")
                 values += valueTok.lexeme
                 if (!match(TokenType.COMMA)) break
                 if (check(TokenType.RIGHT_BRACE)) break
@@ -289,7 +325,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val fields = mutableListOf<RecordFieldType>()
         if (!check(TokenType.RIGHT_BRACE)) {
             while (true) {
-                val fieldTok = consume(TokenType.IDENTIFIER, "Expect record field name")
+                val fieldTok = consumeName("Expect record field name")
                 val optional = match(TokenType.QUESTION)
                 consume(TokenType.COLON, "Expect ':' after record field name")
                 val fieldType = parseTypeExpr()
@@ -372,7 +408,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     // --------------- внутри Parser -----------------
 
     private fun parseLet(): LetStmt {
-        val nameTok = consume(TokenType.IDENTIFIER, "Expect identifier after LET")
+        val nameTok = consumeName("Expect identifier after LET")
         consume(TokenType.ASSIGN, "Expect '=' in LET statement")
         val expr = parseExpression()
         optionalSemicolon()
@@ -380,7 +416,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     }
 
     private fun isSharedWriteStart(): Boolean {
-        if (!check(TokenType.IDENTIFIER) || !checkNext(TokenType.LEFT_BRACKET)) return false
+        if (!checkName() || !checkNext(TokenType.LEFT_BRACKET)) return false
         var idx = current + 2
         var depth = 1
         while (idx < toks.size) {
@@ -402,7 +438,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     }
 
     private fun parseSharedWrite(): SharedWriteStmt {
-        val nameTok = consume(TokenType.IDENTIFIER, "Expect shared resource name")
+        val nameTok = consumeName("Expect shared resource name")
         consume(TokenType.LEFT_BRACKET, "Expect '[' after shared resource name")
         val keyExpr = if (check(TokenType.RIGHT_BRACKET)) null else parseExpression()
         consume(TokenType.RIGHT_BRACKET, "Expect ']' after shared key")
@@ -441,11 +477,11 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
                         val valueExpr = parseExpression()
                         updates += ComputedProperty(keyExpr, valueExpr)
                     }
-                    // b) literal property: IDENTIFIER | STRING | NUMBER : expr
+                    // b) literal property: NAME | STRING | NUMBER : expr
                     else -> {
                         val keyTok = when {
                             match(TokenType.STRING) -> previous()
-                            match(TokenType.IDENTIFIER) -> previous()
+                            matchName() -> previous()
                             match(TokenType.NUMBER) -> previous()
                             // дружелюбная ошибка для отрицательных числовых ключей
                             check(TokenType.MINUS) -> {
@@ -463,10 +499,10 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
                             else -> error(peek(), "Expect field key in MODIFY")
                         }
 
-                        val key: ObjKey = when (keyTok.type) {
-                            TokenType.STRING -> ObjKey.Name(keyTok.lexeme.trim('"'))
-                            TokenType.IDENTIFIER -> ObjKey.Name(keyTok.lexeme)
-                            TokenType.NUMBER -> parseIntKey(keyTok.lexeme) // I32/I64/IBig
+                        val key: ObjKey = when {
+                            keyTok.type == TokenType.STRING -> ObjKey.Name(keyTok.lexeme.trim('"'))
+                            keyTok.type == TokenType.NUMBER -> parseIntKey(keyTok.lexeme) // I32/I64/IBig
+                            isNameType(keyTok.type) -> ObjKey.Name(keyTok.lexeme)
                             else -> error(keyTok, "Invalid field key in MODIFY")
                         }
 
@@ -532,7 +568,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     // FOR EACH --------------------------------------------------------
     private fun parseForEach(forTok: Token): ForEachStmt {
         match(TokenType.EACH)
-        val varTok = consume(TokenType.IDENTIFIER, "Expect loop variable name")
+        val varTok = consumeName("Expect loop variable name")
         consume(TokenType.IN, "Expect IN after loop variable")
         val iterable = parseExpression()
         val whereExpr = if (match(TokenType.WHERE)) parseExpression() else null
@@ -558,8 +594,8 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val tryExpr = parseExpression()
         consume(TokenType.CATCH, "Expect CATCH after TRY expression")
         consume(TokenType.LEFT_PAREN, "Expect '(' after CATCH")
-        val excTok = consume(TokenType.IDENTIFIER, "Expect exception variable")
-        if (match(TokenType.COLON)) consume(TokenType.IDENTIFIER, "Expect type name after ':'")
+        val excTok = consumeName("Expect exception variable")
+        if (match(TokenType.COLON)) consumeName("Expect type name after ':'")
         consume(TokenType.RIGHT_PAREN, "Expect ')' after CATCH")
         var retry: Int? = null
         var backoff: String? = null
@@ -788,7 +824,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
                 check(TokenType.DOT) && checkNext(TokenType.LEFT_BRACKET) -> {
                     advance() // '.'
                     val lbr = consume(TokenType.LEFT_BRACKET, "Expect '[' after '.'")
-                    val first = consume(TokenType.IDENTIFIER, "Expect identifier after '.['")
+                    val first = consumeName("Expect identifier after '.['")
 
                     // строим базу пути-ключа
                     var keyExpr: Expr = IdentifierExpr(first.lexeme, first)
@@ -797,14 +833,17 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
                     // далее читаем .(IDENT|NUMBER)* внутри скобок
                     while (match(TokenType.DOT)) {
                         val segTok = when {
-                            match(TokenType.IDENTIFIER) -> previous()
+                            matchName() -> previous()
                             match(TokenType.NUMBER) -> previous()
                             else -> error(peek(), "Expect name or index inside '.[' … ']'")
                         }
                         val seg = when (segTok.type) {
-                            TokenType.IDENTIFIER -> AccessSeg.Static(ObjKey.Name(segTok.lexeme))
                             TokenType.NUMBER -> AccessSeg.Static(parseIntKey(segTok.lexeme))
-                            else -> error(segTok, "Invalid segment inside '.[' … ']'")
+                            else -> if (isNameType(segTok.type)) {
+                                AccessSeg.Static(ObjKey.Name(segTok.lexeme))
+                            } else {
+                                error(segTok, "Invalid segment inside '.[' … ']'")
+                            }
                         }
                         keySegs += seg
                     }
@@ -821,17 +860,20 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
                     tokenForNode = lbr
                 }
 
-                // ---- .segment (IDENTIFIER | NUMBER) ----
+                // ---- .segment (NAME | NUMBER) ----
                 match(TokenType.DOT) -> {
                     val segTok = when {
-                        match(TokenType.IDENTIFIER) -> previous()
+                        matchName() -> previous()
                         match(TokenType.NUMBER) -> previous()
                         else -> error(peek(), "Expect property name or index after '.'")
                     }
                     segs += when (segTok.type) {
-                        TokenType.IDENTIFIER -> AccessSeg.Static(ObjKey.Name(segTok.lexeme))
                         TokenType.NUMBER -> AccessSeg.Static(parseIntKey(segTok.lexeme))
-                        else -> error(segTok, "Invalid path segment after '.'")
+                        else -> if (isNameType(segTok.type)) {
+                            AccessSeg.Static(ObjKey.Name(segTok.lexeme))
+                        } else {
+                            error(segTok, "Invalid path segment after '.'")
+                        }
                     }
                     tokenForNode = segTok
                 }
@@ -875,18 +917,12 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
 
     private fun parsePrimary(): Expr {
         val tok = advance()
+        if (isNameToken(tok)) {
+            return IdentifierExpr(tok.lexeme, tok)
+        }
         return when (tok.type) {
             TokenType.CASE -> parseCase(tok)
             TokenType.TRY -> parseTryCatchExpr(tok)
-            TokenType.APPEND -> {
-                val t = previous()
-                // опционально: подсказка, если дальше не '('
-                if (!check(TokenType.LEFT_PAREN)) {
-                    error(t, "Expect '(' to call function APPEND")
-                }
-                IdentifierExpr("APPEND", t)
-            }
-            TokenType.IDENTIFIER -> IdentifierExpr(tok.lexeme, tok)
             TokenType.STRING -> StringExpr(tok.lexeme.trim('"'), tok)
             TokenType.NUMBER -> {
                 val tok = previous()
@@ -936,11 +972,11 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             i++ // ')'
             return i < toks.size && toks[i].type == TokenType.ARROW
         }
-        if (toks[i].type != TokenType.IDENTIFIER) return false
+        if (!isNameType(toks[i].type)) return false
         i++ // first param
         while (i < toks.size && toks[i].type == TokenType.COMMA) {
             i++
-            if (i >= toks.size || toks[i].type != TokenType.IDENTIFIER) return false
+            if (i >= toks.size || !isNameType(toks[i].type)) return false
             i++
         }
         if (i >= toks.size || toks[i].type != TokenType.RIGHT_PAREN) return false
@@ -952,7 +988,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val lparen = previous()
         val params = mutableListOf<String>()
         if (!check(TokenType.RIGHT_PAREN)) {
-            do { params += consume(TokenType.IDENTIFIER, "Expect parameter name").lexeme }
+            do { params += consumeName("Expect parameter name").lexeme }
             while (match(TokenType.COMMA))
         }
         consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters")
@@ -998,7 +1034,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         // comprehension?
         return if (match(TokenType.FOR)) {
             consume(TokenType.EACH, "Expect EACH after FOR")
-            val varTok = consume(TokenType.IDENTIFIER, "Expect loop variable")
+            val varTok = consumeName("Expect loop variable")
             consume(TokenType.IN, "Expect IN after loop variable")
             val iter = parseExpression()
             val whereExpr = if (match(TokenType.WHERE)) parseExpression() else null
@@ -1036,7 +1072,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
                         // literal key: IDENT | STRING | NUMBER (целое ≥ 0)
                         val keyTok = when {
                             match(TokenType.STRING) -> previous()
-                            match(TokenType.IDENTIFIER) -> previous()
+                            matchName() -> previous()
                             match(TokenType.NUMBER) -> previous()
                             // дружелюбная ошибка для отрицательных числовых ключей
                             check(TokenType.MINUS) -> {
@@ -1054,10 +1090,10 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
                             else -> error(peek(), "Expect field key in object literal")
                         }
 
-                        val key: ObjKey = when (keyTok.type) {
-                            TokenType.STRING -> ObjKey.Name(keyTok.lexeme.trim('"'))
-                            TokenType.IDENTIFIER -> ObjKey.Name(keyTok.lexeme)
-                            TokenType.NUMBER -> parseIntKey(keyTok.lexeme) // I32 | I64 | IBig
+                        val key: ObjKey = when {
+                            keyTok.type == TokenType.STRING -> ObjKey.Name(keyTok.lexeme.trim('"'))
+                            keyTok.type == TokenType.NUMBER -> parseIntKey(keyTok.lexeme) // I32 | I64 | IBig
+                            isNameType(keyTok.type) -> ObjKey.Name(keyTok.lexeme)
                             else -> error(keyTok, "Invalid object key")
                         }
 
@@ -1090,6 +1126,26 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             TokenType.RIGHT_BRACE -> true
             else -> false
         }
+    }
+
+    private fun isNameType(type: TokenType): Boolean =
+        type == TokenType.IDENTIFIER || type in SOFT_KEYWORD_TYPES
+
+    private fun isNameToken(token: Token): Boolean = isNameType(token.type)
+
+    private fun checkName(): Boolean = isNameType(peek().type)
+
+    private fun matchName(): Boolean {
+        if (checkName()) {
+            advance()
+            return true
+        }
+        return false
+    }
+
+    private fun consumeName(message: String): Token {
+        if (checkName()) return advance()
+        error(peek(), message)
     }
 
     private fun match(vararg types: TokenType): Boolean {

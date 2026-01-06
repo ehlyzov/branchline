@@ -3,49 +3,64 @@ program          ::= versionDecl? importDecl* topDecl* EOF ;
 
 versionDecl      ::= "#!branchline" VERSION                                  ;
 
-importDecl       ::= **IMPORT** STRING ( **AS** IDENTIFIER )? **;**          ;
+importDecl       ::= **IMPORT** STRING ( **AS** name )? **;**                ;
 
 topDecl          ::= transformDecl | funcDecl | typeDecl | sharedDecl | **;** ;
+
+#---------------------------------------------------------------------------
+# Lexical helpers
+#---------------------------------------------------------------------------
+
+# IDENTIFIER also includes backtick-escaped names (for example, `if`).
+name             ::= IDENTIFIER | softKeyword                               ;
+softKeyword      ::= **ABORT** | **APPEND** | **AS** | **BACKOFF**
+                   | **buffer** | **CALL** | **enum** | **FOREACH**
+                   | **FUNC** | **INIT** | **LET** | **MANY**
+                   | **MODIFY** | **OUTPUT** | **RETRY** | **RETURN**
+                   | **SET** | **SHARED** | **SINGLE** | **SOURCE**
+                   | **stream** | **THROW** | **TIMES** | **TO**
+                   | **TRANSFORM** | **TYPE** | **union** | **USING**       ;
 
 #---------------------------------------------------------------------------
 # Transforms
 #---------------------------------------------------------------------------
 
-transformDecl    ::= annotation* **TRANSFORM** IDENTIFIER? transformSig?
+transformDecl    ::= annotation* **TRANSFORM** name? transformSig?
                      transformMode? block                                     ;
 
-annotation       ::= **@** IDENTIFIER                                        ;
+annotation       ::= **@** name                                              ;
 transformMode    ::= "{" ( **stream** | **buffer** ) "}"                    ;
 transformSig     ::= "(" transformParamList? ")" "->" typeExpr              ;
 transformParamList ::= transformParam ( "," transformParam )*               ;
-transformParam   ::= IDENTIFIER ":" typeExpr                                 ;
+transformParam   ::= name ":" typeExpr                                       ;
 
 #---------------------------------------------------------------------------
 # Shared memory
 #---------------------------------------------------------------------------
 
-sharedDecl       ::= **SHARED** IDENTIFIER ( **SINGLE** | **MANY** )? **;**  ;
+sharedDecl       ::= **SHARED** name ( **SINGLE** | **MANY** )? **;**        ;
 
 #---------------------------------------------------------------------------
 # Functions & Types
 #---------------------------------------------------------------------------
 
-funcDecl         ::= **FUNC** IDENTIFIER "(" paramList? ")" funcBody         ;
-paramList        ::= IDENTIFIER ( "," IDENTIFIER )*                          ;
+funcDecl         ::= **FUNC** name "(" paramList? ")" funcBody               ;
+paramList        ::= name ( "," name )*                                      ;
 funcBody         ::= "=" expression | block                                  ;
 
-typeDecl         ::= **TYPE** IDENTIFIER "=" typeExpr **;**                  ;
+typeDecl         ::= **TYPE** name "=" typeExpr **;**                        ;
 typeExpr         ::= typeTerm ( "|" typeTerm )*                              ;
 typeTerm         ::= enumType | recordType | listType
                    | placeholderType | simpleType                            ;
 enumType         ::= **enum** "{" enumVal ("," enumVal)* "}"                 ;
-enumVal          ::= IDENTIFIER                                              ;
+# "enum" is treated as a type literal only when followed by "{"
+enumVal          ::= name                                                    ;
 recordType       ::= "{" recordField ("," recordField)* "}"                  ;
-recordField      ::= IDENTIFIER ["?"] ":" typeExpr                           ;
+recordField      ::= name ["?"] ":" typeExpr                                 ;
 listType         ::= "[" typeExpr "]"                                        ;
 placeholderType  ::= "_" ["?"]                                               ;
 simpleType       ::= **string** | **number** | **boolean** | **null**
-                   | IDENTIFIER                                              ;
+                   | name                                                    ;
 
 #---------------------------------------------------------------------------
 # Blocks  (braces **or** off-side  INDENT / DEDENT tokens)
@@ -58,12 +73,12 @@ statement        ::= letStmt | ifStmt | forStmt | tryStmt | callStmt
                    | sharedWrite | suspendStmt | abortStmt | throwStmt
                    | nestedOutput | expressionStmt | **;**                   ;
 
-letStmt          ::= **LET** IDENTIFIER "=" expression **;**                 ;
+letStmt          ::= **LET** name "=" expression **;**                       ;
 ifStmt           ::= **IF** expression block ( **ELSE** block )?             ;
-forStmt          ::= ( **FOR EACH** | **FOR** ) IDENTIFIER **IN** expression
+forStmt          ::= ( **FOR EACH** | **FOR** ) name **IN** expression
                      ( **WHERE** expression )? block                        ;
-tryStmt          ::= **TRY** expression **CATCH** "(" IDENTIFIER ")" retrySpec? arrow expression ;
-callStmt         ::= optAwait **CALL** IDENTIFIER "(" argList? ")" arrow IDENTIFIER **;** ;
+tryStmt          ::= **TRY** expression **CATCH** "(" name ")" retrySpec? arrow expression ;
+callStmt         ::= optAwait **CALL** name "(" argList? ")" arrow name **;** ;
 optAwait         ::= **AWAIT**?                                              ;
 arrow            ::= "->" | "=>"                                             ;
 retrySpec        ::= **RETRY** NUMBER **TIMES** ( **BACKOFF** STRING )?       ;
@@ -72,15 +87,15 @@ appendStmt       ::= **APPEND** **TO** setTarget expression
                      ( **INIT** expression )? **;**                          ;
 modifyStmt       ::= **MODIFY** modifyTarget modifyBlock **;**               ;
 returnStmt       ::= **RETURN** expression? **;**                            ;
-sharedWrite      ::= IDENTIFIER "[" expression? "]" "=" expression **;**     ;
+sharedWrite      ::= name "[" expression? "]" "=" expression **;**           ;
 suspendStmt      ::= **SUSPEND** expression **;**                            ;
 abortStmt       ::= 'ABORT' expression? ';'                                  ;
 throwStmt       ::= 'THROW' expression? ';'                                  ;
 nestedOutput     ::= **OUTPUT** expression                                   ;
 expressionStmt   ::= expression **;**                                        ;
 
-setTarget        ::= IDENTIFIER pathSeg*                                     ;
-modifyTarget     ::= IDENTIFIER ("." IDENTIFIER)*                            ;
+setTarget        ::= name pathSeg*                                           ;
+modifyTarget     ::= name ("." name)*                                        ;
 modifyBlock      ::= "{" modifyField (("," | ";") modifyField)* [(","|";")] "}" ;
 modifyField      ::= fieldKey ":" expression
                    | "[" expression "]" ":" expression                       ;
@@ -101,9 +116,9 @@ factor           ::= unary  ( ( "*" | "/" | "%" ) unary )*                   ;
 unary            ::= ( "!" | "-" | **AWAIT** | **SUSPEND** ) unary
                    | primary                                                ;
 
-primary          ::= literal | pathExpr | IDENTIFIER | funCall | arrayLit
+primary          ::= literal | pathExpr | name | funCall | arrayLit
                    | objectLit | caseExpr | tryExpr | "(" expression ")" | lambdaExpr ;
-tryExpr          ::= **TRY** expression **CATCH** "(" IDENTIFIER ")" retrySpec? arrow expression ;
+tryExpr          ::= **TRY** expression **CATCH** "(" name ")" retrySpec? arrow expression ;
 
 caseExpr         ::= **CASE** "{" caseWhen+ caseElse "}"                    ;
 caseWhen         ::= **WHEN** expression **THEN** expression                ;
@@ -111,18 +126,18 @@ caseElse         ::= **ELSE** expression                                    ;
 
 literal          ::= NUMBER | STRING | **TRUE** | **FALSE** | **NULL**       ;
 
-funCall          ::= IDENTIFIER "(" argList? ")"                             ;
+funCall          ::= name "(" argList? ")"                                   ;
 argList          ::= expression ( "," expression )*                          ;
 
 lambdaExpr       ::= "(" paramList? ")" "->" expression                      ;
 
 arrayLit         ::= "[" ( expression ("," expression)* )? "]"
-                   | "[" expression **FOR EACH** IDENTIFIER **IN** expression
+                   | "[" expression **FOR EACH** name **IN** expression
                      ( **WHERE** expression )? "]"                           ;
 
 objectLit        ::= "{" fieldPair ("," fieldPair)* "}"                      ;
 fieldPair        ::= fieldKey ":" expression                                 ;
-fieldKey         ::= IDENTIFIER ["?"] | STRING                               ;
+fieldKey         ::= name ["?"] | STRING                                     ;
 
 #---------------------------------------------------------------------------
 # Paths  ($, identifiers, wildcards, slices, filters)
@@ -130,10 +145,10 @@ fieldKey         ::= IDENTIFIER ["?"] | STRING                               ;
 
 pathExpr         ::= "$"        pathSeg*                                     |
                      **INPUT**  pathSeg*                                     |
-                     IDENTIFIER pathSeg*                                     ;
+                     name pathSeg*                                           ;
 
 pathSeg          ::= "." "*"?                    # *.name  or  .*
-                   | "." IDENTIFIER
+                   | "." name
                    | "[" slice  "]"
                    | "[" predicate "]"                                      ;
 

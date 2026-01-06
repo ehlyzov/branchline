@@ -131,6 +131,7 @@ class Lexer(private val source: String) {
                     match('*') -> blockComment(startLine, startCol)
                     else -> add(TokenType.SLASH, "/", startLine, startCol)
                 }
+                '`' -> backtickIdentifier(startLine, startCol)
                 '"' -> string(startLine, startCol)
                 '\n' -> { line++; column = 1 }
                 ' ', '\r', '\t' -> {}
@@ -196,6 +197,19 @@ class Lexer(private val source: String) {
         if (isAtEnd()) errorToken("Unterminated string", startLine, startCol)
         advance()
         add(TokenType.STRING, "\"${sb}\"", startLine, startCol)
+    }
+
+    private fun backtickIdentifier(startLine: Int, startCol: Int) {
+        if (isAtEnd()) errorToken("Unterminated identifier", startLine, startCol)
+        val sb = StringBuilder()
+        while (!isAtEnd() && peek() != '`') {
+            if (peek() == '\n') errorToken("Unterminated identifier", startLine, startCol)
+            sb.append(advance())
+        }
+        if (isAtEnd()) errorToken("Unterminated identifier", startLine, startCol)
+        advance()
+        if (sb.isEmpty()) errorToken("Empty identifier", startLine, startCol)
+        add(TokenType.IDENTIFIER, sb.toString(), startLine, startCol)
     }
 
     private fun number(first: Char, startLine: Int, startCol: Int) {
