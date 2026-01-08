@@ -36,6 +36,9 @@ expect fun BLBigDec.toPlainString(): String
 expect fun BLBigDec.toBLBigInt(): BLBigInt
 expect fun BLBigDec.toDouble(): Double
 expect fun BLBigDec.signum(): Int
+expect fun BLBigDec.floor(): BLBigInt
+expect fun BLBigDec.ceil(): BLBigInt
+
 
 // Shared constants to avoid allocations in hot paths
 val BL_BIG_DEC_ZERO: BLBigDec by lazy { blBigDecOfLong(0) }

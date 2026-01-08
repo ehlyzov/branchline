@@ -9,6 +9,7 @@ class StdArraysModule : StdModule {
         r.fn("SORT", ::fnSORT)
         r.fn("RANGE", ::fnRANGE)
         r.fn("ZIP", ::fnZIP)
+        r.fn("REVERSE", ::fnREVERSE)
     }
 }
 
@@ -64,5 +65,19 @@ private fun fnZIP(args: List<Any?>): Any {
     val b = args[1] as? List<*> ?: error("ZIP: second arg must be list")
     val n = minOf(a.size, b.size)
     return (0 until n).map { i -> listOf(a[i], b[i]) }
+}
+
+/**
+ * REVERSE(list)
+ *
+ * Returns a new list containing all elements of the input list, but in reverse
+ * order.  Equivalent to JSONata’s $reverse():contentReference[oaicite:1]{index=1}.
+ */
+private fun fnREVERSE(args: List<Any?>): Any {
+    require(args.size == 1) { "REVERSE(list)" }
+    val src = args[0] as? List<*>
+        ?: error("REVERSE: arg must be list")
+    // Kotlin’s reversed() returns a new list with elements in reverse order
+    return src.reversed()
 }
 

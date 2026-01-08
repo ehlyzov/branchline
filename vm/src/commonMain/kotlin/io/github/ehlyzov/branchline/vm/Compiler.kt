@@ -1078,7 +1078,7 @@ class Compiler(
         if (hasLocal) emit(DUP)
         emit(STORE_VAR(baseName))
         val storeIndex = instructions.lastIndex
-        if (hasLocal) emit(STORE_LOCAL(localIndex!!))
+        if (hasLocal) emit(STORE_LOCAL(localIndex))
         return storeIndex
     }
 

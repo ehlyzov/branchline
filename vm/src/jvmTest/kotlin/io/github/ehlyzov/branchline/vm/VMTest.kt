@@ -117,21 +117,7 @@ class VMTest {
         val expr = NumberLiteral(I32(100), Token(TokenType.NUMBER, "100", 0, 0))
         val letNode = IRLet("result", expr)
 
-        val eval: (Expr, MutableMap<String, Any?>) -> Any? = { expr, env ->
-            when (expr) {
-                is NumberLiteral -> {
-                    val value = expr.value
-                    when (value) {
-                        is I32 -> value.v
-                        else -> 0
-                    }
-                }
-                is IdentifierExpr -> env[expr.name]
-                else -> null
-            }
-        }
-
-        val vmExec = VMExec(listOf(letNode), eval)
+        val vmExec = VMExec(listOf(letNode))
         val env = mutableMapOf<String, Any?>()
 
         // This should either work with VM or fallback to original

@@ -9,9 +9,6 @@ import org.junit.jupiter.api.Test
 import io.github.ehlyzov.branchline.*
 import io.github.ehlyzov.branchline.ir.Exec
 import io.github.ehlyzov.branchline.ir.ToIR
-import io.github.ehlyzov.branchline.ir.TransformRegistry
-import io.github.ehlyzov.branchline.ir.buildTransformDescriptors
-import io.github.ehlyzov.branchline.ir.makeEval
 import io.github.ehlyzov.branchline.std.DefaultSharedStore
 import io.github.ehlyzov.branchline.std.SharedResourceKind
 
@@ -64,19 +61,19 @@ class TreeReconstructionDSLRuntimeTest {
 
         val funcs = program.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
         val hostFns = io.github.ehlyzov.branchline.std.StdLib.fns
-        val transforms = program.decls.filterIsInstance<TransformDecl>()
-        val typeDecls = program.decls.filterIsInstance<TypeDecl>()
-        val descriptors = buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
-
         val ir = ToIR(funcs, hostFns).compile(transform.body.statements)
-        val registry = TransformRegistry(funcs, hostFns, descriptors)
 
         val sharedStore = DefaultSharedStore().apply {
             addResource("nodeParents", SharedResourceKind.SINGLE)
         }
 
-        val eval = makeEval(hostFns, funcs, registry, sharedStore = sharedStore)
-        val exec = Exec(ir, eval)
+        val exec = Exec(
+            ir = ir,
+            hostFns = hostFns,
+            hostFnMeta = io.github.ehlyzov.branchline.std.StdLib.meta,
+            funcs = funcs,
+            sharedStore = sharedStore,
+        )
 
         // Define a small tree; shuffle simulates out-of-order arrival
         data class Edge(val treeId: String, val fromId: String, val toId: String)

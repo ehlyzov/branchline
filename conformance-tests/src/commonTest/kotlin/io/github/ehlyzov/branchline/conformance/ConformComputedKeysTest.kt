@@ -12,7 +12,7 @@ class ConformComputedKeysTest {
             }
         """.trimIndent()
         val runner = buildRunnerFromProgramMP(program)
-        val out = runner(mapOf("key" to "a")) as Map<String, Any?>
+        val out = runner(mapOf("key" to "a")) as Map<*, *>
         assertEquals(mapOf("a" to 1), out["obj"])
     }
 }

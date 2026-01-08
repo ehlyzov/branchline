@@ -5,6 +5,7 @@ import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.Mode
 import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.ir.TransformDescriptor
+import io.github.ehlyzov.branchline.std.HostFnMetadata
 import io.github.ehlyzov.branchline.vm.VMExec
 
 private fun dumpIR(nodes: List<IRNode>, indent: String = "") {
@@ -48,6 +49,7 @@ fun compileStream(
     t: TransformDecl,
     funcs: Map<String, FuncDecl> = emptyMap(),
     hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
+    hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
     transforms: Map<String, TransformDescriptor> = emptyMap(), // обязателен!
     engine: ExecutionEngine = ExecutionEngine.INTERPRETER,
 ): (Map<String, Any?>) -> Any? {
@@ -56,13 +58,21 @@ fun compileStream(
     /* 1. compile AST → IR */
     val irRoot = ToIR(funcs, hostFns).compile(t.body.statements)
 
-    /* 2. prepare registry + eval */
-    val registry = TransformRegistry(funcs, hostFns, transforms)
-    val eval = makeEval(hostFns, funcs, registry)
+    val exec = Exec(
+        ir = irRoot,
+        hostFns = hostFns,
+        hostFnMeta = hostFnMeta,
+        funcs = funcs,
+    )
 
     // 3. choose execution engine
     if (engine == ExecutionEngine.VM) {
-        val vmExec = VMExec(irRoot, eval, hostFns = hostFns, funcs = funcs)
+        val vmExec = VMExec(
+            ir = irRoot,
+            hostFns = hostFns,
+            hostFnMeta = hostFnMeta,
+            funcs = funcs,
+        )
         return { input: Map<String, Any?> ->
             val env = HashMap<String, Any?>().apply {
                 this[io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS] = input
@@ -76,7 +86,6 @@ fun compileStream(
         }
     }
 
-    val exec = Exec(irRoot, eval)
     return { input: Map<String, Any?> ->
         val env = HashMap<String, Any?>().apply {
             this[io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS] = input

@@ -16,7 +16,7 @@ class ConformPathsTest {
             }
         """.trimIndent()
         val runner = buildRunnerFromProgramMP(program)
-        val result = runner(emptyMap()) as Map<String, Any?>
+        val result = runner(emptyMap()) as Map<*, *>
         assertEquals(mapOf("x" to 1, "items" to listOf(2)), result["obj"])
     }
 
@@ -29,7 +29,7 @@ class ConformPathsTest {
             }
         """.trimIndent()
         val runner = buildRunnerFromProgramMP(program)
-        val result = runner(emptyMap()) as Map<String, Any?>
+        val result = runner(emptyMap()) as Map<*, *>
         assertEquals(mapOf("a" to 1, "b" to 3, "c" to 4), result["o"])
     }
 }

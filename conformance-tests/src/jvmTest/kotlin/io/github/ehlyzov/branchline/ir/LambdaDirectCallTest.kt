@@ -72,4 +72,17 @@ class LambdaDirectCallTest {
         )
         assertEquals(mapOf("ys" to listOf(2, 3, 4)), out)
     }
+
+    @EngineTest
+    fun hof_works_indirect(engine: ExecutionEngine) {
+        val out = compileAndRun(
+            """
+            LET fn = (x) -> x + 1;
+            LET ys = MAP([1,2,3], fn);
+            OUTPUT { ys: ys }
+            """.trimIndent(),
+            engine = engine,
+        )
+        assertEquals(mapOf("ys" to listOf(2, 3, 4)), out)
+    }
 }

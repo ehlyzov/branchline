@@ -7,11 +7,12 @@ import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.debug.TraceEvent
 import io.github.ehlyzov.branchline.debug.Tracer
 import io.github.ehlyzov.branchline.ir.Exec
-import io.github.ehlyzov.branchline.ir.TransformRegistry
 import io.github.ehlyzov.branchline.ir.IRExprOutput
 import io.github.ehlyzov.branchline.ir.IRForEach
 import io.github.ehlyzov.branchline.ir.IRIf
 import io.github.ehlyzov.branchline.ir.IRNode
+import io.github.ehlyzov.branchline.std.HostFnMetadata
+import io.github.ehlyzov.branchline.std.SharedStoreProvider
 import kotlin.concurrent.Volatile
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
@@ -28,9 +29,9 @@ import kotlin.time.measureTimedValue
 /** VM-based executor that can replace the current Exec class */
 class VMExec(
     private val ir: List<IRNode>,
-    private val eval: (Expr, MutableMap<String, Any?>) -> Any?, // Fallback evaluator
     private val tracer: Tracer? = null,
     private val hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
+    private val hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
     private val funcs: Map<String, FuncDecl> = emptyMap(),
     private val precompiled: Bytecode? = null,
 ) {
@@ -63,7 +64,16 @@ class VMExec(
         }
 
     // Interpreter fallback is created lazily to avoid work when VM executes successfully
-    private val interpreter: Exec by lazy { Exec(ir, eval, tracer) }
+    private val interpreter: Exec by lazy {
+        Exec(
+            ir = ir,
+            hostFns = hostFns,
+            hostFnMeta = hostFnMeta,
+            funcs = funcs,
+            tracer = tracer,
+            sharedStore = SharedStoreProvider.store,
+        )
+    }
 
     /**
      * Execute IR using VM with fallback to interpreter for unsupported
@@ -106,10 +116,21 @@ class VMExec(
 class VMEval(
     private val funcs: Map<String, FuncDecl> = emptyMap(),
     private val hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
+    private val hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
     private val tracer: Tracer? = null,
 ) {
     private val compiler = Compiler(funcs, hostFns)
     private val vm = VM(hostFns, funcs, tracer)
+    private val fallbackExec: Exec by lazy {
+        Exec(
+            ir = emptyList(),
+            hostFns = hostFns,
+            hostFnMeta = hostFnMeta,
+            funcs = funcs,
+            tracer = tracer,
+            sharedStore = SharedStoreProvider.store,
+        )
+    }
     // We'll need to implement a fallback evaluator or use the existing one
     // For now, we'll create a simple fallback that handles basic cases
 
@@ -129,19 +150,15 @@ class VMEval(
         } catch (e: NotImplementedError) {
             // Fallback to interpreter for unimplemented features
             VMFactory.Metrics.onCompileFailed()
-            val reg = TransformRegistry(funcs, hostFns, emptyMap())
-            val fallback = io.github.ehlyzov.branchline.ir.makeEval(hostFns, funcs, reg, tracer)
             tracer?.on(io.github.ehlyzov.branchline.debug.TraceEvent.Call("FALLBACK", "Interpreter", listOf(expr::class.simpleName)))
-            val out = fallback(expr, env)
+            val out = fallbackExec.eval(expr, env)
             tracer?.on(io.github.ehlyzov.branchline.debug.TraceEvent.Return("FALLBACK", "Interpreter", out))
             out
         } catch (e: Exception) {
             // Log and fallback
             tracer?.on(io.github.ehlyzov.branchline.debug.TraceEvent.Error("VM expression evaluation failed: ${e.message}", e))
-            val reg = TransformRegistry(funcs, hostFns, emptyMap())
-            val fallback = io.github.ehlyzov.branchline.ir.makeEval(hostFns, funcs, reg, tracer)
             tracer?.on(io.github.ehlyzov.branchline.debug.TraceEvent.Call("FALLBACK", "Interpreter", listOf(expr::class.simpleName)))
-            val out = try { fallback(expr, env) } catch (_: Exception) { null }
+            val out = try { fallbackExec.eval(expr, env) } catch (_: Exception) { null }
             tracer?.on(io.github.ehlyzov.branchline.debug.TraceEvent.Return("FALLBACK", "Interpreter", out))
             out
         }
@@ -154,23 +171,24 @@ object VMFactory {
     /** Create a VM-enabled executor with fallback capability */
     fun createExecutor(
         ir: List<IRNode>,
-        eval: (Expr, MutableMap<String, Any?>) -> Any?,
         tracer: Tracer? = null,
         hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
+        hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
         funcs: Map<String, FuncDecl> = emptyMap(),
         useVM: Boolean = true,
     ): VMExec {
-        return VMExec(ir, eval, tracer, hostFns, funcs)
+        return VMExec(ir, tracer, hostFns, hostFnMeta, funcs)
     }
 
     /** Create a VM-enabled evaluator with fallback capability */
     fun createEvaluator(
         funcs: Map<String, FuncDecl> = emptyMap(),
         hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
+        hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
         tracer: Tracer? = null,
         useVM: Boolean = true,
     ): VMEval {
-        return VMEval(funcs, hostFns, tracer)
+        return VMEval(funcs, hostFns, hostFnMeta, tracer)
     }
 
     /** Get VM compilation statistics for performance monitoring */

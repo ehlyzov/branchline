@@ -4,9 +4,11 @@ import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.SharedDecl
 import io.github.ehlyzov.branchline.debug.Tracer
+import io.github.ehlyzov.branchline.std.HostFnMetadata
 import io.github.ehlyzov.branchline.std.SharedResourceHandle
 import io.github.ehlyzov.branchline.std.SharedStoreProvider
 import io.github.ehlyzov.branchline.std.SharedResourceKind
+import io.github.ehlyzov.branchline.std.StdLib
 
 /**
  * Multiplatform-friendly helpers to run IR and build runners without relying on the VM or parser.
@@ -17,14 +19,21 @@ fun runIR(
     ir: List<IRNode>,
     env: MutableMap<String, Any?>,
     hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
+    hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
     funcs: Map<String, FuncDecl> = emptyMap(),
     tracer: Tracer? = null,
     stringifyKeys: Boolean = false,
+    caps: ExecutionCaps = ExecutionCaps.DEFAULT,
 ): Any? {
-    // Set up a minimal registry for transforms. On JVM this delegates to the full actual; on JS we use the JS actual.
-    val reg = TransformRegistry(funcs, hostFns, emptyMap())
-    val eval = makeEval(hostFns, funcs, reg, tracer, sharedStore = SharedStoreProvider.store)
-    val exec = Exec(ir, eval, tracer)
+    val exec = Exec(
+        ir = ir,
+        hostFns = hostFns,
+        hostFnMeta = hostFnMeta,
+        funcs = funcs,
+        tracer = tracer,
+        sharedStore = SharedStoreProvider.store,
+        caps = caps,
+    )
     return exec.run(env, stringifyKeys)
 }
 
@@ -32,8 +41,10 @@ fun runIR(
 fun buildRunnerFromIRMP(
     ir: List<IRNode>,
     hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
+    hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
     funcs: Map<String, FuncDecl> = emptyMap(),
     tracer: Tracer? = null,
+    caps: ExecutionCaps = ExecutionCaps.DEFAULT,
 ): (Map<String, Any?>) -> Any? {
     return { input: Map<String, Any?> ->
         val env = HashMap<String, Any?>().apply {
@@ -44,16 +55,18 @@ fun buildRunnerFromIRMP(
                 this[alias] = input
             }
         }
-        runIR(ir, env, hostFns, funcs, tracer)
+        runIR(ir, env, hostFns, hostFnMeta, funcs, tracer, caps = caps)
     }
 }
 
 /** Build a runner from a full Branchline program listing (STREAM transform). */
 fun buildRunnerFromProgramMP(
     program: String,
-    hostFns: Map<String, (List<Any?>) -> Any?> = io.github.ehlyzov.branchline.std.StdLib.fns,
+    hostFns: Map<String, (List<Any?>) -> Any?> = StdLib.fns,
+    hostFnMeta: Map<String, HostFnMetadata> = StdLib.meta,
     runSema: Boolean = false,
     tracer: Tracer? = null,
+    caps: ExecutionCaps = ExecutionCaps.DEFAULT,
 ): (Map<String, Any?>) -> Any? {
     val tokens = io.github.ehlyzov.branchline.Lexer(program).lex()
     val prog = Parser(tokens, program).parse()
@@ -83,9 +96,15 @@ fun buildRunnerFromProgramMP(
     val ir = ToIR(funcs, hostFns).compile(t.body.statements)
     val typeDecls = prog.decls.filterIsInstance<io.github.ehlyzov.branchline.TypeDecl>()
     val descriptors = buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
-    val reg = TransformRegistry(funcs, hostFns, descriptors)
-    val eval = makeEval(hostFns, funcs, reg, tracer)
-    val exec = Exec(ir, eval, tracer)
+    val exec = Exec(
+        ir = ir,
+        hostFns = hostFns,
+        hostFnMeta = hostFnMeta,
+        funcs = funcs,
+        tracer = tracer,
+        sharedStore = SharedStoreProvider.store,
+        caps = caps,
+    )
 
     return { input: Map<String, Any?> ->
         val env = HashMap<String, Any?>().apply {

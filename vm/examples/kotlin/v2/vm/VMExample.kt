@@ -99,30 +99,9 @@ class VMExample {
             IROutput(listOf(LiteralProperty(ObjKey.Name("answer"), IdentifierExpr("answer", token))))
         )
         
-        // Create fallback evaluator
-        val eval: (Expr, MutableMap<String, Any?>) -> Any? = { expr, env ->
-            when (expr) {
-                is NumberLiteral -> {
-                    val v = expr.value
-                    when (v) {
-                        is I32 -> v.v
-                        is I64 -> v.v
-                        is IBig -> v.v
-                        is Dec -> v.v
-                    }
-                }
-                is StringExpr -> expr.value
-                is BoolExpr -> expr.value
-                is NullLiteral -> null
-                is IdentifierExpr -> env[expr.name]
-                else -> null
-            }
-        }
-        
         // Create VM-enabled executor
         val vmExec = VMFactory.createExecutor(
             ir = ir,
-            eval = eval,
             useVM = true
         )
         
@@ -161,13 +140,25 @@ class VMExample {
         val transform = prog.decls.filterIsInstance<TransformDecl>().single()
 
         // Build runner using VM engine
-        val runnerVM = io.github.ehlyzov.branchline.ir.compileStream(transform, funcs = funcs, hostFns = hostFns, engine = ExecutionEngine.VM)
+        val runnerVM = io.github.ehlyzov.branchline.ir.compileStream(
+            transform,
+            funcs = funcs,
+            hostFns = hostFns,
+            hostFnMeta = io.github.ehlyzov.branchline.std.StdLib.meta,
+            engine = ExecutionEngine.VM,
+        )
         val input = mapOf("nums" to listOf(1, 2, 3))
         val outVM = runnerVM(input)
         println("VM OUTPUT: $outVM")
 
         // Build runner using interpreter for parity
-        val runnerInterp = io.github.ehlyzov.branchline.ir.compileStream(transform, funcs = funcs, hostFns = hostFns, engine = ExecutionEngine.INTERPRETER)
+        val runnerInterp = io.github.ehlyzov.branchline.ir.compileStream(
+            transform,
+            funcs = funcs,
+            hostFns = hostFns,
+            hostFnMeta = io.github.ehlyzov.branchline.std.StdLib.meta,
+            engine = ExecutionEngine.INTERPRETER,
+        )
         val outInterp = runnerInterp(input)
         println("Interpreter OUTPUT: $outInterp")
     }
@@ -228,8 +219,12 @@ class VMExample {
         val transform = prog.decls.filterIsInstance<TransformDecl>().single()
         val ir = io.github.ehlyzov.branchline.ir.ToIR(funcs, hostFns).compile(transform.body.statements)
 
-        val fallbackEval = io.github.ehlyzov.branchline.ir.makeEval(hostFns, funcs, io.github.ehlyzov.branchline.ir.TransformRegistry(funcs, hostFns, emptyMap()), null)
-        val vmExec = VMExec(ir, fallbackEval)
+        val vmExec = VMExec(
+            ir = ir,
+            hostFns = hostFns,
+            hostFnMeta = io.github.ehlyzov.branchline.std.StdLib.meta,
+            funcs = funcs,
+        )
         val v2res = vmExec.run(mutableMapOf("row" to emptyMap<String, Any?>()))
         println("VMExec output: $v2res")
         println("Final stats: ${VMFactory.getCompilationStats()}")
@@ -256,11 +251,14 @@ class VMExample {
         val ir = io.github.ehlyzov.branchline.ir.ToIR(funcs, hostFns).compile(transform.body.statements)
 
         // Fallback interpreter eval for VMExec
-        val reg = io.github.ehlyzov.branchline.ir.TransformRegistry(funcs, hostFns, emptyMap())
-        val fallbackEval = io.github.ehlyzov.branchline.ir.makeEval(hostFns, funcs, reg, null)
-
         val tracer = io.github.ehlyzov.branchline.debug.CollectingTracer(io.github.ehlyzov.branchline.debug.TraceOptions(step = false))
-        val exec = VMExec(ir, fallbackEval, tracer = tracer, hostFns = hostFns, funcs = funcs)
+        val exec = VMExec(
+            ir = ir,
+            tracer = tracer,
+            hostFns = hostFns,
+            hostFnMeta = io.github.ehlyzov.branchline.std.StdLib.meta,
+            funcs = funcs,
+        )
         val out = exec.run(mutableMapOf("row" to mapOf("nums" to (1..10).toList())))
         println("Transform output: $out")
 

@@ -1,5 +1,6 @@
 package io.github.ehlyzov.branchline.std
 
+import io.github.ehlyzov.branchline.ir.FnValue
 import kotlin.collections.LinkedHashMap
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
@@ -119,4 +120,28 @@ internal fun compareAny(a: Any?, b: Any?): Int {
     val aStr = a?.toString() ?: "null"
     val bStr = b?.toString() ?: "null"
     return compareValues(aStr, bStr)
+}
+
+internal fun truthy(x: Any?): Boolean = when (x) {
+    null -> false
+    is Boolean -> x
+    is Number -> x.toDouble() != 0.0
+    is String -> x.isNotEmpty()
+    else -> true
+}
+
+internal fun asList(name: String, args: List<Any?>, idx: Int): List<*> =
+    args.getOrNull(idx) as? List<*> ?: error("$name: arg ${idx + 1} must be list")
+
+internal fun asFn(name: String, args: List<Any?>, idx: Int): FnValue =
+    args.getOrNull(idx).toFnValue(name, idx)
+
+internal fun Any?.toFnValue(name: String, idx: Int): FnValue {
+    return when (this) {
+        is Function1<*, *> -> {
+            @Suppress("UNCHECKED_CAST")
+            this as FnValue
+        }
+        else -> null
+    } ?: error("$name: arg ${idx + 1} must be function")
 }

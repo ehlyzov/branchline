@@ -75,7 +75,7 @@ class ConformSharedWriteTest {
 
         override fun addResource(resource: String, kind: SharedResourceKind) {
             kinds[resource] = kind
-            data.putIfAbsent(resource, LinkedHashMap())
+            data.getOrPut(resource) { LinkedHashMap() }
         }
 
         override fun setOnceSync(resource: String, key: String, value: Any?): Boolean {

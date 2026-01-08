@@ -1,5 +1,8 @@
 package io.github.ehlyzov.branchline.runtime.bignum
 
+import kotlin.math.ceil
+import kotlin.math.floor
+
 actual class BLBigInt internal constructor(internal val v: Long) {
     override fun toString(): String = v.toString()
 }
@@ -69,3 +72,5 @@ actual fun BLBigDec.signum(): Int = when {
     this.v < 0 -> -1
     else -> 0
 }
+actual fun BLBigDec.floor(): BLBigInt = BLBigInt(floor(this.v).toLong())
+actual fun BLBigDec.ceil(): BLBigInt = BLBigInt(ceil(this.v).toLong())

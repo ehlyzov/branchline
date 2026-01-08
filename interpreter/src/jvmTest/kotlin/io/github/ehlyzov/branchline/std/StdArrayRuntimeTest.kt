@@ -121,6 +121,15 @@ class StdArrayRuntimeTest {
         assertEquals(mapOf("xs" to listOf(0, 1, 2, 3)), out)
     }
 
+    @Test
+    fun `REVERSE list`() {
+        val out = compileAndRun(
+            """OUTPUT { list: REVERSE(input.list) }""",
+            mapOf("list" to listOf(1, 2, 3))
+        )
+        assertEquals(mapOf("list" to listOf(3, 2, 1)), out)
+    }
+
     // ---------- Универсальный паттерн удаления без GET/INDICES ----------
 
     @Test

@@ -11,14 +11,6 @@ class StdDebugModule : StdModule {
     }
 }
 
-private fun truthy(x: Any?): Boolean = when (x) {
-    null -> false
-    is Boolean -> x
-    is Number -> x.toDouble() != 0.0
-    is String -> x.isNotEmpty()
-    else -> true
-}
-
 private fun fnCHECKPOINT(args: List<Any?>): Any {
     val label = args.firstOrNull()?.toString()
     Debug.tracer?.on(TraceEvent.Call("CHECKPOINT", label, emptyList()))

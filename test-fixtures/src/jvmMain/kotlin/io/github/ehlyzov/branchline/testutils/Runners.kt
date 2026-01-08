@@ -29,7 +29,13 @@ private fun compileProgramToRunner(
     }
 
     val transform = prog.decls.filterIsInstance<TransformDecl>().single()
-    return compileStream(transform, funcs = funcs, hostFns = hostFns, engine = engine)
+    return compileStream(
+        transform,
+        funcs = funcs,
+        hostFns = hostFns,
+        hostFnMeta = StdLib.meta,
+        engine = engine,
+    )
 }
 
 fun compileAndRun(

@@ -1064,7 +1064,7 @@ class VM(
         hostFns[name]?.let { fn ->
             val hostArgs = args.map { arg ->
                 if (arg is LambdaValue) {
-                    { callArgs: List<Any?> -> invokeLambda(arg, callArgs) } as (List<Any?>) -> Any?
+                    { callArgs: List<Any?> -> invokeLambda(arg, callArgs) }
                 } else {
                     arg
                 }
@@ -1114,7 +1114,7 @@ class VM(
         ?: throw VMException.VariableNotFound(name)
         val hostArgs = args.map { arg ->
             if (arg is LambdaValue) {
-                { callArgs: List<Any?> -> invokeLambda(arg, callArgs) } as (List<Any?>) -> Any?
+                { callArgs: List<Any?> -> invokeLambda(arg, callArgs) }
             } else {
                 arg
             }
@@ -1261,9 +1261,9 @@ class VM(
     private fun initForEach(varName: String, jumpToEnd: Int) {
         val iterable = pop()
         val list: List<Any?> = when (iterable) {
-            is List<*> -> iterable as List<Any?>
-            is Iterable<*> -> (iterable as Iterable<Any?>).toList()
-            is Sequence<*> -> (iterable as Sequence<Any?>).toList()
+            is List<*> -> iterable
+            is Iterable<*> -> (iterable).toList()
+            is Sequence<*> -> (iterable).toList()
             else -> throw VMException.TypeMismatch("iterable", iterable?.let { it::class.simpleName } ?: "null")
         }
 

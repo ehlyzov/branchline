@@ -27,9 +27,6 @@ import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
 import io.github.ehlyzov.branchline.ir.Exec
 import io.github.ehlyzov.branchline.ir.ToIR
-import io.github.ehlyzov.branchline.ir.TransformRegistry
-import io.github.ehlyzov.branchline.ir.buildTransformDescriptors
-import io.github.ehlyzov.branchline.ir.makeEval
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
 import io.github.ehlyzov.branchline.sema.SemanticAnalyzer
@@ -150,14 +147,14 @@ object PlaygroundFacade {
 
             val ir = ToIR(funcs, hostFns).compile(transform.body.statements)
             val typeDecls = parsed.decls.filterIsInstance<TypeDecl>()
-            val descriptors = buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
-            val registry = TransformRegistry(
-                funcs,
-                hostFns,
-                descriptors,
+            val exec = Exec(
+                ir = ir,
+                hostFns = hostFns,
+                hostFnMeta = StdLib.meta,
+                funcs = funcs,
+                tracer = tracer,
+                sharedStore = SharedStoreProvider.store,
             )
-            val eval = makeEval(hostFns, funcs, registry, tracer)
-            val exec = Exec(ir, eval, tracer)
 
             val msg = parseInput(inputJson)
             val env = HashMap<String, Any?>().apply {

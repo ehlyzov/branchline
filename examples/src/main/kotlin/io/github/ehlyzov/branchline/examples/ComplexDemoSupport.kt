@@ -4,12 +4,8 @@ import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.Lexer
 import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.TransformDecl
-import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.ir.Exec
 import io.github.ehlyzov.branchline.ir.ToIR
-import io.github.ehlyzov.branchline.ir.TransformRegistry
-import io.github.ehlyzov.branchline.ir.buildTransformDescriptors
-import io.github.ehlyzov.branchline.ir.makeEval
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
 import io.github.ehlyzov.branchline.runtime.bignum.toInt
 import io.github.ehlyzov.branchline.std.SharedResourceKind
@@ -138,7 +134,6 @@ internal data class ProgramContext(
     val funcs: Map<String, FuncDecl>,
     val transforms: Map<String, TransformDecl>,
     val hostFns: Map<String, (List<Any?>) -> Any?>,
-    val registry: TransformRegistry,
 )
 
 internal fun buildProgramContext(source: String): ProgramContext {
@@ -148,15 +143,11 @@ internal fun buildProgramContext(source: String): ProgramContext {
     val transforms = program.decls.filterIsInstance<TransformDecl>().associateBy { transform ->
         transform.name ?: error("Transform name required for example program")
     }
-    val typeDecls = program.decls.filterIsInstance<TypeDecl>()
     val hostFns = StdLib.fns
-    val descriptors = buildTransformDescriptors(transforms.values.toList(), typeDecls, hostFns.keys)
-    val registry = TransformRegistry(funcs, hostFns, descriptors)
     return ProgramContext(
         funcs = funcs,
         transforms = transforms,
         hostFns = hostFns,
-        registry = registry,
     )
 }
 
@@ -168,13 +159,13 @@ internal fun buildExec(
     val transform = context.transforms[transformName]
         ?: error("Missing transform '$transformName'")
     val ir = ToIR(context.funcs, context.hostFns).compile(transform.body.statements)
-    val eval = makeEval(
+    return Exec(
+        ir = ir,
         hostFns = context.hostFns,
+        hostFnMeta = StdLib.meta,
         funcs = context.funcs,
-        reg = context.registry,
         sharedStore = sharedStore,
     )
-    return Exec(ir, eval)
 }
 
 internal suspend fun runTransform(

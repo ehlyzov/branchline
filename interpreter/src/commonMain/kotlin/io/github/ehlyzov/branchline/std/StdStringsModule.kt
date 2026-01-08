@@ -30,6 +30,9 @@ class StdStringsModule : StdModule {
         r.fn("LOWER", ::fnLOWER)
         r.fn("TRIM", ::fnTRIM)
         r.fn("FORMAT", ::fnFORMAT)
+        r.fn("SUBSTRING_BEFORE", ::fnSUBSTRING_BEFORE)
+        r.fn("SUBSTRING_AFTER", ::fnSUBSTRING_AFTER)
+        r.fn("PAD", ::fnPAD)
     }
 }
 
@@ -59,14 +62,7 @@ private fun fnNUMBER(args: List<Any?>): Any? {
 
 private fun fnBOOLEAN(args: List<Any?>): Any {
     require(args.size == 1) { "BOOLEAN(x)" }
-    val v = args[0]
-    return when (v) {
-        null -> false
-        is Boolean -> v
-        is Number -> v.toDouble() != 0.0
-        is String -> v.isNotEmpty()
-        else -> true
-    }
+    return truthy(args[0])
 }
 
 private fun fnINT(args: List<Any?>): Any? {
@@ -103,6 +99,30 @@ private fun fnSUBSTRING(args: List<Any?>): Any {
     return s.substring(start, end)
 }
 
+/**
+ * SUBSTRING_BEFORE(str, chars) – returns the substring before the first occurrence of `chars`
+ * or the original string if it does not contain `chars`:contentReference[oaicite:4]{index=4}.
+ */
+private fun fnSUBSTRING_BEFORE(args: List<Any?>): Any {
+    require(args.size == 2) { "SUBSTRING_BEFORE(str, chars)" }
+    val s = args[0] as? String ?: error("SUBSTRING_BEFORE: first arg must be string")
+    val chars = args[1] as? String ?: error("SUBSTRING_BEFORE: second arg must be string")
+    val idx = s.indexOf(chars)
+    return if (idx < 0) s else s.substring(0, idx)
+}
+
+/**
+ * SUBSTRING_AFTER(str, chars) – returns the substring after the first occurrence of `chars`
+ * or the original string if it does not contain `chars`:contentReference[oaicite:5]{index=5}.
+ */
+private fun fnSUBSTRING_AFTER(args: List<Any?>): Any {
+    require(args.size == 2) { "SUBSTRING_AFTER(str, chars)" }
+    val s = args[0] as? String ?: error("SUBSTRING_AFTER: first arg must be string")
+    val chars = args[1] as? String ?: error("SUBSTRING_AFTER: second arg must be string")
+    val idx = s.indexOf(chars)
+    return if (idx < 0) s else s.substring(idx + chars.length)
+}
+
 private fun fnCONTAINS(args: List<Any?>): Any {
     require(args.size == 2) { "CONTAINS(str, substr)" }
     val s = args[0] as? String ?: error("CONTAINS: first arg must be string")
@@ -124,6 +144,28 @@ private fun fnREPLACE(args: List<Any?>): Any {
     val pat = args[1]?.toString() ?: ""
     val repl = args[2]?.toString() ?: ""
     return s.replace(pat.toRegex(), repl)
+}
+
+
+/**
+ * PAD(str, width[, padChars]) – returns `str` padded on the left or right to reach the
+ * absolute `width`.  A positive `width` pads on the right; a negative width pads on
+ * the left.  `padChars` specifies the padding characters (defaults to a single space)
+ *:contentReference[oaicite:6]{index=6}.
+ */
+private fun fnPAD(args: List<Any?>): Any {
+    require(args.size in 2..3) { "PAD(str, width[, padChars])" }
+    val s = args[0] as? String ?: error("PAD: first arg must be string")
+    val width = (args[1] as? Number ?: error("PAD: width must be numeric")).toInt()
+    val padChars = args.getOrNull(2)?.toString() ?: " "
+    val target = kotlin.math.abs(width)
+    if (s.length >= target) return s
+    val padNeeded = target - s.length
+    // Build a padding string repeating padChars as necessary
+    val repeated = buildString {
+        while (length < padNeeded) append(padChars)
+    }.substring(0, padNeeded)
+    return if (width > 0) s + repeated else repeated + s
 }
 
 private fun fnSPLIT(args: List<Any?>): Any {

@@ -5,7 +5,7 @@ import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
 
 class StdCoreModule : StdModule {
     override fun register(r: StdRegistry) {
-        r.fn("KEYS", ::fnKEYS)
+        r.fn("KEYS", ::fnKEYS, ::keysSharedAccess)
         r.fn("VALUES", ::fnVALUES)
         r.fn("ENTRIES", ::fnENTRIES)
         r.fn("PUT", ::fnPUT)
@@ -18,8 +18,12 @@ class StdCoreModule : StdModule {
         r.fn("IS_OBJECT", ::fnIS_OBJECT)
         r.fn("LISTIFY", ::fnLISTIFY)
         r.fn("GET", ::fnGET)
+        r.fn("SIFT", ::fnSIFT)
     }
 }
+
+private fun keysSharedAccess(args: List<Any?>): Boolean =
+    args.firstOrNull() is SharedResourceHandle
 
 private fun fnKEYS(args: List<Any?>): Any {
     require(args.size == 1) { "KEYS(coll)" }
@@ -212,7 +216,7 @@ private fun fnIS_OBJECT(args: List<Any?>): Boolean {
 private fun fnLISTIFY(args: List<Any?>): Any {
     require(args.size == 1) { "LISTIFY(x)" }
     return when (val v = args[0]) {
-        null -> emptyList<Any?>()
+        null -> emptyList()
         is List<*> -> v
         is Map<*, *> -> listOf(v)
         else -> error("LISTIFY: arg must be list, object, or null")
@@ -225,4 +229,25 @@ private fun fnGET(args: List<Any?>): Any? {
     val key = asObjectKey(args[1])
     val fallback = if (args.size == 3) args[2] else null
     return if (obj.containsKey(key)) obj[key] else fallback
+}
+
+/**
+ * SIFT(obj, fn)
+ *
+ * Returns a new object containing only the key/value pairs from `obj`
+ * for which the predicate `fn` returns a truthy value:contentReference[oaicite:1]{index=1}.
+ * The predicate receives the value, the key, and the whole object.
+ */
+private fun fnSIFT(args: List<Any?>): Any {
+    require(args.size == 2) { "SIFT(obj, fn)" }
+    val obj = args[0] as? Map<*, *> ?: error("SIFT: arg 1 must be object")
+    val f = asFn("SIFT", args, 1)
+    val out = LinkedHashMap<Any?, Any?>()
+    for ((key, value) in obj) {
+        // call predicate with (value, key, object)
+        if (truthy(f(listOf(value, key, obj)))) {
+            out[key] = value
+        }
+    }
+    return out
 }

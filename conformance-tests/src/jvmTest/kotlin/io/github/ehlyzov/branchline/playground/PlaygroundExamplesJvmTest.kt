@@ -78,6 +78,7 @@ class PlaygroundExamplesJvmTest {
                     t = transform,
                     funcs = funcs,
                     hostFns = hostFns,
+                    hostFnMeta = StdLib.meta,
                     transforms = descriptors,
                     engine = ExecutionEngine.INTERPRETER,
                 )
@@ -85,6 +86,7 @@ class PlaygroundExamplesJvmTest {
                     t = transform,
                     funcs = funcs,
                     hostFns = hostFns,
+                    hostFnMeta = StdLib.meta,
                     transforms = descriptors,
                     engine = ExecutionEngine.VM,
                 )

@@ -1,15 +1,52 @@
 package io.github.ehlyzov.branchline.ir
 
-import io.github.ehlyzov.branchline.*
+import io.github.ehlyzov.branchline.AccessExpr
+import io.github.ehlyzov.branchline.AccessSeg
+import io.github.ehlyzov.branchline.ArrayCompExpr
+import io.github.ehlyzov.branchline.ArrayExpr
+import io.github.ehlyzov.branchline.BinaryExpr
+import io.github.ehlyzov.branchline.BlockBody
+import io.github.ehlyzov.branchline.BoolExpr
+import io.github.ehlyzov.branchline.CallExpr
+import io.github.ehlyzov.branchline.CaseExpr
+import io.github.ehlyzov.branchline.ComputedProperty
+import io.github.ehlyzov.branchline.Expr
+import io.github.ehlyzov.branchline.ExprBody
+import io.github.ehlyzov.branchline.FuncDecl
+import io.github.ehlyzov.branchline.IBig
+import io.github.ehlyzov.branchline.I32
+import io.github.ehlyzov.branchline.I64
+import io.github.ehlyzov.branchline.IdentifierExpr
+import io.github.ehlyzov.branchline.IfElseExpr
+import io.github.ehlyzov.branchline.InvokeExpr
+import io.github.ehlyzov.branchline.LambdaExpr
+import io.github.ehlyzov.branchline.LiteralProperty
+import io.github.ehlyzov.branchline.NullLiteral
+import io.github.ehlyzov.branchline.NumberLiteral
+import io.github.ehlyzov.branchline.ObjKey
+import io.github.ehlyzov.branchline.ObjectExpr
+import io.github.ehlyzov.branchline.Property
+import io.github.ehlyzov.branchline.SharedStateAwaitExpr
+import io.github.ehlyzov.branchline.StringExpr
+import io.github.ehlyzov.branchline.TokenType
+import io.github.ehlyzov.branchline.TryCatchExpr
+import io.github.ehlyzov.branchline.UnaryExpr
 import io.github.ehlyzov.branchline.debug.Debug
 import io.github.ehlyzov.branchline.debug.TraceEvent
 import io.github.ehlyzov.branchline.debug.Tracer
+import io.github.ehlyzov.branchline.lowerCaseExpr
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
 import io.github.ehlyzov.branchline.runtime.bignum.blBigIntOfLong
 import io.github.ehlyzov.branchline.runtime.bignum.compareTo
 import io.github.ehlyzov.branchline.runtime.bignum.signum
 import io.github.ehlyzov.branchline.runtime.bignum.toInt
 import io.github.ehlyzov.branchline.runtime.isBigInt
+import io.github.ehlyzov.branchline.std.HostFnMetadata
+import io.github.ehlyzov.branchline.std.SharedStore
+import io.github.ehlyzov.branchline.std.blockingAwait
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.collections.LinkedHashMap
 
 /**
  * Executes an IR program and collects OUTPUT objects. Design goals:
@@ -24,23 +61,25 @@ import io.github.ehlyzov.branchline.runtime.isBigInt
  * DI note: tracer is optional and resolved at emit-time as (this.tracer ?:
  * Debug.tracer) to avoid capturing a null tracer during construction.
  */
-// File-private alias to avoid nested typealias (requires experimental flag)
-// Removed nested/file-private typealias to avoid experimental flag usage.
-
 class Exec(
     private val ir: List<IRNode>,
-    private val eval: (Expr, MutableMap<String, Any?>) -> Any?,
-    private val tracer: Tracer? = null, // DI: pass in, or rely on Debug.tracer fallback
+    private val hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
+    private val hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
+    private val funcs: Map<String, FuncDecl> = emptyMap(),
+    private val tracer: Tracer? = null,
+    private val sharedStore: SharedStore? = null,
+    private val caps: ExecutionCaps = ExecutionCaps.DEFAULT,
+    private val compiledFuncs: MutableMap<String, List<IRNode>> = HashMap(),
 ) {
     // ---------- tracer helpers (resolve at call-time) ----------
     private fun currentTracer(): Tracer? = tracer ?: Debug.tracer
     private fun emitEnter(n: IRNode) {
-        val t = currentTracer();
+        val t = currentTracer()
         if (t?.opts?.step == true) t.on(TraceEvent.Enter(n))
     }
 
     private fun emitExit(n: IRNode) {
-        val t = currentTracer();
+        val t = currentTracer()
         if (t?.opts?.step == true) t.on(TraceEvent.Exit(n))
     }
 
@@ -49,7 +88,7 @@ class Exec(
     }
 
     private fun emitLet(name: String, old: Any?, new: Any?) {
-        val t = currentTracer();
+        val t = currentTracer()
         if (t != null && (t.opts.step || name in t.opts.watch)) {
             t.on(TraceEvent.Let(name, old, new))
         }
@@ -63,7 +102,7 @@ class Exec(
      * If stringifyKeys=true — recursively converts object keys to strings on
      * the boundary.
      */
-    fun run(env: MutableMap<String, Any?>, stringifyKeys: Boolean = false): Any? {
+    public fun run(env: Env, stringifyKeys: Boolean = false): Any? {
         val out = mutableListOf<Map<Any, Any?>>()
         execObject(ir, env, out)
         val res: Any? = when (out.size) {
@@ -74,36 +113,468 @@ class Exec(
         return if (!stringifyKeys) res else stringify(res)
     }
 
+    public fun run(env: MutableMap<String, Any?>, stringifyKeys: Boolean = false): Any? =
+        run(Env(env), stringifyKeys)
+
+    public fun eval(expr: Expr, env: Env): Any? = evalExpr(expr, env)
+
+    public fun eval(expr: Expr, env: MutableMap<String, Any?>): Any? = evalExpr(expr, Env(env))
+
+    private fun runForValue(env: Env): Any? {
+        val out = mutableListOf<Map<Any, Any?>>()
+        val res = execObject(ir, env, out)
+        return if (res.returned) res.value else null
+    }
+
+    private fun childExec(ir: List<IRNode>, caps: ExecutionCaps): Exec = Exec(
+        ir = ir,
+        hostFns = hostFns,
+        hostFnMeta = hostFnMeta,
+        funcs = funcs,
+        tracer = tracer,
+        sharedStore = sharedStore,
+        caps = caps,
+        compiledFuncs = compiledFuncs,
+    )
+
+    private fun ensureOutputAllowed() {
+        check(caps.outputAllowed) { "OUTPUT is not allowed in this context" }
+    }
+
+    private fun ensureSharedAllowed() {
+        check(caps.sharedAllowed) { "Shared access is not allowed in this context" }
+    }
+
+    private fun ensureEnvWriteAllowed(op: String) {
+        check(caps.envWriteAllowed) { "$op is not allowed in this context" }
+    }
+
+    // ---------------------------------------------------------------------
+    // Expression evaluation
+    // ---------------------------------------------------------------------
+
+    private inline fun <T> tracedEval(expr: Expr, crossinline block: () -> T): T {
+        val t = Debug.tracer
+        if (t?.opts?.includeEval == true) t.on(TraceEvent.EvalEnter(expr))
+        return try {
+            val v = block()
+            if (t?.opts?.includeEval == true) t.on(TraceEvent.EvalExit(expr, v))
+            v
+        } catch (ex: Throwable) {
+            t?.on(TraceEvent.Error("eval ${expr::class.simpleName}", ex))
+            throw ex
+        }
+    }
+
+    private inline fun <T> tracedCall(kind: String, name: String?, args: List<Any?>, crossinline inv: () -> T): T {
+        val t = Debug.tracer
+        if (t?.opts?.includeCalls == true) t.on(TraceEvent.Call(kind, name, args))
+        return try {
+            val r = inv()
+            if (t?.opts?.includeCalls == true) t.on(TraceEvent.Return(kind, name, r))
+            r
+        } catch (ex: Throwable) {
+            t?.on(TraceEvent.Error("call $kind ${name ?: "<lambda>"}", ex))
+            throw ex
+        }
+    }
+
+    private fun traceRead(name: String, value: Any?) {
+        val t = Debug.tracer
+        if (t != null && (t.opts.watch.isEmpty() || name in t.opts.watch)) {
+            t.on(TraceEvent.Read(name, value))
+        }
+    }
+
+    private fun renderNextPathSegment(container: Any?, segLabel: String, isDynamic: Boolean): String = when (container) {
+        is List<*> -> "[$segLabel]"
+        else -> if (isDynamic && segLabel.any { it == '.' || it == '[' || it == ']' }) ".$segLabel" else ".$segLabel"
+    }
+
+    private fun Any?.toFnValue(): FnValue? = when (this) {
+        is Function1<*, *> -> {
+            @Suppress("UNCHECKED_CAST")
+            (this as FnValue)
+        }
+        else -> null
+    }
+
+    private fun handleNumberLiteral(e: NumberLiteral, env: Env): Any = unwrapNum(e.value)
+    private fun handleString(e: StringExpr, env: Env): Any = e.value
+    private fun handleBool(e: BoolExpr, env: Env): Any = e.value
+    private fun handleNull(e: NullLiteral, env: Env): Any? = null
+
+    private fun handleIdentifier(e: IdentifierExpr, env: Env): Any? {
+        if (e.name == "fail") throw IllegalStateException("boom")
+        val value = env.get(e.name)
+        traceRead(e.name, value)
+        return value
+    }
+
+    private fun handleArray(e: ArrayExpr, env: Env): List<Any?> = e.elements.map { evalExpr(it, env) }
+
+    private fun handleArrayComp(e: ArrayCompExpr, env: Env): List<Any?> {
+        ensureEnvWriteAllowed("ARRAY COMPREHENSION")
+        val iterVal = evalExpr(e.iterable, env)
+        val iterable: Iterable<*> = when (iterVal) {
+            is Iterable<*> -> iterVal
+            is Sequence<*> -> iterVal.asIterable()
+            else -> error("Array comprehension expects list/iterable/sequence")
+        }
+        val out = ArrayList<Any?>()
+        val bindingScope = env.resolveScope(e.varName)
+        val hadBinding = bindingScope != null
+        val prev = if (hadBinding) bindingScope?.getLocal(e.varName) else null
+        val target = bindingScope ?: env
+        for (item in iterable) {
+            target.setLocal(e.varName, item)
+            if (e.where != null && !evalExpr(e.where, env).asBool()) continue
+            out += evalExpr(e.mapExpr, env)
+        }
+        if (hadBinding) {
+            target.setLocal(e.varName, prev)
+        } else {
+            env.removeLocal(e.varName)
+        }
+        return out
+    }
+
+    private fun handleUnary(e: UnaryExpr, env: Env): Any? = when (e.token.type) {
+        TokenType.MINUS -> negateNum(evalExpr(e.expr, env))
+        TokenType.BANG -> !evalExpr(e.expr, env).asBool()
+        TokenType.AWAIT -> evalExpr(e.expr, env)
+        TokenType.SUSPEND -> throw UnsupportedOperationException("'suspend' not supported in stream demo")
+        else -> error("unary ${e.token.lexeme}")
+    }
+
+    private fun handleIfElse(e: IfElseExpr, env: Env): Any? {
+        val chosen: Expr = if (evalExpr(e.condition, env).asBool()) e.thenBranch else e.elseBranch
+        return when (chosen) {
+            is IdentifierExpr -> evalExpr(chosen, env)
+            is CallExpr -> handleFuncCall(chosen, env)
+            else -> evalExpr(chosen, env)
+        }
+    }
+
+    private fun handleCase(e: CaseExpr, env: Env): Any? = evalExpr(lowerCaseExpr(e), env)
+
+    private fun handleTryCatchExpr(e: TryCatchExpr, env: Env): Any? {
+        ensureEnvWriteAllowed("TRY/CATCH")
+        val retries = e.retry ?: 0
+        var attempts = 0
+        while (true) {
+            try {
+                return evalExpr(e.tryExpr, env)
+            } catch (ex: Exception) {
+                if (attempts++ >= retries) {
+                    val errorValue = buildErrorValue(ex)
+                    return withCatchBinding(env, e.exceptionName, errorValue) {
+                        evalExpr(e.fallbackExpr, env)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun evalStepStatic(container: Any?, key: ObjKey): Any? = when (container) {
+        is Map<*, *> -> container[unwrapKey(key)]
+        is List<*> -> {
+            val i = when (key) {
+                is ObjKey.Name -> error("Cannot use name '${key.v}' on list")
+                is I32 -> key.v
+                is I64 -> {
+                    require(key.v in 0..Int.MAX_VALUE.toLong())
+                    key.v.toInt()
+                }
+                is IBig -> {
+                    val bi = key.v
+                    require(bi.signum() >= 0 && bi <= blBigIntOfLong(Int.MAX_VALUE.toLong()))
+                    bi.toInt()
+                }
+            }
+            require(i in 0 until container.size) { "Index $i out of bounds 0..${container.size - 1}" }
+            container[i]
+        }
+        else -> error("Indexing supported only for list or object")
+    }
+
+    private fun evalStepDynamic(container: Any?, keyValue: Any?): Any? = when (container) {
+        is Map<*, *> -> container[unwrapComputedKey(keyValue)]
+        is List<*> -> {
+            val i = when (keyValue) {
+                is Int -> keyValue
+                is Long -> {
+                    require(keyValue in 0..Int.MAX_VALUE.toLong())
+                    keyValue.toInt()
+                }
+                else -> if (isBigInt(keyValue)) {
+                    val bi = keyValue as BLBigInt
+                    require(bi.signum() >= 0 && bi <= blBigIntOfLong(Int.MAX_VALUE.toLong()))
+                    bi.toInt()
+                } else error("Index must be integer for list")
+            }
+            require(i in 0 until container.size) { "Index $i out of bounds 0..${container.size - 1}" }
+            container[i]
+        }
+        else -> error("Indexing supported only for list or object")
+    }
+
+    private fun handleAccess(e: AccessExpr, env: Env): Any? {
+        var cur = evalExpr(e.base, env)
+        for (seg in e.segs) {
+            cur = when (seg) {
+                is AccessSeg.Static -> evalStepStatic(cur, seg.key)
+                is AccessSeg.Dynamic -> evalStepDynamic(cur, evalExpr(seg.keyExpr, env))
+            }
+        }
+        return cur
+    }
+
+    private fun handleAccessTraced(e: AccessExpr, env: Env): Any? {
+        var cur = evalExpr(e.base, env)
+        var pathSoFar = (e.base as? IdentifierExpr)?.name
+
+        for (seg in e.segs) {
+            when (seg) {
+                is AccessSeg.Static -> {
+                    val next = evalStepStatic(cur, seg.key)
+                    if (pathSoFar != null) {
+                        val segLabel: String = when (cur) {
+                            is Map<*, *> -> unwrapKey(seg.key).toString()
+                            is List<*> -> when (seg.key) {
+                                is ObjKey.Name -> error("Cannot use name '${seg.key.v}' on list")
+                                is I32 -> seg.key.v.toString()
+                                is I64 -> seg.key.v.toString()
+                                is IBig -> seg.key.v.toString()
+                            }
+                            else -> "<non-container>"
+                        }
+                        pathSoFar += renderNextPathSegment(cur, segLabel, isDynamic = false)
+                        traceRead(pathSoFar, next)
+                    }
+                    cur = next
+                }
+
+                is AccessSeg.Dynamic -> {
+                    val dynKey = evalExpr(seg.keyExpr, env)
+                    val next = evalStepDynamic(cur, dynKey)
+                    if (pathSoFar != null) {
+                        val segLabel: String = when (cur) {
+                            is Map<*, *> -> when (dynKey) {
+                                is String, is Int, is Long -> dynKey.toString()
+                                else -> if (isBigInt(dynKey)) dynKey.toString() else "<key>"
+                            }
+                            is List<*> -> when (dynKey) {
+                                is Int, is Long -> dynKey.toString()
+                                else -> if (isBigInt(dynKey)) dynKey.toString() else "<idx>"
+                            }
+                            else -> "<non-container>"
+                        }
+                        pathSoFar += renderNextPathSegment(cur, segLabel, isDynamic = true)
+                        traceRead(pathSoFar, next)
+                    }
+                    cur = next
+                }
+            }
+        }
+        return cur
+    }
+
+    private fun handleLambda(e: LambdaExpr, env: Env): FnValue {
+        val compiled: List<IRNode>? =
+            (e.body as? BlockBody)?.let { ToIR(funcs = funcs, hostFns = hostFns).compile(it.block.statements) }
+
+        return { args: List<Any?> ->
+            val local = Env(parent = env)
+            e.params.zip(args).forEach { (p, v) -> local.setLocal(p, v) }
+            tracedCall("LAMBDA", null, args) {
+                when (val b = e.body) {
+                    is ExprBody -> evalExpr(b.expr, local)
+                    is BlockBody -> {
+                        val ir = compiled ?: emptyList()
+                        val nested = childExec(ir, caps.copy(outputAllowed = false, sharedAllowed = true))
+                        nested.runForValue(local)
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleFuncCall(c: CallExpr, env: Env): Any? {
+        val args = c.args.map { evalExpr(it, env) }
+
+        hostFns[c.callee.name]?.let { fn ->
+            val meta = hostFnMeta[c.callee.name]
+            if (meta?.requiresSharedAccess(args) == true && !caps.sharedAllowed) {
+                ensureSharedAllowed()
+            }
+            return tracedCall("HOST", c.callee.name, args) { fn(args) }
+        }
+
+        env.get(c.callee.name).toFnValue()?.let { fn ->
+            return tracedCall("CALL", c.callee.name, args) { fn(args) }
+        }
+
+        val fd = funcs[c.callee.name] ?: error("FUNC '${c.callee.name}' undefined")
+        val local = Env()
+        fd.params.zip(args).forEach { (p, v) ->
+            local.setLocal(p, v)
+        }
+
+        return tracedCall("FUNC", fd.name, args) {
+            when (val body = fd.body) {
+                is ExprBody -> evalExpr(body.expr, local)
+                is BlockBody -> {
+                    val irFn = compiledFuncs.getOrPut(fd.name) {
+                        ToIR(funcs = funcs, hostFns = hostFns).compile(body.block.statements)
+                    }
+                    val nested = childExec(irFn, caps.copy(outputAllowed = false, sharedAllowed = true))
+                    nested.runForValue(local)
+                }
+            }
+        }
+    }
+
+    private fun handleBinary(e: BinaryExpr, env: Env): Any? {
+        val l = evalExpr(e.left, env)
+        return when (e.token.type) {
+            TokenType.PLUS -> {
+                val r = evalExpr(e.right, env)
+                if (l is String || r is String) {
+                    l.toString() + r.toString()
+                } else {
+                    require(isNumeric(l) && isNumeric(r)) { "Operator '+' expects numbers or strings" }
+                    addNum(l, r)
+                }
+            }
+            TokenType.MINUS -> {
+                val r = evalExpr(e.right, env)
+                require(isNumeric(l) && isNumeric(r)) { "Operator '-' expects numbers" }
+                subNum(l, r)
+            }
+            TokenType.STAR -> {
+                val r = evalExpr(e.right, env)
+                require(isNumeric(l) && isNumeric(r)) { "Operator '*' expects numbers" }
+                mulNum(l, r)
+            }
+            TokenType.SLASH -> {
+                val r = evalExpr(e.right, env)
+                require(isNumeric(l) && isNumeric(r)) { "Operator '/' expects numbers" }
+                divNum(l, r)
+            }
+            TokenType.PERCENT -> {
+                val r = evalExpr(e.right, env)
+                require(isNumeric(l) && isNumeric(r)) { "Operator '%' expects numbers" }
+                remNum(l, r)
+            }
+            TokenType.LT, TokenType.LE, TokenType.GT, TokenType.GE -> {
+                val r = evalExpr(e.right, env)
+                val cmp = if (isNumeric(l) && isNumeric(r)) numericCompare(l, r) else l.toString().compareTo(r.toString())
+                when (e.token.type) {
+                    TokenType.LT -> cmp < 0
+                    TokenType.LE -> cmp <= 0
+                    TokenType.GT -> cmp > 0
+                    else -> cmp >= 0
+                }
+            }
+            TokenType.CONCAT -> {
+                val r = evalExpr(e.right, env)
+                require(l is List<*> && r is List<*>) { "Operator '++' expects two lists" }
+                ArrayList<Any?>(l.size + r.size).apply {
+                    addAll(l)
+                    addAll(r)
+                }
+            }
+            TokenType.EQ -> numericEquals(l, evalExpr(e.right, env))
+            TokenType.NEQ -> !numericEquals(l, evalExpr(e.right, env))
+            TokenType.AND -> if (!l.asBool()) false else evalExpr(e.right, env).asBool()
+            TokenType.OR -> if (l.asBool()) true else evalExpr(e.right, env).asBool()
+            TokenType.COALESCE -> l ?: evalExpr(e.right, env)
+            else -> error("Unknown binary op ${e.token.lexeme}")
+        }
+    }
+
+    private fun handleObject(e: ObjectExpr, env: Env): Map<Any, Any?> {
+        val out = LinkedHashMap<Any, Any?>()
+        e.fields.forEach { p ->
+            when (p) {
+                is ComputedProperty -> {
+                    val fieldName: Any = unwrapComputedKey(evalExpr(p.keyExpr, env))
+                    out[fieldName] = evalExpr(p.value, env)
+                }
+                is LiteralProperty -> out[unwrapKey(p.key)] = evalExpr(p.value, env)
+            }
+        }
+        return out
+    }
+
+    private fun handleInvoke(e: InvokeExpr, env: Env): Any? {
+        val fn = evalExpr(e.target, env).toFnValue() ?: error("Value is not callable")
+        val argv = e.args.map { evalExpr(it, env) }
+        return tracedCall("CALL", null, argv) { fn(argv) }
+    }
+
+    private fun handleSharedStateAwait(e: SharedStateAwaitExpr, env: Env): Any? {
+        ensureSharedAllowed()
+        val store = sharedStore ?: error("SharedStore not available for await operation")
+        return blockingAwait(store, e.resource, e.key)
+    }
+
+    private fun evalExpr(e: Expr, env: Env): Any? = tracedEval(e) {
+        when (e) {
+            is NumberLiteral -> handleNumberLiteral(e, env)
+            is StringExpr -> handleString(e, env)
+            is BoolExpr -> handleBool(e, env)
+            is NullLiteral -> handleNull(e, env)
+
+            is IdentifierExpr -> handleIdentifier(e, env)
+            is ArrayExpr -> handleArray(e, env)
+            is ArrayCompExpr -> handleArrayComp(e, env)
+            is UnaryExpr -> handleUnary(e, env)
+            is BinaryExpr -> handleBinary(e, env)
+            is IfElseExpr -> handleIfElse(e, env)
+            is CaseExpr -> handleCase(e, env)
+            is TryCatchExpr -> handleTryCatchExpr(e, env)
+            is AccessExpr -> {
+                if (Debug.tracer != null) {
+                    handleAccessTraced(e, env)
+                } else {
+                    handleAccess(e, env)
+                }
+            }
+            is CallExpr -> handleFuncCall(e, env)
+            is InvokeExpr -> handleInvoke(e, env)
+            is ObjectExpr -> handleObject(e, env)
+            is LambdaExpr -> handleLambda(e, env)
+            is SharedStateAwaitExpr -> handleSharedStateAwait(e, env)
+        }
+    }
+
     // ---------------------------------------------------------------------
     // Internals
     // ---------------------------------------------------------------------
 
-    // --- Tiny types
     private data class Frame(val container: Any?, val keyOrIdx: Any)
     private enum class CKind { MAP, LIST }
     private data class LeafAddress(val kind: CKind, val addr: Any)
 
-    // --- Basic utilities
-    private fun Any?.asBool(): Boolean = when (this) {
-        null -> false
-        is Boolean -> this
-        is Number -> this.toDouble() != 0.0
-        else -> true
-    }
+    private data class PathContext(
+        val rootName: String,
+        val rootScope: Env,
+        val frames: List<Frame>,
+        val parent: Any?,
+        val last: AccessSeg,
+    )
 
+    private data class ExecResult(val returned: Boolean, val value: Any?)
+
+    // --- Basic utilities
     private fun unwrapKeyAny(k: Any?): Any = when (k) {
         is ObjKey.Name -> k.v
         is I32 -> k.v
         is I64 -> k.v
         is IBig -> k.v
         else -> k!!
-    }
-
-    private fun unwrapKey(k: ObjKey): Any = when (k) {
-        is ObjKey.Name -> k.v
-        is I32 -> k.v
-        is I64 -> k.v
-        is IBig -> k.v
     }
 
     private fun normalizeMapKeys(m: Map<*, *>): Map<Any, Any?> =
@@ -125,12 +596,12 @@ class Exec(
     private fun mapKeyFromDynamic(v: Any?): Any = when (v) {
         is String -> v
         is Int -> {
-            require(v >= 0) { "Object key must be non-negative" };
+            require(v >= 0) { "Object key must be non-negative" }
             v
         }
 
         is Long -> {
-            require(v >= 0) { "Object key must be non-negative" };
+            require(v >= 0) { "Object key must be non-negative" }
             v
         }
 
@@ -144,7 +615,7 @@ class Exec(
     private fun listIndexFromDynamic(v: Any?, size: Int): Int = when (v) {
         is Int -> v
         is Long -> {
-            require(v in 0..Int.MAX_VALUE.toLong()) { "Index $v out of bounds" };
+            require(v in 0..Int.MAX_VALUE.toLong()) { "Index $v out of bounds" }
             v.toInt()
         }
 
@@ -159,8 +630,8 @@ class Exec(
         is ObjKey.Name -> error("Cannot use name segment on list")
         is I32 -> seg.v
         is I64 -> {
-            val v = seg.v;
-            require(v in 0..Int.MAX_VALUE.toLong());
+            val v = seg.v
+            require(v in 0..Int.MAX_VALUE.toLong())
             v.toInt()
         }
 
@@ -188,28 +659,28 @@ class Exec(
 
     private fun List<*>.withAppended(value: Any?): ArrayList<Any?> =
         ArrayList<Any?>(this.size + 1).apply {
-            addAll(this@withAppended);
+            addAll(this@withAppended)
             add(value)
         }
 
     // --- Properties → Map
-    private fun propertiesToMap(fields: List<Property>, env: MutableMap<String, Any?>): LinkedHashMap<Any, Any?> =
+    private fun propertiesToMap(fields: List<Property>, env: Env): LinkedHashMap<Any, Any?> =
         LinkedHashMap<Any, Any?>().apply {
             fields.forEach { p ->
                 when (p) {
                     is LiteralProperty -> {
                         val key = unwrapKey(p.key)
                         val value = Debug.captureOutputField(key) {
-                            eval(p.value, env)
+                            evalExpr(p.value, env)
                         }
                         put(key, value)
                     }
 
                     is ComputedProperty -> {
-                        val keyValue = eval(p.keyExpr, env)
+                        val keyValue = evalExpr(p.keyExpr, env)
                         val key = mapKeyFromDynamic(keyValue)
                         val value = Debug.captureOutputField(key) {
-                            eval(p.value, env)
+                            evalExpr(p.value, env)
                         }
                         put(key, value)
                     }
@@ -218,29 +689,26 @@ class Exec(
         }
 
     // --- Path traversal (to parent of the last segment)
-    private data class PathContext(
-        val rootName: String,
-        val frames: ArrayList<Frame>,
-        val parent: Any?,
-        val last: AccessSeg,
-    )
+    private fun traverseToParent(target: AccessExpr, env: Env, opName: String): PathContext {
+        val rootIdent = target.base as? IdentifierExpr ?: error("$opName target must start with identifier")
+        val rootName = rootIdent.name
+        val rootScope = env.resolveScope(rootName) ?: error("$opName variable '$rootName' not found")
+        val rootVal = rootScope.getLocal(rootName) ?: error("$opName variable '$rootName' not found")
+        val frames = mutableListOf<Frame>()
+        var cur = rootVal as Any?
 
-    private fun traverseToParent(target: AccessExpr, env: MutableMap<String, Any?>, opName: String): PathContext {
-        val baseIdent = target.base as? IdentifierExpr ?: error("$opName target must start with identifier")
-        val rootName = baseIdent.name
-        val rootVal = env[rootName] ?: error("$opName root '$rootName' not found")
-        require(target.segs.isNotEmpty()) { "$opName needs a non-empty path" }
-
-        val frames = ArrayList<Frame>(target.segs.size)
-        var cur: Any? = rootVal
-
-        for (i in 0 until target.segs.lastIndex) {
-            cur = when (val seg = target.segs[i]) {
+        for (seg in target.segs.dropLast(1)) {
+            cur = when (seg) {
                 is AccessSeg.Static -> stepStatic(cur, seg.key, frames, opName)
-                is AccessSeg.Dynamic -> stepDynamic(cur, eval(seg.keyExpr, env), frames, opName)
+                is AccessSeg.Dynamic -> stepDynamic(
+                    cur = cur,
+                    dyn = evalExpr(seg.keyExpr, env),
+                    frames = frames,
+                    op = opName,
+                )
             }
         }
-        return PathContext(rootName, frames, cur, target.segs.last())
+        return PathContext(rootName, rootScope, frames, cur, target.segs.last())
     }
 
     private fun stepStatic(cur: Any?, key: ObjKey, frames: MutableList<Frame>, op: String): Any? = when (cur) {
@@ -280,11 +748,11 @@ class Exec(
     }
 
     // --- Leaf resolution / read / write
-    private fun resolveLeafAddress(parent: Any?, last: AccessSeg, env: MutableMap<String, Any?>): LeafAddress = when (parent) {
+    private fun resolveLeafAddress(parent: Any?, last: AccessSeg, env: Env): LeafAddress = when (parent) {
         is Map<*, *> -> {
             val key: Any = when (last) {
                 is AccessSeg.Static -> unwrapKey(last.key)
-                is AccessSeg.Dynamic -> mapKeyFromDynamic(eval(last.keyExpr, env))
+                is AccessSeg.Dynamic -> mapKeyFromDynamic(evalExpr(last.keyExpr, env))
             }
             LeafAddress(CKind.MAP, key)
         }
@@ -292,7 +760,7 @@ class Exec(
         is List<*> -> {
             val idx: Int = when (last) {
                 is AccessSeg.Static -> staticIndex(last.key)
-                is AccessSeg.Dynamic -> listIndexFromDynamic(eval(last.keyExpr, env), parent.size)
+                is AccessSeg.Dynamic -> listIndexFromDynamic(evalExpr(last.keyExpr, env), parent.size)
             }
             require(idx in 0 until parent.size) { "Index $idx out of bounds 0..${parent.size - 1}" }
             LeafAddress(CKind.LIST, idx)
@@ -355,8 +823,8 @@ class Exec(
     private fun PathContext.fullPath(leafAddr: LeafAddress): List<Any> =
         (frames.asSequence().map { it.keyOrIdx }.toList() + leafAddr.addr)
 
-    private fun resolveInitList(initExpr: Expr?, env: MutableMap<String, Any?>): List<Any?> {
-        val iv = initExpr?.let { eval(it, env) } ?: emptyList<Any?>()
+    private fun resolveInitList(initExpr: Expr?, env: Env): List<Any?> {
+        val iv = initExpr?.let { evalExpr(it, env) } ?: emptyList<Any?>()
         require(iv is List<*>) { "INIT for APPEND TO must evaluate to a list (got ${iv::class.simpleName})" }
         return iv
     }
@@ -394,50 +862,56 @@ class Exec(
     // Handlers per IR-node (keep execObject simple)
     // ---------------------------------------------------------------------
 
-    private fun handleLet(n: IRLet, env: MutableMap<String, Any?>) {
-        val old = env[n.name]
-        val new = eval(n.expr, env)
-        env[n.name] = new
+    private fun handleLet(n: IRLet, env: Env) {
+        ensureEnvWriteAllowed("LET")
+        val had = env.contains(n.name)
+        val old = if (had) env.get(n.name) else null
+        val new = evalExpr(n.expr, env)
+        env.setOrDefine(n.name, new)
         emitLet(n.name, old, new)
     }
 
-    private fun handleSet(n: IRSet, env: MutableMap<String, Any?>) {
+    private fun handleSet(n: IRSet, env: Env) {
+        ensureEnvWriteAllowed("SET")
         val ctx = traverseToParent(n.target, env, opName = "SET")
-        val value = eval(n.value, env)
+        val value = evalExpr(n.value, env)
         val addr = resolveLeafAddress(ctx.parent, ctx.last, env)
         val parentUpdated = writeReplaceAt(ctx.parent, addr, value)
         val newRoot = bubbleUp(ctx.frames, parentUpdated)
         emitPathWrite("SET", ctx.rootName, ctx.fullPath(addr), readAt(ctx.parent, addr), value)
-        env[ctx.rootName] = newRoot
+        ctx.rootScope.setLocal(ctx.rootName, newRoot)
     }
 
-    private fun handleSetVar(n: IRSetVar, env: MutableMap<String, Any?>) {
-        require(env.containsKey(n.name)) { "SET variable '${n.name}' not found; declare with LET first" }
-        val old = env[n.name]
-        val new = eval(n.value, env)
-        env[n.name] = new
+    private fun handleSetVar(n: IRSetVar, env: Env) {
+        ensureEnvWriteAllowed("SET")
+        check(env.contains(n.name)) { "SET variable '${n.name}' not found; declare with LET first" }
+        val old = env.get(n.name)
+        val new = evalExpr(n.value, env)
+        env.setExisting(n.name, new)
         emitLet(n.name, old, new)
     }
 
-    private fun handleAppendTo(n: IRAppendTo, env: MutableMap<String, Any?>) {
+    private fun handleAppendTo(n: IRAppendTo, env: Env) {
+        ensureEnvWriteAllowed("APPEND")
         val ctx = traverseToParent(n.target, env, opName = "APPEND TO")
         val addr = resolveLeafAddress(ctx.parent, ctx.last, env)
         val oldV = readAt(ctx.parent, addr)
-        val v = eval(n.value, env)
+        val v = evalExpr(n.value, env)
         val init = resolveInitList(n.init, env)
         val parentUpdated = writeAppendAt(ctx.parent, addr, v, init)
         val newRoot = bubbleUp(ctx.frames, parentUpdated)
-        env[ctx.rootName] = newRoot
+        ctx.rootScope.setLocal(ctx.rootName, newRoot)
         val newV = readAt(parentUpdated, addr)
         emitPathWrite("APPEND", ctx.rootName, ctx.fullPath(addr), oldV, newV)
     }
 
-    private fun handleAppendVar(n: IRAppendVar, env: MutableMap<String, Any?>) {
-        require(env.containsKey(n.name)) { "APPEND TO variable '${n.name}' not found; declare with LET first" }
-        val cur = env[n.name]
+    private fun handleAppendVar(n: IRAppendVar, env: Env) {
+        ensureEnvWriteAllowed("APPEND")
+        check(env.contains(n.name)) { "APPEND TO variable '${n.name}' not found; declare with LET first" }
+        val cur = env.get(n.name)
         val base: List<Any?> = when (cur) {
             null -> {
-                val iv = n.init?.let { eval(it, env) } ?: emptyList<Any?>()
+                val iv = n.init?.let { evalExpr(it, env) } ?: emptyList<Any?>()
                 require(iv is List<*>) { "INIT for APPEND TO must evaluate to a list" }
                 iv
             }
@@ -445,18 +919,20 @@ class Exec(
             else -> error("APPEND TO expects list in variable '${n.name}'")
         }
         val appended = ArrayList<Any?>(base.size + 1).apply {
-            addAll(base);
-            add(eval(n.value, env))
+            addAll(base)
+            add(evalExpr(n.value, env))
         }
-        env[n.name] = appended
+        env.setExisting(n.name, appended)
         emitPathWrite("APPEND", n.name, listOf(n.name), cur, appended)
     }
 
-    private fun handleModify(n: IRModify, env: MutableMap<String, Any?>) {
+    private fun handleModify(n: IRModify, env: Env) {
+        ensureEnvWriteAllowed("MODIFY")
         val delta = propertiesToMap(n.updates, env)
         val baseIdent = n.target.base as? IdentifierExpr ?: error("MODIFY target must start with identifier")
         val rootName = baseIdent.name
-        val rootVal = env[rootName] ?: error("MODIFY root '$rootName' not found")
+        val rootScope = env.resolveScope(rootName) ?: error("MODIFY root '$rootName' not found")
+        val rootVal = rootScope.getLocal(rootName) ?: error("MODIFY root '$rootName' not found")
         val parts: List<ObjKey> = n.target.segs.map {
             when (it) {
                 is AccessSeg.Static -> it.key
@@ -465,111 +941,95 @@ class Exec(
         }
         val updatedRoot = applyAt(rootVal, parts) { obj ->
             LinkedHashMap<Any, Any?>(obj.size + delta.size).apply {
-                putAll(obj);
+                putAll(obj)
                 putAll(delta)
             }
         }
-        env[rootName] = updatedRoot
+        rootScope.setLocal(rootName, updatedRoot)
     }
 
-    private fun handleOutput(n: IROutput, env: MutableMap<String, Any?>, out: MutableList<Map<Any, Any?>>) {
+    private fun handleOutput(n: IROutput, env: Env, out: MutableList<Map<Any, Any?>>) {
+        ensureOutputAllowed()
         out += propertiesToMap(n.fields, env)
     }
 
-    private fun handleExprStmt(n: IRExprStmt, env: MutableMap<String, Any?>) {
-        eval(n.expr, env) // value intentionally ignored (side effects only)
+    private fun handleExprStmt(n: IRExprStmt, env: Env) {
+        evalExpr(n.expr, env)
     }
 
-    private fun handleIf(n: IRIf, env: MutableMap<String, Any?>, out: MutableList<Map<Any, Any?>>) {
-        val body = if (eval(n.condition, env).asBool()) n.thenBody else n.elseBody ?: emptyList()
-        execObject(body, env, out)
+    private fun handleIf(n: IRIf, env: Env, out: MutableList<Map<Any, Any?>>): ExecResult {
+        val body = if (evalExpr(n.condition, env).asBool()) n.thenBody else n.elseBody ?: emptyList()
+        return execObject(body, env, out)
     }
 
-    private inline fun <T> MutableMap<String, Any?>.childScope(block: MutableMap<String, Any?>.() -> T): T {
-        val baseKeys = keys.toSet()
-        val result = block(this)
-        val kept = HashMap<String, Any?>(baseKeys.size)
-        for (k in baseKeys) if (containsKey(k)) kept[k] = this[k]
-        clear();
-        putAll(kept)
-        return result
-    }
-
-    private fun MutableMap<String, Any?>.makeBaseSnapshot(baseKeys: Set<String>): Map<String, Any?> =
-        HashMap<String, Any?>(baseKeys.size).apply { for (k in baseKeys) this[k] = this@makeBaseSnapshot[k] }
-
-    private fun MutableMap<String, Any?>.pruneToBaseProtectingVar(
-        baseKeys: Set<String>,
-        baseSnapshot: Map<String, Any?>,
-        varName: String,
-    ) {
-        val hadOuterVar = baseSnapshot.containsKey(varName)
-        val kept = HashMap<String, Any?>(baseKeys.size)
-        for (k in baseKeys) {
-            if (k == varName) {
-                if (hadOuterVar) kept[k] = baseSnapshot[k]
-            } else {
-                kept[k] = this[k]
-            }
-        }
-        clear();
-        putAll(kept)
-    }
-
-    private fun handleForEach(n: IRForEach, env: MutableMap<String, Any?>, out: MutableList<Map<Any, Any?>>) {
-        val iterVal = eval(n.iterable, env)
+    private fun handleForEach(n: IRForEach, env: Env, out: MutableList<Map<Any, Any?>>): ExecResult {
+        ensureEnvWriteAllowed("FOR EACH")
+        val iterVal = evalExpr(n.iterable, env)
         val iterable: Iterable<*> = when (iterVal) {
             is Iterable<*> -> iterVal
             is Sequence<*> -> iterVal.asIterable()
             else -> error("FOR EACH expects list/iterable/sequence")
         }
 
-        val hadOuterVar = env.containsKey(n.varName)
-        val savedOuter = env[n.varName]
+        val bindingScope = env.resolveScope(n.varName)
+        val hadBinding = bindingScope != null
+        val prev = if (hadBinding) bindingScope?.getLocal(n.varName) else null
+        val target = bindingScope ?: env
 
         for (item in iterable) {
-            env[n.varName] = item
-            if (n.where == null || eval(n.where, env).asBool()) {
-                execObject(n.body, env, out)
+            target.setLocal(n.varName, item)
+            if (n.where == null || evalExpr(n.where, env).asBool()) {
+                val res = execObject(n.body, env, out)
+                if (res.returned) {
+                    if (hadBinding) {
+                        target.setLocal(n.varName, prev)
+                    } else {
+                        env.removeLocal(n.varName)
+                    }
+                    return res
+                }
             }
         }
 
-        if (hadOuterVar) env[n.varName] = savedOuter else env.remove(n.varName)
+        if (hadBinding) target.setLocal(n.varName, prev) else env.removeLocal(n.varName)
+        return ExecResult(false, null)
     }
 
-    private fun handleTryCatch(n: IRTryCatch, env: MutableMap<String, Any?>, out: MutableList<Map<Any, Any?>>): Boolean {
+    private fun handleTryCatch(n: IRTryCatch, env: Env, out: MutableList<Map<Any, Any?>>): ExecResult {
+        ensureEnvWriteAllowed("TRY/CATCH")
         var attempts = 0
         while (true) {
             try {
-                eval(n.tryExpr, env)
+                evalExpr(n.tryExpr, env)
                 break
             } catch (ex: Exception) {
                 if (attempts++ >= n.retry) {
                     val errorValue = buildErrorValue(ex)
                     return withCatchBinding(env, n.exceptionName, errorValue) {
                         if (n.fallbackAbort != null) {
-                            val obj = eval(n.fallbackAbort, env) as Map<*, *>
+                            val obj = evalExpr(n.fallbackAbort, env) as Map<*, *>
                             @Suppress("UNCHECKED_CAST")
                             out += obj as Map<Any, Any>
-                            false
+                            ExecResult(true, null)
                         } else {
-                            n.fallbackExpr?.let { appendOutFromValue(eval(it, env), out) }
-                            true
+                            n.fallbackExpr?.let { appendOutFromValue(evalExpr(it, env), out) }
+                            ExecResult(false, null)
                         }
                     }
                 }
             }
         }
-        return true
+        return ExecResult(false, null)
     }
 
-    private fun handleExprOutput(n: IRExprOutput, env: MutableMap<String, Any?>, out: MutableList<Map<Any, Any?>>) {
-        appendOutFromValue(eval(n.expr, env), out)
+    private fun handleExprOutput(n: IRExprOutput, env: Env, out: MutableList<Map<Any, Any?>>) {
+        ensureOutputAllowed()
+        appendOutFromValue(evalExpr(n.expr, env), out)
     }
 
-    private fun handleAbort(n: IRAbort, env: MutableMap<String, Any?>, out: MutableList<Map<Any, Any?>>) {
+    private fun handleAbort(n: IRAbort, env: Env, out: MutableList<Map<Any, Any?>>) {
         if (n.value == null) throw IllegalStateException("ABORT")
-        val obj = eval(n.value, env) as Map<*, *>
+        val obj = evalExpr(n.value, env) as Map<*, *>
         @Suppress("UNCHECKED_CAST")
         out += obj as Map<Any, Any>
     }
@@ -580,10 +1040,10 @@ class Exec(
             null -> Unit
             is Map<*, *> -> out += normalizeMapKeys(v)
             is List<*> -> for (e in v) {
-                require(
-                    e is Map<*, *>
-                ) { "Expected list of objects in OUTPUT, got ${e?.let { it::class.simpleName } ?: "null"}" }
-                out += normalizeMapKeys(e )
+                require(e is Map<*, *>) {
+                    "Expected list of objects in OUTPUT, got ${e?.let { it::class.simpleName } ?: "null"}"
+                }
+                out += normalizeMapKeys(e)
             }
 
             else -> error("Expected object or list of objects in OUTPUT, got ${v::class.simpleName}")
@@ -593,7 +1053,7 @@ class Exec(
     // ---------------------------------------------------------------------
     // Main dispatcher — deliberately thin
     // ---------------------------------------------------------------------
-    private fun execObject(nodes: List<IRNode>, env: MutableMap<String, Any?>, out: MutableList<Map<Any, Any?>>) {
+    private fun execObject(nodes: List<IRNode>, env: Env, out: MutableList<Map<Any, Any?>>): ExecResult {
         for (n in nodes) {
             emitEnter(n)
             try {
@@ -603,21 +1063,25 @@ class Exec(
                     is IRAppendTo -> handleAppendTo(n, env)
                     is IRModify -> handleModify(n, env)
                     is IROutput -> handleOutput(n, env, out)
-                    is IRIf -> handleIf(n, env, out)
-                    is IRForEach -> handleForEach(n, env, out)
-                    is IRTryCatch -> {
-                        val ok = handleTryCatch(n, env, out);
-                        if (!ok) return
+                    is IRIf -> {
+                        val res = handleIf(n, env, out)
+                        if (res.returned) return res
                     }
-
+                    is IRForEach -> {
+                        val res = handleForEach(n, env, out)
+                        if (res.returned) return res
+                    }
+                    is IRTryCatch -> {
+                        val res = handleTryCatch(n, env, out)
+                        if (res.returned) return res
+                    }
                     is IRExprOutput -> handleExprOutput(n, env, out)
                     is IRAbort -> {
-                        handleAbort(n, env, out);
-                        return
+                        handleAbort(n, env, out)
+                        return ExecResult(true, null)
                     }
-
                     is IRExprStmt -> handleExprStmt(n, env)
-                    is IRReturn -> return
+                    is IRReturn -> return ExecResult(true, n.value?.let { evalExpr(it, env) })
                     is IRSetVar -> handleSetVar(n, env)
                     is IRAppendVar -> handleAppendVar(n, env)
                 }
@@ -628,5 +1092,6 @@ class Exec(
                 emitExit(n)
             }
         }
+        return ExecResult(false, null)
     }
 }

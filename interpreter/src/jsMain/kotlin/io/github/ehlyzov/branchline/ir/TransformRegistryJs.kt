@@ -4,10 +4,13 @@ import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.Mode
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
 import io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES
+import io.github.ehlyzov.branchline.std.HostFnMetadata
+import io.github.ehlyzov.branchline.std.SharedStoreProvider
 
 actual class TransformRegistry actual constructor(
     private val funcs: Map<String, FuncDecl>,
     private val hostFns: Map<String, (List<Any?>) -> Any?>,
+    private val hostFnMeta: Map<String, HostFnMetadata>,
     private val transforms: Map<String, TransformDescriptor>,
 ) {
     private val cache = mutableMapOf<String, (Map<String, Any?>) -> Any?>()
@@ -18,8 +21,13 @@ actual class TransformRegistry actual constructor(
             val decl = descriptor.decl
             require(decl.mode == Mode.BUFFER) { "Only buffer mode is supported" }
             val ir = ToIR(funcs, hostFns).compile(decl.body.statements)
-            val evalFn = makeEval(hostFns, funcs, this)
-            val exec = Exec(ir, evalFn)
+            val exec = Exec(
+                ir = ir,
+                hostFns = hostFns,
+                hostFnMeta = hostFnMeta,
+                funcs = funcs,
+                sharedStore = SharedStoreProvider.store,
+            )
             val runner: (Map<String, Any?>) -> Any? = { input: Map<String, Any?> ->
                 val env = HashMap<String, Any?>().apply {
                     this[DEFAULT_INPUT_ALIAS] = input

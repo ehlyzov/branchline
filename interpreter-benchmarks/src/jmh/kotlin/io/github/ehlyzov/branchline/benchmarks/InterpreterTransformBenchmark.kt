@@ -14,12 +14,8 @@ import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.Lexer
 import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.TransformDecl
-import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.ir.Exec
 import io.github.ehlyzov.branchline.ir.ToIR
-import io.github.ehlyzov.branchline.ir.TransformRegistry
-import io.github.ehlyzov.branchline.ir.buildTransformDescriptors
-import io.github.ehlyzov.branchline.ir.makeEval
 import io.github.ehlyzov.branchline.std.StdLib
 import java.util.concurrent.TimeUnit
 
@@ -121,9 +117,10 @@ private fun buildExec(program: String): Exec {
     val transforms = parsed.decls.filterIsInstance<TransformDecl>()
     val transform = transforms.single()
     val ir = ToIR(funcs, hostFns).compile(transform.body.statements)
-    val typeDecls = parsed.decls.filterIsInstance<TypeDecl>()
-    val descriptors = buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
-    val registry = TransformRegistry(funcs, hostFns, descriptors)
-    val eval = makeEval(hostFns, funcs, registry)
-    return Exec(ir, eval)
+    return Exec(
+        ir = ir,
+        hostFns = hostFns,
+        hostFnMeta = StdLib.meta,
+        funcs = funcs,
+    )
 }

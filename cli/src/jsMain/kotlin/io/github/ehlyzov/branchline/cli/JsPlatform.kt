@@ -42,7 +42,7 @@ public actual fun parseXmlInput(text: String): Map<String, Any?> {
     val parsed = newXmlParser().parse(text)
     val converted = dynamicToKotlin(parsed)
     if (converted is Map<*, *>) {
-        @Suppress("UncheckedCast")
+        @Suppress("UNCHECKED_CAST")
         return converted as Map<String, Any?>
     }
     return emptyMap()

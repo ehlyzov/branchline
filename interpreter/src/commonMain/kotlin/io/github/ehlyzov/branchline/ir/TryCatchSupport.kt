@@ -10,21 +10,23 @@ internal fun buildErrorValue(error: Throwable): Map<String, Any?> {
 }
 
 internal fun <T> withCatchBinding(
-    env: MutableMap<String, Any?>,
+    env: Env,
     name: String,
     errorValue: Map<String, Any?>,
     block: () -> T,
 ): T {
-    val had = env.containsKey(name)
-    val prev = env[name]
-    env[name] = errorValue
+    val scope = env.resolveScope(name)
+    val had = scope != null
+    val prev = if (had) scope?.getLocal(name) else null
+    val target = scope ?: env
+    target.setLocal(name, errorValue)
     return try {
         block()
     } finally {
         if (had) {
-            env[name] = prev
+            target.setLocal(name, prev)
         } else {
-            env.remove(name)
+            env.removeLocal(name)
         }
     }
 }

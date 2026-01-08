@@ -12,10 +12,8 @@ import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
 import io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES
-import io.github.ehlyzov.branchline.Expr
 import io.github.ehlyzov.branchline.contract.TransformContract
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
-import io.github.ehlyzov.branchline.ir.TransformRegistry
 import io.github.ehlyzov.branchline.std.SharedResourceHandle
 import io.github.ehlyzov.branchline.std.SharedResourceKind
 import io.github.ehlyzov.branchline.std.SharedStoreProvider
@@ -37,8 +35,7 @@ public class BranchlineProgram(
     private val typeDecls: List<TypeDecl>
     private val sharedDecls: List<SharedDecl>
     private val namedDescriptors: Map<String, TransformDescriptor>
-    private val registry: TransformRegistry
-    private val eval: (Expr, MutableMap<String, Any?>) -> Any?
+    private val hostFnMeta: Map<String, io.github.ehlyzov.branchline.std.HostFnMetadata>
     private val contractBuilder: TransformContractBuilder
 
     init {
@@ -49,6 +46,7 @@ public class BranchlineProgram(
             throw CliException(ex.message ?: "Parser error", kind = CliErrorKind.INPUT)
         }
         hostFns = StdLib.fns
+        hostFnMeta = StdLib.meta
         _root_ide_package_.io.github.ehlyzov.branchline.sema.SemanticAnalyzer(hostFns.keys).analyze(program)
         funcs = program.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
         transforms = program.decls.filterIsInstance<TransformDecl>()
@@ -61,14 +59,6 @@ public class BranchlineProgram(
         val typeResolver = _root_ide_package_.io.github.ehlyzov.branchline.sema.TypeResolver(typeDecls)
         contractBuilder = _root_ide_package_.io.github.ehlyzov.branchline.contract.TransformContractBuilder(typeResolver, hostFns.keys)
         namedDescriptors = _root_ide_package_.io.github.ehlyzov.branchline.ir.buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
-        registry = TransformRegistry(funcs, hostFns, namedDescriptors)
-        eval = _root_ide_package_.io.github.ehlyzov.branchline.ir.makeEval(
-            hostFns,
-            funcs,
-            registry,
-            tracer = tracer,
-            sharedStore = SharedStoreProvider.store,
-        )
     }
 
     fun selectTransform(name: String?): TransformDecl {
@@ -80,7 +70,14 @@ public class BranchlineProgram(
 
     fun execute(transform: TransformDecl, input: Map<String, Any?>): Any? {
         val ir = compileIr(transform)
-        val exec = _root_ide_package_.io.github.ehlyzov.branchline.ir.Exec(ir, eval, tracer)
+        val exec = _root_ide_package_.io.github.ehlyzov.branchline.ir.Exec(
+            ir = ir,
+            hostFns = hostFns,
+            hostFnMeta = hostFnMeta,
+            funcs = funcs,
+            tracer = tracer,
+            sharedStore = SharedStoreProvider.store,
+        )
         val env = buildEnv(input)
         return exec.run(env, stringifyKeys = true)
     }
@@ -94,12 +91,12 @@ public class BranchlineProgram(
     fun prepareVmExec(transform: TransformDecl, bytecode: Bytecode): VMExec {
         val ir = compileIr(transform)
         return _root_ide_package_.io.github.ehlyzov.branchline.vm.VMExec(
-            ir,
-            eval,
+            ir = ir,
             tracer = tracer,
             hostFns = hostFns,
+            hostFnMeta = hostFnMeta,
             funcs = funcs,
-            precompiled = bytecode
+            precompiled = bytecode,
         )
     }
 

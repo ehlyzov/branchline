@@ -13,7 +13,7 @@ class ConformJoinTest {
         """.trimIndent()
 
         val runner = buildRunnerFromProgramMP(program)
-        val out = runner(emptyMap()) as Map<String, Any?>
+        val out = runner(emptyMap()) as Map<*, *>
         assertEquals("a-b-c", out["v"])
     }
 
@@ -25,7 +25,7 @@ class ConformJoinTest {
         """.trimIndent()
 
         val runner = buildRunnerFromProgramMP(program)
-        val out = runner(emptyMap()) as Map<String, Any?>
+        val out = runner(emptyMap()) as Map<*, *>
         assertEquals("xyz", out["v"])
     }
 }
