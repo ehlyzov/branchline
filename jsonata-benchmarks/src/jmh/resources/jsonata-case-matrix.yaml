@@ -46,21 +46,25 @@ cases:
   - id: function-sift/case004
     branchlineProgram: |
       TRANSFORM FunctionSiftCase004 {
-          OUTPUT {
-              a: "hello",
-          };
+          LET data = { a: "hello", b: "world", hello: "again" }
+          LET result = {}
+          FOR EACH key in KEYS(data) WHERE GET(data, data[key]) != NULL {
+            SET result.[key] = data[key]
+          }
+          OUTPUT result;
       }
-    kotlinEvalId: 'function-sift/case004'
+    kotlinEvalId: "function-sift/case004"
   - id: hof-map/case000
     branchlineProgram: |
       TRANSFORM HofMapCase000 {
           LET data = {
               one: [1, 2, 3, 4, 5],
               two: [5, 4, 3, 2, 1],
-          };
-          OUTPUT MAP(data.one, (x) -> x * x);
+          }
+          LET fn = (x) -> x * x
+          OUTPUT { result: MAP(data.one, fn) }
       }
-    kotlinEvalId: 'hof-map/case000'
+    kotlinEvalId: "hof-map/case000"
   - id: function-zip/case002
     branchlineProgram: |
       TRANSFORM FunctionZipCase002 {
@@ -68,9 +72,11 @@ cases:
           LET second = [4, 5];
           LET third = [7, 8, 9];
           LET limit = MIN([LENGTH(first), LENGTH(second), LENGTH(third)]);
-          OUTPUT MAP(RANGE(0, limit - 1), (i) -> [first[i], second[i], third[i]]);
+          OUTPUT {
+            result: MAP(RANGE(0, limit - 1), (i) -> [first[i], second[i], third[i]])
+          }
       }
-    kotlinEvalId: 'function-zip/case002'
+    kotlinEvalId: "function-zip/case002"
   - id: hof-zip-map/case000
     branchlineProgram: |
       TRANSFORM HofZipMapCase000 {
@@ -79,60 +85,64 @@ cases:
               two: [5, 4, 3, 2, 1],
           };
           LET pairs = ZIP(data.one, data.two);
-          OUTPUT MAP(pairs, (pair) -> pair[0] + pair[1]);
+          OUTPUT {
+            result: MAP(pairs, (pair) -> pair[0] + pair[1])
+          }
       }
-    kotlinEvalId: 'hof-zip-map/case000'
+    kotlinEvalId: "hof-zip-map/case000"
   - id: partial-application/case002
     branchlineProgram: |
       TRANSFORM PartialApplicationCase002 {
-          OUTPUT SUBSTRING("Hello World", 0, 5);
+          OUTPUT {
+            result: SUBSTRING("Hello World", 0, 5)
+          }
       }
-    kotlinEvalId: 'partial-application/case002'
+    kotlinEvalId: "partial-application/case002"
   - id: function-sum/case000
     branchlineProgram: |
       TRANSFORM FunctionSumCase000 {
           LET totals = FLATTEN(MAP(input.Account.Order, (order) -> MAP(order.Product, (product) -> product.Price * product.Quantity)));
-          OUTPUT SUM(totals);
+          OUTPUT { result: SUM(totals) }
       }
-    kotlinEvalId: 'function-sum/case000'
+    kotlinEvalId: "function-sum/case000"
   - id: function-count/case000
     branchlineProgram: |
       TRANSFORM FunctionCountCase000 {
           LET totals = FLATTEN(MAP(input.Account.Order, (order) -> MAP(order.Product, (product) -> product.Price * product.Quantity)));
-          OUTPUT COUNT(totals);
+          OUTPUT { result: COUNT(totals) }
       }
-    kotlinEvalId: 'function-count/case000'
+    kotlinEvalId: "function-count/case000"
   - id: simple-array-selectors/case000
     branchlineProgram: |
       TRANSFORM SimpleArraySelectorsCase000 {
           LET values = FLATTEN(MAP(input, (item) -> MAP(item.nest0, (entry) -> entry.nest1[0])));
-          OUTPUT FLATTEN(values);
+          OUTPUT { result: FLATTEN(values) }
       }
-    kotlinEvalId: 'simple-array-selectors/case000'
+    kotlinEvalId: "simple-array-selectors/case000"
   - id: fields/case000
     branchlineProgram: |
       TRANSFORM FieldsCase000 {
-          OUTPUT input.foo.bar;
+          OUTPUT { result: input.foo.bar }
       }
-    kotlinEvalId: 'fields/case000'
+    kotlinEvalId: "fields/case000"
   - id: numeric-operators/case000
     branchlineProgram: |
       TRANSFORM NumericOperatorsCase000 {
-          OUTPUT input.foo.bar + input.bar;
+          OUTPUT { result: input.foo.bar + input.bar }
       }
-    kotlinEvalId: 'numeric-operators/case000'
+    kotlinEvalId: "numeric-operators/case000"
   - id: string-concat/case000
     branchlineProgram: |
       TRANSFORM StringConcatCase000 {
-          OUTPUT JOIN(["foo", "bar"], "");
+          OUTPUT { result: "foo" + "bar" };
       }
-    kotlinEvalId: 'string-concat/case000'
+    kotlinEvalId: "string-concat/case000"
   - id: range-operator/case000
     branchlineProgram: |
       TRANSFORM RangeOperatorCase000 {
-          OUTPUT RANGE(0, 9);
+          OUTPUT { result: RANGE(0, 9) }
       }
-    kotlinEvalId: 'range-operator/case000'
+    kotlinEvalId: "range-operator/case000"
   - id: performance/case001
     branchlineProgram: |
       TRANSFORM PerformanceCase001 {
@@ -140,10 +150,13 @@ cases:
           LET filtered = FILTER(items, (item) -> item.text != "" && item.text != "test");
           LET size = LENGTH(items);
           OUTPUT {
-              items: MAP(RANGE(0, size - 1), (i) -> {
+              items: [
+                {
                   foo: "bar",
-                  label: JOIN([items[i].label, filtered[i].text], " "),
-              }),
+                  label: JOIN([items[index].label, filtered[index].text], " "),
+                } 
+                FOR EACH index IN RANGE(0, size - 1)
+              ]
           };
       }
-    kotlinEvalId: 'performance/case001'
+    kotlinEvalId: "performance/case001"

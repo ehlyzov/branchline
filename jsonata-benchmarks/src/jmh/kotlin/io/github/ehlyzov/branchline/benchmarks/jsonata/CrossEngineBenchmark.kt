@@ -13,7 +13,7 @@ import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.infra.Blackhole
 
-private const val DEFAULT_CASE_FILTER: String = "all"
+private const val DEFAULT_CASE_ID: String = "all"
 private const val CASE_FILTER_PROPERTY: String = "jsonata.caseFilter"
 
 @BenchmarkMode(Mode.Throughput)
@@ -29,15 +29,15 @@ public open class CrossEngineBenchmark {
     )
     public lateinit var engineId: String
 
-    @Param(DEFAULT_CASE_FILTER)
-    public lateinit var caseFilter: String
+    @Param(DEFAULT_CASE_ID)
+    public lateinit var caseId: String
 
     private lateinit var preparedCases: List<PreparedCase>
     private var timeoutRunner: BenchmarkTimeoutRunner? = null
 
     @Setup(Level.Trial)
     public fun setup() {
-        val filter = resolveCaseFilter(caseFilter)
+        val filter = resolveCaseFilter(caseId)
         val cases = filterCases(CrossEngineCases.loadAll(), filter)
         preparedCases = cases.map { case ->
             val inputs = buildInputs(case)
@@ -201,7 +201,7 @@ private fun filterCases(
     filter: String,
 ): List<CrossEngineCase> {
     val trimmed = filter.trim()
-    if (trimmed.isEmpty() || trimmed == DEFAULT_CASE_FILTER) return cases
+    if (trimmed.isEmpty() || trimmed == DEFAULT_CASE_ID) return cases
     val ids = trimmed.split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
     require(ids.isNotEmpty()) { "Case filter must not be empty." }
     val filtered = cases.filter { ids.contains(it.id) }

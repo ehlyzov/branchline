@@ -59,7 +59,8 @@ Defaults are tuned for quick runs. Override with Gradle properties:
 - `-PjmhTimeOnIteration=200ms`
 - `-PjmhForks=1`
 - `-PjmhProfilers=gc` (comma-separated)
-- `-Djsonata.caseFilter=caseA,caseB` to limit cases by ID
+- `-PjmhCaseIds=caseA,caseB` to run a subset of YAML cases (default: all YAML ids)
+- `-Djsonata.caseFilter=caseA,caseB` to override case IDs at runtime
 - `-Djsonata.benchTimeoutMs=500` to bound per-case evaluation (0 disables)
 
 # Methodology (dashjoin-style)
@@ -138,6 +139,8 @@ Results are emitted to:
   optional dotenv) and ensure `.env` is ignored.
 - Step 8 (done): Guard per-case execution with a timeout and disable failing
   cases to keep JMH runs finite.
+- Step 9 (done): Run CrossEngineBenchmark per YAML case by default so each task
+  gets its own JMH result entry.
 
 # Progress log
 - Step 1: Reviewed module files and documented current behavior (why: establish
@@ -164,6 +167,9 @@ Results are emitted to:
   default 10s warmup and keep runs fast).
 - Step 8: Added a per-case timeout (default 500ms) and disable-on-error behavior
   (why: keep long or stuck cases from stalling the suite).
+- Step 9: Parameterized CrossEngineBenchmark with `caseId` and defaulted the JMH
+  parameters to all YAML cases (why: produce per-task comparisons instead of a
+  single aggregate).
 
 # Branchline issues and notes
 - Array comprehension syntax differs from the JSONata-style examples; Branchline

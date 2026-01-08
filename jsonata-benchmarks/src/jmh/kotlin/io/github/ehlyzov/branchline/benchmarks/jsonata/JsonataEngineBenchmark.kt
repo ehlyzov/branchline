@@ -27,7 +27,7 @@ public open class JsonataEngineBenchmark {
     public lateinit var engineId: String
 
     @Param(DEFAULT_CASE_FILTER)
-    public lateinit var caseFilter: String
+    public lateinit var caseId: String
 
     private lateinit var engine: JsonataEngine
     private lateinit var preparedCases: List<JsonataPreparedCase>
@@ -37,7 +37,7 @@ public open class JsonataEngineBenchmark {
     public fun setup() {
         engine = JsonataEngines.require(engineId)
         val root = JsonataTestSuite.resolveRoot()
-        val filter = resolveCaseFilter(caseFilter)
+        val filter = resolveCaseFilter(caseId)
         val caseIds = filterCaseIds(JsonataTestSuite.listCaseIds(root), filter)
         val prepared = ArrayList<JsonataPreparedCase>(caseIds.size)
         for (caseId in caseIds) {

@@ -34,6 +34,27 @@ def loadDotenv(File rootDir) {
     return values
 }
 
+def loadCaseIds(File matrixFile) {
+    if (!matrixFile.exists()) {
+        return []
+    }
+    def ids = []
+    matrixFile.eachLine { line ->
+        def matcher = (line =~ /^\s*-\s*id:\s*(.+)\s*$/)
+        if (!matcher.matches()) {
+            return
+        }
+        def raw = matcher[0][1].trim()
+        if ((raw.startsWith("\"") && raw.endsWith("\"")) || (raw.startsWith("'") && raw.endsWith("'"))) {
+            raw = raw.substring(1, raw.length() - 1)
+        }
+        if (!raw.isEmpty()) {
+            ids << raw
+        }
+    }
+    return ids.unique()
+}
+
 def resolveConfigValue(String gradlePropertyName, String envName, Map dotenvValues) {
     def fromProperty = providers.gradleProperty(gradlePropertyName).orNull
     if (fromProperty != null && !fromProperty.trim().isEmpty()) {
@@ -77,9 +98,22 @@ def jmhIterations = providers.gradleProperty("jmhIterations").orNull
 def jmhTimeOnIteration = providers.gradleProperty("jmhTimeOnIteration").orNull
 def jmhForks = providers.gradleProperty("jmhForks").orNull
 def jmhProfilers = providers.gradleProperty("jmhProfilers").orNull
+def jmhCaseIds = providers.gradleProperty("jmhCaseIds").orNull
+def jmhIncludes = providers.gradleProperty("jmhIncludes").orNull
 def jmhProfilerList = jmhProfilers == null
     ? ['gc']
     : jmhProfilers.split(',').collect { it.trim() }.findAll { it }
+def jmhIncludeList = jmhIncludes == null || jmhIncludes.trim().isEmpty()
+    ? ['io.github.ehlyzov.branchline.benchmarks.jsonata.*']
+    : jmhIncludes.split(',').collect { it.trim() }.findAll { it }
+def caseIdList = jmhCaseIds == null || jmhCaseIds.trim().isEmpty()
+    ? loadCaseIds(file("src/jmh/resources/jsonata-case-matrix.yaml"))
+    : jmhCaseIds.split(',').collect { it.trim() }.findAll { it }
+if (caseIdList.isEmpty()) {
+    caseIdList = ['all']
+}
+def caseIdListProperty = objects.listProperty(String)
+caseIdListProperty.set(caseIdList)
 
 dependencies {
     implementation project(':interpreter')
@@ -98,13 +132,14 @@ dependencies {
 jmh {
     resultFormat = 'JSON'
     profilers = jmhProfilerList
-    includes = [
-        'io.github.ehlyzov.branchline.benchmarks.jsonata.*',
+    includes = jmhIncludeList
+    benchmarkParameters = [
+        caseId: caseIdListProperty,
     ]
     warmupIterations = (jmhWarmupIterations ?: "1").toInteger()
     warmup = jmhWarmupTime ?: '200ms'
     iterations = (jmhIterations ?: "1").toInteger()
-    timeOnIteration = jmhTimeOnIteration ?: '200ms'
+    timeOnIteration = jmhTimeOnIteration ?: '800ms'
     fork = (jmhForks ?: "1").toInteger()
 }
 

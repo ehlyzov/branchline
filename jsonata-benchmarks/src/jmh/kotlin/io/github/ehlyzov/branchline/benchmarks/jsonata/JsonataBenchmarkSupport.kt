@@ -4,19 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
-import io.github.ehlyzov.branchline.Expr
 import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.Lexer
 import io.github.ehlyzov.branchline.Mode
 import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.TransformDecl
-import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.ir.Exec
 import io.github.ehlyzov.branchline.ir.IRNode
 import io.github.ehlyzov.branchline.ir.ToIR
-import io.github.ehlyzov.branchline.ir.TransformRegistry
-import io.github.ehlyzov.branchline.ir.buildTransformDescriptors
-import io.github.ehlyzov.branchline.ir.makeEval
 import io.github.ehlyzov.branchline.std.StdLib
 import io.github.ehlyzov.branchline.vm.VMFactory
 import java.lang.reflect.Method
@@ -258,7 +253,12 @@ public object BranchlineCompiler {
 
     public fun compileInterpreter(program: String): (Any?) -> Any? {
         val compiled = compileProgram(program)
-        val exec = Exec(compiled.ir, compiled.eval, null)
+        val exec = Exec(
+            ir = compiled.ir,
+            hostFns = compiled.hostFns,
+            hostFnMeta = compiled.hostFnMeta,
+            funcs = compiled.funcs,
+        )
         return { input ->
             exec.run(buildEnv(input))
         }
@@ -268,9 +268,9 @@ public object BranchlineCompiler {
         val compiled = compileProgram(program)
         val vmExec = VMFactory.createExecutor(
             compiled.ir,
-            compiled.eval,
             null,
             compiled.hostFns,
+            compiled.hostFnMeta,
             compiled.funcs,
         )
         return { input ->
@@ -287,14 +287,10 @@ public object BranchlineCompiler {
         val transform = transforms.single()
         require(transform.mode == Mode.BUFFER) { "Only buffer mode transforms are supported." }
         val ir = ToIR(funcs, hostFns).compile(transform.body.statements)
-        val typeDecls = parsed.decls.filterIsInstance<TypeDecl>()
-        val descriptors = buildTransformDescriptors(transforms, typeDecls, hostFns.keys)
-        val registry = TransformRegistry(funcs, hostFns, descriptors)
-        val eval = makeEval(hostFns, funcs, registry, null)
         return BranchlineCompiled(
             ir = ir,
-            eval = eval,
             hostFns = hostFns,
+            hostFnMeta = StdLib.meta,
             funcs = funcs,
         )
     }
@@ -317,8 +313,8 @@ public object BranchlineCompiler {
 
 private data class BranchlineCompiled(
     val ir: List<IRNode>,
-    val eval: (Expr, MutableMap<String, Any?>) -> Any?,
     val hostFns: Map<String, (List<Any?>) -> Any?>,
+    val hostFnMeta: Map<String, io.github.ehlyzov.branchline.std.HostFnMetadata>,
     val funcs: Map<String, FuncDecl>,
 )
 
@@ -579,11 +575,26 @@ private fun evalSummaryStats(input: Any?): Any? {
 }
 
 private fun evalFunctionSiftCase004(input: Any?): Any? {
-    return linkedMapOf("a" to "hello")
+    val sift = { data: Map<String, String>, predicate: (k: String, v: String, o: Map<String, String>) -> Boolean ->
+        data.filter { entry ->
+            predicate(entry.key, entry.value, data)
+        }
+    }
+    return sift(
+        mapOf(
+            "a" to "hello",
+            "b" to "world",
+            "hello" to "again",
+        ), { _: String, v: String, o: Map<String, String> ->
+            o.keys.contains(v)
+        })
 }
 
 private fun evalHofMapCase000(input: Any?): Any? {
-    return listOf(1, 4, 9, 16, 25)
+    val data = mapOf("one" to listOf(1, 2, 3, 4, 5), "two" to listOf(5, 4, 3, 2, 1))
+    val square = { x: Int -> x * x }
+    val result = data["one"]!!.map(square)
+    return result
 }
 
 private fun evalFunctionZipCase002(input: Any?): Any? {
@@ -681,7 +692,7 @@ private fun evalNumericOperatorsCase000(input: Any?): Any? {
 }
 
 private fun evalStringConcatCase000(input: Any?): Any? {
-    return "foobar"
+    return "foo" + "bar"
 }
 
 private fun evalRangeOperatorCase000(input: Any?): Any? {
@@ -721,6 +732,7 @@ private fun fromJsonElement(element: JsonElement): Any? = when (element) {
             this[key] = fromJsonElement(value)
         }
     }
+
     is JsonArray -> ArrayList<Any?>(element.size).apply {
         element.forEach { add(fromJsonElement(it)) }
     }

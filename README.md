@@ -76,6 +76,11 @@ Branchline uses JMH benchmarks for the interpreter and VM with shared datasets.
 - Planned automation: publish per-release results and highlight regressions
   without blocking the release.
 
+You can also run benchmarks for dashjoint's and IBM's implementation of JSONata. For JSONata code snippets from official repository is used.
+You can run it yourself via: `./gradlew :jsonata-benchmarks:jmh -PjmhIncludes=io.github.ehlyzov.branchline.benchmarks.jsonata.CrossEngineBenchmark`
+
+
+
 ## Motivation
 
 I created Branchline while exploring alternative ways to describe integration flows. I needed a language that:
