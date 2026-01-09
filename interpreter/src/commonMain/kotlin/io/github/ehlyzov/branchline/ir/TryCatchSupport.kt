@@ -17,7 +17,7 @@ internal fun <T> withCatchBinding(
 ): T {
     val scope = env.resolveScope(name)
     val had = scope != null
-    val prev = if (had) scope?.getLocal(name) else null
+    val prev = if (had) scope.getLocal(name) else null
     val target = scope ?: env
     target.setLocal(name, errorValue)
     return try {

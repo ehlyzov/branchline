@@ -224,7 +224,7 @@ class Exec(
         val out = ArrayList<Any?>()
         val bindingScope = env.resolveScope(e.varName)
         val hadBinding = bindingScope != null
-        val prev = if (hadBinding) bindingScope?.getLocal(e.varName) else null
+        val prev = if (hadBinding) bindingScope.getLocal(e.varName) else null
         val target = bindingScope ?: env
         for (item in iterable) {
             target.setLocal(e.varName, item)
@@ -973,7 +973,7 @@ class Exec(
 
         val bindingScope = env.resolveScope(n.varName)
         val hadBinding = bindingScope != null
-        val prev = if (hadBinding) bindingScope?.getLocal(n.varName) else null
+        val prev = if (hadBinding) bindingScope.getLocal(n.varName) else null
         val target = bindingScope ?: env
 
         for (item in iterable) {

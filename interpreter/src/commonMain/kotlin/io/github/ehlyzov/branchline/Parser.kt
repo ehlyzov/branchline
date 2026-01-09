@@ -1048,7 +1048,12 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             )
         } else {
             val elems = mutableListOf<Expr>().apply { add(firstExpr) }
-            while (match(TokenType.COMMA)) elems += parseExpression()
+            while (true) {
+                if (match(TokenType.COMMA)) {
+                    if (check(TokenType.RIGHT_BRACKET)) break
+                    parseExpression()
+                } else break
+            }
             consume(TokenType.RIGHT_BRACKET, "Expect ']' after array literal")
             ArrayExpr(elems, lbr)
         }
