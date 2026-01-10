@@ -71,10 +71,15 @@ Branchline uses JMH benchmarks for the interpreter and VM with shared datasets.
 - Run locally: `./gradlew :interpreter-benchmarks:jmh :vm-benchmarks:jmh`.
 - Results: `interpreter-benchmarks/build/results/jmh/results.json` and
   `vm-benchmarks/build/results/jmh/results.json`.
-- Release summary: `node .github/scripts/jmh-report.mjs build/benchmarks interpreter-benchmarks/build/results/jmh/results.json vm-benchmarks/build/results/jmh/results.json`.
+- Release summary: `./gradlew :cli:runBl --args ".github/scripts/jmh-report.bl --shared-file jmh=interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir build/benchmarks"`.
 - Methodology and comparison guidance: `docs/benchmarks.md`.
 - Planned automation: publish per-release results and highlight regressions
   without blocking the release.
+
+You can also run benchmarks for dashjoint's and IBM's implementation of JSONata. For JSONata code snippets from official repository is used.
+You can run it yourself via: `./gradlew :jsonata-benchmarks:jmh -PjmhIncludes=io.github.ehlyzov.branchline.benchmarks.jsonata.CrossEngineBenchmark`
+
+
 
 ## Motivation
 

@@ -157,7 +157,7 @@ tasks.register('blShadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.S
     description = 'Assemble a standalone JVM CLI jar with all dependencies.'
     archiveBaseName.set('branchline-cli')
     archiveClassifier.set('all')
-    manifest { attributes 'Main-Class': 'io.branchline.cli.BlJvmMainKt' }
+    manifest { attributes 'Main-Class': 'io.github.ehlyzov.branchline.cli.BlJvmMainKt' }
     from(kotlin.targets.jvm.compilations.main.output)
     configurations = [project.configurations.jvmRuntimeClasspath]
 }
@@ -173,7 +173,7 @@ tasks.named('assemble') {
 tasks.register('runBl', JavaExec) {
     group = 'application'
     description = 'Run Branchline CLI (bl) on the JVM target.'
-    mainClass = 'io.branchline.cli.BlJvmMain'
+    mainClass = 'io.github.ehlyzov.branchline.cli.BlJvmMainKt'
     classpath = files(jvmCompilation.output.allOutputs, configurations.jvmRuntimeClasspath)
     dependsOn jvmCompilation.compileTaskProvider
 }
@@ -181,7 +181,7 @@ tasks.register('runBl', JavaExec) {
 tasks.register('runBlc', JavaExec) {
     group = 'application'
     description = 'Run Branchline compiler CLI (blc) on the JVM target.'
-    mainClass = 'io.branchline.cli.BlcJvmMain'
+    mainClass = 'io.github.ehlyzov.branchline.cli.BlcJvmMainKt'
     classpath = files(jvmCompilation.output.allOutputs, configurations.jvmRuntimeClasspath)
     dependsOn jvmCompilation.compileTaskProvider
 }
@@ -189,7 +189,7 @@ tasks.register('runBlc', JavaExec) {
 tasks.register('runBlvm', JavaExec) {
     group = 'application'
     description = 'Run Branchline VM CLI (blvm) on the JVM target.'
-    mainClass = 'io.branchline.cli.BlvmJvmMain'
+    mainClass = 'io.github.ehlyzov.branchline.cli.BlvmJvmMainKt'
     classpath = files(jvmCompilation.output.allOutputs, configurations.jvmRuntimeClasspath)
     dependsOn jvmCompilation.compileTaskProvider
 }

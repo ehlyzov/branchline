@@ -1,8 +1,8 @@
-package v2.vm
+package io.github.ehlyzov.branchline.vm
 
-import v2.*
-import v2.ir.*
-import v2.debug.*
+import io.github.ehlyzov.branchline.*
+import io.github.ehlyzov.branchline.ir.*
+import io.github.ehlyzov.branchline.debug.*
 
 /**
  * Example demonstrating the VM execution of Branchline DSL code
@@ -99,30 +99,9 @@ class VMExample {
             IROutput(listOf(LiteralProperty(ObjKey.Name("answer"), IdentifierExpr("answer", token))))
         )
         
-        // Create fallback evaluator
-        val eval: (Expr, MutableMap<String, Any?>) -> Any? = { expr, env ->
-            when (expr) {
-                is NumberLiteral -> {
-                    val v = expr.value
-                    when (v) {
-                        is I32 -> v.v
-                        is I64 -> v.v
-                        is IBig -> v.v
-                        is Dec -> v.v
-                    }
-                }
-                is StringExpr -> expr.value
-                is BoolExpr -> expr.value
-                is NullLiteral -> null
-                is IdentifierExpr -> env[expr.name]
-                else -> null
-            }
-        }
-        
         // Create VM-enabled executor
         val vmExec = VMFactory.createExecutor(
             ir = ir,
-            eval = eval,
             useVM = true
         )
         
@@ -156,18 +135,30 @@ class VMExample {
         val tokens = Lexer(program).lex()
         val prog = Parser(tokens, program).parse()
         val funcs = prog.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
-        val hostFns = v2.std.StdLib.fns
-        v2.sema.SemanticAnalyzer(hostFns.keys).analyze(prog)
+        val hostFns = io.github.ehlyzov.branchline.std.StdLib.fns
+        io.github.ehlyzov.branchline.sema.SemanticAnalyzer(hostFns.keys).analyze(prog)
         val transform = prog.decls.filterIsInstance<TransformDecl>().single()
 
         // Build runner using VM engine
-        val runnerVM = v2.ir.compileStream(transform, funcs = funcs, hostFns = hostFns, engine = ExecutionEngine.VM)
+        val runnerVM = io.github.ehlyzov.branchline.ir.compileStream(
+            transform,
+            funcs = funcs,
+            hostFns = hostFns,
+            hostFnMeta = io.github.ehlyzov.branchline.std.StdLib.meta,
+            engine = ExecutionEngine.VM,
+        )
         val input = mapOf("nums" to listOf(1, 2, 3))
         val outVM = runnerVM(input)
         println("VM OUTPUT: $outVM")
 
         // Build runner using interpreter for parity
-        val runnerInterp = v2.ir.compileStream(transform, funcs = funcs, hostFns = hostFns, engine = ExecutionEngine.INTERPRETER)
+        val runnerInterp = io.github.ehlyzov.branchline.ir.compileStream(
+            transform,
+            funcs = funcs,
+            hostFns = hostFns,
+            hostFnMeta = io.github.ehlyzov.branchline.std.StdLib.meta,
+            engine = ExecutionEngine.INTERPRETER,
+        )
         val outInterp = runnerInterp(input)
         println("Interpreter OUTPUT: $outInterp")
     }
@@ -223,13 +214,17 @@ class VMExample {
         val tokens = Lexer(program).lex()
         val prog = Parser(tokens, program).parse()
         val funcs = prog.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
-        val hostFns = v2.std.StdLib.fns
-        v2.sema.SemanticAnalyzer(hostFns.keys).analyze(prog)
+        val hostFns = io.github.ehlyzov.branchline.std.StdLib.fns
+        io.github.ehlyzov.branchline.sema.SemanticAnalyzer(hostFns.keys).analyze(prog)
         val transform = prog.decls.filterIsInstance<TransformDecl>().single()
-        val ir = v2.ir.ToIR(funcs, hostFns).compile(transform.body.statements)
+        val ir = io.github.ehlyzov.branchline.ir.ToIR(funcs, hostFns).compile(transform.body.statements)
 
-        val fallbackEval = v2.ir.makeEval(hostFns, funcs, v2.ir.TransformRegistry(funcs, hostFns, emptyMap()), null)
-        val vmExec = VMExec(ir, fallbackEval)
+        val vmExec = VMExec(
+            ir = ir,
+            hostFns = hostFns,
+            hostFnMeta = io.github.ehlyzov.branchline.std.StdLib.meta,
+            funcs = funcs,
+        )
         val v2res = vmExec.run(mutableMapOf("row" to emptyMap<String, Any?>()))
         println("VMExec output: $v2res")
         println("Final stats: ${VMFactory.getCompilationStats()}")
@@ -250,17 +245,20 @@ class VMExample {
         val tokens = Lexer(program).lex()
         val prog = Parser(tokens, program).parse()
         val funcs = prog.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
-        val hostFns = v2.std.StdLib.fns
-        v2.sema.SemanticAnalyzer(hostFns.keys).analyze(prog)
+        val hostFns = io.github.ehlyzov.branchline.std.StdLib.fns
+        io.github.ehlyzov.branchline.sema.SemanticAnalyzer(hostFns.keys).analyze(prog)
         val transform = prog.decls.filterIsInstance<TransformDecl>().single()
-        val ir = v2.ir.ToIR(funcs, hostFns).compile(transform.body.statements)
+        val ir = io.github.ehlyzov.branchline.ir.ToIR(funcs, hostFns).compile(transform.body.statements)
 
         // Fallback interpreter eval for VMExec
-        val reg = v2.ir.TransformRegistry(funcs, hostFns, emptyMap())
-        val fallbackEval = v2.ir.makeEval(hostFns, funcs, reg, null)
-
-        val tracer = v2.debug.CollectingTracer(v2.debug.TraceOptions(step = false))
-        val exec = VMExec(ir, fallbackEval, tracer = tracer, hostFns = hostFns, funcs = funcs)
+        val tracer = io.github.ehlyzov.branchline.debug.CollectingTracer(io.github.ehlyzov.branchline.debug.TraceOptions(step = false))
+        val exec = VMExec(
+            ir = ir,
+            tracer = tracer,
+            hostFns = hostFns,
+            hostFnMeta = io.github.ehlyzov.branchline.std.StdLib.meta,
+            funcs = funcs,
+        )
         val out = exec.run(mutableMapOf("row" to mapOf("nums" to (1..10).toList())))
         println("Transform output: $out")
 

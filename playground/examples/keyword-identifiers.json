@@ -1,0 +1,12 @@
+{
+  "title": "Use keywords as identifiers",
+  "description": "Shows soft keywords as names and backtick-escaped identifiers for hard keywords.",
+  "program": [
+    "LET output = 1;",
+    "LET enum = 2;",
+    "LET `if` = 3;",
+    "LET summary = { output: output, enum: enum, `if`: `if` };",
+    "OUTPUT { summary: summary, total: output + enum + `if` }"
+  ],
+  "input": {}
+}

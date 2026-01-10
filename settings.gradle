@@ -8,8 +8,10 @@ include 'vm'
 include 'test-fixtures'
 include 'conformance-tests'
 include 'cli'
+include 'examples'
 include 'interpreter-benchmarks'
 include 'vm-benchmarks'
+include 'jsonata-benchmarks'
 
 if (file('platform-private').exists()) {
     include 'platform-private'

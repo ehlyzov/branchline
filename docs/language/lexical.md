@@ -40,13 +40,21 @@ This page outlines the tokens recognized by the Branchline lexer. Tokens are gro
 
 | Token | Example | Description |
 |---|---|---|
-| IDENTIFIER | `userName` | Name for variables or functions. |
+| IDENTIFIER | `userName` | Name for variables or functions (backticks can escape keywords). |
 | STRING | `"hello"` | Text enclosed in double quotes. |
 | NUMBER | `42` | Integer or floating-point number. |
 
 ## Keywords
 
-Reserved words. Each links to a page with usage examples.
+Keywords are case-insensitive. A small set is hard-reserved; the rest are
+contextual and can be used as identifiers where a name is expected.
+
+Hard-reserved: `IF`, `THEN`, `ELSE`, `CASE`, `WHEN`, `FOR`, `EACH`, `IN`,
+`WHERE`, `TRY`, `CATCH`, `AWAIT`, `SUSPEND`, `TRUE`, `FALSE`, `NULL`.
+Use backticks to escape any keyword when you need it as a name (for example,
+`` `if` ``).
+
+Backtick identifiers accept any characters except a backtick or newline.
 
 ### Statement Keywords
 

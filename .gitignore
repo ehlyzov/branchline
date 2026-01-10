@@ -13,3 +13,4 @@ build
 /docs/playground/
 site
 .java-version
+.env

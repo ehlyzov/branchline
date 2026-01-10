@@ -58,8 +58,8 @@ kotlin {
 // JVM run task for VMLoop
 tasks.register('runVmLoop', JavaExec) {
     group = 'application'
-    description = 'Runs v2.vm.VMLoopKt on JVM target.'
-    mainClass = 'v2.vm.VMLoopKt'
+    description = 'Runs io.github.ehlyzov.branchline.vm.VMLoopKt on JVM target.'
+    mainClass = 'io.github.ehlyzov.branchline.vm.VMLoopKt'
     classpath = files(
         kotlin.targets.jvm.compilations.main.output.allOutputs,
         configurations.jvmRuntimeClasspath

@@ -1,0 +1,148 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+    id 'me.champeau.jmh'
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+def loadDotenv(File rootDir) {
+    def envFile = new File(rootDir, ".env")
+    if (!envFile.exists()) {
+        return [:]
+    }
+    def values = [:]
+    envFile.eachLine { line ->
+        def trimmed = line.trim()
+        if (!trimmed || trimmed.startsWith("#")) {
+            return
+        }
+        def separator = trimmed.indexOf("=")
+        if (separator <= 0) {
+            return
+        }
+        def key = trimmed.substring(0, separator).trim()
+        def value = trimmed.substring(separator + 1).trim()
+        if ((value.startsWith("\"") && value.endsWith("\"")) || (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.substring(1, value.length() - 1)
+        }
+        if (key) {
+            values[key] = value
+        }
+    }
+    return values
+}
+
+def loadCaseIds(File matrixFile) {
+    if (!matrixFile.exists()) {
+        return []
+    }
+    def ids = []
+    matrixFile.eachLine { line ->
+        def matcher = (line =~ /^\s*-\s*id:\s*(.+)\s*$/)
+        if (!matcher.matches()) {
+            return
+        }
+        def raw = matcher[0][1].trim()
+        if ((raw.startsWith("\"") && raw.endsWith("\"")) || (raw.startsWith("'") && raw.endsWith("'"))) {
+            raw = raw.substring(1, raw.length() - 1)
+        }
+        if (!raw.isEmpty()) {
+            ids << raw
+        }
+    }
+    return ids.unique()
+}
+
+def resolveConfigValue(String gradlePropertyName, String envName, Map dotenvValues) {
+    def fromProperty = providers.gradleProperty(gradlePropertyName).orNull
+    if (fromProperty != null && !fromProperty.trim().isEmpty()) {
+        return fromProperty
+    }
+    def fromEnv = providers.environmentVariable(envName).orNull
+    if (fromEnv != null && !fromEnv.trim().isEmpty()) {
+        return fromEnv
+    }
+    def fromDotenv = dotenvValues[envName]
+    if (fromDotenv != null && !fromDotenv.toString().trim().isEmpty()) {
+        return fromDotenv.toString()
+    }
+    return null
+}
+
+def dotenvValues = loadDotenv(rootProject.projectDir)
+def dashjoinRepo = resolveConfigValue("dashjoinRepo", "DASHJOIN_REPO", dotenvValues)
+def ibmRepo = resolveConfigValue("ibmJsonataRepo", "IBM_JSONATA_REPO", dotenvValues)
+
+if (dashjoinRepo == null) {
+    logger.lifecycle("jsonata-benchmarks: Dashjoin repo not configured; Dashjoin engine will be unavailable.")
+}
+if (ibmRepo == null) {
+    logger.lifecycle("jsonata-benchmarks: IBM repo not configured; IBM engine will be unavailable.")
+}
+
+def dashjoinJar = dashjoinRepo == null ? files() : fileTree(dir: dashjoinRepo, includes: [
+    "**/target/jsonata-*.jar",
+    "**/target/jsonata-java-*.jar",
+    "**/build/libs/jsonata-*.jar",
+    "**/build/libs/jsonata-java-*.jar",
+])
+def ibmJar = ibmRepo == null ? files() : fileTree(dir: ibmRepo, includes: [
+    "**/target/JSONata4Java-*.jar",
+    "**/build/libs/JSONata4Java-*.jar",
+])
+def jmhWarmupIterations = providers.gradleProperty("jmhWarmupIterations").orNull
+def jmhWarmupTime = providers.gradleProperty("jmhWarmupTime").orNull
+def jmhIterations = providers.gradleProperty("jmhIterations").orNull
+def jmhTimeOnIteration = providers.gradleProperty("jmhTimeOnIteration").orNull
+def jmhForks = providers.gradleProperty("jmhForks").orNull
+def jmhProfilers = providers.gradleProperty("jmhProfilers").orNull
+def jmhCaseIds = providers.gradleProperty("jmhCaseIds").orNull
+def jmhIncludes = providers.gradleProperty("jmhIncludes").orNull
+def jmhProfilerList = jmhProfilers == null
+    ? ['gc']
+    : jmhProfilers.split(',').collect { it.trim() }.findAll { it }
+def jmhIncludeList = jmhIncludes == null || jmhIncludes.trim().isEmpty()
+    ? ['io.github.ehlyzov.branchline.benchmarks.jsonata.*']
+    : jmhIncludes.split(',').collect { it.trim() }.findAll { it }
+def caseIdList = jmhCaseIds == null || jmhCaseIds.trim().isEmpty()
+    ? loadCaseIds(file("src/jmh/resources/jsonata-case-matrix.yaml"))
+    : jmhCaseIds.split(',').collect { it.trim() }.findAll { it }
+if (caseIdList.isEmpty()) {
+    caseIdList = ['all']
+}
+def caseIdListProperty = objects.listProperty(String)
+caseIdListProperty.set(caseIdList)
+
+dependencies {
+    implementation project(':interpreter')
+    implementation project(':vm')
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.10.0-RC'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.1'
+    runtimeOnly 'org.antlr:antlr4-runtime:4.13.2'
+    runtimeOnly 'org.apache.commons:commons-text:1.15.0'
+    runtimeOnly 'com.google.code.gson:gson:2.13.2'
+
+    runtimeOnly dashjoinJar
+    runtimeOnly ibmJar
+}
+
+jmh {
+    resultFormat = 'JSON'
+    profilers = jmhProfilerList
+    includes = jmhIncludeList
+    benchmarkParameters = [
+        caseId: caseIdListProperty,
+    ]
+    warmupIterations = (jmhWarmupIterations ?: "1").toInteger()
+    warmup = jmhWarmupTime ?: '200ms'
+    iterations = (jmhIterations ?: "1").toInteger()
+    timeOnIteration = jmhTimeOnIteration ?: '800ms'
+    fork = (jmhForks ?: "1").toInteger()
+}
+
+tasks.named('jmh', me.champeau.jmh.JMHTask).configure {
+    profilers = jmhProfilerList
+}

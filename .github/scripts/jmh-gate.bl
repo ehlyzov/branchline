@@ -1,0 +1,127 @@
+SHARED jmh MANY;
+
+FUNC toNs(value, unit) {
+    LET num = NUMBER(value);
+    IF num == NULL THEN {
+        RETURN NULL;
+    }
+    RETURN CASE {
+        WHEN unit == "ns/op" THEN num
+        WHEN unit == "ms/op" THEN num * 1000000
+        WHEN unit == "s/op" THEN num * 1000000000
+        WHEN CONTAINS(unit, "s/op") THEN num * 1000
+        ELSE NULL
+    };
+}
+
+FUNC formatNs(value) {
+    IF value == NULL THEN {
+        RETURN "n/a";
+    }
+    IF value >= 1000000 THEN {
+        RETURN STRING(value / 1000000) + " ms/op";
+    }
+    IF value >= 1000 THEN {
+        RETURN STRING(value / 1000) + " us/op";
+    }
+    RETURN STRING(value) + " ns/op";
+}
+
+FUNC paramsMatch(expected, actual) {
+    LET expectedParams = expected ?? {};
+    LET actualParams = actual ?? {};
+    FOR key IN KEYS(expectedParams) {
+        LET expectedValue = GET(expectedParams, key, "");
+        LET actualValue = GET(actualParams, key, "");
+        IF STRING(actualValue) != STRING(expectedValue) THEN {
+            RETURN FALSE;
+        }
+    }
+    RETURN TRUE;
+}
+
+FUNC resolveP95Ns(entry) {
+    LET metric = entry.primaryMetric ?? NULL;
+    IF metric == NULL THEN {
+        RETURN NULL;
+    }
+    LET unit = metric.scoreUnit ?? "ns/op";
+    LET percentiles = metric.scorePercentiles ?? {};
+    LET p95Raw = GET(percentiles, "0.95", GET(percentiles, "95.0", metric.score));
+    RETURN toNs(p95Raw, unit);
+}
+
+FUNC resolveAllocBytes(entry) {
+    LET secondary = entry.secondaryMetrics ?? {};
+    LET allocKey = NULL;
+    FOR key IN KEYS(secondary) {
+        IF CONTAINS(STRING(key), "gc.alloc.rate.norm") THEN {
+            SET allocKey = key;
+        }
+    }
+    IF allocKey == NULL THEN {
+        RETURN NULL;
+    }
+    LET metric = GET(secondary, allocKey, NULL);
+    IF metric == NULL THEN {
+        RETURN NULL;
+    }
+    RETURN NUMBER(metric.score);
+}
+
+FUNC loadResults() {
+    LET raw = [];
+    FOR key IN KEYS(jmh) {
+        SET raw = APPEND(raw, LISTIFY(AWAIT_SHARED("jmh", key)));
+    }
+    RETURN FLATTEN(raw);
+}
+
+TRANSFORM Gate {
+    LET gates = input.benchmarks ?? [];
+    IF LENGTH(gates) == 0 THEN {
+        THROW "No benchmarks configured in perf gates.";
+    }
+
+    LET results = loadResults();
+    LET failures = [];
+
+    FOR gate IN gates {
+        LET match = NULL;
+        LET gateParams = gate.params ?? {};
+        FOR entry IN results {
+            IF entry.benchmark == gate.name && paramsMatch(gateParams, entry.params) THEN {
+                SET match = entry;
+            }
+        }
+
+        IF match == NULL THEN {
+            SET failures = APPEND(failures, "Missing benchmark result: " + gate.name + " " + STRING(gateParams));
+        } ELSE {
+            LET p95 = resolveP95Ns(match);
+            LET alloc = resolveAllocBytes(match);
+
+            IF p95 == NULL THEN {
+                SET failures = APPEND(failures, "Missing p95 score for " + gate.name);
+            } ELSE IF p95 > gate.p95Ns THEN {
+                SET failures = APPEND(failures, gate.name + " p95 " + formatNs(p95) + " > gate " + formatNs(gate.p95Ns) + " (" + STRING(gateParams) + ")");
+            }
+
+            IF alloc == NULL THEN {
+                SET failures = APPEND(failures, "Missing gc.alloc.rate.norm for " + gate.name);
+            } ELSE IF alloc > gate.allocBytes THEN {
+                SET failures = APPEND(failures, gate.name + " alloc " + STRING(alloc) + " B/op > gate " + STRING(gate.allocBytes) + " (" + STRING(gateParams) + ")");
+            }
+        }
+    }
+
+    IF LENGTH(failures) > 0 THEN {
+        LET lines = ["Performance gates failed:"];
+        FOR failure IN failures {
+            SET lines = APPEND(lines, "- " + failure);
+        }
+        THROW JOIN(lines, "\n");
+    }
+
+    OUTPUT { status: "passing" };
+}

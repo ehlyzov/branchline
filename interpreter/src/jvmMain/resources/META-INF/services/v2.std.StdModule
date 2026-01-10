@@ -1,8 +1,0 @@
-v2.std.StdCoreModule
-v2.std.StdArraysModule
-v2.std.StdAggModule
-v2.std.StdStringsModule
-v2.std.StdTimeModule
-v2.std.StdHofModule
-v2.std.StdDebugModule
-v2.std.StdSharedModule

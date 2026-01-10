@@ -11,7 +11,7 @@ dependencies {
 jmh {
     resultFormat = 'JSON'
     profilers = ['gc']
-    includes = ['v2.vm.VMTransformBenchmark.*']
+    includes = ['io.github.ehlyzov.branchline.vm.VMTransformBenchmark.*']
     warmupIterations = 2
     iterations = 5
     timeOnIteration = '500ms'
@@ -25,7 +25,7 @@ tasks.named('jmh').configure {
 tasks.register('vmOpcodeSnapshot', JavaExec) {
     group = 'verification'
     description = 'Writes opcode histograms for VM benchmarks to docs.'
-    mainClass = 'v2.vm.VMOpcodeSnapshotKt'
+    mainClass = 'io.github.ehlyzov.branchline.vm.VMOpcodeSnapshotKt'
     classpath = sourceSets.jmh.runtimeClasspath
     args = [file("$rootDir/docs/benchmarks/vm-opcodes.json").path]
     dependsOn tasks.named('jmhClasses')

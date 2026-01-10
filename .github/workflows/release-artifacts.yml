@@ -6,6 +6,21 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to use (optional). Example: v1.2.3'
+        required: false
+        type: string
+      full_release:
+        description: 'Build and upload full release artifacts (CLI + libraries) in addition to benchmarks'
+        required: false
+        default: true
+        type: boolean
+      run_jmh:
+        description: 'Run JMH benchmarks and upload benchmark artifacts'
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -14,6 +29,7 @@ jobs:
   build-and-upload:
     runs-on: ubuntu-latest
     if: github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message || '', '+performance'))
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,60 +50,77 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Resolve release context
+      - name: Resolve release context (gh)
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISPATCH_TAG: ${{ github.event.inputs.tag }}
+          DISPATCH_FULL_RELEASE: ${{ github.event.inputs.full_release }}
+          DISPATCH_RUN_JMH: ${{ github.event.inputs.run_jmh }}
         run: |
           set -euo pipefail
 
-          if [[ "${{ github.event_name }}" == "release" ]]; then
-            echo "TAG_NAME=${{ github.event.release.tag_name }}" >> "$GITHUB_ENV"
-            echo "RELEASE_UPLOAD_URL=${{ github.event.release.upload_url }}" >> "$GITHUB_ENV"
-            echo "RUN_FULL_RELEASE=true" >> "$GITHUB_ENV"
-            exit 0
+          echo "Resolve release context:"
+          echo "  event_name=$GITHUB_EVENT_NAME"
+          echo "  ref_name=${GITHUB_REF_NAME:-<empty>}"
+          echo "  sha=$GITHUB_SHA"
+
+          ensure_release_exists="false"
+          prerelease_flag=""
+          notes=""
+
+          if [[ "$GITHUB_EVENT_NAME" == "release" ]]; then
+            tag="${{ github.event.release.tag_name }}"
+            run_full_release="true"
+            run_jmh="true"
+            ensure_release_exists="false"
+          elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            tag="perf-${GITHUB_SHA::7}"
+            run_full_release="false"
+            run_jmh="true"
+            ensure_release_exists="true"
+            prerelease_flag="--prerelease"
+            notes="Automated performance run for $GITHUB_SHA"
+          else
+            # workflow_dispatch
+            tag="${DISPATCH_TAG:-}"
+            [[ -z "$tag" ]] && tag="snapshot-${GITHUB_SHA::7}"
+
+            # inputs arrive as strings; default true
+            fr="${DISPATCH_FULL_RELEASE:-true}"
+            rj="${DISPATCH_RUN_JMH:-true}"
+
+            if [[ "${fr,,}" == "false" ]]; then run_full_release="false"; else run_full_release="true"; fi
+            if [[ "${rj,,}" == "false" ]]; then run_jmh="false"; else run_jmh="true"; fi
+
+            ensure_release_exists="true"
+            prerelease_flag="--prerelease"
+            notes="Manual run for $GITHUB_SHA"
           fi
 
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            short_sha="${GITHUB_SHA::7}"
-            tag="perf-${short_sha}"
-            draft=false
-            prerelease=true
-            run_full_release=false
-          else
-            tag="${{ github.ref_name }}"
-            if [[ -z "$tag" ]]; then
-              tag="snapshot"
-            fi
-            draft=false
-            prerelease=true
-            run_full_release=true
-          fi
+          echo "  TAG_NAME=$tag"
+          echo "  RUN_FULL_RELEASE=$run_full_release"
+          echo "  RUN_JMH=$run_jmh"
+          echo "  ensure_release_exists=$ensure_release_exists"
+          echo "  prerelease_flag=${prerelease_flag:-<none>}"
 
           echo "TAG_NAME=$tag" >> "$GITHUB_ENV"
           echo "RUN_FULL_RELEASE=$run_full_release" >> "$GITHUB_ENV"
+          echo "RUN_JMH=$run_jmh" >> "$GITHUB_ENV"
 
-          api="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${tag}"
-          status=$(curl -sSL -o release.json -w "%{http_code}" -H "Authorization: Bearer $GH_TOKEN" "$api")
-          if [[ "$status" == "200" ]]; then
-            upload_url=$(jq -r '.upload_url' release.json)
-            echo "RELEASE_UPLOAD_URL=$upload_url" >> "$GITHUB_ENV"
-            exit 0
+          if [[ "$ensure_release_exists" == "true" ]]; then
+            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              echo "  Release exists: $tag"
+            else
+              echo "  Creating release: $tag"
+              gh release create "$tag" \
+                --repo "$GITHUB_REPOSITORY" \
+                --title "$tag" \
+                --notes "$notes" \
+                $prerelease_flag \
+                --target "$GITHUB_SHA"
+            fi
           fi
-
-          payload=$(jq -n --arg tag "$tag" --arg name "$tag" \
-            --argjson draft $draft --argjson prerelease $prerelease \
-            '{tag_name:$tag, name:$name, draft:$draft, prerelease:$prerelease}')
-          response=$(curl -sSL -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            -d "$payload" "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases")
-          upload_url=$(echo "$response" | jq -r '.upload_url')
-          if [[ -z "$upload_url" || "$upload_url" == "null" ]]; then
-            echo "Failed to create release:" >&2
-            echo "$response" >&2
-            exit 1
-          fi
-          echo "RELEASE_UPLOAD_URL=$upload_url" >> "$GITHUB_ENV"
 
       - name: Build JS CLI tarball
         if: env.RUN_FULL_RELEASE == 'true'
@@ -110,199 +143,99 @@ jobs:
         run: ./gradlew --no-daemon :interpreter:jvmJar :vm:jvmJar :interpreter:packageInterpreterJs
 
       - name: Run JMH benchmarks
+        if: env.RUN_JMH == 'true'
         run: ./gradlew --no-daemon :interpreter-benchmarks:jmh :vm-benchmarks:jmh
 
       - name: Build JMH summary
-        run: node .github/scripts/jmh-report.mjs build/benchmarks interpreter-benchmarks/build/results/jmh/results.json vm-benchmarks/build/results/jmh/results.json
+        if: env.RUN_JMH == 'true'
+        run: |
+          ./gradlew --no-daemon :cli:runBl --args ".github/scripts/jmh-report.bl --shared-file jmh=interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir build/benchmarks --output-format json-compact"
 
-      - name: List library artifacts
+      - name: List artifacts
         run: |
           ls -alh interpreter/build/libs || true
           ls -alh interpreter/build/distributions || true
           ls -alh vm/build/libs || true
           ls -alh build/benchmarks || true
 
-      - name: Capture release artifact paths
+      - name: Capture release artifact paths (glob; decoupled from TAG_NAME)
         if: env.RUN_FULL_RELEASE == 'true'
         shell: bash
         run: |
           set -euo pipefail
           shopt -s nullglob
 
-          JS_TARBALL="$GITHUB_WORKSPACE/cli/build/distributions/branchline-cli-js-${TAG_NAME}.tgz"
-          if [ ! -f "$JS_TARBALL" ]; then
-            echo "JS tarball not found at $JS_TARBALL" >&2
-            exit 1
-          fi
-          echo "JS_TARBALL_PATH=$JS_TARBALL" >> $GITHUB_ENV
-          echo "JS_TARBALL_NAME=branchline-cli-js-${TAG_NAME}.tgz" >> $GITHUB_ENV
+          js=( "$GITHUB_WORKSPACE"/cli/build/distributions/branchline-cli-js-*.tgz )
+          [[ ${#js[@]} -gt 0 ]] || { echo "JS tarball not found in cli/build/distributions" >&2; exit 1; }
+          echo "JS_TARBALL_PATH=${js[0]}" >> "$GITHUB_ENV"
 
-          JVM_JAR="$GITHUB_WORKSPACE/cli/build/libs/branchline-cli-${TAG_NAME}-all.jar"
-          if [ ! -f "$JVM_JAR" ]; then
-            jars=($GITHUB_WORKSPACE/cli/build/libs/branchline-cli-*-all.jar)
-            if [ ${#jars[@]} -eq 0 ]; then
-              echo "JVM fat jar not found" >&2
-              exit 1
-            fi
-            JVM_JAR="${jars[0]}"
-          fi
-          echo "JVM_JAR_PATH=$JVM_JAR" >> $GITHUB_ENV
-          echo "JVM_JAR_NAME=branchline-cli-${TAG_NAME}-all.jar" >> $GITHUB_ENV
+          jvm=( "$GITHUB_WORKSPACE"/cli/build/libs/branchline-cli-*-all.jar )
+          [[ ${#jvm[@]} -gt 0 ]] || { echo "JVM fat jar not found in cli/build/libs" >&2; exit 1; }
+          echo "JVM_JAR_PATH=${jvm[0]}" >> "$GITHUB_ENV"
 
-          interp_jars=($GITHUB_WORKSPACE/interpreter/build/libs/interpreter-jvm-*.jar)
-          if [ ${#interp_jars[@]} -eq 0 ]; then
-            echo "Interpreter JVM jar not found" >&2
-            exit 1
-          fi
-          INTERP_JVM="${interp_jars[0]}"
-          echo "INTERPRETER_JVM_PATH=$INTERP_JVM" >> $GITHUB_ENV
-          echo "INTERPRETER_JVM_NAME=branchline-interpreter-${TAG_NAME}-jvm.jar" >> $GITHUB_ENV
+          interp_jars=( "$GITHUB_WORKSPACE"/interpreter/build/libs/interpreter-jvm-*.jar )
+          [[ ${#interp_jars[@]} -gt 0 ]] || { echo "Interpreter JVM jar not found" >&2; exit 1; }
+          echo "INTERPRETER_JVM_PATH=${interp_jars[0]}" >> "$GITHUB_ENV"
 
-          vm_jars=($GITHUB_WORKSPACE/vm/build/libs/vm-jvm-*.jar)
-          if [ ${#vm_jars[@]} -eq 0 ]; then
-            echo "VM JVM jar not found" >&2
-            exit 1
-          fi
-          VM_JVM="${vm_jars[0]}"
-          echo "VM_JVM_PATH=$VM_JVM" >> $GITHUB_ENV
-          echo "VM_JVM_NAME=branchline-vm-${TAG_NAME}-jvm.jar" >> $GITHUB_ENV
+          vm_jars=( "$GITHUB_WORKSPACE"/vm/build/libs/vm-jvm-*.jar )
+          [[ ${#vm_jars[@]} -gt 0 ]] || { echo "VM JVM jar not found" >&2; exit 1; }
+          echo "VM_JVM_PATH=${vm_jars[0]}" >> "$GITHUB_ENV"
 
-          INTERP_TGZ="$GITHUB_WORKSPACE/interpreter/build/distributions/branchline-interpreter-${TAG_NAME}-js.tgz"
-          if [ ! -f "$INTERP_TGZ" ]; then
-            echo "Interpreter JS package not found at $INTERP_TGZ" >&2
-            exit 1
-          fi
-          echo "INTERPRETER_JS_PATH=$INTERP_TGZ" >> $GITHUB_ENV
-          echo "INTERPRETER_JS_NAME=branchline-interpreter-${TAG_NAME}-js.tgz" >> $GITHUB_ENV
+          interp_js=( "$GITHUB_WORKSPACE"/interpreter/build/distributions/branchline-interpreter-*-js.tgz )
+          [[ ${#interp_js[@]} -gt 0 ]] || { echo "Interpreter JS package not found in interpreter/build/distributions" >&2; exit 1; }
+          echo "INTERPRETER_JS_PATH=${interp_js[0]}" >> "$GITHUB_ENV"
 
       - name: Capture JMH artifact paths
+        if: env.RUN_JMH == 'true'
         shell: bash
         run: |
           set -euo pipefail
 
           INTERP_JMH_JSON="$GITHUB_WORKSPACE/interpreter-benchmarks/build/results/jmh/results.json"
-          if [ ! -f "$INTERP_JMH_JSON" ]; then
-            echo "Interpreter JMH results not found at $INTERP_JMH_JSON" >&2
-            exit 1
-          fi
-          echo "INTERPRETER_JMH_JSON_PATH=$INTERP_JMH_JSON" >> $GITHUB_ENV
-          echo "INTERPRETER_JMH_JSON_NAME=branchline-jmh-interpreter-${TAG_NAME}.json" >> $GITHUB_ENV
+          [ -f "$INTERP_JMH_JSON" ] || { echo "Interpreter JMH results not found at $INTERP_JMH_JSON" >&2; exit 1; }
+          echo "INTERPRETER_JMH_JSON_PATH=$INTERP_JMH_JSON" >> "$GITHUB_ENV"
 
           VM_JMH_JSON="$GITHUB_WORKSPACE/vm-benchmarks/build/results/jmh/results.json"
-          if [ ! -f "$VM_JMH_JSON" ]; then
-            echo "VM JMH results not found at $VM_JMH_JSON" >&2
-            exit 1
-          fi
-          echo "VM_JMH_JSON_PATH=$VM_JMH_JSON" >> $GITHUB_ENV
-          echo "VM_JMH_JSON_NAME=branchline-jmh-vm-${TAG_NAME}.json" >> $GITHUB_ENV
+          [ -f "$VM_JMH_JSON" ] || { echo "VM JMH results not found at $VM_JMH_JSON" >&2; exit 1; }
+          echo "VM_JMH_JSON_PATH=$VM_JMH_JSON" >> "$GITHUB_ENV"
 
           JMH_SUMMARY_MD="$GITHUB_WORKSPACE/build/benchmarks/jmh-summary.md"
-          if [ ! -f "$JMH_SUMMARY_MD" ]; then
-            echo "JMH summary markdown not found at $JMH_SUMMARY_MD" >&2
-            exit 1
-          fi
-          echo "JMH_SUMMARY_MD_PATH=$JMH_SUMMARY_MD" >> $GITHUB_ENV
-          echo "JMH_SUMMARY_MD_NAME=branchline-jmh-summary-${TAG_NAME}.md" >> $GITHUB_ENV
+          [ -f "$JMH_SUMMARY_MD" ] || { echo "JMH summary markdown not found at $JMH_SUMMARY_MD" >&2; exit 1; }
+          echo "JMH_SUMMARY_MD_PATH=$JMH_SUMMARY_MD" >> "$GITHUB_ENV"
 
           JMH_SUMMARY_CSV="$GITHUB_WORKSPACE/build/benchmarks/jmh-summary.csv"
-          if [ ! -f "$JMH_SUMMARY_CSV" ]; then
-            echo "JMH summary CSV not found at $JMH_SUMMARY_CSV" >&2
-            exit 1
-          fi
-          echo "JMH_SUMMARY_CSV_PATH=$JMH_SUMMARY_CSV" >> $GITHUB_ENV
-          echo "JMH_SUMMARY_CSV_NAME=branchline-jmh-summary-${TAG_NAME}.csv" >> $GITHUB_ENV
+          [ -f "$JMH_SUMMARY_CSV" ] || { echo "JMH summary CSV not found at $JMH_SUMMARY_CSV" >&2; exit 1; }
+          echo "JMH_SUMMARY_CSV_PATH=$JMH_SUMMARY_CSV" >> "$GITHUB_ENV"
 
-      - name: Upload JS CLI tarball
+      - name: Upload full release artifacts (gh; tag-based names)
         if: env.RUN_FULL_RELEASE == 'true'
-        uses: actions/upload-release-asset@v1
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ github.workspace }}/cli/build/distributions/branchline-cli-js-${{ env.TAG_NAME }}.tgz
-          asset_name: ${{ env.JS_TARBALL_NAME }}
-          asset_content_type: application/gzip
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
 
-      - name: Upload JVM CLI fat jar
-        if: env.RUN_FULL_RELEASE == 'true'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ github.workspace }}/cli/build/libs/branchline-cli-${{ env.TAG_NAME }}-all.jar
-          asset_name: ${{ env.JVM_JAR_NAME }}
-          asset_content_type: application/java-archive
+          gh release upload "$TAG_NAME" \
+            "$JS_TARBALL_PATH#branchline-cli-js-${TAG_NAME}.tgz" \
+            "$JVM_JAR_PATH#branchline-cli-${TAG_NAME}-all.jar" \
+            "$INTERPRETER_JVM_PATH#branchline-interpreter-${TAG_NAME}-jvm.jar" \
+            "$VM_JVM_PATH#branchline-vm-${TAG_NAME}-jvm.jar" \
+            "$INTERPRETER_JS_PATH#branchline-interpreter-${TAG_NAME}-js.tgz" \
+            --clobber \
+            --repo "$GITHUB_REPOSITORY"
 
-      - name: Upload interpreter JVM jar
-        if: env.RUN_FULL_RELEASE == 'true'
-        uses: actions/upload-release-asset@v1
+      - name: Upload JMH artifacts (gh; optional)
+        if: env.RUN_JMH == 'true'
+        shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.INTERPRETER_JVM_PATH }}
-          asset_name: ${{ env.INTERPRETER_JVM_NAME }}
-          asset_content_type: application/java-archive
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
 
-      - name: Upload VM JVM jar
-        if: env.RUN_FULL_RELEASE == 'true'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.VM_JVM_PATH }}
-          asset_name: ${{ env.VM_JVM_NAME }}
-          asset_content_type: application/java-archive
-
-      - name: Upload interpreter JS package
-        if: env.RUN_FULL_RELEASE == 'true'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.INTERPRETER_JS_PATH }}
-          asset_name: ${{ env.INTERPRETER_JS_NAME }}
-          asset_content_type: application/gzip
-
-      - name: Upload interpreter JMH JSON
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.INTERPRETER_JMH_JSON_PATH }}
-          asset_name: ${{ env.INTERPRETER_JMH_JSON_NAME }}
-          asset_content_type: application/json
-
-      - name: Upload VM JMH JSON
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.VM_JMH_JSON_PATH }}
-          asset_name: ${{ env.VM_JMH_JSON_NAME }}
-          asset_content_type: application/json
-
-      - name: Upload JMH summary (Markdown)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.JMH_SUMMARY_MD_PATH }}
-          asset_name: ${{ env.JMH_SUMMARY_MD_NAME }}
-          asset_content_type: text/markdown
-
-      - name: Upload JMH summary (CSV)
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.RELEASE_UPLOAD_URL }}
-          asset_path: ${{ env.JMH_SUMMARY_CSV_PATH }}
-          asset_name: ${{ env.JMH_SUMMARY_CSV_NAME }}
-          asset_content_type: text/csv
+          gh release upload "$TAG_NAME" \
+            "$INTERPRETER_JMH_JSON_PATH#branchline-jmh-interpreter-${TAG_NAME}.json" \
+            "$VM_JMH_JSON_PATH#branchline-jmh-vm-${TAG_NAME}.json" \
+            "$JMH_SUMMARY_MD_PATH#branchline-jmh-summary-${TAG_NAME}.md" \
+            "$JMH_SUMMARY_CSV_PATH#branchline-jmh-summary-${TAG_NAME}.csv" \
+            --clobber \
+            --repo "$GITHUB_REPOSITORY"

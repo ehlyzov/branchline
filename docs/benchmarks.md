@@ -66,9 +66,7 @@ Results are written to:
 Generate a release-friendly summary:
 
 ```bash
-node .github/scripts/jmh-report.mjs build/benchmarks \
-  interpreter-benchmarks/build/results/jmh/results.json \
-  vm-benchmarks/build/results/jmh/results.json
+./gradlew :cli:runBl --args ".github/scripts/jmh-report.bl --shared-file jmh=interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir build/benchmarks"
 ```
 
 Outputs:

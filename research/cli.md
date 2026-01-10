@@ -1,6 +1,6 @@
 # Branchline CLI Rollout
 
-> **Status:** ✅ CLI module ships JVM and JS binaries; CI runs JUnit summaries entirely through Branchline helpers using the packaged JS bundle (with dependencies bundled), and README/docs cover local usage flows.【F:cli/build.gradle†L1-L140】【F:.github/scripts/junit-summary.mjs†L1-L280】【F:docs/guides/cli.md†L1-L58】
+> **Status:** ✅ CLI module ships JVM and JS binaries; CI runs JUnit summaries entirely through Branchline helpers using shared IO, and README/docs cover local usage flows.【F:cli/build.gradle†L1-L140】【F:.github/scripts/junit-summary.bl†L1-L200】【F:docs/guides/cli.md†L1-L80】
 
 This document tracks the plan for introducing dedicated command-line tools that wrap the existing Branchline interpreter and VM (compile/bytecode paths live inside those modules).
 
@@ -55,7 +55,7 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - Package the Node bundle with `./gradlew :cli:prepareJsCliPackage` (installs dependencies automatically), then execute scripts through `node cli/build/cliJsPackage/bin/bl.cjs`.
 - Tests: `./gradlew :cli:jvmTest :cli:jsNodeTest` (JVM suite now includes a Node smoke test for the packaged CLI).
 - XML input is supported on JVM/JS through `--input-format xml` (JS runtime relies on `fast-xml-parser`).
-- CI summaries run `.github/scripts/junit-summary.mjs`, which shells into the packaged CLI for per-file metrics and delegates aggregate rollups to `cli/scripts/junit-summary.bl`.
+- CI summaries run `.github/scripts/junit-summary.bl` through the CLI with shared IO (fan-out + summary transforms).
 - Running any entry point without arguments now prints the full help screen (also via `-h/--help`).
 - Release artifacts (published by `release-artifacts.yml`):
   - CLI: `branchline-cli-js-<tag>.tgz`, `branchline-cli-<tag>-all.jar`.
@@ -76,7 +76,7 @@ This document tracks the plan for introducing dedicated command-line tools that 
 - [x] XML input handler (JVM)
 - [x] XML input handler (JS)
 - [x] Tests in place
-- [x] Branchline scripts replace `junit-summary.mjs` parsing via CLI-driven per-file metrics aggregation
+- [x] Branchline scripts replace Node parsing via CLI-driven per-file metrics aggregation
 - [x] CI migrated to CLI-powered reporting (JS bundle + `.bl` scripts executed without Gradle run tasks)
 
 ## Follow-ups

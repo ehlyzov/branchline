@@ -1,0 +1,309 @@
+SHARED jmh MANY;
+
+FUNC pad2(value) {
+    LET num = INT(value);
+    IF num < 10 THEN {
+        RETURN "0" + STRING(num);
+    }
+    RETURN STRING(num);
+}
+
+FUNC pad4(value) {
+    LET num = INT(value);
+    IF num < 10 THEN {
+        RETURN "000" + STRING(num);
+    }
+    IF num < 100 THEN {
+        RETURN "00" + STRING(num);
+    }
+    IF num < 1000 THEN {
+        RETURN "0" + STRING(num);
+    }
+    RETURN STRING(num);
+}
+
+FUNC suiteRank(suite) = CASE {
+    WHEN suite == "Interpreter" THEN 0
+    WHEN suite == "VM" THEN 1
+    ELSE 2
+};
+
+FUNC benchmarkRank(method) = CASE {
+    WHEN method == "pathExpressions" THEN 0
+    WHEN method == "arrayComprehensions" THEN 1
+    WHEN method == "typicalTransform" THEN 2
+    ELSE 99
+};
+
+FUNC datasetRank(dataset) = CASE {
+    WHEN dataset == "small" THEN 0
+    WHEN dataset == "medium" THEN 1
+    WHEN dataset == "large" THEN 2
+    ELSE 99
+};
+
+FUNC resolveSuite(benchmark) = CASE {
+    WHEN CONTAINS(benchmark, ".InterpreterTransformBenchmark") THEN "Interpreter"
+    WHEN CONTAINS(benchmark, ".VMTransformBenchmark") THEN "VM"
+    ELSE "Other"
+};
+
+FUNC toUs(value, unit) {
+    LET num = NUMBER(value);
+    IF num == NULL THEN {
+        RETURN NULL;
+    }
+    RETURN CASE {
+        WHEN unit == "ns/op" THEN num / 1000
+        WHEN unit == "ms/op" THEN num * 1000
+        WHEN unit == "s/op" THEN num * 1000000
+        WHEN CONTAINS(unit, "s/op") THEN num
+        ELSE NULL
+    };
+}
+
+FUNC resolveAllocBytes(entry) {
+    LET secondary = entry.secondaryMetrics ?? {};
+    LET allocKey = NULL;
+    FOR key IN KEYS(secondary) {
+        IF CONTAINS(STRING(key), "gc.alloc.rate.norm") THEN {
+            SET allocKey = key;
+        }
+    }
+    IF allocKey == NULL THEN {
+        RETURN NULL;
+    }
+    LET metric = GET(secondary, allocKey, NULL);
+    IF metric == NULL THEN {
+        RETURN NULL;
+    }
+    RETURN NUMBER(metric.score);
+}
+
+FUNC buildParamsText(params) {
+    LET keys = KEYS(params);
+    LET parts = [];
+    FOR key IN keys {
+        IF key != "dataset" THEN {
+            LET value = GET(params, key, "");
+            SET parts = APPEND(parts, STRING(key) + "=" + STRING(value));
+        }
+    }
+    RETURN JOIN(parts, ", ");
+}
+
+FUNC titleCase(value) {
+    IF value == NULL THEN {
+        RETURN "n/a";
+    }
+    LET text = STRING(value);
+    IF text == "" THEN {
+        RETURN "n/a";
+    }
+    RETURN UPPER(SUBSTRING(text, 0, 1)) + LOWER(SUBSTRING(text, 1));
+}
+
+FUNC formatNumber(value) {
+    IF value == NULL THEN {
+        RETURN "n/a";
+    }
+    RETURN STRING(value);
+}
+
+FUNC formatAlloc(value) {
+    IF value == NULL THEN {
+        RETURN "n/a";
+    }
+    RETURN STRING(value);
+}
+
+FUNC buildSortKey(row, idx) {
+    LET suiteKey = pad2(suiteRank(row.suite));
+    LET methodKey = pad2(benchmarkRank(row.method));
+    LET datasetKey = pad2(datasetRank(row.dataset));
+    LET indexKey = pad4(idx);
+    RETURN suiteKey + "::" + methodKey + "::" + datasetKey + "::" + row.method + "::" + row.dataset + "::" + indexKey;
+}
+
+FUNC sortRows(rows) {
+    LET keys = [];
+    LET idx = 0;
+    FOR row IN rows {
+        SET keys = APPEND(keys, buildSortKey(row, idx));
+        SET idx = idx + 1;
+    }
+    LET sortedKeys = SORT(keys);
+    LET out = [];
+    FOR key IN sortedKeys {
+        LET parts = SPLIT(key, "::");
+        LET pos = INT(parts[5]);
+        SET out = APPEND(out, rows[pos]);
+    }
+    RETURN out;
+}
+
+FUNC buildRuntimeSection(rows) {
+    LET lines = [];
+    SET lines = APPEND(lines, "## Runtime and allocation (mean, p95)");
+    SET lines = APPEND(lines, "");
+    SET lines = APPEND(lines, "| Runtime | Dataset | Mean (us/op) | p95 (us/op) | Alloc (B/op) | Params |");
+    SET lines = APPEND(lines, "| --- | --- | ---: | ---: | ---: | --- |");
+
+    FOR row IN rows {
+        LET runtime = row.suite + " " + row.method;
+        LET dataset = titleCase(row.dataset);
+        LET mean = formatNumber(row.meanUs);
+        LET p95 = formatNumber(row.p95Us);
+        LET alloc = formatAlloc(row.alloc);
+        LET params = CASE {
+            WHEN row.paramsText == "" THEN "n/a"
+            ELSE row.paramsText
+        };
+        SET lines = APPEND(lines, "| " + runtime + " | " + dataset + " | " + mean + " | " + p95 + " | " + alloc + " | " + params + " |");
+    }
+    RETURN JOIN(lines, "\n");
+}
+
+FUNC buildComparison(rows) {
+    LET combos = [];
+    FOR row IN rows {
+        IF row.suite == "Interpreter" || row.suite == "VM" THEN {
+            SET combos = APPEND(combos, row.method + "::" + row.dataset);
+        }
+    }
+    LET uniq = DISTINCT(combos);
+    LET out = [];
+    FOR key IN uniq {
+        LET parts = SPLIT(key, "::");
+        LET method = parts[0];
+        LET dataset = parts[1];
+        LET interp = NULL;
+        LET vm = NULL;
+        FOR row IN rows {
+            IF row.method == method && row.dataset == dataset THEN {
+                IF row.suite == "Interpreter" THEN {
+                    SET interp = row.meanUs;
+                }
+                IF row.suite == "VM" THEN {
+                    SET vm = row.meanUs;
+                }
+            }
+        }
+        IF interp != NULL && vm != NULL THEN {
+            SET out = APPEND(out, {
+                method: method,
+                dataset: dataset,
+                interpreter: interp,
+                vm: vm,
+                ratio: vm / interp
+            });
+        }
+    }
+    RETURN out;
+}
+
+FUNC buildComparisonSortKey(row, idx) {
+    LET methodKey = pad2(benchmarkRank(row.method));
+    LET datasetKey = pad2(datasetRank(row.dataset));
+    LET indexKey = pad4(idx);
+    RETURN methodKey + "::" + datasetKey + "::" + row.method + "::" + row.dataset + "::" + indexKey;
+}
+
+FUNC sortComparisons(rows) {
+    LET keys = [];
+    LET idx = 0;
+    FOR row IN rows {
+        SET keys = APPEND(keys, buildComparisonSortKey(row, idx));
+        SET idx = idx + 1;
+    }
+    LET sortedKeys = SORT(keys);
+    LET out = [];
+    FOR key IN sortedKeys {
+        LET parts = SPLIT(key, "::");
+        LET pos = INT(parts[4]);
+        SET out = APPEND(out, rows[pos]);
+    }
+    RETURN out;
+}
+
+FUNC buildComparisonSection(rows) {
+    LET lines = [];
+    SET lines = APPEND(lines, "## Interpreter vs VM ratio (mean)");
+    SET lines = APPEND(lines, "");
+    SET lines = APPEND(lines, "| Benchmark | Dataset | Interpreter (us/op) | VM (us/op) | Ratio (VM/Interp) |");
+    SET lines = APPEND(lines, "| --- | --- | ---: | ---: | ---: |");
+    FOR row IN rows {
+        LET line = "| " + row.method + " | " + titleCase(row.dataset) + " | " + formatNumber(row.interpreter) + " | " + formatNumber(row.vm) + " | " + STRING(row.ratio) + "x |";
+        SET lines = APPEND(lines, line);
+    }
+    RETURN JOIN(lines, "\n");
+}
+
+FUNC buildCsv(rows) {
+    LET lines = [];
+    SET lines = APPEND(lines, "suite,benchmark,dataset,params,mean_us_op,p95_us_op,alloc_b_op");
+    FOR row IN rows {
+        LET paramsCell = CASE {
+            WHEN row.paramsText == "" THEN ""
+            ELSE "\"" + row.paramsText + "\""
+        };
+        LET line = row.suite + "," + row.method + "," + row.dataset + "," + paramsCell + "," + formatNumber(row.meanUs) + "," + formatNumber(row.p95Us) + "," + formatAlloc(row.alloc);
+        SET lines = APPEND(lines, line);
+    }
+    RETURN JOIN(lines, "\n") + "\n";
+}
+
+TRANSFORM Report {
+    LET raw = [];
+    FOR key IN KEYS(jmh) {
+        SET raw = APPEND(raw, LISTIFY(AWAIT_SHARED("jmh", key)));
+    }
+    LET entries = FLATTEN(raw);
+
+    LET rows = [];
+    FOR entry IN entries {
+        LET primary = entry.primaryMetric ?? {};
+        LET percentiles = primary.scorePercentiles ?? {};
+        LET unit = primary.scoreUnit ?? "ns/op";
+        LET meanUs = toUs(primary.score, unit);
+        LET p95Raw = GET(percentiles, "0.95", GET(percentiles, "95.0", primary.score));
+        LET p95Us = toUs(p95Raw, unit);
+        LET alloc = resolveAllocBytes(entry);
+        LET params = entry.params ?? {};
+        LET dataset = params.dataset ?? "";
+        LET paramsText = buildParamsText(params);
+        LET benchmark = entry.benchmark ?? "unknown";
+        LET parts = SPLIT(benchmark, ".");
+        LET method = parts[LENGTH(parts) - 1];
+        LET suite = resolveSuite(benchmark);
+
+        SET rows = APPEND(rows, {
+            suite: suite,
+            method: method,
+            dataset: dataset,
+            paramsText: paramsText,
+            meanUs: meanUs,
+            p95Us: p95Us,
+            alloc: alloc,
+            benchmark: benchmark
+        });
+    }
+
+    LET sorted = sortRows(rows);
+    LET markdown = buildRuntimeSection(sorted);
+    LET comparisons = sortComparisons(buildComparison(sorted));
+    IF LENGTH(comparisons) > 0 THEN {
+        SET markdown = markdown + "\n\n" + buildComparisonSection(comparisons);
+    }
+    SET markdown = markdown + "\n";
+
+    LET csv = buildCsv(sorted);
+
+    OUTPUT {
+        rows: LENGTH(sorted),
+        files: {
+            "jmh-summary.md": markdown,
+            "jmh-summary.csv": csv
+        }
+    };
+}

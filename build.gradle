@@ -20,7 +20,7 @@ subprojects {
     apply plugin: 'io.gitlab.arturbosch.detekt'
     apply plugin: 'jacoco'
 
-    group = 'io.github.ehlyzov.branchline-public'
+    group = 'io.github.ehlyzov.branchline'
     version = 'v0.11.0-SNAPSHOT'
 
     detekt {
@@ -56,7 +56,7 @@ subprojects {
     }
     plugins.withId('org.jetbrains.kotlin.multiplatform') {
         kotlin {
-            jvmToolchain(23)
+            jvmToolchain(21)
         }
     }
 
@@ -124,7 +124,7 @@ subprojects {
 // Delegate run to the VM module's JVM runner
 tasks.register('run') {
     group = 'application'
-    description = 'Runs v2.vm.VMLoopKt via :vm'
+    description = 'Runs io.github.ehlyzov.branchline.vm.VMLoopKt via :vm'
     dependsOn(':vm:runVmLoop')
 }
 

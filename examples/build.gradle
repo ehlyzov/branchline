@@ -1,0 +1,29 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm'
+}
+
+dependencies {
+    implementation project(':interpreter')
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2"
+}
+
+tasks.register('runShortestPathDemo', JavaExec) {
+    group = 'application'
+    description = 'Run the complex shortest-path demo.'
+    mainClass = 'io.github.ehlyzov.branchline.examples.ComplexShortestPathDemoKt'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+tasks.register('runWeightedTreeDemo', JavaExec) {
+    group = 'application'
+    description = 'Run the weighted tree metrics demo.'
+    mainClass = 'io.github.ehlyzov.branchline.examples.WeightedTreeMetricsDemoKt'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+tasks.register('runTreeReconstructionDemo', JavaExec) {
+    group = 'application'
+    description = 'Run the full tree reconstruction demo.'
+    mainClass = 'io.github.ehlyzov.branchline.examples.TreeReconstructionDemoKt'
+    classpath = sourceSets.main.runtimeClasspath
+}

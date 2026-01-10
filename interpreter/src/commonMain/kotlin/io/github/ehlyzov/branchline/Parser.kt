@@ -1,0 +1,1212 @@
+package io.github.ehlyzov.branchline
+
+import io.github.ehlyzov.branchline.runtime.bignum.blBigDecOfLong
+import io.github.ehlyzov.branchline.runtime.bignum.blBigDecParse
+import io.github.ehlyzov.branchline.runtime.bignum.blBigIntOfLong
+import io.github.ehlyzov.branchline.runtime.bignum.blBigIntParse
+
+class ParseException(msg: String, val token: Token, val snippet: String? = null) :
+    RuntimeException(
+        "[${token.line}:${token.column}] $msg near '${token.lexeme}'" +
+            (snippet?.let { "\n$it" } ?: "")
+    )
+
+object NumOps {
+    fun isIntegral(n: NumValue) = n !is Dec
+
+    /** Снимает обёртку в Any-число нативного типа. */
+    fun unwrap(n: NumValue): Any = when (n) {
+        is I32 -> n.v
+        is I64 -> n.v
+        is IBig -> n.v
+        is Dec -> n.v
+    }
+
+    fun promote(a: NumValue, b: NumValue): Pair<NumValue, NumValue> {
+        // пример политики: I32->I64->IBig->Dec
+        val rank = when (a) {
+            is Dec -> 3
+            is IBig -> 2
+            is I64 -> 1
+            is I32 -> 0
+        }.coerceAtLeast(
+            when (b) {
+                is Dec -> 3
+                is IBig -> 2
+                is I64 -> 1
+                is I32 -> 0
+            }
+        )
+
+        fun lift(x: NumValue): NumValue = when (rank) {
+            3 -> when (x) {
+                is Dec -> x
+                is IBig -> Dec(blBigDecParse(x.v.toString()))
+                is I64 -> Dec(blBigDecOfLong(x.v))
+                is I32 -> Dec(blBigDecOfLong(x.v.toLong()))
+            }
+
+            2 -> when (x) {
+                is Dec -> x // не опускаем
+                is IBig -> x
+                is I64 -> IBig(blBigIntOfLong(x.v))
+                is I32 -> IBig(blBigIntOfLong(x.v.toLong()))
+            }
+
+            1 -> when (x) {
+                is Dec -> x
+                is IBig -> x // не опускаем BLBigInt
+                is I64 -> x
+                is I32 -> I64(x.v.toLong())
+            }
+
+            else -> x
+        }
+        return lift(a) to lift(b)
+    }
+}
+
+class Parser(tokens: List<Token>, private val source: String? = null) {
+    private companion object {
+        private val SOFT_KEYWORD_TYPES: Set<TokenType> = setOf(
+            TokenType.ABORT,
+            TokenType.APPEND,
+            TokenType.AS,
+            TokenType.BACKOFF,
+            TokenType.BUFFER,
+            TokenType.CALL,
+            TokenType.ENUM,
+            TokenType.FOREACH,
+            TokenType.FUNC,
+            TokenType.INIT,
+            TokenType.LET,
+            TokenType.MANY,
+            TokenType.MODIFY,
+            TokenType.OUTPUT,
+            TokenType.RETRY,
+            TokenType.RETURN,
+            TokenType.SET,
+            TokenType.SHARED,
+            TokenType.SINGLE,
+            TokenType.SOURCE,
+            TokenType.STREAM,
+            TokenType.THROW,
+            TokenType.TIMES,
+            TokenType.TO,
+            TokenType.TRANSFORM,
+            TokenType.TYPE,
+            TokenType.UNION,
+            TokenType.USING,
+        )
+    }
+
+    private val toks = tokens
+    private var current = 0
+
+    fun parse(): Program {
+        // Версию пока не парсим: она приходит строкой-комментарием // branchline 0.2
+        val version: VersionDecl? = null
+        val decls = mutableListOf<TopLevelDecl>()
+        while (!isAtEnd()) {
+            when {
+                check(TokenType.TRANSFORM) -> decls += parseTransform()
+                check(TokenType.SHARED) -> decls += parseShared()
+                check(TokenType.FUNC) -> decls += parseFunc()
+                check(TokenType.TYPE) -> decls += parseType()
+                check(TokenType.EOF) -> break
+                else -> error(peek(), "Unexpected token at top-level")
+            }
+        }
+        consume(TokenType.EOF, "Expect end of file")
+        return Program(version, decls)
+    }
+
+    // ------------------- top‑level parsers --------------------------
+
+    private fun parseTransform(): TransformDecl {
+        val start = advance() // TRANSFORM
+        val nameTok = if (checkName()) advance() else null
+
+        val params = mutableListOf<String>()
+        var signature: TransformSignature? = null
+        if (match(TokenType.LEFT_PAREN)) {
+            val sigStart = previous()
+            val paramTypes = mutableListOf<TransformParam>()
+            if (!check(TokenType.RIGHT_PAREN)) {
+                do {
+                    val paramTok = consumeName("Expect parameter name in transform signature")
+                    consume(TokenType.COLON, "Expect ':' after transform parameter name")
+                    val paramType = parseTypeExpr()
+                    params += paramTok.lexeme
+                    paramTypes += TransformParam(paramTok.lexeme, paramType, paramTok)
+                } while (match(TokenType.COMMA))
+            }
+            consume(TokenType.RIGHT_PAREN, "Expect ')' after transform signature parameters")
+            consume(TokenType.ARROW, "Expect '->' after transform signature")
+            val outputType = parseTypeExpr()
+            val sigEnd = previous()
+            val inputType = when (paramTypes.size) {
+                0 -> null
+                1 -> paramTypes.first().type
+                else -> RecordTypeRef(
+                    fields = paramTypes.map { param ->
+                        RecordFieldType(
+                            name = param.name,
+                            type = param.type,
+                            optional = false,
+                            token = param.token,
+                        )
+                    },
+                    token = paramTypes.first().token,
+                )
+            }
+            signature = TransformSignature(
+                input = inputType,
+                output = outputType,
+                tokenSpan = TokenSpan(sigStart, sigEnd),
+            )
+        }
+
+        // Optional mode block; only BUFFER supported. STREAM not supported yet.
+        var mode: Mode = Mode.BUFFER
+        if (check(TokenType.LEFT_BRACE) && (checkNext(TokenType.STREAM) || checkNext(TokenType.BUFFER))) {
+            advance() // consume '{'
+            val modeTok = advance()
+            mode = when (modeTok.type) {
+                TokenType.BUFFER -> Mode.BUFFER
+                TokenType.STREAM -> error(modeTok, "STREAM mode is not supported yet. Omit mode to use BUFFER.")
+                else -> error(modeTok, "Expect BUFFER")
+            }
+            consume(TokenType.RIGHT_BRACE, "Expect '}' after mode")
+        }
+
+        val body: TransformBody = parseBlock()
+
+        return TransformDecl(nameTok?.lexeme, params, signature, mode, body, start)
+    }
+
+    private fun parseAdapter(): AdapterSpec {
+        val nameTok = consumeName("Expect adapter name after USING")
+        val args = mutableListOf<Expr>()
+        if (match(TokenType.LEFT_PAREN)) {
+            if (!check(TokenType.RIGHT_PAREN)) {
+                do {
+                    args += parseExpression()
+                } while (match(TokenType.COMMA))
+            }
+            consume(TokenType.RIGHT_PAREN, "Expect ')' after adapter args")
+        }
+        return AdapterSpec(nameTok.lexeme, args, nameTok)
+    }
+
+    // --------------------------------------------------------------------
+    // SHARED cache SINGLE ;
+    private fun parseShared(): SharedDecl {
+        val sharedTok = consume(TokenType.SHARED, "Expect 'SHARED'.")
+        val nameTok = consumeName("Expect shared memory name.")
+
+        val kind = when {
+            match(TokenType.SINGLE) -> SharedKind.SINGLE
+            match(TokenType.MANY) -> SharedKind.MANY
+            else -> error(peek(), "Expect SINGLE or MANY after shared name")
+        }
+        optionalSemicolon()
+        return SharedDecl(nameTok.lexeme, kind, sharedTok)
+    }
+
+    // --------------------------------------------------------------------
+    // FUNC newId(prefix) = expr ;     |     FUNC sum(a,b) { … }
+    private fun parseFunc(): FuncDecl {
+        val funcTok = consume(TokenType.FUNC, "Expect 'FUNC'.")
+        val nameTok = consumeName("Expect function name.")
+
+        // ( param, … )
+        consume(TokenType.LEFT_PAREN, "Expect '(' after function name.")
+        val params = mutableListOf<String>()
+        if (!check(TokenType.RIGHT_PAREN)) {
+            do {
+                params += consumeName("Expect parameter name.").lexeme
+            } while (match(TokenType.COMMA))
+        }
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.")
+
+        // тело:  '=' expr ';'   ИЛИ   блок '{ … }'
+        val body: FuncBody = if (match(TokenType.ASSIGN)) {
+            val expr = parseExpression()
+            optionalSemicolon()
+            ExprBody(expr, funcTok)
+        } else {
+            val block = parseBlock() // parseBlock съедает '{ … }'
+            BlockBody(block, funcTok)
+        }
+
+        return FuncDecl(nameTok.lexeme, params, body, funcTok)
+    }
+
+    // --------------------------------------------------------------------
+    // TYPE Color = enum { RED, GREEN } ;     |     TYPE Id = union String | Number ;
+    private fun parseType(): TypeDecl {
+        val typeTok = consume(TokenType.TYPE, "Expect 'TYPE'.")
+        val nameTok = consumeName("Expect type name.")
+        consume(TokenType.ASSIGN, "Expect '=' after type name.")
+
+        val defs = mutableListOf<String>()
+        val kind: TypeKind = when {
+            match(TokenType.ENUM) -> {
+                consume(TokenType.LEFT_BRACE, "Expect '{' after 'enum'.")
+                do {
+                    defs += consumeName("Expect enum label.").lexeme
+                } while (match(TokenType.COMMA))
+                consume(TokenType.RIGHT_BRACE, "Expect '}' after enum body.")
+                TypeKind.ENUM
+            }
+
+            match(TokenType.UNION) -> {
+                // последовательно <Ident> ( '|' <Ident> )*
+                do {
+                    defs += consumeName("Expect union member type.").lexeme
+                } while (match(TokenType.PIPE))
+                TypeKind.UNION
+            }
+
+            else -> error(peek(), "Expect 'enum' or 'union' after '='")
+        }
+
+        optionalSemicolon()
+        return TypeDecl(nameTok.lexeme, kind, defs, typeTok)
+    }
+
+    private data class TransformParam(
+        val name: String,
+        val type: TypeRef,
+        val token: Token,
+    )
+
+    private fun parseTypeExpr(): TypeRef {
+        val first = parseTypeTerm()
+        val members = mutableListOf(first)
+        while (match(TokenType.PIPE)) {
+            members += parseTypeTerm()
+        }
+        return if (members.size == 1) {
+            first
+        } else {
+            UnionTypeRef(members, first.token)
+        }
+    }
+
+    private fun parseTypeTerm(): TypeRef = when {
+        check(TokenType.ENUM) && checkNext(TokenType.LEFT_BRACE) -> {
+            advance()
+            parseEnumType(previous())
+        }
+        match(TokenType.LEFT_BRACE) -> parseRecordType(previous())
+        match(TokenType.LEFT_BRACKET) -> parseListType(previous())
+        matchName() -> parseSimpleType(previous())
+        else -> error(peek(), "Expect type")
+    }
+
+    private fun parseEnumType(start: Token): TypeRef {
+        consume(TokenType.LEFT_BRACE, "Expect '{' after enum")
+        val values = mutableListOf<String>()
+        if (!check(TokenType.RIGHT_BRACE)) {
+            while (true) {
+                val valueTok = consumeName("Expect enum value")
+                values += valueTok.lexeme
+                if (!match(TokenType.COMMA)) break
+                if (check(TokenType.RIGHT_BRACE)) break
+            }
+        }
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after enum")
+        return EnumTypeRef(values, start)
+    }
+
+    private fun parseRecordType(start: Token): TypeRef {
+        val fields = mutableListOf<RecordFieldType>()
+        if (!check(TokenType.RIGHT_BRACE)) {
+            while (true) {
+                val fieldTok = consumeName("Expect record field name")
+                val optional = match(TokenType.QUESTION)
+                consume(TokenType.COLON, "Expect ':' after record field name")
+                val fieldType = parseTypeExpr()
+                fields += RecordFieldType(
+                    name = fieldTok.lexeme,
+                    type = fieldType,
+                    optional = optional,
+                    token = fieldTok,
+                )
+                if (!match(TokenType.COMMA)) break
+                if (check(TokenType.RIGHT_BRACE)) break
+            }
+        }
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after record type")
+        return RecordTypeRef(fields, start)
+    }
+
+    private fun parseListType(start: Token): TypeRef {
+        val elementType = parseTypeExpr()
+        consume(TokenType.RIGHT_BRACKET, "Expect ']' after list type")
+        return ArrayTypeRef(elementType, start)
+    }
+
+    private fun parseSimpleType(typeTok: Token): TypeRef {
+        val normalized = typeTok.lexeme.lowercase()
+        return when (typeTok.lexeme) {
+            "_" -> {
+                val isNullable = match(TokenType.QUESTION)
+                PrimitiveTypeRef(
+                    if (isNullable) PrimitiveType.ANY_NULLABLE else PrimitiveType.ANY,
+                    typeTok,
+                )
+            }
+
+            else -> when (normalized) {
+                "string", "text" -> PrimitiveTypeRef(PrimitiveType.TEXT, typeTok)
+                "number" -> PrimitiveTypeRef(PrimitiveType.NUMBER, typeTok)
+                "boolean" -> PrimitiveTypeRef(PrimitiveType.BOOLEAN, typeTok)
+                "null" -> PrimitiveTypeRef(PrimitiveType.NULL, typeTok)
+                "any" -> PrimitiveTypeRef(PrimitiveType.ANY, typeTok)
+                else -> NamedTypeRef(typeTok.lexeme, typeTok)
+            }
+        }
+    }
+
+    // ------------------- statements & block -------------------------
+
+    private fun parseBlock(): CodeBlock {
+        val lbrace = consume(TokenType.LEFT_BRACE, "Expect '{' to start block")
+        val stmts = mutableListOf<Stmt>()
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            stmts += parseStatement()
+        }
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after block")
+        return CodeBlock(stmts, lbrace)
+    }
+
+    private fun parseStatement(): Stmt {
+        return when {
+            match(TokenType.LET) -> parseLet()
+            match(TokenType.MODIFY) -> parseModify()
+            match(TokenType.SET) -> parseSet()
+            match(TokenType.APPEND) -> parseAppendTo()
+            match(TokenType.OUTPUT) -> parseOutputStmt()
+            match(TokenType.IF) -> parseIf(previous())
+            match(TokenType.FOR) -> parseForEach(previous())
+            match(TokenType.TRY) -> parseTryCatch(previous())
+            match(TokenType.RETURN) -> parseReturn()
+            match(TokenType.ABORT) -> parseAbort()
+            isSharedWriteStart() -> parseSharedWrite()
+            else -> {
+                val start = peek()
+                val expr = parseExpression()
+                optionalSemicolon()
+                ExprStmt(expr, start)
+            }
+        }
+    }
+
+    // --------------- внутри Parser -----------------
+
+    private fun parseLet(): LetStmt {
+        val nameTok = consumeName("Expect identifier after LET")
+        consume(TokenType.ASSIGN, "Expect '=' in LET statement")
+        val expr = parseExpression()
+        optionalSemicolon()
+        return LetStmt(nameTok.lexeme, expr, nameTok)
+    }
+
+    private fun isSharedWriteStart(): Boolean {
+        if (!checkName() || !checkNext(TokenType.LEFT_BRACKET)) return false
+        var idx = current + 2
+        var depth = 1
+        while (idx < toks.size) {
+            val tok = toks[idx]
+            when (tok.type) {
+                TokenType.LEFT_BRACKET -> depth += 1
+                TokenType.RIGHT_BRACKET -> {
+                    depth -= 1
+                    if (depth == 0) {
+                        return toks.getOrNull(idx + 1)?.type == TokenType.ASSIGN
+                    }
+                }
+                TokenType.EOF -> return false
+                else -> Unit
+            }
+            idx += 1
+        }
+        return false
+    }
+
+    private fun parseSharedWrite(): SharedWriteStmt {
+        val nameTok = consumeName("Expect shared resource name")
+        consume(TokenType.LEFT_BRACKET, "Expect '[' after shared resource name")
+        val keyExpr = if (check(TokenType.RIGHT_BRACKET)) null else parseExpression()
+        consume(TokenType.RIGHT_BRACKET, "Expect ']' after shared key")
+        consume(TokenType.ASSIGN, "Expect '=' after shared key")
+        val valueExpr = parseExpression()
+        optionalSemicolon()
+        return SharedWriteStmt(nameTok.lexeme, keyExpr, valueExpr, nameTok)
+    }
+
+    private fun parseModify(): ModifyStmt {
+        // Цель — статический путь: IdentifierExpr или PathExpr (без IndexExpr)
+        val targetExpr = parsePrimaryPostfix()
+        val targetPath: AccessExpr = when (targetExpr) {
+            is IdentifierExpr -> AccessExpr(targetExpr, emptyList(), targetExpr.token)
+            is AccessExpr -> targetExpr
+            else -> error(
+                previous(),
+                "Expect static object path after MODIFY (identifier or dotted path without '[ ]')"
+            )
+        }
+        check(targetPath.segs.all { it is AccessSeg.Static }) {
+            "Expect static object path after MODIFY (identifier or dotted path without '[ ]')"
+        }
+
+        val lbrace = consume(TokenType.LEFT_BRACE, "Expect '{' after MODIFY target")
+        val updates = mutableListOf<Property>()
+
+        if (!check(TokenType.RIGHT_BRACE)) {
+            do {
+                when {
+                    // a) computed property: [expr] : expr
+                    match(TokenType.LEFT_BRACKET) -> {
+                        val keyExpr = parseExpression()
+                        consume(TokenType.RIGHT_BRACKET, "Expect ']' after computed property name")
+                        consume(TokenType.COLON, "Expect ':' after computed property name")
+                        val valueExpr = parseExpression()
+                        updates += ComputedProperty(keyExpr, valueExpr)
+                    }
+                    // b) literal property: NAME | STRING | NUMBER : expr
+                    else -> {
+                        val keyTok = when {
+                            match(TokenType.STRING) -> previous()
+                            matchName() -> previous()
+                            match(TokenType.NUMBER) -> previous()
+                            // дружелюбная ошибка для отрицательных числовых ключей
+                            check(TokenType.MINUS) -> {
+                                advance()
+                                val nTok = consume(
+                                    TokenType.NUMBER,
+                                    "Numeric field key must be a non-negative integer"
+                                )
+                                error(
+                                    nTok,
+                                    "Numeric field key must be a non-negative integer, got '-${nTok.lexeme}'"
+                                )
+                            }
+
+                            else -> error(peek(), "Expect field key in MODIFY")
+                        }
+
+                        val key: ObjKey = when {
+                            keyTok.type == TokenType.STRING -> ObjKey.Name(keyTok.lexeme.trim('"'))
+                            keyTok.type == TokenType.NUMBER -> parseIntKey(keyTok.lexeme) // I32/I64/IBig
+                            isNameType(keyTok.type) -> ObjKey.Name(keyTok.lexeme)
+                            else -> error(keyTok, "Invalid field key in MODIFY")
+                        }
+
+                        consume(TokenType.COLON, "Expect ':' after field key")
+                        val valueExpr = parseExpression()
+                        updates += LiteralProperty(key, valueExpr)
+                    }
+                }
+            } while (match(TokenType.COMMA) || match(TokenType.SEMICOLON))
+        }
+
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after MODIFY block")
+        optionalSemicolon()
+        return ModifyStmt(targetPath, updates, lbrace)
+    }
+
+    private fun parseAppendTo(): Stmt {
+        val start = previous() // 'APPEND'
+        consume(TokenType.TO, "Expect TO after APPEND")
+        val target = parsePrimaryPostfix(allowCall = false)
+        val value = parseExpression()
+        val initExpr = if (match(TokenType.INIT)) parseExpression() else null
+        optionalSemicolon()
+        return when (target) {
+            is IdentifierExpr -> AppendToVarStmt(target.name, value, initExpr, start)
+            is AccessExpr -> AppendToStmt(target, value, initExpr, start)
+            else -> error(start, "APPEND TO target must be identifier or path")
+        }
+    }
+
+    private fun parseSet(): Stmt {
+        val start = previous() // 'SET'
+        val target = parsePrimaryPostfix()
+        consume(TokenType.ASSIGN, "Expect '=' after SET target")
+        val value = parseExpression()
+        optionalSemicolon()
+        return when (target) {
+            is IdentifierExpr -> SetVarStmt(target.name, value, start)
+            is AccessExpr -> SetStmt(target, value, start)
+            else -> error(start, "SET target must be identifier or path")
+        }
+    }
+
+    private fun parseOutputStmt(): OutputStmt {
+        val outTok = previous()
+        val template = parseExpression()
+        // optional semicolon in example omitted inside transform
+        if (match(TokenType.SEMICOLON)) {
+            // consume semicolon
+        }
+        return OutputStmt(template, outTok)
+    }
+
+    // IF / ELSE -------------------------------------------------------
+    private fun parseIf(ifTok: Token): IfStmt {
+        val condition = parseExpression()
+        consume(TokenType.THEN, "Expect THEN after IF condition")
+        val thenBlock = parseBlock()
+        val elseBlock = if (match(TokenType.ELSE)) parseBlock() else null
+        return IfStmt(condition, thenBlock, elseBlock, ifTok)
+    }
+
+    // FOR EACH --------------------------------------------------------
+    private fun parseForEach(forTok: Token): ForEachStmt {
+        match(TokenType.EACH)
+        val varTok = consumeName("Expect loop variable name")
+        consume(TokenType.IN, "Expect IN after loop variable")
+        val iterable = parseExpression()
+        val whereExpr = if (match(TokenType.WHERE)) parseExpression() else null
+        val body = parseBlock()
+        return ForEachStmt(
+            varName = varTok.lexeme,
+            iterable = iterable,
+            body = body,
+            where = whereExpr,
+            token = forTok
+        )
+    }
+
+    // TRY / CATCH -----------------------------------------------------
+    private data class TryCatchParts(
+        val tryExpr: Expr,
+        val exceptionName: String,
+        val retry: Int?,
+        val backoff: String?,
+    )
+
+    private fun parseTryCatchParts(): TryCatchParts {
+        val tryExpr = parseExpression()
+        consume(TokenType.CATCH, "Expect CATCH after TRY expression")
+        consume(TokenType.LEFT_PAREN, "Expect '(' after CATCH")
+        val excTok = consumeName("Expect exception variable")
+        if (match(TokenType.COLON)) consumeName("Expect type name after ':'")
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after CATCH")
+        var retry: Int? = null
+        var backoff: String? = null
+        if (match(TokenType.RETRY)) {
+            val numTok = consume(TokenType.NUMBER, "Expect retry count")
+            retry = numTok.lexeme.toInt()
+            consume(TokenType.TIMES, "Expect TIMES after retry count")
+            if (match(TokenType.BACKOFF)) {
+                val strTok = consume(TokenType.STRING, "Expect backoff string")
+                backoff = strTok.lexeme.trim('"')
+            }
+        }
+        return TryCatchParts(
+            tryExpr = tryExpr,
+            exceptionName = excTok.lexeme,
+            retry = retry,
+            backoff = backoff,
+        )
+    }
+
+    private fun parseTryCatch(tryTok: Token): TryCatchStmt {
+        val parts = parseTryCatchParts()
+        consume(TokenType.ARROW, "Expect '->' after TRY/CATCH block")
+        var fbExpr: Expr? = null
+        var fbAbort: AbortStmt? = null
+
+        if (match(TokenType.ABORT)) {
+            fbAbort = parseAbort() // мы уже написали parseAbort()
+        } else {
+            fbExpr = parseExpression()
+        }
+        match(TokenType.SEMICOLON)
+        return TryCatchStmt(
+            parts.tryExpr,
+            parts.exceptionName,
+            parts.retry,
+            parts.backoff,
+            fbExpr,
+            fbAbort,
+            tryTok
+        )
+    }
+
+    private fun parseTryCatchExpr(tryTok: Token): TryCatchExpr {
+        val parts = parseTryCatchParts()
+        consume(TokenType.ARROW, "Expect '->' after TRY/CATCH expression")
+        val fallbackExpr = parseExpression()
+        return TryCatchExpr(
+            tryExpr = parts.tryExpr,
+            exceptionName = parts.exceptionName,
+            retry = parts.retry,
+            backoff = parts.backoff,
+            fallbackExpr = fallbackExpr,
+            token = tryTok,
+        )
+    }
+
+    // RETURN expr? ;
+    private fun parseReturn(): ReturnStmt {
+        val kw = previous() // сам токен RETURN уже съели
+        val value = if (shouldParseReturnExpr(kw)) parseExpression() else null
+        optionalSemicolon()
+        return ReturnStmt(value, kw)
+    }
+
+    private fun parseAbort(): AbortStmt {
+        val kw = previous() // токен ABORT
+        val expr = if (shouldParseReturnExpr(kw)) parseExpression() else null
+        optionalSemicolon()
+        return AbortStmt(expr, kw)
+    }
+
+    private fun shouldParseReturnExpr(kw: Token): Boolean {
+        val next = peek()
+        if (next.type == TokenType.SEMICOLON) return false
+        if (next.line != kw.line) return false
+        if (isStatementBoundary(next.type)) return false
+        return true
+    }
+
+    // ------------------- expressions --------------------------------
+
+    private fun parseExpression(): Expr = parseIfElse()
+
+    private fun parseIfElse(): Expr {
+        if (!match(TokenType.IF)) return parseCoalesce() // как раньше
+
+        val ifTok = previous()
+        val cond = parseExpression()
+        consume(TokenType.THEN, "expect THEN")
+        val thenE = parseExpression()
+        consume(TokenType.ELSE, "expect ELSE")
+        val elseE = parseExpression()
+        return IfElseExpr(cond, thenE, elseE, ifTok)
+    }
+
+    /*   a ?? b   */
+    private fun parseCoalesce(): Expr {
+        var expr = parseOr()
+        while (match(TokenType.COALESCE)) {
+            val op = previous()
+            val right = parseOr()
+            expr = BinaryExpr(expr, op, right)
+        }
+        return expr
+    }
+
+    /*   a || b   */
+    private fun parseOr(): Expr {
+        var expr = parseAnd()
+        while (match(TokenType.OR)) {
+            val op = previous()
+            val right = parseAnd()
+            expr = BinaryExpr(expr, op, right)
+        }
+        return expr
+    }
+
+    /*   a && b   */
+    private fun parseAnd(): Expr {
+        var expr = parseEquality()
+        while (match(TokenType.AND)) {
+            val op = previous()
+            val right = parseEquality()
+            expr = BinaryExpr(expr, op, right)
+        }
+        return expr
+    }
+
+    /*   a == b, a != b   */
+    private fun parseEquality(): Expr {
+        var expr = parseComparison()
+        while (match(TokenType.EQ, TokenType.NEQ)) {
+            val op = previous()
+            val right = parseComparison()
+            expr = BinaryExpr(expr, op, right)
+        }
+        return expr
+    }
+
+    /*   <  <=  >  >=   */
+    private fun parseComparison(): Expr {
+        var expr = parseConcat()
+        while (match(TokenType.LT, TokenType.LE, TokenType.GT, TokenType.GE)) {
+            val op = previous()
+            val right = parseConcat()
+            expr = BinaryExpr(expr, op, right)
+        }
+        return expr
+    }
+
+    private fun parseConcat(): Expr {
+        var expr = parseTerm()
+        while (match(TokenType.CONCAT)) {
+            val op = previous()
+            val right = parseTerm()
+            expr = BinaryExpr(expr, op, right)
+        }
+        return expr
+    }
+
+    /*   +  -   */
+    private fun parseTerm(): Expr {
+        var expr = parseFactor()
+        while (match(TokenType.PLUS, TokenType.MINUS)) {
+            val op = previous()
+            val right = parseFactor()
+            expr = BinaryExpr(expr, op, right)
+        }
+        return expr
+    }
+
+    /*   *  /  %   */
+    private fun parseFactor(): Expr {
+        var expr = parseUnary()
+        while (match(TokenType.STAR, TokenType.SLASH, TokenType.PERCENT)) {
+            val op = previous()
+            val right = parseUnary()
+            expr = BinaryExpr(expr, op, right)
+        }
+        return expr
+    }
+
+    /*   -x   !flag   await expr   suspend expr   */
+    private fun parseUnary(): Expr {
+        if (match(TokenType.AWAIT)) {
+            val awaitTok = previous()
+            // Parse the expression that follows await
+            val right = parsePrimaryPostfix()
+
+            // Check if it's a dot access (like resource.key)
+            return if (right is AccessExpr &&
+                       right.base is IdentifierExpr &&
+                       right.segs.size == 1 &&
+                       right.segs[0] is AccessSeg.Static &&
+                       (right.segs[0] as AccessSeg.Static).key is ObjKey.Name) {
+                // This looks like AWAIT resource.key - treat as SharedState await
+                val resourceName = right.base.name
+                val keyName = ((right.segs[0] as AccessSeg.Static).key as ObjKey.Name).v
+                SharedStateAwaitExpr(resourceName, keyName, awaitTok)
+            } else {
+                // Regular await expression
+                UnaryExpr(right, awaitTok)
+            }
+        }
+        if (match(TokenType.MINUS, TokenType.BANG, TokenType.SUSPEND)) {
+            val op = previous()
+            val right = parseUnary()
+            return UnaryExpr(right, op)
+        }
+        return parsePrimaryPostfix()
+    }
+
+    private fun parsePrimaryPostfix(allowCall: Boolean = true): Expr {
+        var expr = parsePrimary()
+        val segs = mutableListOf<AccessSeg>()
+        var tokenForNode: Token = expr.token
+
+        fun flush(): Expr {
+            return if (segs.isEmpty()) expr else AccessExpr(expr, segs.toList(), tokenForNode)
+        }
+
+        loop@ while (true) {
+            when {
+                // ---- .[ simple.path ] ----
+                check(TokenType.DOT) && checkNext(TokenType.LEFT_BRACKET) -> {
+                    advance() // '.'
+                    val lbr = consume(TokenType.LEFT_BRACKET, "Expect '[' after '.'")
+                    val first = consumeName("Expect identifier after '.['")
+
+                    // строим базу пути-ключа
+                    var keyExpr: Expr = IdentifierExpr(first.lexeme, first)
+                    val keySegs = mutableListOf<AccessSeg>()
+
+                    // далее читаем .(IDENT|NUMBER)* внутри скобок
+                    while (match(TokenType.DOT)) {
+                        val segTok = when {
+                            matchName() -> previous()
+                            match(TokenType.NUMBER) -> previous()
+                            else -> error(peek(), "Expect name or index inside '.[' … ']'")
+                        }
+                        val seg = when (segTok.type) {
+                            TokenType.NUMBER -> AccessSeg.Static(parseIntKey(segTok.lexeme))
+                            else -> if (isNameType(segTok.type)) {
+                                AccessSeg.Static(ObjKey.Name(segTok.lexeme))
+                            } else {
+                                error(segTok, "Invalid segment inside '.[' … ']'")
+                            }
+                        }
+                        keySegs += seg
+                    }
+
+                    consume(TokenType.RIGHT_BRACKET, "Expect ']' after .[ … ]")
+
+                    // если были дополнительные сегменты — завернём в AccessExpr; иначе оставим просто IdentifierExpr
+                    if (keySegs.isNotEmpty()) {
+                        keyExpr = AccessExpr(keyExpr, keySegs.toList(), first)
+                    }
+
+                    // добавляем ОДИН динамический сегмент к текущему base-выражению
+                    segs += AccessSeg.Dynamic(keyExpr)
+                    tokenForNode = lbr
+                }
+
+                // ---- .segment (NAME | NUMBER) ----
+                match(TokenType.DOT) -> {
+                    val segTok = when {
+                        matchName() -> previous()
+                        match(TokenType.NUMBER) -> previous()
+                        else -> error(peek(), "Expect property name or index after '.'")
+                    }
+                    segs += when (segTok.type) {
+                        TokenType.NUMBER -> AccessSeg.Static(parseIntKey(segTok.lexeme))
+                        else -> if (isNameType(segTok.type)) {
+                            AccessSeg.Static(ObjKey.Name(segTok.lexeme))
+                        } else {
+                            error(segTok, "Invalid path segment after '.'")
+                        }
+                    }
+                    tokenForNode = segTok
+                }
+
+                // ---- [ expr ] ----
+                match(TokenType.LEFT_BRACKET) -> {
+                    val keyExpr = parseExpression()
+                    consume(TokenType.RIGHT_BRACKET, "Expect ']' after index")
+                    segs += AccessSeg.Dynamic(keyExpr)
+                    tokenForNode = keyExpr.token
+                }
+
+                // ( args ) — только если allowCall == true
+                check(TokenType.LEFT_PAREN) && !allowCall -> {
+                    break@loop
+                }
+
+                // ---- ( args ) ----
+                match(TokenType.LEFT_PAREN) -> {
+                    expr = flush() // сначала закрываем накопленный путь
+                    val lpar = previous()
+                    val args = mutableListOf<Expr>()
+                    if (!check(TokenType.RIGHT_PAREN)) {
+                        do { args += parseExpression() } while (match(TokenType.COMMA))
+                    }
+                    consume(TokenType.RIGHT_PAREN, "Expect ')' after arguments")
+                    val callee = when (expr) {
+                        is IdentifierExpr -> CallExpr(expr, args, lpar)
+                        else -> InvokeExpr(expr, args, lpar)
+                    }
+                    expr = callee
+                    segs.clear()
+                    tokenForNode = callee.token
+                }
+
+                else -> break@loop
+            }
+        }
+        return flush()
+    }
+
+    private fun parsePrimary(): Expr {
+        val tok = advance()
+        if (isNameToken(tok)) {
+            return IdentifierExpr(tok.lexeme, tok)
+        }
+        return when (tok.type) {
+            TokenType.CASE -> parseCase(tok)
+            TokenType.TRY -> parseTryCatchExpr(tok)
+            TokenType.STRING -> StringExpr(tok.lexeme.trim('"'), tok)
+            TokenType.NUMBER -> {
+                val tok = previous()
+                NumberLiteral(parseNumValue(tok.lexeme), tok)
+            }
+            TokenType.NULL -> NullLiteral(tok)
+            TokenType.TRUE -> BoolExpr(true, tok)
+            TokenType.FALSE -> BoolExpr(false, tok)
+            TokenType.LEFT_BRACE -> parseObject(tok)
+            TokenType.LEFT_BRACKET -> parseArray(tok)
+            TokenType.LEFT_PAREN -> {
+                if (looksLikeLambdaAt(current)) {
+                    parseLambdaAfterLParen() // НЕ требует save/restore
+                } else {
+                    val inner = parseExpression()
+                    consume(TokenType.RIGHT_PAREN, "Expect ')' after expression")
+                    inner
+                }
+            }
+
+            else -> error(tok, "Unexpected token in expression")
+        }
+    }
+
+    private fun parseCase(caseTok: Token): Expr {
+        consume(TokenType.LEFT_BRACE, "Expect '{' after CASE")
+        val whens = mutableListOf<CaseWhen>()
+        while (match(TokenType.WHEN)) {
+            val condition = parseExpression()
+            consume(TokenType.THEN, "Expect THEN after CASE WHEN condition")
+            val result = parseExpression()
+            whens += CaseWhen(condition, result)
+        }
+        if (whens.isEmpty()) {
+            error(caseTok, "CASE requires at least one WHEN")
+        }
+        consume(TokenType.ELSE, "Expect ELSE in CASE")
+        val elseExpr = parseExpression()
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after CASE")
+        return CaseExpr(whens, elseExpr, caseTok)
+    }
+
+    private fun looksLikeLambdaAt(idxStart: Int = current): Boolean {
+        var i = idxStart
+        if (i >= toks.size) return false
+        if (toks[i].type == TokenType.RIGHT_PAREN) {
+            i++ // ')'
+            return i < toks.size && toks[i].type == TokenType.ARROW
+        }
+        if (!isNameType(toks[i].type)) return false
+        i++ // first param
+        while (i < toks.size && toks[i].type == TokenType.COMMA) {
+            i++
+            if (i >= toks.size || !isNameType(toks[i].type)) return false
+            i++
+        }
+        if (i >= toks.size || toks[i].type != TokenType.RIGHT_PAREN) return false
+        i++ // ')'
+        return i < toks.size && toks[i].type == TokenType.ARROW
+    }
+
+    private fun parseLambdaAfterLParen(): Expr {
+        val lparen = previous()
+        val params = mutableListOf<String>()
+        if (!check(TokenType.RIGHT_PAREN)) {
+            do { params += consumeName("Expect parameter name").lexeme }
+            while (match(TokenType.COMMA))
+        }
+        consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters")
+        val arrow = consume(TokenType.ARROW, "Expect '->' after parameters")
+        val body: FuncBody =
+            if (check(TokenType.LEFT_BRACE)) {
+                val block = parseBlock() // consumes { ... }
+                BlockBody(block, arrow)
+            } else {
+                val expr = parseExpression() // no ';' here
+                ExprBody(expr, arrow)
+            }
+        return LambdaExpr(params, body, lparen)
+    }
+
+    private fun parseIntKey(lex: String): ObjKey.Index {
+        require(!lex.startsWith("-") && !lex.contains('.') && !lex.contains('e', ignoreCase = true)) {
+            "Numeric field key must be a non-negative integer, got '$lex'"
+        }
+        lex.toIntOrNull()?.let { return I32(it) }
+        lex.toLongOrNull()?.let { return I64(it) }
+        return IBig(blBigIntParse(lex))
+    }
+
+    private fun parseNumValue(lex: String): NumValue =
+        if (lex.contains('.') || lex.contains('e', true)) {
+            Dec(blBigDecParse(lex))
+        } else {
+            lex.toIntOrNull()?.let(::I32)
+                ?: lex.toLongOrNull()?.let(::I64)
+                ?: IBig(blBigIntParse(lex))
+        }
+
+    private fun parseArray(lbr: Token): Expr {
+        // пустой []
+        if (match(TokenType.RIGHT_BRACKET)) {
+            return ArrayExpr(emptyList(), lbr)
+        }
+
+        // запоминаем первую часть до возможного 'FOR'
+        val firstExpr = parseExpression()
+
+        // comprehension?
+        return if (match(TokenType.FOR)) {
+            consume(TokenType.EACH, "Expect EACH after FOR")
+            val varTok = consumeName("Expect loop variable")
+            consume(TokenType.IN, "Expect IN after loop variable")
+            val iter = parseExpression()
+            val whereExpr = if (match(TokenType.WHERE)) parseExpression() else null
+            consume(TokenType.RIGHT_BRACKET, "Expect ']' after array comprehension")
+            ArrayCompExpr(
+                varName = varTok.lexeme,
+                iterable = iter,
+                mapExpr = firstExpr,
+                where = whereExpr,
+                token = lbr
+            )
+        } else {
+            val elems = mutableListOf<Expr>().apply { add(firstExpr) }
+            while (true) {
+                if (match(TokenType.COMMA)) {
+                    if (check(TokenType.RIGHT_BRACKET)) break
+                    parseExpression()
+                } else break
+            }
+            consume(TokenType.RIGHT_BRACKET, "Expect ']' after array literal")
+            ArrayExpr(elems, lbr)
+        }
+    }
+
+    private fun parseObject(lbrace: Token): ObjectExpr {
+        val fields = mutableListOf<Property>()
+        if (!check(TokenType.RIGHT_BRACE)) {
+            while (true) {
+                when {
+                    // {[expr] : value}
+                    match(TokenType.LEFT_BRACKET) -> {
+                        val keyExpr = parseExpression()
+                        consume(TokenType.RIGHT_BRACKET, "Expect ']' after computed property name")
+                        consume(TokenType.COLON, "Expect ':' after property name")
+                        val valueExpr = parseExpression()
+                        fields += ComputedProperty(keyExpr, valueExpr)
+                    }
+
+                    else -> {
+                        // literal key: IDENT | STRING | NUMBER (целое ≥ 0)
+                        val keyTok = when {
+                            match(TokenType.STRING) -> previous()
+                            matchName() -> previous()
+                            match(TokenType.NUMBER) -> previous()
+                            // дружелюбная ошибка для отрицательных числовых ключей
+                            check(TokenType.MINUS) -> {
+                                advance() // consume '-'
+                                val nTok = consume(
+                                    TokenType.NUMBER,
+                                    "Numeric field key must be a non-negative integer"
+                                )
+                                error(
+                                    nTok,
+                                    "Numeric field key must be a non-negative integer, got '-${nTok.lexeme}'"
+                                )
+                            }
+
+                            else -> error(peek(), "Expect field key in object literal")
+                        }
+
+                        val key: ObjKey = when {
+                            keyTok.type == TokenType.STRING -> ObjKey.Name(keyTok.lexeme.trim('"'))
+                            keyTok.type == TokenType.NUMBER -> parseIntKey(keyTok.lexeme) // I32 | I64 | IBig
+                            isNameType(keyTok.type) -> ObjKey.Name(keyTok.lexeme)
+                            else -> error(keyTok, "Invalid object key")
+                        }
+
+                        consume(TokenType.COLON, "Expect ':' after field key")
+                        val valueExpr = parseExpression()
+                        fields += LiteralProperty(key, valueExpr)
+                    }
+                }
+                if (!match(TokenType.COMMA)) break
+                if (check(TokenType.RIGHT_BRACE)) break // allow trailing comma
+            }
+        }
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after object literal")
+        return ObjectExpr(fields, lbrace)
+    }
+
+    // ------------------- helpers ------------------------------------
+
+    private fun optionalSemicolon() {
+        if (match(TokenType.SEMICOLON)) return
+        val next = peek()
+        if (next.line != previous().line) return
+        if (isStatementBoundary(next.type)) return
+        error(next, "Expect ';' or newline between statements")
+    }
+
+    private fun isStatementBoundary(type: TokenType): Boolean {
+        return when (type) {
+            TokenType.EOF,
+            TokenType.RIGHT_BRACE -> true
+            else -> false
+        }
+    }
+
+    private fun isNameType(type: TokenType): Boolean =
+        type == TokenType.IDENTIFIER || type in SOFT_KEYWORD_TYPES
+
+    private fun isNameToken(token: Token): Boolean = isNameType(token.type)
+
+    private fun checkName(): Boolean = isNameType(peek().type)
+
+    private fun matchName(): Boolean {
+        if (checkName()) {
+            advance()
+            return true
+        }
+        return false
+    }
+
+    private fun consumeName(message: String): Token {
+        if (checkName()) return advance()
+        error(peek(), message)
+    }
+
+    private fun match(vararg types: TokenType): Boolean {
+        for (type in types) {
+            if (check(type)) {
+                advance()
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun check(type: TokenType): Boolean = peek().type == type
+    private fun checkNext(type: TokenType): Boolean = peekNext().type == type
+
+    private fun advance(): Token {
+        if (!isAtEnd()) current++
+        return previous()
+    }
+
+    private fun consume(type: TokenType, message: String): Token {
+        if (check(type)) return advance()
+        error(peek(), message)
+    }
+
+    private fun error(token: Token, message: String): Nothing {
+        val line = token.line
+        val col = token.column
+        val lines = source?.lines() ?: toks.joinToString("\n") {
+            it.lexeme
+        }.lines() // если храните исходник — лучше используйте его
+        val pointer = " ".repeat((col - 1).coerceAtLeast(0)) + "^"
+        val snippet = if (source != null) {
+            val before = if (line - 2 >= 0) lines[line - 2] else null
+            val at = lines.getOrNull(line - 1) ?: ""
+            val after = lines.getOrNull(line) ?: ""
+
+            buildString {
+                appendLine(message)
+                if (before != null) appendLine(before)
+                appendLine(at)
+                appendLine(pointer)
+                appendLine(after)
+            }
+        } else {
+            pointer
+        }
+
+        throw ParseException(message, token, snippet)
+    }
+
+    private fun isAtEnd(): Boolean = peek().type == TokenType.EOF
+    private fun peek(): Token = toks[current]
+    private fun previous(): Token = toks[current - 1]
+
+    // в начале класса Parser
+    private fun peekNext(): Token =
+        if (current + 1 < toks.size) toks[current + 1] else Token(TokenType.EOF, "", 0, 0)
+}
