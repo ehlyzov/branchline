@@ -46,7 +46,7 @@ type PlaygroundFacade = {
   ): WorkerResponse;
 };
 
-const INTERPRETER_GLOBAL = 'io.github.ehlyzov.branchline-public:interpreter';
+const INTERPRETER_GLOBAL = 'io.github.ehlyzov.branchline:interpreter';
 
 let facadePromise: Promise<PlaygroundFacade> | null = null;
 const loadedScripts = new Set<string>();
