@@ -47,7 +47,7 @@ subprojects {
     // Configure Kotlin toolchains/options depending on plugin used
     plugins.withId('org.jetbrains.kotlin.jvm') {
         kotlin {
-            jvmToolchain(23)
+            jvmToolchain(21)
             compilerOptions {
                 freeCompilerArgs.add("-Xnested-type-aliases")
                 freeCompilerArgs.add("-Xexpect-actual-classes")
