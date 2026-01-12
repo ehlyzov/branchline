@@ -1,5 +1,6 @@
 package io.github.ehlyzov.branchline.examples
 
+import io.github.ehlyzov.branchline.examples.ExamplePrograms.WEIGHTED_TREE_DSL
 import io.github.ehlyzov.branchline.std.DefaultSharedStore
 import io.github.ehlyzov.branchline.std.SharedResourceKind
 import io.github.ehlyzov.branchline.std.SharedStoreProvider

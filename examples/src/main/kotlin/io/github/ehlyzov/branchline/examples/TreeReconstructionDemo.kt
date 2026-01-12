@@ -1,5 +1,7 @@
 package io.github.ehlyzov.branchline.examples
 
+import io.github.ehlyzov.branchline.examples.ExamplePrograms.TREE_SNAPSHOT_DSL
+import io.github.ehlyzov.branchline.examples.ExamplePrograms.WEIGHTED_TREE_DSL
 import io.github.ehlyzov.branchline.std.DefaultSharedStore
 import io.github.ehlyzov.branchline.std.SharedResourceKind
 import io.github.ehlyzov.branchline.std.SharedStoreProvider
@@ -45,7 +47,7 @@ public fun main() {
                             "weight" to edge.weight,
                         )
                     }
-                    sharedStore.setOnce("children", nodeKey(nodeId), children)
+                    sharedStore.setOnce("children", nodeId.nodeKey(), children)
                 }
             }
 

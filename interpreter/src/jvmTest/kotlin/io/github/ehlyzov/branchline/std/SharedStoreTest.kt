@@ -50,7 +50,7 @@ class SharedStoreTest {
         assertFalse(secondWrite)
 
         // Value should remain the first written value
-        val retrieved = store.get("test_single", "key1")
+        val retrieved = store.lookup("test_single", "key1")
         assertEquals("value1", retrieved)
     }
 
@@ -60,13 +60,13 @@ class SharedStoreTest {
 
         // Multiple writes should all succeed and overwrite
         store.put("test_many", "key1", "value1")
-        assertEquals("value1", store.get("test_many", "key1"))
+        assertEquals("value1", store.lookup("test_many", "key1"))
 
         store.put("test_many", "key1", "value2")
-        assertEquals("value2", store.get("test_many", "key1"))
+        assertEquals("value2", store.lookup("test_many", "key1"))
 
         store.put("test_many", "key1", "value3")
-        assertEquals("value3", store.get("test_many", "key1"))
+        assertEquals("value3", store.lookup("test_many", "key1"))
     }
 
     @Test
@@ -170,14 +170,14 @@ class SharedStoreTest {
 
         store.commit(snapshot, delta)
 
-        assertEquals("updated", store.get("test_resource", "key1"))
-        assertEquals("new_value", store.get("test_resource", "key2"))
+        assertEquals("updated", store.lookup("test_resource", "key1"))
+        assertEquals("new_value", store.lookup("test_resource", "key2"))
     }
 
     @Test
     fun `test error when accessing unknown resource`() = runTest {
         assertThrows<IllegalArgumentException> {
-            runBlocking { store.get("unknown_resource", "key1") }
+            runBlocking { store.lookup("unknown_resource", "key1") }
         }
 
         assertThrows<IllegalArgumentException> {
@@ -218,7 +218,7 @@ class SharedStoreTest {
         assertEquals(1, successCount.get())
 
         // The value should be from whichever coroutine won the race
-        val finalValue = store.get("concurrent_test", "race_key") as String
+        val finalValue = store.lookup("concurrent_test", "race_key") as String
         assertTrue(finalValue.startsWith("value_"))
     }
 
@@ -240,7 +240,7 @@ class SharedStoreTest {
         jobs.joinAll()
 
         // Final value should be from one of the writes
-        val finalValue = store.get("concurrent_many", "race_key") as String
+        val finalValue = store.lookup("concurrent_many", "race_key") as String
         assertTrue(finalValue.startsWith("value_"))
     }
 

@@ -56,7 +56,7 @@ class SharedStoreBrowserTest {
 
         val reader = DefaultSharedStore()
         reader.addResource("session", SharedResourceKind.MANY)
-        val value = reader.get("session", "user")
+        val value = reader.lookup("session", "user")
         assertEquals("aria", value)
     }
 }

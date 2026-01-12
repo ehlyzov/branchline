@@ -70,7 +70,7 @@ class DefaultSharedStore : SharedStore, SharedStoreSync {
     private val resources = ConcurrentHashMap<String, SharedResource>()
     private val globalLock = ReentrantReadWriteLock()
 
-    override suspend fun get(resource: String, key: String): Any? =
+    override suspend fun lookup(resource: String, key: String): Any? =
         resources[resource]?.get(key) ?: throw IllegalArgumentException("Unknown shared resource: $resource")
 
     override suspend fun setOnce(resource: String, key: String, value: Any?): Boolean =

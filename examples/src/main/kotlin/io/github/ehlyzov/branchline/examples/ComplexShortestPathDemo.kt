@@ -1,5 +1,6 @@
 package io.github.ehlyzov.branchline.examples
 
+import io.github.ehlyzov.branchline.examples.ExamplePrograms.SHORTEST_PATH_DSL
 import io.github.ehlyzov.branchline.std.DefaultSharedStore
 import io.github.ehlyzov.branchline.std.SharedResourceKind
 import io.github.ehlyzov.branchline.std.SharedStoreProvider
@@ -25,7 +26,7 @@ public fun main() {
             val edgeExec = buildExec(context, "EdgeIngest", sharedStore)
             val queryExec = buildExec(context, "ShortestPath", sharedStore)
 
-            sharedStore.setOnce("distances", nodeKey(graph.start), 0)
+            sharedStore.setOnce("distances", graph.start.nodeKey(), 0)
 
             println("Task 1: Shortest path")
             println(
@@ -44,9 +45,9 @@ public fun main() {
                                 val toId = requireInt(output["dst"], "dst")
                                 val distance = requireInt(output["distance"], "distance")
                                 val parent = requireInt(output["parent"], "parent")
-                                val distanceWritten = sharedStore.setOnce("distances", nodeKey(toId), distance)
+                                val distanceWritten = sharedStore.setOnce("distances", toId.nodeKey(), distance)
                                 if (distanceWritten) {
-                                    sharedStore.setOnce("parents", nodeKey(toId), parent)
+                                    sharedStore.setOnce("parents", toId.nodeKey(), parent)
                                 }
                             }
                         }

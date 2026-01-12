@@ -21,13 +21,13 @@ class SharedMemoryDSLIntegrationTest {
             // Test SINGLE semantics
             assertTrue(sharedStore.setOnce("singleRes", "key1", "value1"))
             assertFalse(sharedStore.setOnce("singleRes", "key1", "value2"))
-            assertEquals("value1", sharedStore.get("singleRes", "key1"))
+            assertEquals("value1", sharedStore.lookup("singleRes", "key1"))
             
             // Test MANY semantics  
             sharedStore.put("manyRes", "key1", "value1")
-            assertEquals("value1", sharedStore.get("manyRes", "key1"))
+            assertEquals("value1", sharedStore.lookup("manyRes", "key1"))
             sharedStore.put("manyRes", "key1", "value2")
-            assertEquals("value2", sharedStore.get("manyRes", "key1"))
+            assertEquals("value2", sharedStore.lookup("manyRes", "key1"))
         }
     }
     

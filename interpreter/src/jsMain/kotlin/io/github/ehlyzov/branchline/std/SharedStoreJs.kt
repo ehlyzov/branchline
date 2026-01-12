@@ -133,7 +133,7 @@ class DefaultSharedStore : SharedStore, SharedStoreSync {
     private val resources = mutableMapOf<String, SharedResource>()
     private val storage = if (hasLocalStorage()) localStorage() else null
 
-    override suspend fun get(resource: String, key: String): Any? =
+    override suspend fun lookup(resource: String, key: String): Any? =
         resources[resource]?.get(key) ?: error("Unknown shared resource: $resource")
 
     override suspend fun setOnce(resource: String, key: String, value: Any?): Boolean =

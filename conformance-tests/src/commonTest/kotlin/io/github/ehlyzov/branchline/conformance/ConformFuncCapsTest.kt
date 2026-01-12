@@ -6,7 +6,6 @@ import io.github.ehlyzov.branchline.std.SharedResourceKind
 import io.github.ehlyzov.branchline.std.SharedStore
 import io.github.ehlyzov.branchline.std.SharedStoreProvider
 import io.github.ehlyzov.branchline.std.SharedStoreSync
-import kotlin.collections.mutableMapOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -132,7 +131,7 @@ private class TestSharedStore : SharedStore, SharedStoreSync {
     private val data = LinkedHashMap<String, LinkedHashMap<String, Any?>>()
     private val written = LinkedHashMap<String, MutableSet<String>>()
 
-    override suspend fun get(resource: String, key: String): Any? =
+    override suspend fun lookup(resource: String, key: String): Any? =
         data[resource]?.get(key) ?: error("Unknown shared resource: $resource")
 
     override suspend fun setOnce(resource: String, key: String, value: Any?): Boolean =
@@ -162,7 +161,7 @@ private class TestSharedStore : SharedStore, SharedStoreSync {
         }
     }
 
-    override suspend fun await(resource: String, key: String): Any? = get(resource, key)
+    override suspend fun await(resource: String, key: String): Any? = lookup(resource, key)
 
     override fun hasResource(resource: String): Boolean = kinds.containsKey(resource)
 

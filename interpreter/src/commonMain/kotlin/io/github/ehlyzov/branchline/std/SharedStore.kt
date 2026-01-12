@@ -2,7 +2,7 @@ package io.github.ehlyzov.branchline.std
 
 /** Multiplatform shared-state store interface. JVM provides DefaultSharedStore. */
 interface SharedStore {
-    suspend fun get(resource: String, key: String): Any?
+    suspend fun lookup(resource: String, key: String): Any?
     suspend fun setOnce(resource: String, key: String, value: Any?): Boolean
     suspend fun put(resource: String, key: String, value: Any?)
     fun snapshot(): Map<String, Map<String, Any?>>

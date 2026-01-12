@@ -39,7 +39,7 @@ class ConformSharedWriteTest {
         private val data = LinkedHashMap<String, LinkedHashMap<String, Any?>>()
         private val written = LinkedHashMap<String, MutableSet<String>>()
 
-        override suspend fun get(resource: String, key: String): Any? =
+        override suspend fun lookup(resource: String, key: String): Any? =
             data[resource]?.get(key) ?: error("Unknown shared resource: $resource")
 
         override suspend fun setOnce(resource: String, key: String, value: Any?): Boolean =
@@ -69,7 +69,7 @@ class ConformSharedWriteTest {
             }
         }
 
-        override suspend fun await(resource: String, key: String): Any? = get(resource, key)
+        override suspend fun await(resource: String, key: String): Any? = lookup(resource, key)
 
         override fun hasResource(resource: String): Boolean = kinds.containsKey(resource)
 

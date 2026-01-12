@@ -21,7 +21,7 @@ class MapDBSharedStore(path: File) : SharedStore, SharedStoreSync {
     private val awaiters = ConcurrentHashMap<String, MutableList<CompletableDeferred<Any?>>>()
     private val mutex = Mutex()
 
-    override suspend fun get(resource: String, key: String): Any? {
+    override suspend fun lookup(resource: String, key: String): Any? {
         val map = mapOfResource(resource)
         return map[key]
     }
@@ -70,12 +70,12 @@ class MapDBSharedStore(path: File) : SharedStore, SharedStoreSync {
     }
 
     override suspend fun await(resource: String, key: String): Any? {
-        val cur = get(resource, key)
+        val cur = lookup(resource, key)
         if (cur != null) return cur
         val def = CompletableDeferred<Any?>()
         val id = "$resource\u0000$key"
         mutex.withLock {
-            val again = get(resource, key)
+            val again = lookup(resource, key)
             if (again != null) return again
             awaiters.computeIfAbsent(id) { mutableListOf() }.add(def)
         }
