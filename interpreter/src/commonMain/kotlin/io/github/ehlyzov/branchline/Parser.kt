@@ -1051,7 +1051,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             while (true) {
                 if (match(TokenType.COMMA)) {
                     if (check(TokenType.RIGHT_BRACKET)) break
-                    parseExpression()
+                    elems.add(parseExpression())
                 } else break
             }
             consume(TokenType.RIGHT_BRACKET, "Expect ']' after array literal")
