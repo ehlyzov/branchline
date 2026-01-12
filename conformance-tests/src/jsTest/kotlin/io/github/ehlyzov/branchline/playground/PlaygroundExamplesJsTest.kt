@@ -95,12 +95,20 @@ class PlaygroundExamplesJsTest {
 
     private fun findExamplesDir(): String {
         var current = js("process.cwd()") as String
-        repeat(6) {
-            val candidate = path.resolve(current, "io/github/ehlyzov/branchline/playground", "examples")
-            if (fs.existsSync(candidate) as Boolean) return candidate
+        var attempts = 0
+        while (attempts < 8) {
+            val playgroundCandidate = path.resolve(current, "playground", "examples")
+            if (fs.existsSync(playgroundCandidate) as Boolean) return playgroundCandidate
+            val resourceCandidate = path.resolve(
+                current,
+                "io/github/ehlyzov/branchline/playground",
+                "examples",
+            )
+            if (fs.existsSync(resourceCandidate) as Boolean) return resourceCandidate
             val parent = path.resolve(current, "..")
-            if (parent == current) return candidate
+            if (parent == current) break
             current = parent
+            attempts += 1
         }
         error("Examples directory not found from cwd ${js("process.cwd()")}")
     }
