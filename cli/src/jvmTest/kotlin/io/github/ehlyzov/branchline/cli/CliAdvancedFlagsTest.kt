@@ -236,6 +236,50 @@ public class CliAdvancedFlagsTest {
         assertNumberEquals(5.0, output["total"])
         assertNumberEquals(2.0, output["count"])
     }
+
+    @Test
+    public fun junitSummaryHonorsReportStatus() {
+        val scriptPath = resolveJunitSummaryScript()
+        val baseDir = Files.createDirectories(Path.of("build", "tmp", "cli-junit"))
+        val reportsDir = Files.createTempDirectory(baseDir, "branchline-junit-")
+        val emptyReport = reportsDir.resolve("empty.xml")
+        val okReport = reportsDir.resolve("ok.xml")
+
+        Files.writeString(
+            emptyReport,
+            """<?xml version="1.0" encoding="UTF-8"?><testsuite name="empty" tests="0" failures="0" errors="0" skipped="0"></testsuite>""",
+            StandardCharsets.UTF_8,
+        )
+        Files.writeString(
+            okReport,
+            """<?xml version="1.0" encoding="UTF-8"?><testsuite name="ok" tests="1" failures="0" errors="0" skipped="0"></testsuite>""",
+            StandardCharsets.UTF_8,
+        )
+
+        val result = runCli(
+            args = listOf(
+                scriptPath.toString(),
+                "--transform",
+                "FileSummary",
+                "--summary-transform",
+                "Summary",
+                "--shared-glob",
+                "reports=${reportsDir}/*.xml",
+                "--shared-format",
+                "xml",
+                "--shared-key",
+                "relative",
+                "--jobs",
+                "2",
+                "--output-format",
+                "json-compact",
+            ),
+        )
+
+        assertSuccess(result)
+        val output = parseJsonInput(result.stdout)
+        assertEquals("error", output["status"])
+    }
 }
 
 private data class CliRunResult(
@@ -274,6 +318,19 @@ private fun writeTempFile(dir: Path, name: String, contents: String): Path {
     val path = dir.resolve(name)
     Files.writeString(path, contents, StandardCharsets.UTF_8)
     return path
+}
+
+private fun resolveJunitSummaryScript(): Path {
+    var current = Path.of(System.getProperty("user.dir")).toAbsolutePath().normalize()
+    var attempts = 0
+    while (attempts < 8) {
+        val candidate = current.resolve(".github").resolve("scripts").resolve("junit-summary.bl")
+        if (Files.exists(candidate)) return candidate
+        val parent = current.parent ?: break
+        current = parent
+        attempts += 1
+    }
+    error("Unable to locate .github/scripts/junit-summary.bl from ${System.getProperty("user.dir")}")
 }
 
 private fun assertNumberEquals(expected: Double, actual: Any?) {

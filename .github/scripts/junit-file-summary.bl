@@ -1,11 +1,15 @@
+// Summarize a single JUnit XML file into totals and status.
+// Used by CI fanout jobs to compute per-file results before aggregation.
 SHARED reports MANY;
 
 TRANSFORM FileSummary {
+    // Resolve the payload for a single XML report (direct input or shared).
     LET payload = CASE {
         WHEN input.key == NULL THEN input
         ELSE AWAIT_SHARED("reports", input.key)
     };
 
+    // JUnit XML may be <testsuite> or <testsuites> with nested suites.
     LET direct = LISTIFY(payload.testsuite);
     LET container = payload.testsuites ?? payload;
     LET branch = CASE {
@@ -21,6 +25,7 @@ TRANSFORM FileSummary {
     FOR suite IN suites {
         SET suiteCount = suiteCount + 1
 
+        // XML attributes are stored with '@' prefixes by the XML parser.
         LET attrs = [
             { key: "tests", value: suite["@tests"] },
             { key: "failures", value: suite["@failures"] },

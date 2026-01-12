@@ -1,3 +1,7 @@
+// Summarize JUnit XML reports for CI badges and workflow status.
+// Input arrives via shared "reports" glob and each file is parsed as XML.
+// FileSummary emits per-file totals and status; Summary aggregates and
+// honors any failing/error report so missing or empty files are not masked.
 SHARED reports MANY;
 
 TRANSFORM Summary {
@@ -9,8 +13,18 @@ TRANSFORM Summary {
     LET totals = { tests: 0, failures: 0, errors: 0, skipped: 0 };
     LET count = 0;
     LET failed = 0;
+    LET hasFailing = false;
+    LET hasError = false;
 
     FOR report IN reports {
+        // FileSummary emits status; prefer it to avoid masking empty/missing files.
+        LET reportStatus = report.status ?? "";
+        IF reportStatus == "failing" THEN {
+            SET hasFailing = true;
+        }
+        IF reportStatus == "error" THEN {
+            SET hasError = true;
+        }
         LET tests = report.tests ?? 0;
         LET failures = report.failures ?? 0;
         LET errors = report.errors ?? 0;
@@ -25,7 +39,11 @@ TRANSFORM Summary {
         SET count = count + 1;
     }
 
+    // Precedence: any failing report -> failing, any error report -> error,
+    // otherwise fall back to aggregate totals.
     LET status = CASE {
+        WHEN hasFailing THEN "failing"
+        WHEN hasError THEN "error"
         WHEN totals.tests == 0 THEN "error"
         WHEN failed == 0 THEN "passing"
         ELSE "failing"
@@ -53,11 +71,13 @@ TRANSFORM Summary {
 }
 
 TRANSFORM FileSummary {
+    // Resolve the payload for a single XML report (direct input or shared).
     LET payload = CASE {
         WHEN input.key == NULL THEN input
         ELSE AWAIT_SHARED("reports", input.key)
     };
 
+    // JUnit XML may be <testsuite> or <testsuites> with nested suites.
     LET direct = LISTIFY(payload.testsuite);
     LET container = payload.testsuites ?? payload;
     LET branch = CASE {
@@ -73,6 +93,7 @@ TRANSFORM FileSummary {
     FOR suite IN suites {
         SET suiteCount = suiteCount + 1
 
+        // XML attributes are stored with '@' prefixes by the XML parser.
         LET attrs = [
             { key: "tests", value: suite["@tests"] },
             { key: "failures", value: suite["@failures"] },
