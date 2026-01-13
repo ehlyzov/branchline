@@ -132,14 +132,14 @@ class LexerTest {
 
     @Test
     fun `short unicode escape throws`() {
-        assertThrows<StringIndexOutOfBoundsException> {
+        assertThrows<IllegalArgumentException> {
             Lexer("\"\\u12\"").lex()
         }
     }
 
     @Test
     fun `string ending with escape character throws`() {
-        assertThrows<StringIndexOutOfBoundsException> {
+        assertThrows<IllegalArgumentException> {
             Lexer("\"abc\\").lex()
         }
     }

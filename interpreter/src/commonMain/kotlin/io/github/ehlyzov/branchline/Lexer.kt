@@ -231,11 +231,11 @@ class Lexer(private val source: String) {
     }
 
     private fun unterminatedStringEscape(line: Int, col: Int): Nothing {
-        throw StringIndexOutOfBoundsException("[Line $line, Col $col] Unterminated string escape")
+        errorToken("Unterminated string escape", line, col)
     }
 
     private fun unterminatedUnicodeEscape(line: Int, col: Int): Nothing {
-        throw StringIndexOutOfBoundsException("[Line $line, Col $col] Unterminated unicode escape")
+        errorToken("Unterminated unicode escape", line, col)
     }
 
     private fun backtickIdentifier(startLine: Int, startCol: Int) {
