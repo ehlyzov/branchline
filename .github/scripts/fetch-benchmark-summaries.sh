@@ -73,6 +73,14 @@ while IFS= read -r release; do
   safe_tag="${safe_tag// /-}"
   out_path="${release_dir}/${safe_tag}.md"
   curl -sSL -H "Authorization: Bearer ${GH_TOKEN}" -o "$out_path" "$asset_url"
+  release_assets_dir="${release_dir}/${safe_tag}"
+  mkdir -p "$release_assets_dir"
+  csv_asset_url="$(jq -r --arg tag "$tag" \
+    '.assets[]? | select(.name == ("branchline-jmh-summary-" + $tag + ".csv")) | .browser_download_url' \
+    <<<"$decoded" | head -1)"
+  if [[ -n "$csv_asset_url" && "$csv_asset_url" != "null" ]]; then
+    curl -sSL -H "Authorization: Bearer ${GH_TOKEN}" -o "${release_assets_dir}/jmh-summary.csv" "$csv_asset_url"
+  fi
 
   label="$tag"
   if [[ "$prerelease" == "true" ]]; then
@@ -95,17 +103,16 @@ while IFS= read -r release; do
 
   jsonata_out_path="${jsonata_release_dir}/${safe_tag}.md"
   curl -sSL -H "Authorization: Bearer ${GH_TOKEN}" -o "$jsonata_out_path" "$jsonata_asset_url"
-  echo "- [${label}](${safe_tag}/)" >> "$jsonata_index_path"
-  echo "- [${label}](releases/${safe_tag}/)" >> "$jsonata_list_path"
-
-  jsonata_csv_url="$(jq -r --arg tag "$tag" \
+  jsonata_assets_dir="${jsonata_release_dir}/${safe_tag}"
+  mkdir -p "$jsonata_assets_dir"
+  jsonata_csv_asset_url="$(jq -r --arg tag "$tag" \
     '.assets[]? | select(.name == ("branchline-jsonata-summary-" + $tag + ".csv")) | .browser_download_url' \
     <<<"$decoded" | head -1)"
-  if [[ -n "$jsonata_csv_url" && "$jsonata_csv_url" != "null" ]]; then
-    jsonata_csv_path="${jsonata_release_dir}/${safe_tag}.csv"
-    curl -sSL -H "Authorization: Bearer ${GH_TOKEN}" -o "$jsonata_csv_path" "$jsonata_csv_url"
-    sed -i "s|(jsonata-summary.csv)|(${safe_tag}.csv)|g" "$jsonata_out_path"
+  if [[ -n "$jsonata_csv_asset_url" && "$jsonata_csv_asset_url" != "null" ]]; then
+    curl -sSL -H "Authorization: Bearer ${GH_TOKEN}" -o "${jsonata_assets_dir}/jsonata-summary.csv" "$jsonata_csv_asset_url"
   fi
+  echo "- [${label}](${safe_tag}/)" >> "$jsonata_index_path"
+  echo "- [${label}](releases/${safe_tag}/)" >> "$jsonata_list_path"
 
   if [[ "$jsonata_latest_written" == "false" ]]; then
     cp "$jsonata_out_path" "$jsonata_latest_path"

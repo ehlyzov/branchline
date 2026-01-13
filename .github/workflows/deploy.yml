@@ -95,13 +95,21 @@ jobs:
             safe_tag="${safe_tag// /-}"
             out_path="docs/benchmarks/releases/${safe_tag}.md"
             curl -sSL -H "Authorization: Bearer $GH_TOKEN" -o "$out_path" "$asset_url"
+            release_assets_dir="docs/benchmarks/releases/${safe_tag}"
+            mkdir -p "$release_assets_dir"
+            csv_asset_url=$(echo "$release" | base64 --decode | jq -r --arg tag "$tag" \
+              '.assets[]? | select(.name == ("branchline-jmh-summary-" + $tag + ".csv")) | .browser_download_url' \
+              | head -1)
+            if [[ -n "$csv_asset_url" && "$csv_asset_url" != "null" ]]; then
+              curl -sSL -H "Authorization: Bearer $GH_TOKEN" -o "${release_assets_dir}/jmh-summary.csv" "$csv_asset_url"
+            fi
 
             label="$tag"
             if [[ "$prerelease" == "true" ]]; then
               label="${tag} (prerelease)"
             fi
-            echo "- [${label}](${safe_tag}.md)" >> "$index_path"
-            echo "- [${label}](releases/${safe_tag}.md)" >> "$list_path"
+            echo "- [${label}](${safe_tag}/)" >> "$index_path"
+            echo "- [${label}](releases/${safe_tag}/)" >> "$list_path"
 
             if [[ "$latest_written" == "false" ]]; then
               cp "$out_path" "$latest_path"
@@ -115,8 +123,16 @@ jobs:
             if [[ -n "$jsonata_asset_url" && "$jsonata_asset_url" != "null" ]]; then
               jsonata_out_path="docs/benchmarks/jsonata/releases/${safe_tag}.md"
               curl -sSL -H "Authorization: Bearer $GH_TOKEN" -o "$jsonata_out_path" "$jsonata_asset_url"
-              echo "- [${label}](${safe_tag}.md)" >> "$jsonata_index_path"
-              echo "- [${label}](releases/${safe_tag}.md)" >> "$jsonata_list_path"
+              jsonata_assets_dir="docs/benchmarks/jsonata/releases/${safe_tag}"
+              mkdir -p "$jsonata_assets_dir"
+              jsonata_csv_asset_url=$(echo "$release" | base64 --decode | jq -r --arg tag "$tag" \
+                '.assets[]? | select(.name == ("branchline-jsonata-summary-" + $tag + ".csv")) | .browser_download_url' \
+                | head -1)
+              if [[ -n "$jsonata_csv_asset_url" && "$jsonata_csv_asset_url" != "null" ]]; then
+                curl -sSL -H "Authorization: Bearer $GH_TOKEN" -o "${jsonata_assets_dir}/jsonata-summary.csv" "$jsonata_csv_asset_url"
+              fi
+              echo "- [${label}](${safe_tag}/)" >> "$jsonata_index_path"
+              echo "- [${label}](releases/${safe_tag}/)" >> "$jsonata_list_path"
 
               if [[ "$jsonata_latest_written" == "false" ]]; then
                 cp "$jsonata_out_path" "$jsonata_latest_path"
