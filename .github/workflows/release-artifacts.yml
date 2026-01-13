@@ -238,11 +238,16 @@ jobs:
 
           INTERP_JMH_JSON="$GITHUB_WORKSPACE/interpreter-benchmarks/build/results/jmh/results.json"
           [ -f "$INTERP_JMH_JSON" ] || { echo "Interpreter JMH results not found at $INTERP_JMH_JSON" >&2; exit 1; }
-          echo "INTERPRETER_JMH_JSON_PATH=$INTERP_JMH_JSON" >> "$GITHUB_ENV"
+          mkdir -p "$GITHUB_WORKSPACE/build/benchmarks"
+          INTERP_JMH_UPLOAD="$GITHUB_WORKSPACE/build/benchmarks/branchline-jmh-interpreter-${TAG_NAME}.json"
+          cp "$INTERP_JMH_JSON" "$INTERP_JMH_UPLOAD"
+          echo "INTERPRETER_JMH_JSON_PATH=$INTERP_JMH_UPLOAD" >> "$GITHUB_ENV"
 
           VM_JMH_JSON="$GITHUB_WORKSPACE/vm-benchmarks/build/results/jmh/results.json"
           [ -f "$VM_JMH_JSON" ] || { echo "VM JMH results not found at $VM_JMH_JSON" >&2; exit 1; }
-          echo "VM_JMH_JSON_PATH=$VM_JMH_JSON" >> "$GITHUB_ENV"
+          VM_JMH_UPLOAD="$GITHUB_WORKSPACE/build/benchmarks/branchline-jmh-vm-${TAG_NAME}.json"
+          cp "$VM_JMH_JSON" "$VM_JMH_UPLOAD"
+          echo "VM_JMH_JSON_PATH=$VM_JMH_UPLOAD" >> "$GITHUB_ENV"
 
           JMH_SUMMARY_MD="$GITHUB_WORKSPACE/build/benchmarks/jmh-summary.md"
           [ -f "$JMH_SUMMARY_MD" ] || { echo "JMH summary markdown not found at $JMH_SUMMARY_MD" >&2; exit 1; }
