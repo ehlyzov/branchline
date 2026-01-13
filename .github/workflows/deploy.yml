@@ -1,10 +1,18 @@
 name: Build and Deploy to GitHub Pages
 
 on:
-  workflow_run:
-    workflows: ["Release Artifacts"]
-    types: [completed]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref (branch, tag, or SHA) to deploy'
+        required: false
+        default: ''
+  workflow_call:
+    inputs:
+      ref:
+        description: 'Git ref (branch, tag, or SHA) to deploy'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -18,12 +26,18 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Debug - Event context
+        run: |
+          echo "event_name=${{ github.event_name }}"
+          echo "ref=${{ github.ref }}"
+          echo "sha=${{ github.sha }}"
+          echo "ref_input=${{ inputs.ref }}"
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -220,7 +234,6 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

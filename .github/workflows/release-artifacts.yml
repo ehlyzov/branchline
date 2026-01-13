@@ -33,6 +33,8 @@ permissions:
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
+    outputs:
+      deploy_pages: ${{ steps.deploy_gate.outputs.deploy_pages }}
     if: github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (contains(github.event.head_commit.message || '', '+performance') || contains(github.event.head_commit.message || '', '+jsonata')))
 
     steps:
@@ -137,6 +139,17 @@ jobs:
                 $prerelease_flag \
                 --target "$GITHUB_SHA"
             fi
+          fi
+
+      - name: Decide whether to deploy pages
+        id: deploy_gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${RUN_JMH}" == "true" || "${RUN_JSONATA}" == "true" ]]; then
+            echo "deploy_pages=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy_pages=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build JS CLI tarball
@@ -345,3 +358,15 @@ jobs:
             "$JSONATA_SUMMARY_CSV_PATH#branchline-jsonata-summary-${TAG_NAME}.csv" \
             --clobber \
             --repo "$GITHUB_REPOSITORY"
+
+  deploy-pages:
+    needs: build-and-upload
+    if: needs.build-and-upload.outputs.deploy_pages == 'true'
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit
+    with:
+      ref: ${{ github.sha }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
