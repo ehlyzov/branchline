@@ -209,26 +209,38 @@ jobs:
         run: |
           set -euo pipefail
           shopt -s nullglob
+          upload_dir="$GITHUB_WORKSPACE/build/release-upload"
+          mkdir -p "$upload_dir"
 
           js=( "$GITHUB_WORKSPACE"/cli/build/distributions/branchline-cli-js-*.tgz )
           [[ ${#js[@]} -gt 0 ]] || { echo "JS tarball not found in cli/build/distributions" >&2; exit 1; }
-          echo "JS_TARBALL_PATH=${js[0]}" >> "$GITHUB_ENV"
+          js_out="$upload_dir/branchline-cli-js-${TAG_NAME}.tgz"
+          cp "${js[0]}" "$js_out"
+          echo "JS_TARBALL_PATH=$js_out" >> "$GITHUB_ENV"
 
           jvm=( "$GITHUB_WORKSPACE"/cli/build/libs/branchline-cli-*-all.jar )
           [[ ${#jvm[@]} -gt 0 ]] || { echo "JVM fat jar not found in cli/build/libs" >&2; exit 1; }
-          echo "JVM_JAR_PATH=${jvm[0]}" >> "$GITHUB_ENV"
+          jvm_out="$upload_dir/branchline-cli-${TAG_NAME}-all.jar"
+          cp "${jvm[0]}" "$jvm_out"
+          echo "JVM_JAR_PATH=$jvm_out" >> "$GITHUB_ENV"
 
           interp_jars=( "$GITHUB_WORKSPACE"/interpreter/build/libs/interpreter-jvm-*.jar )
           [[ ${#interp_jars[@]} -gt 0 ]] || { echo "Interpreter JVM jar not found" >&2; exit 1; }
-          echo "INTERPRETER_JVM_PATH=${interp_jars[0]}" >> "$GITHUB_ENV"
+          interp_out="$upload_dir/branchline-interpreter-${TAG_NAME}-jvm.jar"
+          cp "${interp_jars[0]}" "$interp_out"
+          echo "INTERPRETER_JVM_PATH=$interp_out" >> "$GITHUB_ENV"
 
           vm_jars=( "$GITHUB_WORKSPACE"/vm/build/libs/vm-jvm-*.jar )
           [[ ${#vm_jars[@]} -gt 0 ]] || { echo "VM JVM jar not found" >&2; exit 1; }
-          echo "VM_JVM_PATH=${vm_jars[0]}" >> "$GITHUB_ENV"
+          vm_out="$upload_dir/branchline-vm-${TAG_NAME}-jvm.jar"
+          cp "${vm_jars[0]}" "$vm_out"
+          echo "VM_JVM_PATH=$vm_out" >> "$GITHUB_ENV"
 
           interp_js=( "$GITHUB_WORKSPACE"/interpreter/build/distributions/branchline-interpreter-*-js.tgz )
           [[ ${#interp_js[@]} -gt 0 ]] || { echo "Interpreter JS package not found in interpreter/build/distributions" >&2; exit 1; }
-          echo "INTERPRETER_JS_PATH=${interp_js[0]}" >> "$GITHUB_ENV"
+          interp_js_out="$upload_dir/branchline-interpreter-${TAG_NAME}-js.tgz"
+          cp "${interp_js[0]}" "$interp_js_out"
+          echo "INTERPRETER_JS_PATH=$interp_js_out" >> "$GITHUB_ENV"
 
       - name: Capture JMH artifact paths
         if: env.RUN_JMH == 'true'
@@ -249,12 +261,16 @@ jobs:
           cp "$VM_JMH_JSON" "$VM_JMH_UPLOAD"
           echo "VM_JMH_JSON_PATH=$VM_JMH_UPLOAD" >> "$GITHUB_ENV"
 
-          JMH_SUMMARY_MD="$GITHUB_WORKSPACE/build/benchmarks/jmh-summary.md"
-          [ -f "$JMH_SUMMARY_MD" ] || { echo "JMH summary markdown not found at $JMH_SUMMARY_MD" >&2; exit 1; }
+          JMH_SUMMARY_MD="$GITHUB_WORKSPACE/build/benchmarks/branchline-jmh-summary-${TAG_NAME}.md"
+          SRC_MD="$GITHUB_WORKSPACE/build/benchmarks/jmh-summary.md"
+          [ -f "$SRC_MD" ] || { echo "JMH summary markdown not found at $SRC_MD" >&2; exit 1; }
+          cp "$SRC_MD" "$JMH_SUMMARY_MD"
           echo "JMH_SUMMARY_MD_PATH=$JMH_SUMMARY_MD" >> "$GITHUB_ENV"
 
-          JMH_SUMMARY_CSV="$GITHUB_WORKSPACE/build/benchmarks/jmh-summary.csv"
-          [ -f "$JMH_SUMMARY_CSV" ] || { echo "JMH summary CSV not found at $JMH_SUMMARY_CSV" >&2; exit 1; }
+          JMH_SUMMARY_CSV="$GITHUB_WORKSPACE/build/benchmarks/branchline-jmh-summary-${TAG_NAME}.csv"
+          SRC_CSV="$GITHUB_WORKSPACE/build/benchmarks/jmh-summary.csv"
+          [ -f "$SRC_CSV" ] || { echo "JMH summary CSV not found at $SRC_CSV" >&2; exit 1; }
+          cp "$SRC_CSV" "$JMH_SUMMARY_CSV"
           echo "JMH_SUMMARY_CSV_PATH=$JMH_SUMMARY_CSV" >> "$GITHUB_ENV"
 
       - name: Capture JSONata artifact paths
@@ -270,12 +286,16 @@ jobs:
           cp "$JSONATA_JMH_JSON" "$JSONATA_JMH_UPLOAD"
           echo "JSONATA_JMH_JSON_PATH=$JSONATA_JMH_UPLOAD" >> "$GITHUB_ENV"
 
-          JSONATA_SUMMARY_MD="$GITHUB_WORKSPACE/build/jsonata-benchmarks/jsonata-summary.md"
-          [ -f "$JSONATA_SUMMARY_MD" ] || { echo "JSONata summary markdown not found at $JSONATA_SUMMARY_MD" >&2; exit 1; }
+          JSONATA_SUMMARY_MD="$GITHUB_WORKSPACE/build/jsonata-benchmarks/branchline-jsonata-summary-${TAG_NAME}.md"
+          SRC_JSONATA_MD="$GITHUB_WORKSPACE/build/jsonata-benchmarks/jsonata-summary.md"
+          [ -f "$SRC_JSONATA_MD" ] || { echo "JSONata summary markdown not found at $SRC_JSONATA_MD" >&2; exit 1; }
+          cp "$SRC_JSONATA_MD" "$JSONATA_SUMMARY_MD"
           echo "JSONATA_SUMMARY_MD_PATH=$JSONATA_SUMMARY_MD" >> "$GITHUB_ENV"
 
-          JSONATA_SUMMARY_CSV="$GITHUB_WORKSPACE/build/jsonata-benchmarks/jsonata-summary.csv"
-          [ -f "$JSONATA_SUMMARY_CSV" ] || { echo "JSONata summary CSV not found at $JSONATA_SUMMARY_CSV" >&2; exit 1; }
+          JSONATA_SUMMARY_CSV="$GITHUB_WORKSPACE/build/jsonata-benchmarks/branchline-jsonata-summary-${TAG_NAME}.csv"
+          SRC_JSONATA_CSV="$GITHUB_WORKSPACE/build/jsonata-benchmarks/jsonata-summary.csv"
+          [ -f "$SRC_JSONATA_CSV" ] || { echo "JSONata summary CSV not found at $SRC_JSONATA_CSV" >&2; exit 1; }
+          cp "$SRC_JSONATA_CSV" "$JSONATA_SUMMARY_CSV"
           echo "JSONATA_SUMMARY_CSV_PATH=$JSONATA_SUMMARY_CSV" >> "$GITHUB_ENV"
 
       - name: Upload full release artifacts (gh; tag-based names)

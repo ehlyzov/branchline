@@ -192,11 +192,48 @@ class Lexer(private val source: String) {
         val sb = StringBuilder()
         while (!isAtEnd() && peek() != '"') {
             if (peek() == '\n') errorToken("Unterminated string", startLine, startCol)
-            if (peek() == '\\') { advance(); sb.append('\\').append(advance()) } else sb.append(advance())
+            if (peek() == '\\') {
+                val escapeLine = line
+                val escapeCol = column
+                advance() // consume backslash
+                if (isAtEnd()) throw unterminatedStringEscape(escapeLine, escapeCol)
+                val escaped = advance()
+                sb.append(when (escaped) {
+                    'n' -> '\n'
+                    't' -> '\t'
+                    'r' -> '\r'
+                    '\\' -> '\\'
+                    '"' -> '"'
+                    'u' -> readUnicodeEscape(escapeLine, escapeCol)
+                    else -> escaped // pass through unknown escapes
+                })
+            } else {
+                sb.append(advance())
+            }
         }
         if (isAtEnd()) errorToken("Unterminated string", startLine, startCol)
         advance()
         add(TokenType.STRING, "\"${sb}\"", startLine, startCol)
+    }
+
+    private fun readUnicodeEscape(startLine: Int, startCol: Int): Char {
+        var value = 0
+        repeat(4) {
+            if (isAtEnd()) throw unterminatedUnicodeEscape(startLine, startCol)
+            val ch = advance()
+            val digit = ch.digitToIntOrNull(16)
+                ?: errorToken("Invalid unicode escape", startLine, startCol)
+            value = value * 16 + digit
+        }
+        return value.toChar()
+    }
+
+    private fun unterminatedStringEscape(line: Int, col: Int): Nothing {
+        throw StringIndexOutOfBoundsException("[Line $line, Col $col] Unterminated string escape")
+    }
+
+    private fun unterminatedUnicodeEscape(line: Int, col: Int): Nothing {
+        throw StringIndexOutOfBoundsException("[Line $line, Col $col] Unterminated unicode escape")
     }
 
     private fun backtickIdentifier(startLine: Int, startCol: Int) {

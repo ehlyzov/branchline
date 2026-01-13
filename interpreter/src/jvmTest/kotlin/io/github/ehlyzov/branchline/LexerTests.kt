@@ -113,14 +113,14 @@ class LexerTest {
     fun `string with escape sequences`() {
         val token = lex("\"a\\n\\t\\\\b\"")[0]
         assertEquals(TokenType.STRING, token.type)
-        assertEquals("\"a\\n\\t\\\\b\"", token.lexeme)
+        assertEquals("\"a\n\t\\b\"", token.lexeme)
     }
 
     @Test
     fun `unicode escape inside string`() {
         val token = lex("\"\\u0041\"")[0]
         assertEquals(TokenType.STRING, token.type)
-        assertEquals("\"\\u0041\"", token.lexeme)
+        assertEquals("\"\u0041\"", token.lexeme)
     }
 
     @Test
