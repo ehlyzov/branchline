@@ -14,3 +14,4 @@ build
 site
 .java-version
 .env
+docs-compiled
