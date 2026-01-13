@@ -1,27 +1,5 @@
 SHARED jmh MANY;
 
-FUNC pad2(value) {
-    LET num = INT(value);
-    IF num < 10 THEN {
-        RETURN "0" + STRING(num);
-    }
-    RETURN STRING(num);
-}
-
-FUNC pad4(value) {
-    LET num = INT(value);
-    IF num < 10 THEN {
-        RETURN "000" + STRING(num);
-    }
-    IF num < 100 THEN {
-        RETURN "00" + STRING(num);
-    }
-    IF num < 1000 THEN {
-        RETURN "0" + STRING(num);
-    }
-    RETURN STRING(num);
-}
-
 FUNC engineRank(engine) = CASE {
     WHEN engine == "kotlin" THEN 0
     WHEN engine == "branchline-interpreter" THEN 1
@@ -39,9 +17,9 @@ FUNC formatNumber(value) {
 }
 
 FUNC buildSortKey(row, idx) {
-    LET engineKey = pad2(engineRank(row.engine));
+    LET engineKey = PAD(STRING(INT(engineRank(row.engine))), -2, "0");
     LET caseKey = STRING(row.caseId);
-    LET indexKey = pad4(idx);
+    LET indexKey = PAD(STRING(INT(idx)), -4, "0");
     RETURN engineKey + "::" + caseKey + "::" + indexKey;
 }
 
