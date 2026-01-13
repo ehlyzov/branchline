@@ -87,10 +87,13 @@ def dashjoinJar = dashjoinRepo == null ? files() : fileTree(dir: dashjoinRepo, i
     "**/target/jsonata-java-*.jar",
     "**/build/libs/jsonata-*.jar",
     "**/build/libs/jsonata-java-*.jar",
+    "**/jsonata-*.jar",
+    "**/jsonata-java-*.jar",
 ])
 def ibmJar = ibmRepo == null ? files() : fileTree(dir: ibmRepo, includes: [
     "**/target/JSONata4Java-*.jar",
     "**/build/libs/JSONata4Java-*.jar",
+    "**/JSONata4Java-*.jar",
 ])
 def jmhWarmupIterations = providers.gradleProperty("jmhWarmupIterations").orNull
 def jmhWarmupTime = providers.gradleProperty("jmhWarmupTime").orNull
@@ -100,11 +103,15 @@ def jmhForks = providers.gradleProperty("jmhForks").orNull
 def jmhProfilers = providers.gradleProperty("jmhProfilers").orNull
 def jmhCaseIds = providers.gradleProperty("jmhCaseIds").orNull
 def jmhIncludes = providers.gradleProperty("jmhIncludes").orNull
+def jsonataFullSuite = providers.gradleProperty("jsonataFullSuite").orNull
 def jmhProfilerList = jmhProfilers == null
     ? ['gc']
     : jmhProfilers.split(',').collect { it.trim() }.findAll { it }
+def fullSuiteEnabled = jsonataFullSuite != null && jsonataFullSuite.trim().equalsIgnoreCase("true")
 def jmhIncludeList = jmhIncludes == null || jmhIncludes.trim().isEmpty()
-    ? ['io.github.ehlyzov.branchline.benchmarks.jsonata.*']
+    ? (fullSuiteEnabled
+        ? ['io.github.ehlyzov.branchline.benchmarks.jsonata.*']
+        : ['io.github.ehlyzov.branchline.benchmarks.jsonata.CrossEngineBenchmark'])
     : jmhIncludes.split(',').collect { it.trim() }.findAll { it }
 def caseIdList = jmhCaseIds == null || jmhCaseIds.trim().isEmpty()
     ? loadCaseIds(file("src/jmh/resources/jsonata-case-matrix.yaml"))

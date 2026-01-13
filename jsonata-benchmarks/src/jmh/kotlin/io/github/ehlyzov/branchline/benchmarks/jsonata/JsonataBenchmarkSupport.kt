@@ -35,6 +35,7 @@ private const val TEST_SUITE_ROOT_PROPERTY: String = "jsonata.testSuiteRoot"
 private const val TEST_SUITE_ROOT_ENV: String = "JSONATA_TEST_SUITE_ROOT"
 private const val DASHJOIN_REPO_ENV: String = "DASHJOIN_REPO"
 private const val DOTENV_FILENAME: String = ".env"
+private const val LOCAL_TEST_SUITE_RESOURCE: String = "/jsonata-test-suite"
 
 private val DOTENV_VALUES: Map<String, String> = loadDotenv()
 
@@ -71,6 +72,8 @@ public object JsonataTestSuite {
     private val json: Json = Json { ignoreUnknownKeys = true }
 
     public fun resolveRoot(): Path {
+        val localRoot = resolveLocalTestSuiteRoot()
+        if (localRoot != null) return localRoot
         val override = System.getProperty(TEST_SUITE_ROOT_PROPERTY)
             ?: getenvOrDotenv(TEST_SUITE_ROOT_ENV)
         if (override != null) return Paths.get(override)
@@ -151,6 +154,18 @@ public object JsonataTestSuite {
         }
         caseIds.sort()
         return caseIds
+    }
+}
+
+private fun resolveLocalTestSuiteRoot(): Path? {
+    val resourceUrl = JsonataTestSuite::class.java.getResource(LOCAL_TEST_SUITE_RESOURCE) ?: return null
+    return try {
+        if (resourceUrl.protocol != "file") {
+            return null
+        }
+        Paths.get(resourceUrl.toURI())
+    } catch (_: Exception) {
+        null
     }
 }
 

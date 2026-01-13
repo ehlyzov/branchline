@@ -61,18 +61,25 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p docs/benchmarks/releases
+          mkdir -p docs/benchmarks/jsonata/releases
 
           latest_path="docs/benchmarks/latest.md"
           index_path="docs/benchmarks/releases/index.md"
           list_path="docs/benchmarks/releases/list.md"
+          jsonata_latest_path="docs/benchmarks/jsonata/latest.md"
+          jsonata_index_path="docs/benchmarks/jsonata/releases/index.md"
+          jsonata_list_path="docs/benchmarks/jsonata/releases/list.md"
 
           : > "$index_path"
           : > "$list_path"
+          : > "$jsonata_index_path"
+          : > "$jsonata_list_path"
 
           releases=$(curl -sSL -H "Authorization: Bearer $GH_TOKEN" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=100")
 
           latest_written=false
+          jsonata_latest_written=false
           while IFS= read -r release; do
             tag=$(echo "$release" | base64 --decode | jq -r '.tag_name')
             prerelease=$(echo "$release" | base64 --decode | jq -r '.prerelease')
@@ -100,12 +107,34 @@ jobs:
               cp "$out_path" "$latest_path"
               latest_written=true
             fi
+
+            jsonata_asset_url=$(echo "$release" | base64 --decode | jq -r --arg tag "$tag" \
+              '.assets[]? | select(.name == ("branchline-jsonata-summary-" + $tag + ".md")) | .browser_download_url' \
+              | head -1)
+
+            if [[ -n "$jsonata_asset_url" && "$jsonata_asset_url" != "null" ]]; then
+              jsonata_out_path="docs/benchmarks/jsonata/releases/${safe_tag}.md"
+              curl -sSL -H "Authorization: Bearer $GH_TOKEN" -o "$jsonata_out_path" "$jsonata_asset_url"
+              echo "- [${label}](${safe_tag}.md)" >> "$jsonata_index_path"
+              echo "- [${label}](releases/${safe_tag}.md)" >> "$jsonata_list_path"
+
+              if [[ "$jsonata_latest_written" == "false" ]]; then
+                cp "$jsonata_out_path" "$jsonata_latest_path"
+                jsonata_latest_written=true
+              fi
+            fi
           done < <(echo "$releases" | jq -r '.[] | select(.draft == false) | @base64')
 
           if [[ "$latest_written" == "false" ]]; then
             echo "_No benchmark summaries found in releases._" > "$latest_path"
             echo "_No benchmark summaries found in releases._" >> "$index_path"
             echo "_No benchmark summaries found in releases._" >> "$list_path"
+          fi
+
+          if [[ "$jsonata_latest_written" == "false" ]]; then
+            echo "_No JSONata benchmark summaries found in releases._" > "$jsonata_latest_path"
+            echo "_No JSONata benchmark summaries found in releases._" >> "$jsonata_index_path"
+            echo "_No JSONata benchmark summaries found in releases._" >> "$jsonata_list_path"
           fi
 
       - name: Build interpreter for JavaScript

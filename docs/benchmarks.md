@@ -15,7 +15,7 @@ Summaries are generated from CI JMH runs and attached to GitHub Releases.
 
 --8<-- "benchmarks/releases/list.md"
 
-Full archive: [Release benchmark history](benchmarks/releases/).
+Full archive: [Release benchmark history](releases/).
 
 ## What we measure
 
@@ -26,6 +26,24 @@ Full archive: [Release benchmark history](benchmarks/releases/).
 | Typical transform | `InterpreterTransformBenchmark.typicalTransform` | `VMTransformBenchmark.typicalTransform` |
 
 Datasets: Small (10x5), Medium (100x10), Large (500x25).
+
+Sample input shape:
+
+```json
+{
+  "customer": { "name": "Customer-*", "segment": "B2B" },
+  "orders": [
+    {
+      "id": 1,
+      "total": 125,
+      "status": "OPEN",
+      "items": [
+        { "sku": "SKU-1-0", "qty": 1, "price": 10 }
+      ]
+    }
+  ]
+}
+```
 
 ## JSONata benchmarks
 
@@ -46,7 +64,7 @@ Asset names:
 
 ```bash
 ./gradlew :interpreter-benchmarks:jmh :vm-benchmarks:jmh
-./gradlew :cli:runBl --args ".github/scripts/jmh-report.bl --shared-file jmh=interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir build/benchmarks"
+./gradlew :cli:runBl --args "$PWD/.github/scripts/jmh-report.bl --shared-file jmh=$PWD/interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=$PWD/vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir $PWD/build/benchmarks"
 ```
 
 Outputs:

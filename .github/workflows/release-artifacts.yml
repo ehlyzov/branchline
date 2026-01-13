@@ -21,6 +21,11 @@ on:
         required: false
         default: true
         type: boolean
+      run_jsonata:
+        description: 'Run JSONata benchmarks and upload JSONata artifacts'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -28,7 +33,7 @@ permissions:
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message || '', '+performance'))
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (contains(github.event.head_commit.message || '', '+performance') || contains(github.event.head_commit.message || '', '+jsonata')))
 
     steps:
       - name: Checkout
@@ -57,6 +62,8 @@ jobs:
           DISPATCH_TAG: ${{ github.event.inputs.tag }}
           DISPATCH_FULL_RELEASE: ${{ github.event.inputs.full_release }}
           DISPATCH_RUN_JMH: ${{ github.event.inputs.run_jmh }}
+          DISPATCH_RUN_JSONATA: ${{ github.event.inputs.run_jsonata }}
+          HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           set -euo pipefail
 
@@ -73,11 +80,17 @@ jobs:
             tag="${{ github.event.release.tag_name }}"
             run_full_release="true"
             run_jmh="true"
+            run_jsonata="false"
             ensure_release_exists="false"
           elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             tag="perf-${GITHUB_SHA::7}"
             run_full_release="false"
             run_jmh="true"
+            if [[ "${HEAD_COMMIT_MESSAGE:-}" == *"+jsonata"* ]]; then
+              run_jsonata="true"
+            else
+              run_jsonata="false"
+            fi
             ensure_release_exists="true"
             prerelease_flag="--prerelease"
             notes="Automated performance run for $GITHUB_SHA"
@@ -89,9 +102,11 @@ jobs:
             # inputs arrive as strings; default true
             fr="${DISPATCH_FULL_RELEASE:-true}"
             rj="${DISPATCH_RUN_JMH:-true}"
+            rjta="${DISPATCH_RUN_JSONATA:-false}"
 
             if [[ "${fr,,}" == "false" ]]; then run_full_release="false"; else run_full_release="true"; fi
             if [[ "${rj,,}" == "false" ]]; then run_jmh="false"; else run_jmh="true"; fi
+            if [[ "${rjta,,}" == "true" ]]; then run_jsonata="true"; else run_jsonata="false"; fi
 
             ensure_release_exists="true"
             prerelease_flag="--prerelease"
@@ -101,12 +116,14 @@ jobs:
           echo "  TAG_NAME=$tag"
           echo "  RUN_FULL_RELEASE=$run_full_release"
           echo "  RUN_JMH=$run_jmh"
+          echo "  RUN_JSONATA=$run_jsonata"
           echo "  ensure_release_exists=$ensure_release_exists"
           echo "  prerelease_flag=${prerelease_flag:-<none>}"
 
           echo "TAG_NAME=$tag" >> "$GITHUB_ENV"
           echo "RUN_FULL_RELEASE=$run_full_release" >> "$GITHUB_ENV"
           echo "RUN_JMH=$run_jmh" >> "$GITHUB_ENV"
+          echo "RUN_JSONATA=$run_jsonata" >> "$GITHUB_ENV"
 
           if [[ "$ensure_release_exists" == "true" ]]; then
             if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
@@ -142,6 +159,24 @@ jobs:
         if: env.RUN_FULL_RELEASE == 'true'
         run: ./gradlew --no-daemon :interpreter:jvmJar :vm:jvmJar :interpreter:packageInterpreterJs
 
+      - name: Download JSONata engine jars
+        if: env.RUN_JSONATA == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          dashjoin_version="0.9.8"
+          ibm_version="2.5.5"
+          base_dir="$GITHUB_WORKSPACE/build/jsonata-jars"
+          dashjoin_dir="$base_dir/dashjoin"
+          ibm_dir="$base_dir/ibm"
+          mkdir -p "$dashjoin_dir" "$ibm_dir"
+          curl -sSL -o "$dashjoin_dir/jsonata-${dashjoin_version}.jar" \
+            "https://repo1.maven.org/maven2/com/dashjoin/jsonata/${dashjoin_version}/jsonata-${dashjoin_version}.jar"
+          curl -sSL -o "$ibm_dir/JSONata4Java-${ibm_version}.jar" \
+            "https://repo1.maven.org/maven2/com/ibm/jsonata4java/JSONata4Java/${ibm_version}/JSONata4Java-${ibm_version}.jar"
+          echo "DASHJOIN_REPO=$dashjoin_dir" >> "$GITHUB_ENV"
+          echo "IBM_JSONATA_REPO=$ibm_dir" >> "$GITHUB_ENV"
+
       - name: Run JMH benchmarks
         if: env.RUN_JMH == 'true'
         run: ./gradlew --no-daemon :interpreter-benchmarks:jmh :vm-benchmarks:jmh
@@ -149,7 +184,16 @@ jobs:
       - name: Build JMH summary
         if: env.RUN_JMH == 'true'
         run: |
-          ./gradlew --no-daemon :cli:runBl --args ".github/scripts/jmh-report.bl --shared-file jmh=interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir build/benchmarks --output-format json-compact"
+          ./gradlew --no-daemon :cli:runBl --args "$GITHUB_WORKSPACE/.github/scripts/jmh-report.bl --shared-file jmh=$GITHUB_WORKSPACE/interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=$GITHUB_WORKSPACE/vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir $GITHUB_WORKSPACE/build/benchmarks --output-format json-compact"
+
+      - name: Run JSONata benchmarks
+        if: env.RUN_JSONATA == 'true'
+        run: ./gradlew --no-daemon :jsonata-benchmarks:jmh
+
+      - name: Build JSONata summary
+        if: env.RUN_JSONATA == 'true'
+        run: |
+          ./gradlew --no-daemon :cli:runBl --args "$GITHUB_WORKSPACE/.github/scripts/jsonata-report.bl --shared-file jmh=$GITHUB_WORKSPACE/jsonata-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir $GITHUB_WORKSPACE/build/jsonata-benchmarks --output-format json-compact"
 
       - name: List artifacts
         run: |
@@ -157,6 +201,7 @@ jobs:
           ls -alh interpreter/build/distributions || true
           ls -alh vm/build/libs || true
           ls -alh build/benchmarks || true
+          ls -alh build/jsonata-benchmarks || true
 
       - name: Capture release artifact paths (glob; decoupled from TAG_NAME)
         if: env.RUN_FULL_RELEASE == 'true'
@@ -207,6 +252,24 @@ jobs:
           [ -f "$JMH_SUMMARY_CSV" ] || { echo "JMH summary CSV not found at $JMH_SUMMARY_CSV" >&2; exit 1; }
           echo "JMH_SUMMARY_CSV_PATH=$JMH_SUMMARY_CSV" >> "$GITHUB_ENV"
 
+      - name: Capture JSONata artifact paths
+        if: env.RUN_JSONATA == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          JSONATA_JMH_JSON="$GITHUB_WORKSPACE/jsonata-benchmarks/build/results/jmh/results.json"
+          [ -f "$JSONATA_JMH_JSON" ] || { echo "JSONata JMH results not found at $JSONATA_JMH_JSON" >&2; exit 1; }
+          echo "JSONATA_JMH_JSON_PATH=$JSONATA_JMH_JSON" >> "$GITHUB_ENV"
+
+          JSONATA_SUMMARY_MD="$GITHUB_WORKSPACE/build/jsonata-benchmarks/jsonata-summary.md"
+          [ -f "$JSONATA_SUMMARY_MD" ] || { echo "JSONata summary markdown not found at $JSONATA_SUMMARY_MD" >&2; exit 1; }
+          echo "JSONATA_SUMMARY_MD_PATH=$JSONATA_SUMMARY_MD" >> "$GITHUB_ENV"
+
+          JSONATA_SUMMARY_CSV="$GITHUB_WORKSPACE/build/jsonata-benchmarks/jsonata-summary.csv"
+          [ -f "$JSONATA_SUMMARY_CSV" ] || { echo "JSONata summary CSV not found at $JSONATA_SUMMARY_CSV" >&2; exit 1; }
+          echo "JSONATA_SUMMARY_CSV_PATH=$JSONATA_SUMMARY_CSV" >> "$GITHUB_ENV"
+
       - name: Upload full release artifacts (gh; tag-based names)
         if: env.RUN_FULL_RELEASE == 'true'
         shell: bash
@@ -237,5 +300,20 @@ jobs:
             "$VM_JMH_JSON_PATH#branchline-jmh-vm-${TAG_NAME}.json" \
             "$JMH_SUMMARY_MD_PATH#branchline-jmh-summary-${TAG_NAME}.md" \
             "$JMH_SUMMARY_CSV_PATH#branchline-jmh-summary-${TAG_NAME}.csv" \
+            --clobber \
+            --repo "$GITHUB_REPOSITORY"
+
+      - name: Upload JSONata artifacts (gh; optional)
+        if: env.RUN_JSONATA == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          gh release upload "$TAG_NAME" \
+            "$JSONATA_JMH_JSON_PATH#branchline-jsonata-jmh-${TAG_NAME}.json" \
+            "$JSONATA_SUMMARY_MD_PATH#branchline-jsonata-summary-${TAG_NAME}.md" \
+            "$JSONATA_SUMMARY_CSV_PATH#branchline-jsonata-summary-${TAG_NAME}.csv" \
             --clobber \
             --repo "$GITHUB_REPOSITORY"

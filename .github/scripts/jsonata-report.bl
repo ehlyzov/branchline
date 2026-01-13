@@ -1,0 +1,120 @@
+SHARED jmh MANY;
+
+FUNC pad2(value) {
+    LET num = INT(value);
+    IF num < 10 THEN {
+        RETURN "0" + STRING(num);
+    }
+    RETURN STRING(num);
+}
+
+FUNC pad4(value) {
+    LET num = INT(value);
+    IF num < 10 THEN {
+        RETURN "000" + STRING(num);
+    }
+    IF num < 100 THEN {
+        RETURN "00" + STRING(num);
+    }
+    IF num < 1000 THEN {
+        RETURN "0" + STRING(num);
+    }
+    RETURN STRING(num);
+}
+
+FUNC engineRank(engine) = CASE {
+    WHEN engine == "kotlin" THEN 0
+    WHEN engine == "branchline-interpreter" THEN 1
+    WHEN engine == "branchline-vm" THEN 2
+    WHEN engine == "dashjoin" THEN 3
+    WHEN engine == "ibm" THEN 4
+    ELSE 99
+};
+
+FUNC formatNumber(value) {
+    IF value == NULL THEN {
+        RETURN "n/a";
+    }
+    RETURN STRING(value);
+}
+
+FUNC buildSortKey(row, idx) {
+    LET engineKey = pad2(engineRank(row.engine));
+    LET caseKey = STRING(row.caseId);
+    LET indexKey = pad4(idx);
+    RETURN engineKey + "::" + caseKey + "::" + indexKey;
+}
+
+FUNC sortRows(rows) {
+    LET keys = [];
+    LET idx = 0;
+    FOR row IN rows {
+        SET keys = APPEND(keys, buildSortKey(row, idx));
+        SET idx = idx + 1;
+    }
+    LET sortedKeys = SORT(keys);
+    LET out = [];
+    FOR key IN sortedKeys {
+        LET parts = SPLIT(key, "::");
+        LET pos = INT(parts[2]);
+        SET out = APPEND(out, rows[pos]);
+    }
+    RETURN out;
+}
+
+FUNC buildMarkdown(rows) {
+    LET lines = [];
+    SET lines = APPEND(lines, "## JSONata cross-engine results");
+    SET lines = APPEND(lines, "");
+    SET lines = APPEND(lines, "| Engine | Case | Score | Error | Unit |");
+    SET lines = APPEND(lines, "| --- | --- | ---: | ---: | --- |");
+    FOR row IN rows {
+        LET line = "| " + row.engine + " | " + row.caseId + " | " + formatNumber(row.score) + " | " + formatNumber(row.scoreError) + " | " + row.unit + " |";
+        SET lines = APPEND(lines, line);
+    }
+    RETURN JOIN(lines, "\n");
+}
+
+FUNC buildCsv(rows) {
+    LET lines = ["engine,case,score,score_error,unit"];
+    FOR row IN rows {
+        LET line = row.engine + "," + row.caseId + "," + formatNumber(row.score) + "," + formatNumber(row.scoreError) + "," + row.unit;
+        SET lines = APPEND(lines, line);
+    }
+    RETURN JOIN(lines, "\n");
+}
+
+TRANSFORM JsonataReport {
+    LET raw = [];
+    FOR key IN KEYS(jmh) {
+        SET raw = APPEND(raw, LISTIFY(AWAIT_SHARED("jmh", key)));
+    }
+    LET entries = FLATTEN(raw);
+    LET rows = [];
+    FOR entry IN entries {
+        LET params = entry.params ?? {};
+        LET engine = params.engineId ?? NULL;
+        IF engine != NULL THEN {
+            LET caseId = params.caseId ?? "";
+            LET primary = entry.primaryMetric ?? {};
+            SET rows = APPEND(rows, {
+                engine: engine,
+                caseId: caseId,
+                score: primary.score,
+                scoreError: primary.scoreError,
+                unit: primary.scoreUnit ?? ""
+            });
+        }
+    }
+    LET sorted = sortRows(rows);
+    LET markdown = buildMarkdown(sorted);
+    LET csv = buildCsv(sorted);
+
+    OUTPUT {
+        rows: LENGTH(sorted),
+        files: {
+            "jsonata-summary.md": markdown,
+            "jsonata-summary.csv": csv
+        }
+    };
+}

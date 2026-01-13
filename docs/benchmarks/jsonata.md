@@ -4,22 +4,37 @@ title: JSONata Benchmarks
 
 # JSONata Benchmarks
 
-This page will host Branchline vs JSONata benchmark results once CI publishing
-is wired up.
+This page tracks Branchline vs JSONata performance on a curated case matrix.
 
-## Status
+## Latest release results
 
-- Placeholder page; no published results yet.
-- CI automation depends on external JSONata engines and the JSONata test suite.
+--8<-- "benchmarks/jsonata/latest.md"
+
+## Release history
+
+--8<-- "benchmarks/jsonata/releases/list.md"
+
+Full archive: [Release benchmark history](jsonata/releases/).
+
+## Scope
+
+- Default suite: case matrix in `jsonata-benchmarks/src/jmh/resources/jsonata-case-matrix.yaml`.
+- Full JSONata test-suite runs are opt-in via `-PjsonataFullSuite=true` or a custom `-PjmhIncludes=...`.
 
 ## Run locally
 
 ```bash
-./gradlew :jsonata-benchmarks:jmh -PjmhIncludes=io.github.ehlyzov.branchline.benchmarks.jsonata.CrossEngineBenchmark
+DASHJOIN_REPO=path/to/dashjoin-jars \
+IBM_JSONATA_REPO=path/to/ibm-jars \
+./gradlew :jsonata-benchmarks:jmh
 ```
 
-## Planned outputs
+## Raw artifacts
 
-- Per-release summary table (mean, p95, allocation).
-- Cross-engine comparison tables (Branchline interpreter/VM vs JSONata engines).
-- Links to raw JSON artifacts.
+Latest assets live on the [latest GitHub release](https://github.com/ehlyzov/branchline-public/releases/latest).
+
+Asset names:
+
+- `branchline-jsonata-summary-<tag>.md`
+- `branchline-jsonata-summary-<tag>.csv`
+- `branchline-jsonata-jmh-<tag>.json`
