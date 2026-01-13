@@ -64,7 +64,7 @@ Asset names:
 
 ```bash
 ./gradlew :interpreter-benchmarks:jmh :vm-benchmarks:jmh
-./gradlew :cli:runBl --args "$PWD/.github/scripts/jmh-report.bl --shared-file jmh=$PWD/interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=$PWD/vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir $PWD/build/benchmarks"
+./gradlew :cli:runBl --args "$PWD/.github/scripts/jmh-report.bl --shared-file jmh=$PWD/interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=$PWD/vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key relative --write-output --write-output-dir $PWD/build/benchmarks"
 ```
 
 Outputs:

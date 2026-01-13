@@ -111,14 +111,11 @@ FUNC formatNumber(value) {
     IF value == NULL THEN {
         RETURN "n/a";
     }
-    RETURN STRING(value);
+    RETURN STRING(ROUND(value, 3));
 }
 
 FUNC formatAlloc(value) {
-    IF value == NULL THEN {
-        RETURN "n/a";
-    }
-    RETURN STRING(value);
+    RETURN formatNumber(value);
 }
 
 FUNC buildSortKey(row, idx) {
@@ -237,7 +234,7 @@ FUNC buildComparisonSection(rows) {
     SET lines = APPEND(lines, "| Benchmark | Dataset | Interpreter (us/op) | VM (us/op) | Ratio (VM/Interp) |");
     SET lines = APPEND(lines, "| --- | --- | ---: | ---: | ---: |");
     FOR row IN rows {
-        LET line = "| " + row.method + " | " + titleCase(row.dataset) + " | " + formatNumber(row.interpreter) + " | " + formatNumber(row.vm) + " | " + STRING(row.ratio) + "x |";
+        LET line = "| " + row.method + " | " + titleCase(row.dataset) + " | " + formatNumber(row.interpreter) + " | " + formatNumber(row.vm) + " | " + formatNumber(row.ratio) + "x |";
         SET lines = APPEND(lines, line);
     }
     RETURN JOIN(lines, "\n");
@@ -265,6 +262,8 @@ TRANSFORM Report {
     LET entries = FLATTEN(raw);
 
     LET rows = [];
+    LET hasInterpreter = FALSE;
+    LET hasVm = FALSE;
     FOR entry IN entries {
         LET primary = entry.primaryMetric ?? {};
         LET percentiles = primary.scorePercentiles ?? {};
@@ -280,6 +279,12 @@ TRANSFORM Report {
         LET parts = SPLIT(benchmark, ".");
         LET method = parts[LENGTH(parts) - 1];
         LET suite = resolveSuite(benchmark);
+        IF suite == "Interpreter" THEN {
+            SET hasInterpreter = TRUE;
+        }
+        IF suite == "VM" THEN {
+            SET hasVm = TRUE;
+        }
 
         SET rows = APPEND(rows, {
             suite: suite,
@@ -295,6 +300,13 @@ TRANSFORM Report {
 
     LET sorted = sortRows(rows);
     LET markdown = buildRuntimeSection(sorted);
+    IF (hasInterpreter && !hasVm) || (!hasInterpreter && hasVm) THEN {
+        LET missing = CASE {
+            WHEN hasInterpreter THEN "VM"
+            ELSE "Interpreter"
+        };
+        SET markdown = markdown + "\n\n" + "**Warning:** missing " + missing + " JMH suite; comparison requires both.";
+    }
     LET comparisons = sortComparisons(buildComparison(sorted));
     IF LENGTH(comparisons) > 0 THEN {
         SET markdown = markdown + "\n\n" + buildComparisonSection(comparisons);

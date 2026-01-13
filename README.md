@@ -71,7 +71,7 @@ Branchline uses JMH benchmarks for the interpreter and VM with shared datasets.
 - Run locally: `./gradlew :interpreter-benchmarks:jmh :vm-benchmarks:jmh`.
 - Results: `interpreter-benchmarks/build/results/jmh/results.json` and
   `vm-benchmarks/build/results/jmh/results.json`.
-- Release summary: `./gradlew :cli:runBl --args ".github/scripts/jmh-report.bl --shared-file jmh=interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir build/benchmarks"`.
+- Release summary: `./gradlew :cli:runBl --args ".github/scripts/jmh-report.bl --shared-file jmh=interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key relative --write-output --write-output-dir build/benchmarks"`.
 - Methodology and comparison guidance: `docs/benchmarks.md`.
 - Planned automation: publish per-release results and highlight regressions
   without blocking the release.

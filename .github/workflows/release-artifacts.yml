@@ -184,7 +184,7 @@ jobs:
       - name: Build JMH summary
         if: env.RUN_JMH == 'true'
         run: |
-          ./gradlew --no-daemon :cli:runBl --args "$GITHUB_WORKSPACE/.github/scripts/jmh-report.bl --shared-file jmh=$GITHUB_WORKSPACE/interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=$GITHUB_WORKSPACE/vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key basename --write-output --write-output-dir $GITHUB_WORKSPACE/build/benchmarks --output-format json-compact"
+          ./gradlew --no-daemon :cli:runBl --args "$GITHUB_WORKSPACE/.github/scripts/jmh-report.bl --shared-file jmh=$GITHUB_WORKSPACE/interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=$GITHUB_WORKSPACE/vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key relative --write-output --write-output-dir $GITHUB_WORKSPACE/build/benchmarks --output-format json-compact"
 
       - name: Run JSONata benchmarks
         if: env.RUN_JSONATA == 'true'
