@@ -64,8 +64,10 @@ jobs:
 
           latest_path="docs/benchmarks/latest.md"
           index_path="docs/benchmarks/releases/index.md"
+          list_path="docs/benchmarks/releases/list.md"
 
           : > "$index_path"
+          : > "$list_path"
 
           releases=$(curl -sSL -H "Authorization: Bearer $GH_TOKEN" \
             "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=100")
@@ -91,7 +93,8 @@ jobs:
             if [[ "$prerelease" == "true" ]]; then
               label="${tag} (prerelease)"
             fi
-            echo "- [${label}](benchmarks/releases/${safe_tag}.md)" >> "$index_path"
+            echo "- [${label}](${safe_tag}.md)" >> "$index_path"
+            echo "- [${label}](releases/${safe_tag}.md)" >> "$list_path"
 
             if [[ "$latest_written" == "false" ]]; then
               cp "$out_path" "$latest_path"
@@ -102,6 +105,7 @@ jobs:
           if [[ "$latest_written" == "false" ]]; then
             echo "_No benchmark summaries found in releases._" > "$latest_path"
             echo "_No benchmark summaries found in releases._" >> "$index_path"
+            echo "_No benchmark summaries found in releases._" >> "$list_path"
           fi
 
       - name: Build interpreter for JavaScript

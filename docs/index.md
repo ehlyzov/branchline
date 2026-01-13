@@ -68,6 +68,7 @@ Or on Node:
 
 ## Release readiness
 - Review the [Release Readiness & Stability guide](guides/release-readiness.md) for versioning policy, stability levels, compatibility checks, and SLA-style targets.
+- Check [benchmark results](benchmarks.md) and the [release benchmark history](benchmarks/releases/) for performance tracking.
 
 ## What you can build
 - [Normalize XML test reports](playground.md?example=junit-badge-summary){ target="_blank" } into JSON summaries and badges.

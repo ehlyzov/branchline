@@ -62,5 +62,7 @@ items:
         href: vm.md
       - name: Benchmarks
         href: benchmarks.md
+      - name: JSONata Benchmarks
+        href: benchmarks/jsonata.md
   - name: Playground
     href: playground.md

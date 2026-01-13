@@ -31,7 +31,9 @@ markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
-  - pymdownx.snippets
+  - pymdownx.snippets:
+      base_path: docs
+      check_paths: true
   - pymdownx.superfences
   - admonition
   - pymdownx.details
@@ -73,6 +75,7 @@ nav:
     - VM Overview: vm.md
   - Performance:
     - Benchmarks: benchmarks.md
+    - JSONata Benchmarks: benchmarks/jsonata.md
 
 plugins:
   - search
