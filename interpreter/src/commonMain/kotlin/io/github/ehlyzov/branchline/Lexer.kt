@@ -220,10 +220,11 @@ class Lexer(private val source: String) {
         var value = 0
         repeat(4) {
             if (isAtEnd()) throw unterminatedUnicodeEscape(startLine, startCol)
-            val ch = advance()
-            if (ch == '"' || ch == '\n') throw unterminatedUnicodeEscape(startLine, startCol)
+            val ch = peek()
+            if (ch == '\n' || ch == '\r' || ch == '"') throw unterminatedUnicodeEscape(startLine, startCol)
             val digit = ch.digitToIntOrNull(16)
                 ?: errorToken("Invalid unicode escape", startLine, startCol)
+            advance()
             value = value * 16 + digit
         }
         return value.toChar()
