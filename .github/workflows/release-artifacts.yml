@@ -265,7 +265,10 @@ jobs:
 
           JSONATA_JMH_JSON="$GITHUB_WORKSPACE/jsonata-benchmarks/build/results/jmh/results.json"
           [ -f "$JSONATA_JMH_JSON" ] || { echo "JSONata JMH results not found at $JSONATA_JMH_JSON" >&2; exit 1; }
-          echo "JSONATA_JMH_JSON_PATH=$JSONATA_JMH_JSON" >> "$GITHUB_ENV"
+          mkdir -p "$GITHUB_WORKSPACE/build/jsonata-benchmarks"
+          JSONATA_JMH_UPLOAD="$GITHUB_WORKSPACE/build/jsonata-benchmarks/branchline-jsonata-jmh-${TAG_NAME}.json"
+          cp "$JSONATA_JMH_JSON" "$JSONATA_JMH_UPLOAD"
+          echo "JSONATA_JMH_JSON_PATH=$JSONATA_JMH_UPLOAD" >> "$GITHUB_ENV"
 
           JSONATA_SUMMARY_MD="$GITHUB_WORKSPACE/build/jsonata-benchmarks/jsonata-summary.md"
           [ -f "$JSONATA_SUMMARY_MD" ] || { echo "JSONata summary markdown not found at $JSONATA_SUMMARY_MD" >&2; exit 1; }
