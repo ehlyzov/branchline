@@ -45,6 +45,10 @@ FUNC datasetRank(dataset) = CASE {
 FUNC resolveSuite(benchmark) = CASE {
     WHEN CONTAINS(benchmark, ".InterpreterTransformBenchmark") THEN "Interpreter"
     WHEN CONTAINS(benchmark, ".VMTransformBenchmark") THEN "VM"
+    WHEN CONTAINS(benchmark, ".benchmarks.") && CONTAINS(benchmark, "Interpreter") THEN "Interpreter"
+    WHEN CONTAINS(benchmark, ".vm.") && CONTAINS(benchmark, "TransformBenchmark") THEN "VM"
+    WHEN CONTAINS(benchmark, "Interpreter") THEN "Interpreter"
+    WHEN CONTAINS(benchmark, "VM") THEN "VM"
     ELSE "Other"
 };
 

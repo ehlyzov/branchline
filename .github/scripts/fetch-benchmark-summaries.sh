@@ -78,8 +78,8 @@ while IFS= read -r release; do
   if [[ "$prerelease" == "true" ]]; then
     label="${tag} (prerelease)"
   fi
-  echo "- [${label}](${safe_tag}.md)" >> "$index_path"
-  echo "- [${label}](releases/${safe_tag}.md)" >> "$list_path"
+  echo "- [${label}](${safe_tag}/)" >> "$index_path"
+  echo "- [${label}](releases/${safe_tag}/)" >> "$list_path"
 
   if [[ "$latest_written" == "false" ]]; then
     cp "$out_path" "$latest_path"
@@ -95,8 +95,17 @@ while IFS= read -r release; do
 
   jsonata_out_path="${jsonata_release_dir}/${safe_tag}.md"
   curl -sSL -H "Authorization: Bearer ${GH_TOKEN}" -o "$jsonata_out_path" "$jsonata_asset_url"
-  echo "- [${label}](${safe_tag}.md)" >> "$jsonata_index_path"
-  echo "- [${label}](releases/${safe_tag}.md)" >> "$jsonata_list_path"
+  echo "- [${label}](${safe_tag}/)" >> "$jsonata_index_path"
+  echo "- [${label}](releases/${safe_tag}/)" >> "$jsonata_list_path"
+
+  jsonata_csv_url="$(jq -r --arg tag "$tag" \
+    '.assets[]? | select(.name == ("branchline-jsonata-summary-" + $tag + ".csv")) | .browser_download_url' \
+    <<<"$decoded" | head -1)"
+  if [[ -n "$jsonata_csv_url" && "$jsonata_csv_url" != "null" ]]; then
+    jsonata_csv_path="${jsonata_release_dir}/${safe_tag}.csv"
+    curl -sSL -H "Authorization: Bearer ${GH_TOKEN}" -o "$jsonata_csv_path" "$jsonata_csv_url"
+    sed -i "s|(jsonata-summary.csv)|(${safe_tag}.csv)|g" "$jsonata_out_path"
+  fi
 
   if [[ "$jsonata_latest_written" == "false" ]]; then
     cp "$jsonata_out_path" "$jsonata_latest_path"

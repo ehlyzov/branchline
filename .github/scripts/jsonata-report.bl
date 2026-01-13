@@ -16,6 +16,20 @@ FUNC formatNumber(value) {
     RETURN STRING(value);
 }
 
+FUNC formatRatio(value) {
+    IF value == NULL THEN {
+        RETURN "n/a";
+    }
+    RETURN STRING(value) + "x";
+}
+
+FUNC isDisplayEngine(engine) {
+    RETURN engine == "branchline-interpreter"
+        || engine == "branchline-vm"
+        || engine == "dashjoin"
+        || engine == "ibm";
+}
+
 FUNC buildSortKey(row, idx) {
     LET engineKey = PAD(STRING(INT(engineRank(row.engine))), -2, "0");
     LET caseKey = STRING(row.caseId);
@@ -40,14 +54,79 @@ FUNC sortRows(rows) {
     RETURN out;
 }
 
+FUNC findScore(rows, caseId, engineId) {
+    FOR row IN rows {
+        IF row.caseId == caseId && row.engine == engineId THEN {
+            RETURN row.score;
+        }
+    }
+    RETURN NULL;
+}
+
+FUNC resolveFastestJsonata(ibmScore, dashjoinScore) {
+    IF ibmScore == NULL && dashjoinScore == NULL THEN {
+        RETURN { engine: NULL, score: NULL };
+    }
+    IF dashjoinScore == NULL THEN {
+        RETURN { engine: "ibm", score: ibmScore };
+    }
+    IF ibmScore == NULL THEN {
+        RETURN { engine: "dashjoin", score: dashjoinScore };
+    }
+    IF dashjoinScore >= ibmScore THEN {
+        RETURN { engine: "dashjoin", score: dashjoinScore };
+    }
+    RETURN { engine: "ibm", score: ibmScore };
+}
+
 FUNC buildMarkdown(rows) {
+    LET display = [];
+    FOR row IN rows {
+        IF isDisplayEngine(row.engine) THEN {
+            SET display = APPEND(display, row);
+        }
+    }
+    LET cases = [];
+    FOR row IN display {
+        SET cases = APPEND(cases, row.caseId);
+    }
+    LET caseIds = SORT(DISTINCT(cases));
+
     LET lines = [];
     SET lines = APPEND(lines, "## JSONata cross-engine results");
     SET lines = APPEND(lines, "");
-    SET lines = APPEND(lines, "| Engine | Case | Score | Error | Unit |");
-    SET lines = APPEND(lines, "| --- | --- | ---: | ---: | --- |");
-    FOR row IN rows {
-        LET line = "| " + row.engine + " | " + row.caseId + " | " + formatNumber(row.score) + " | " + formatNumber(row.scoreError) + " | " + row.unit + " |";
+    SET lines = APPEND(lines, "Source data: [CSV](jsonata-summary.csv).");
+    SET lines = APPEND(lines, "");
+    SET lines = APPEND(lines, "Scores are throughput in ops/s (higher is faster). Ratios compare Branchline throughput to the fastest JSONata engine.");
+    SET lines = APPEND(lines, "");
+    SET lines = APPEND(lines, "| Case | Branchline Interpreter (ops/s) | Branchline VM (ops/s) | Fastest JSONata (ops/s) | Fastest JSONata engine | Interpreter vs JSONata | VM vs JSONata |");
+    SET lines = APPEND(lines, "| --- | ---: | ---: | ---: | --- | ---: | ---: |");
+    FOR caseId IN caseIds {
+        LET interp = findScore(display, caseId, "branchline-interpreter");
+        LET vm = findScore(display, caseId, "branchline-vm");
+        LET dashjoin = findScore(display, caseId, "dashjoin");
+        LET ibm = findScore(display, caseId, "ibm");
+        LET fastest = resolveFastestJsonata(ibm, dashjoin);
+        LET fastestEngine = CASE {
+            WHEN fastest.engine == NULL THEN "n/a"
+            ELSE fastest.engine
+        };
+        LET interpRatio = CASE {
+            WHEN interp == NULL || fastest.score == NULL THEN NULL
+            ELSE interp / fastest.score
+        };
+        LET vmRatio = CASE {
+            WHEN vm == NULL || fastest.score == NULL THEN NULL
+            ELSE vm / fastest.score
+        };
+        LET line = "| " + caseId
+            + " | " + formatNumber(interp)
+            + " | " + formatNumber(vm)
+            + " | " + formatNumber(fastest.score)
+            + " | " + fastestEngine
+            + " | " + formatRatio(interpRatio)
+            + " | " + formatRatio(vmRatio)
+            + " |";
         SET lines = APPEND(lines, line);
     }
     RETURN JOIN(lines, "\n");
