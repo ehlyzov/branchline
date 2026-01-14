@@ -50,3 +50,4 @@ actual fun BLBigDec.floor(): BLBigInt = this.round(
 actual fun BLBigDec.ceil(): BLBigInt = this.round(
     MathContext(0, RoundingMode.CEILING)
 ).toBLBigInt()
+actual fun BLBigDec.roundHalfEven(scale: Int): BLBigDec = this.setScale(scale, RoundingMode.HALF_EVEN)

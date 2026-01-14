@@ -1,5 +1,7 @@
 package io.github.ehlyzov.branchline.runtime.bignum
 
+import kotlin.math.pow
+
 // Minimal BigNum facade for multiplatform. JVM uses java.math via typealiases.
 
 expect class BLBigInt
@@ -38,6 +40,7 @@ expect fun BLBigDec.toDouble(): Double
 expect fun BLBigDec.signum(): Int
 expect fun BLBigDec.floor(): BLBigInt
 expect fun BLBigDec.ceil(): BLBigInt
+expect fun BLBigDec.roundHalfEven(scale: Int): BLBigDec
 
 
 // Shared constants to avoid allocations in hot paths
@@ -45,3 +48,30 @@ val BL_BIG_DEC_ZERO: BLBigDec by lazy { blBigDecOfLong(0) }
 val BL_BIG_DEC_ONE: BLBigDec by lazy { blBigDecOfLong(1) }
 val BL_BIG_INT_ZERO: BLBigInt by lazy { blBigIntOfLong(0) }
 val BL_BIG_INT_ONE: BLBigInt by lazy { blBigIntOfLong(1) }
+
+internal fun roundHalfEvenDouble(value: Double, scale: Int): Double {
+    if (!value.isFinite()) return value
+    if (scale == 0) return roundHalfEvenWhole(value)
+    val absScale = kotlin.math.abs(scale)
+    val factor = 10.0.pow(absScale.toDouble())
+    if (factor.isInfinite()) {
+        return if (scale > 0) value else if (value < 0.0) -0.0 else 0.0
+    }
+    return if (scale > 0) {
+        val scaled = value * factor
+        if (!scaled.isFinite()) value else roundHalfEvenWhole(scaled) / factor
+    } else {
+        roundHalfEvenWhole(value / factor) * factor
+    }
+}
+
+private fun roundHalfEvenWhole(value: Double): Double {
+    if (!value.isFinite()) return value
+    val floorValue = kotlin.math.floor(value)
+    val diff = value - floorValue
+    return when {
+        diff < 0.5 -> floorValue
+        diff > 0.5 -> floorValue + 1.0
+        else -> if (floorValue % 2.0 == 0.0) floorValue else floorValue + 1.0
+    }
+}

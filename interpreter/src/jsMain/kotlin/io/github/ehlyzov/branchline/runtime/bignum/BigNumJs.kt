@@ -74,3 +74,5 @@ actual fun BLBigDec.signum(): Int = when {
 }
 actual fun BLBigDec.floor(): BLBigInt = BLBigInt(floor(this.v).toLong())
 actual fun BLBigDec.ceil(): BLBigInt = BLBigInt(ceil(this.v).toLong())
+actual fun BLBigDec.roundHalfEven(scale: Int): BLBigDec =
+    BLBigDec(roundHalfEvenDouble(this.v, scale))

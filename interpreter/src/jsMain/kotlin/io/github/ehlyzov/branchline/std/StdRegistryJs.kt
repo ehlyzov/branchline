@@ -5,6 +5,7 @@ actual fun loadStdModules(registry: StdRegistry) {
         StdCoreModule(),
         StdArraysModule(),
         StdAggModule(),
+        StdNumericModule(),
         StdStringsModule(),
         StdTimeModule(),
         StdHofModule(),

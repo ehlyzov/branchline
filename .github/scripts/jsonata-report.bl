@@ -13,7 +13,7 @@ FUNC formatNumber(value) {
     IF value == NULL THEN {
         RETURN "n/a";
     }
-    RETURN STRING(value);
+    RETURN STRING(ROUND(value, 3));
 }
 
 FUNC formatRatio(value) {

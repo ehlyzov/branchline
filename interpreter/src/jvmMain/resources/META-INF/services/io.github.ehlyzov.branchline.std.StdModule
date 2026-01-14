@@ -1,6 +1,7 @@
 io.github.ehlyzov.branchline.std.StdCoreModule
 io.github.ehlyzov.branchline.std.StdArraysModule
 io.github.ehlyzov.branchline.std.StdAggModule
+io.github.ehlyzov.branchline.std.StdNumericModule
 io.github.ehlyzov.branchline.std.StdStringsModule
 io.github.ehlyzov.branchline.std.StdTimeModule
 io.github.ehlyzov.branchline.std.StdHofModule

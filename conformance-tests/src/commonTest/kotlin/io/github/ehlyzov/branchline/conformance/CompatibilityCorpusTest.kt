@@ -94,6 +94,28 @@ public class CompatibilityCorpusTest {
                 input = mapOf("letters" to listOf("b", "l", "")),
                 expected = mapOf("text" to "BL"),
             ),
+            CorpusCase(
+                name = "stdlib-round-half-even",
+                program = """
+                    TRANSFORM T {
+                        OUTPUT {
+                            rounded: STRING(ROUND(2.050769212644806, 3)),
+                            half_even_low: STRING(ROUND(2.5)),
+                            half_even_high: STRING(ROUND(3.5)),
+                            negative_half: STRING(ROUND(-1.5)),
+                            neg_precision: STRING(ROUND(155, -2)),
+                        }
+                    }
+                """.trimIndent(),
+                input = emptyMap(),
+                expected = mapOf(
+                    "rounded" to "2.051",
+                    "half_even_low" to "2",
+                    "half_even_high" to "4",
+                    "negative_half" to "-2",
+                    "neg_precision" to "200",
+                ),
+            ),
         )
     }
 }
