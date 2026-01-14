@@ -147,7 +147,7 @@ class ExplainProvenanceOneLoopTest {
         val obj = out.requireStringMap("explain result")
         val explanations = Debug.explainOutput(obj)
         assertNotNull(explanations)
-        val resultExplain = explanations!!["result"].requireStringMap("explain[result]")
+        val resultExplain = explanations["result"].requireStringMap("explain[result]")
         val steps = resultExplain["steps"].requireMapList("explain[result].steps")
         assertTrue(steps.isNotEmpty(), "Expected result provenance from explainOutput")
         val firstStep = steps.first()

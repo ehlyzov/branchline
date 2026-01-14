@@ -57,6 +57,9 @@ subprojects {
     plugins.withId('org.jetbrains.kotlin.multiplatform') {
         kotlin {
             jvmToolchain(21)
+            compilerOptions {
+                freeCompilerArgs.add("-Xexpect-actual-classes")
+            }
         }
     }
 

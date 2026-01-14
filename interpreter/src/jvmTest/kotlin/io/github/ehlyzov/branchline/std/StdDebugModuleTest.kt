@@ -26,7 +26,7 @@ class StdDebugModuleTest {
 
         // We should see the checkpoint call and have monotonic times
         assertTrue(
-            tracer.events.any { it.event is TraceEvent.Call && (it.event as TraceEvent.Call).kind == "CHECKPOINT" }
+            tracer.events.any { it.event is TraceEvent.Call && it.event.kind == "CHECKPOINT" }
         )
         val times = tracer.events.map { it.at }
         assertTrue(times.zipWithNext().all { (a, b) -> a <= b })
