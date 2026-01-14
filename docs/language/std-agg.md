@@ -4,11 +4,22 @@ title: Aggregation Standard Library
 
 # Aggregation
 
-Functions for computing statistics over collections.
+Summaries and aggregates for arrays and collections.
 
-- `LENGTH(x)` / `COUNT(x)` → size of strings, lists, or objects; `0` for `null`.
-- `SUM(list)` → sum of numbers; errors on non-numeric entries; `0` when list is empty.
-- `AVG(list)` → average or `null` when empty; errors on non-numeric entries.
-- `MIN(list)` / `MAX(list)` → smallest/largest value or `null` when empty; errors on incomparable values.
+## Functions
+- `LENGTH(list)` → number of elements.
+- `COUNT(list)` → alias for `LENGTH`.
+- `SUM(list)` → sum of numeric values.
+- `AVG(list)` → average of numeric values.
+- `MIN(list)` → smallest value.
+- `MAX(list)` → largest value.
 
-Run it: [Aggregation example](../playground.md?example=stdlib-agg-overview).
+## Example
+- [stdlib-agg-overview](../playground.md?example=stdlib-agg-overview)
+
+## Notes
+- Most functions expect numeric arrays; non-numeric values may error.
+
+## Related
+- [Arrays](std-arrays.md)
+- [Higher-Order Functions](std-hof.md)

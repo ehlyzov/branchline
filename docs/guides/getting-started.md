@@ -4,11 +4,10 @@ title: Getting Started
 
 # Getting Started
 
-This short guide walks through writing and running a minimal Branchline transform.
+Write a minimal transform and run it locally or in the Playground.
 
-## Write your first transform
-
-Create a file `hello.bl` with the following contents:
+## Step 1: Write a transform
+Create `hello.bl`:
 
 ```branchline
 TRANSFORM Hello {
@@ -17,41 +16,15 @@ TRANSFORM Hello {
 }
 ```
 
-The transform reads the implicit `input` record, builds a new field, and emits it with `OUTPUT`.
-
-## Run the transform
-
-You can execute Branchline from Kotlin using the test utility `compileAndRun`:
-
-```kotlin
-val result = compileAndRun(
-    body = """
-        LET greet = \"Hello, \" + input.name;
-        OUTPUT { greeting: greet };
-    """.trimIndent(),
-    input = mapOf("name" to "Branchline")
-)
-println(result) // {greeting=Hello, Branchline}
+## Step 2: Run locally
+```bash
+./gradlew :cli:runBl --args "hello.bl --input sample.json"
 ```
 
-The helper compiles the snippet and runs it against the provided input map.
-
-## Try it in the playground
-Open the playground with the starter example preloaded: [customer-profile](../playground.md?example=customer-profile){ target="_blank" }.
-
-Expected output for the starter example:
-```json
-{
-  "id": 42,
-  "full_name": "Ada Lovelace",
-  "loyalty_tier": "standard",
-  "shipping_city": "London"
-}
-```
-
-Change the input JSON and rerun to see the output update. Enable tracing to view `EXPLAIN` provenance for variables you care about.
+## Step 3: Try in the Playground
+Open [customer-profile](../playground.md?example=customer-profile){ target="_blank" } and edit the program or input.
 
 ## Next steps
-- Edit the program to add a field (e.g., loyalty tier label) and confirm the output changes.
-- Switch the input format to XML in the playground and try the `junit-badge-summary` example to see XML parsing.
-- Read the [Language Overview](../language/index.md) for syntax details and explore the stdlib pages linked to interactive examples.
+- Add a new field to the output and rerun.
+- Read the [Language Overview](../language/index.md) for syntax details.
+- Explore [Standard Library](../language/std-core.md) pages for reusable helpers.

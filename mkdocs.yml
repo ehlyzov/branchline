@@ -11,7 +11,7 @@ theme:
     - scheme: default
       primary: blue
       toggle:
-        icon: material/brightness-7 
+        icon: material/brightness-7
         name: Switch to dark mode
     - scheme: slate
       primary: blue
@@ -47,35 +47,52 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Playground: playground.md
-  - Language Reference:
-    - Overview: language/index.md  
+  - Learn:
+    - Tour of Branchline: learn/index.md
+    - Hello, Transform: learn/hello-transform.md
+    - Paths and Reshaping: learn/paths-and-reshaping.md
+    - Control Flow for Pipelines: learn/control-flow.md
+    - Error Handling and Tracing: learn/error-handling.md
+    - Real-world Recipes: learn/recipes.md
+    - Guides Index: guides/index.md
+    - First Steps: guides/first-steps.md
+    - Install Branchline: guides/install.md
+    - Getting Started: guides/getting-started.md
+    - FOR EACH Loops: guides/for-each.md
+    - Array Comprehensions: guides/array-comprehension.md
+    - TRY/CATCH: guides/try-catch.md
+  - Reference:
+    - Overview: language/index.md
     - Lexical Structure: language/lexical.md
     - Declarations: language/declarations.md
     - Statements: language/statements.md
     - Expressions: language/expressions.md
     - Grammar: language/grammar.md
-    - Standard Library:
-      - Core Functions: language/std-core.md
-      - Array Operations: language/std-arrays.md
-      - Time Functions: language/std-time.md
-      - Aggregation: language/std-agg.md
-      - Higher-order Functions: language/std-hof.md
-      - Strings: language/std-strings.md
-      - Debug Utilities: language/std-debug.md
-  - Guides: 
-    - guides/index.md
-    - guides/first-steps.md
-    - guides/install.md
-    - guides/getting-started.md
-    - guides/for-each.md
-    - guides/array-comprehension.md
-    - guides/try-catch.md
-    - guides/parallelism.md
-  - Architecture:
-    - VM Overview: vm.md
-  - Performance:
-    - Benchmarks: benchmarks.md
-    - JSONata Benchmarks: benchmarks/jsonata.md
+  - Standard Library:
+    - Core Functions: language/std-core.md
+    - Array Operations: language/std-arrays.md
+    - Time Functions: language/std-time.md
+    - Aggregation: language/std-agg.md
+    - Higher-order Functions: language/std-hof.md
+    - Strings: language/std-strings.md
+    - Debug Utilities: language/std-debug.md
+  - Advanced:
+    - Examples: guides/examples.md
+    - Branchline CLI: guides/cli.md
+    - Production Use: guides/production-use.md
+    - Migration Guides: guides/migrations.md
+    - Release Readiness & Stability: guides/release-readiness.md
+    - Architecture:
+      - VM Overview: vm.md
+    - Benchmarks:
+      - Overview: benchmarks.md
+      - Latest: benchmarks/latest.md
+      - Releases: benchmarks/releases/index.md
+      - Release List: benchmarks/releases/list.md
+      - JSONata Overview: benchmarks/jsonata.md
+      - JSONata Latest: benchmarks/jsonata/latest.md
+      - JSONata Releases: benchmarks/jsonata/releases/index.md
+      - JSONata Release List: benchmarks/jsonata/releases/list.md
 
 plugins:
   - search

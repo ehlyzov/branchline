@@ -4,57 +4,32 @@ title: Array Comprehensions
 
 # Array Comprehensions
 
-Array comprehensions build arrays from other collections using a `FOR` clause inside a literal. They’re handy for concise reshaping without an explicit loop.
+Array comprehensions build a new array from an existing collection in a single expression.
 
-## Basic comprehension
+## When to use it
+Use a comprehension when you only need a simple mapping or filtering expression and want a concise result.
+
+## Syntax
 ```branchline
-LET nums = [1, 2, 3];
-LET squares = [FOR (n IN nums) => n * n];
-OUTPUT { squares: squares };
+LET squares = [FOR (n IN input.numbers) => n * n];
+LET evens = [FOR (n IN input.numbers) IF n % 2 == 0 => n];
 ```
-`squares` becomes `[1, 4, 9]`.
 
-## With filtering
+## Example
 ```branchline
-LET nums = [1, 2, 3, 4];
-LET evens = [FOR (n IN nums) IF n % 2 == 0 => n];
-OUTPUT { evens: evens };
-```
-`evens` becomes `[2, 4]`.
-
-## Building objects inline
-```branchline
-LET items = [
-  { name: "pen", qty: 2, price: 9.5 },
-  { name: "pad", qty: 1, price: 12.0 },
-  { name: "bag", qty: 3, price: 4.75 }
-];
-
-LET summaries = [
-  FOR (item IN items)
-    IF item.qty > 1
-    => { name: item.name, subtotal: item.qty * item.price }
-];
-
-OUTPUT { summaries: summaries };
-```
-Result:
-```json
-{
-  "summaries": [
-    { "name": "pen", "subtotal": 19 },
-    { "name": "bag", "subtotal": 14.25 }
-  ]
+TRANSFORM Tags {
+    LET tags = [FOR (item IN input.items) => item.tag];
+    OUTPUT { tags: tags };
 }
 ```
 
-## Trailing form
-You can trail the `FOR EACH` after the expression:
-```branchline
-LET nums = [1, 2, 3];
-LET doubled = [n * 2 FOR EACH n IN nums];
-```
-This is equivalent to the basic form above.
+## Pitfalls
+- Comprehensions allow only a single expression after `=>`.
+- Use `FOR EACH` if you need multiple statements or side effects.
 
 ## Try it
-Paste any of the snippets into the [playground](../playground.md) and run. Start from the `collection-transforms` example to compare comprehensions with MAP/FILTER/REDUCE.
+Open [collection-transforms](../playground.md?example=collection-transforms){ target="_blank" } to see comprehensions alongside MAP/FILTER/REDUCE.
+
+## Related
+- [FOR EACH Loops](for-each.md)
+- [Expressions](../language/expressions.md#arrays-and-objects)

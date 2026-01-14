@@ -4,8 +4,7 @@ title: Benchmarks
 
 # Benchmarks
 
-This page publishes performance results for the Branchline interpreter and VM.
-Summaries are generated from CI JMH runs and attached to GitHub Releases.
+Performance results for the Branchline interpreter and VM.
 
 ## Latest release results
 
@@ -15,7 +14,7 @@ Summaries are generated from CI JMH runs and attached to GitHub Releases.
 
 --8<-- "benchmarks/releases/list.md"
 
-Full archive: [Release benchmark history](releases/).
+Full archive: [Release benchmark history](benchmarks/releases/index.md).
 
 ## What we measure
 

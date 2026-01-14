@@ -4,8 +4,9 @@ title: Grammar
 
 # Branchline Grammar
 
-The Branchline DSL syntax is defined using Extended Backus–Naur Form (EBNF).
-The canonical grammar is maintained in the repository at
+Use this page for the exact, authoritative syntax. If you only need to learn the language, start with the [Tour of Branchline](../learn/index.md).
+
+The Branchline DSL syntax is defined using Extended Backus–Naur Form (EBNF). The canonical grammar is maintained in the repository at
 [interpreter/src/jvmTest/resources/io/github/ehlyzov/branchline/ebnf.txt](https://github.com/ehlyzov/branchline-public/blob/main/interpreter/src/jvmTest/resources/io/github/ehlyzov/branchline/ebnf.txt)
 and is reproduced below for convenience.
 
@@ -174,3 +175,8 @@ predicate        ::= expression                                              ;
 ```
 
 The grammar file above is exercised by tests to stay synchronized with the implementation.
+
+## Related
+- [Lexical Structure](lexical.md)
+- [Statements](statements.md)
+- [Expressions](expressions.md)

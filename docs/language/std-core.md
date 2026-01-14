@@ -4,36 +4,33 @@ title: Core Standard Library
 
 # Core
 
-Utilities for working with objects and arrays.
+Utilities for working with objects, arrays, and iterables.
 
-## Shape and inspect data
-- `KEYS(coll)` → list of keys/indices. Lists return indices `[0,1,...]`. Errors on non list/object.
-- `VALUES(obj)` → list of values from an object. Errors if not an object.
-- `ENTRIES(obj)` → list of `{ key, value }` pairs. Errors if not an object.
-- `GET(obj, key[, default])` → value at key or `default` when missing. Errors if not an object.
+## Functions
+- `KEYS(coll)` → list of keys or indices.
+- `VALUES(obj)` → list of values from an object.
+- `ENTRIES(obj)` → list of `{ key, value }` pairs.
+- `GET(obj, key[, default])` → value at key or `default` when missing.
+- `PUT(coll, key, value)` → new list/object with entry added or replaced.
+- `DELETE(coll, key)` → remove an entry by key/index.
+- `APPEND(list, value)` / `PREPEND(list, value)` → new lists with value added.
+- `WALK(tree)` → iterable of nodes with `path`, `key`, `value`, and `depth`.
+- `COLLECT(iterable)` → list from a sequence/iterable.
+- `IS_OBJECT(x)` → true if value is a map/object.
+- `LISTIFY(x)` → `[]` for null, list as-is, or `[x]`.
+- `PRINT(...args)` → write to stdout and return `null` (CLI/runtime only).
 
-Run it: [KEYS/VALUES/ENTRIES example](../playground.md?example=stdlib-core-keys-values).
+## Examples
+- [KEYS/VALUES/ENTRIES](../playground.md?example=stdlib-core-keys-values)
+- [PUT/DELETE](../playground.md?example=stdlib-core-put-delete)
+- [APPEND/PREPEND/COLLECT](../playground.md?example=stdlib-core-append-prepend)
+- [WALK](../playground.md?example=stdlib-core-walk)
+- [LISTIFY/GET](../playground.md?example=stdlib-core-listify-get)
 
-## Update collections immutably
-- `PUT(coll, key, value)` → new list/object with the entry added or replaced. List indexes must be within `0..size` (append when equal to size).
-- `DELETE(coll, key)` → remove an entry by key/index. Errors if out of bounds or unsupported type.
-- `APPEND(list, value)` / `PREPEND(list, value)` → new lists with value at the end/start.
+## Notes
+- Object helpers error if used on non-objects.
+- List helpers require valid indices (append at `size`).
 
-Run it: [PUT/DELETE example](../playground.md?example=stdlib-core-put-delete) and [APPEND/PREPEND/COLLECT example](../playground.md?example=stdlib-core-append-prepend).
-
-## Walk trees
-- `WALK(tree)` → sequence describing each node: `path`, `key`, `value`, `depth`, `isLeaf`. Works on objects and lists; other values yield a single leaf entry.
-- Combine with `COLLECT` to materialize the sequence; use `MAP`/`FILTER` to inspect paths.
-
-Run it: [WALK example](../playground.md?example=stdlib-core-walk).
-
-## Normalize iterables
-- `COLLECT(iterable)` → list from a sequence/iterable. Errors on unsupported types.
-- `IS_OBJECT(x)` → boolean indicating object-ness (maps only).
-- `LISTIFY(x)` → `[]` for `null`, list as-is, or `[object]`. Errors on unsupported types.
-
-Run it: [APPEND/PREPEND/COLLECT example](../playground.md?example=stdlib-core-append-prepend).
-Run it: [LISTIFY/GET example](../playground.md?example=stdlib-core-listify-get).
-
-## Side effects
-- `PRINT(...args)` → writes to stdout, returns `null`. Use in CLI/runtime environments; not demonstrated in the playground because browser consoles do not display the call reliably.
+## Related
+- [Arrays](std-arrays.md)
+- [Higher-Order Functions](std-hof.md)
