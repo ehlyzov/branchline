@@ -1,9 +1,12 @@
 package io.github.ehlyzov.branchline
 
+import io.github.ehlyzov.branchline.runtime.bignum.blBigDecOfDouble
 import io.github.ehlyzov.branchline.runtime.bignum.blBigDecOfLong
 import io.github.ehlyzov.branchline.runtime.bignum.blBigDecParse
 import io.github.ehlyzov.branchline.runtime.bignum.blBigIntOfLong
 import io.github.ehlyzov.branchline.runtime.bignum.blBigIntParse
+import io.github.ehlyzov.branchline.runtime.bignum.toBLBigDec
+import io.github.ehlyzov.branchline.runtime.bignum.toDouble
 
 class ParseException(msg: String, val token: Token, val snippet: String? = null) :
     RuntimeException(
@@ -12,12 +15,13 @@ class ParseException(msg: String, val token: Token, val snippet: String? = null)
     )
 
 object NumOps {
-    fun isIntegral(n: NumValue) = n !is Dec
+    fun isIntegral(n: NumValue) = n !is Dec && n !is F64
 
     /** Снимает обёртку в Any-число нативного типа. */
     fun unwrap(n: NumValue): Any = when (n) {
         is I32 -> n.v
         is I64 -> n.v
+        is F64 -> n.v
         is IBig -> n.v
         is Dec -> n.v
     }
@@ -25,13 +29,15 @@ object NumOps {
     fun promote(a: NumValue, b: NumValue): Pair<NumValue, NumValue> {
         // пример политики: I32->I64->IBig->Dec
         val rank = when (a) {
-            is Dec -> 3
+            is Dec -> 4
+            is F64 -> 3
             is IBig -> 2
             is I64 -> 1
             is I32 -> 0
         }.coerceAtLeast(
             when (b) {
-                is Dec -> 3
+                is Dec -> 4
+                is F64 -> 3
                 is IBig -> 2
                 is I64 -> 1
                 is I32 -> 0
@@ -39,15 +45,25 @@ object NumOps {
         )
 
         fun lift(x: NumValue): NumValue = when (rank) {
-            3 -> when (x) {
+            4 -> when (x) {
                 is Dec -> x
+                is F64 -> Dec(blBigDecOfDouble(x.v))
                 is IBig -> Dec(blBigDecParse(x.v.toString()))
                 is I64 -> Dec(blBigDecOfLong(x.v))
                 is I32 -> Dec(blBigDecOfLong(x.v.toLong()))
             }
 
+            3 -> when (x) {
+                is Dec -> x
+                is F64 -> x
+                is IBig -> F64(x.v.toBLBigDec().toDouble())
+                is I64 -> F64(x.v.toDouble())
+                is I32 -> F64(x.v.toDouble())
+            }
+
             2 -> when (x) {
                 is Dec -> x // не опускаем
+                is F64 -> x
                 is IBig -> x
                 is I64 -> IBig(blBigIntOfLong(x.v))
                 is I32 -> IBig(blBigIntOfLong(x.v.toLong()))
@@ -55,6 +71,7 @@ object NumOps {
 
             1 -> when (x) {
                 is Dec -> x
+                is F64 -> x
                 is IBig -> x // не опускаем BLBigInt
                 is I64 -> x
                 is I32 -> I64(x.v.toLong())
@@ -771,7 +788,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     /*   *  /  %   */
     private fun parseFactor(): Expr {
         var expr = parseUnary()
-        while (match(TokenType.STAR, TokenType.SLASH, TokenType.PERCENT)) {
+        while (match(TokenType.STAR, TokenType.SLASH, TokenType.SLASH_SLASH, TokenType.PERCENT)) {
             val op = previous()
             val right = parseUnary()
             expr = BinaryExpr(expr, op, right)
@@ -1015,7 +1032,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
 
     private fun parseNumValue(lex: String): NumValue =
         if (lex.contains('.') || lex.contains('e', true)) {
-            Dec(blBigDecParse(lex))
+            F64(lex.toDouble())
         } else {
             lex.toIntOrNull()?.let(::I32)
                 ?: lex.toLongOrNull()?.let(::I64)

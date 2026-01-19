@@ -3,7 +3,7 @@ package io.github.ehlyzov.branchline.vm
 enum class Opcode {
     PUSH, DUP, POP, SWAP,
     LOAD_VAR, STORE_VAR, LOAD_SCOPE, LOAD_LOCAL, STORE_LOCAL,
-    ADD, SUB, MUL, DIV, MOD, NEG,
+    ADD, SUB, MUL, DIV, IDIV, MOD, NEG,
     EQ, NEQ, LT, LE, GT, GE,
     AND, OR, NOT, COALESCE,
     MAKE_OBJECT, MAKE_ARRAY, ACCESS_STATIC, ACCESS_DYNAMIC,
@@ -15,4 +15,3 @@ enum class Opcode {
     TRACE, BREAKPOINT, LINE, NOP,
     SUSPEND
 }
-

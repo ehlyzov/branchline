@@ -113,6 +113,7 @@ Experiment with Branchline directly in your browser—no installs required. The 
   [stdlib-agg-overview](?example=stdlib-agg-overview){ target="_blank" },
   [stdlib-strings-casts](?example=stdlib-strings-casts){ target="_blank" },
   [stdlib-strings-text](?example=stdlib-strings-text){ target="_blank" },
+  [stdlib-numeric-precision](?example=stdlib-numeric-precision){ target="_blank" },
   [stdlib-hof-overview](?example=stdlib-hof-overview){ target="_blank" },
   [stdlib-debug-explain](?example=stdlib-debug-explain){ target="_blank" },
   [stdlib-time-now](?example=stdlib-time-now){ target="_blank" }

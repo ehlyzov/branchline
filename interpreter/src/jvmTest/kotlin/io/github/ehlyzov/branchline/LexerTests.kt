@@ -201,6 +201,21 @@ class LexerTest {
     }
 
     @Test
+    fun `double slash tokenizes as integer division`() {
+        val tokens = lex("5 // 2")
+        val types = tokens.map { it.type }
+        assertEquals(
+            listOf(
+                TokenType.NUMBER,
+                TokenType.SLASH_SLASH,
+                TokenType.NUMBER,
+                TokenType.EOF,
+            ),
+            types
+        )
+    }
+
+    @Test
     fun `dot-prefixed and dot-suffixed numbers split correctly`() {
         val tokens = lex(".5 1.")
         val types = tokens.map { it.type }

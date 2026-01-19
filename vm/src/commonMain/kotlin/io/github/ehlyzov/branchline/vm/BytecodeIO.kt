@@ -102,6 +102,7 @@ object BytecodeIO {
         Instruction.SUB -> SerializedInstruction("SUB")
         Instruction.MUL -> SerializedInstruction("MUL")
         Instruction.DIV -> SerializedInstruction("DIV")
+        Instruction.IDIV -> SerializedInstruction("IDIV")
         Instruction.MOD -> SerializedInstruction("MOD")
         Instruction.NEG -> SerializedInstruction("NEG")
         Instruction.EQ -> SerializedInstruction("EQ")
@@ -163,6 +164,7 @@ object BytecodeIO {
         "SUB" -> Instruction.SUB
         "MUL" -> Instruction.MUL
         "DIV" -> Instruction.DIV
+        "IDIV" -> Instruction.IDIV
         "MOD" -> Instruction.MOD
         "NEG" -> Instruction.NEG
         "EQ" -> Instruction.EQ

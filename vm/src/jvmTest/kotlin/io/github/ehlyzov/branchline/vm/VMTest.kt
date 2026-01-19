@@ -178,6 +178,19 @@ class VMTest {
     }
 
     @Test
+    fun `integer division opcode truncates toward zero`() {
+        val instructions = listOf(
+            Instruction.PUSH(7),
+            Instruction.PUSH(2),
+            Instruction.IDIV
+        )
+        val bytecode = Bytecode.fromInstructions(instructions)
+        val vm = VM()
+
+        assertEquals(3, vm.execute(bytecode))
+    }
+
+    @Test
     fun `array comprehension evaluates correctly`() {
         // Parse expression and compile
         fun parseExpr(src: String): Expr {

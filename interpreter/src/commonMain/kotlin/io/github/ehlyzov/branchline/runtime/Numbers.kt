@@ -9,14 +9,10 @@ import io.github.ehlyzov.branchline.runtime.bignum.blBigIntOfLong
 // Platform-aware type checks to avoid commonMain warnings
 expect fun isBigInt(x: Any?): Boolean
 expect fun isBigDec(x: Any?): Boolean
+expect fun isSafeInteger(value: Long): Boolean
 
-fun toBigInt(n: Number): BLBigInt {
-    val any = n as Any
-    return when {
-        any is BLBigInt -> any
-        else -> blBigIntOfLong(n.toLong())
-    }
-}
+fun toBigInt(n: Number): BLBigInt =
+    (n as? BLBigInt) ?: blBigIntOfLong(n.toLong())
 
 fun toBigDec(n: Number): BLBigDec {
     val any = n as Any

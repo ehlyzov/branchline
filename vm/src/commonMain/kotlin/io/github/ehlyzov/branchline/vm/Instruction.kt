@@ -32,6 +32,7 @@ object InstructionTable {
         emptyArray(), // SUB
         emptyArray(), // MUL
         emptyArray(), // DIV
+        emptyArray(), // IDIV
         emptyArray(), // MOD
         emptyArray(), // NEG
         emptyArray(), // EQ
@@ -132,6 +133,9 @@ sealed class Instruction {
 
     /** Divide the top two stack elements */
     object DIV : Instruction()
+
+    /** Integer divide the top two stack elements */
+    object IDIV : Instruction()
 
     /** Modulo the top two stack elements */
     object MOD : Instruction()
@@ -349,6 +353,7 @@ data class Bytecode(
             Opcode.SUB -> Instruction.SUB
             Opcode.MUL -> Instruction.MUL
             Opcode.DIV -> Instruction.DIV
+            Opcode.IDIV -> Instruction.IDIV
             Opcode.MOD -> Instruction.MOD
             Opcode.NEG -> Instruction.NEG
             Opcode.EQ -> Instruction.EQ
@@ -483,6 +488,7 @@ data class Bytecode(
                     Instruction.SUB -> Opcode.SUB.ordinal
                     Instruction.MUL -> Opcode.MUL.ordinal
                     Instruction.DIV -> Opcode.DIV.ordinal
+                    Instruction.IDIV -> Opcode.IDIV.ordinal
                     Instruction.MOD -> Opcode.MOD.ordinal
                     Instruction.NEG -> Opcode.NEG.ordinal
                     Instruction.EQ -> Opcode.EQ.ordinal

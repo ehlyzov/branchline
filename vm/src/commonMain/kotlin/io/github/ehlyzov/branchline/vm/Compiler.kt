@@ -555,6 +555,7 @@ class Compiler(
                         TokenType.PLUS -> lnum + rnum
                         TokenType.MINUS -> lnum - rnum
                         TokenType.STAR -> lnum * rnum
+                        TokenType.SLASH_SLASH -> if (rnum == 0) null else lnum / rnum
                         TokenType.PERCENT -> if (rnum == 0) null else lnum % rnum
                         // avoid folding division due to int/float semantics
                         else -> null
@@ -566,6 +567,7 @@ class Compiler(
                         TokenType.PLUS -> lnum + rnum
                         TokenType.MINUS -> lnum - rnum
                         TokenType.STAR -> lnum * rnum
+                        TokenType.SLASH_SLASH -> if (rnum == 0L) null else lnum / rnum
                         TokenType.PERCENT -> if (rnum == 0L) null else lnum % rnum
                         else -> null
                     }
@@ -612,6 +614,7 @@ class Compiler(
                     TokenType.MINUS -> emit(SUB)
                     TokenType.STAR -> emit(MUL)
                     TokenType.SLASH -> emit(DIV)
+                    TokenType.SLASH_SLASH -> emit(IDIV)
                     TokenType.PERCENT -> emit(MOD)
                     TokenType.EQ -> emit(EQ)
                     TokenType.NEQ -> emit(NEQ)
@@ -1068,6 +1071,7 @@ class Compiler(
     private fun unwrapNum(value: NumValue): Any = when (value) {
         is I32 -> value.v
         is I64 -> value.v
+        is F64 -> value.v
         is IBig -> value.v
         is Dec -> value.v
     }

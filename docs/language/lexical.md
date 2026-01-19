@@ -23,6 +23,7 @@ This page outlines the tokens recognized by the Branchline lexer. Tokens are gro
 | MINUS | `-` | `a - b` |
 | STAR | `*` | `a * b` |
 | SLASH | `/` | `a / b` |
+| SLASH_SLASH | `//` | `a // b` |
 | PERCENT | `%` | `a % b` |
 | CONCAT | `++` | `xs ++ ys` |
 | LT / LE | `<` `<=` | `a <= b` |
@@ -55,6 +56,10 @@ Use backticks to escape any keyword when you need it as a name (for example,
 `` `if` ``).
 
 Backtick identifiers accept any characters except a backtick or newline.
+
+Line comments use `//` only when they appear at the start of a line or after a statement delimiter
+(for example, after a semicolon). Use that form if you want comments that would otherwise conflict
+with the `//` integer division operator.
 
 ### Statement Keywords
 

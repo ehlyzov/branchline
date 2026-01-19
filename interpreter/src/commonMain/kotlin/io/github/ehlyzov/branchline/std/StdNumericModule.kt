@@ -6,7 +6,10 @@ import io.github.ehlyzov.branchline.runtime.bignum.BL_BIG_DEC_ZERO
 import io.github.ehlyzov.branchline.runtime.bignum.BL_BIG_INT_ONE
 import io.github.ehlyzov.branchline.runtime.bignum.BL_BIG_INT_ZERO
 import io.github.ehlyzov.branchline.runtime.bignum.bitLength
+import io.github.ehlyzov.branchline.runtime.bignum.blBigDecOfDouble
+import io.github.ehlyzov.branchline.runtime.bignum.blBigDecParse
 import io.github.ehlyzov.branchline.runtime.bignum.blBigIntOfLong
+import io.github.ehlyzov.branchline.runtime.bignum.blBigIntParse
 import io.github.ehlyzov.branchline.runtime.bignum.ceil
 import io.github.ehlyzov.branchline.runtime.bignum.compareTo
 import io.github.ehlyzov.branchline.runtime.bignum.div
@@ -20,6 +23,7 @@ import io.github.ehlyzov.branchline.runtime.bignum.signum
 import io.github.ehlyzov.branchline.runtime.bignum.times
 import io.github.ehlyzov.branchline.runtime.bignum.toBLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.toBLBigInt
+import io.github.ehlyzov.branchline.runtime.bignum.toDouble
 import io.github.ehlyzov.branchline.runtime.bignum.toInt
 import io.github.ehlyzov.branchline.runtime.bignum.toLong
 import io.github.ehlyzov.branchline.runtime.bignum.unaryMinus
@@ -30,12 +34,46 @@ import kotlin.math.floor
 class StdNumericModule : StdModule {
     override fun register(r: StdRegistry) {
         r.fn("ABS", ::fnABS)
+        r.fn("DEC", ::fnDEC)
         r.fn("FLOOR", ::fnFLOOR)
         r.fn("CEIL", ::fnCEIL)
         r.fn("ROUND", ::fnROUND)
         r.fn("POWER", ::fnPOWER)
         r.fn("SQRT", ::fnSQRT)
         r.fn("RANDOM", ::fnRANDOM)
+    }
+}
+
+/**
+ * DEC(x) – explicit opt-in to precise numeric domain (BigInt/BigDec).
+ */
+private fun fnDEC(args: List<Any?>): Any? {
+    require(args.size == 1) { "DEC(x)" }
+    val v = args[0] ?: return null
+    return when (v) {
+        is BLBigInt -> v
+        is BLBigDec -> v
+        is String -> parseDecString(v)
+        is Long -> blBigIntOfLong(v)
+        is Int -> blBigIntOfLong(v.toLong())
+        is Short -> blBigIntOfLong(v.toLong())
+        is Byte -> blBigIntOfLong(v.toLong())
+        is Double -> blBigDecOfDouble(v)
+        is Float -> blBigDecOfDouble(v.toDouble())
+        is Number -> blBigDecOfDouble(v.toDouble())
+        else -> error("DEC: unsupported type ${v::class.simpleName}")
+    }
+}
+
+private fun parseDecString(value: String): Any {
+    val trimmed = value.trim()
+    if (trimmed.isEmpty()) {
+        error("DEC: cannot parse '$value'")
+    }
+    return if (trimmed.contains('.') || trimmed.contains('e', true)) {
+        blBigDecParse(trimmed)
+    } else {
+        blBigIntParse(trimmed)
     }
 }
 
@@ -98,14 +136,14 @@ private fun fnROUND(args: List<Any?>): Any? {
     val v = args[0] ?: return null
     val precision = if (args.size == 2) parsePrecision(args[1]) else 0
     return when (v) {
-        is Int -> roundIntegralInt(v, precision)
-        is Long -> roundIntegralLong(v, precision)
-        is Short -> roundIntegralInt(v.toInt(), precision)
-        is Byte -> roundIntegralInt(v.toInt(), precision)
-        is Float -> roundHalfEvenDouble(v.toDouble(), precision).toFloat()
-        is Double -> roundHalfEvenDouble(v, precision)
-        is BLBigInt -> roundIntegralBigInt(v, precision)
-        is BLBigDec -> v.roundHalfEven(precision)
+        is Int -> roundIntegerValue(v.toLong(), precision, preferInt = true)
+        is Long -> roundIntegerValue(v, precision, preferInt = false)
+        is Short -> roundIntegerValue(v.toLong(), precision, preferInt = true)
+        is Byte -> roundIntegerValue(v.toLong(), precision, preferInt = true)
+        is Float -> roundFloatValue(v.toDouble(), precision)
+        is Double -> roundFloatValue(v, precision)
+        is BLBigInt -> roundBigIntValue(v, precision)
+        is BLBigDec -> roundBigDecValue(v, precision)
         else -> error("ROUND: arg must be numeric")
     }
 }
@@ -154,31 +192,40 @@ private fun parsePrecisionDouble(value: Double): Int {
 private val BL_BIG_INT_TWO: BLBigInt = blBigIntOfLong(2)
 private val BL_BIG_INT_TEN: BLBigInt = blBigIntOfLong(10)
 
-private fun roundIntegralInt(value: Int, precision: Int): Any {
-    if (precision >= 0) return value
-    val rounded = roundIntegralBigInt(blBigIntOfLong(value.toLong()), precision)
-    val asLong = rounded.toLong()
-    val asLongBig = blBigIntOfLong(asLong)
-    return if (asLong in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong() &&
-        asLongBig.compareTo(rounded) == 0
-    ) {
-        asLong.toInt()
-    } else if (asLongBig.compareTo(rounded) == 0) {
-        asLong
-    } else {
-        rounded
+private fun roundIntegerValue(value: Long, precision: Int, preferInt: Boolean): Any {
+    if (precision > 0) {
+        return roundHalfEvenDouble(value.toDouble(), precision)
     }
+    if (precision == 0) {
+        return narrowInteger(value, preferInt)
+    }
+    val rounded = roundIntegralBigInt(blBigIntOfLong(value), precision)
+    return narrowBigInt(rounded, preferInt)
 }
 
-private fun roundIntegralLong(value: Long, precision: Int): Any {
-    if (precision >= 0) return value
-    val rounded = roundIntegralBigInt(blBigIntOfLong(value), precision)
-    val asLong = rounded.toLong()
-    return if (blBigIntOfLong(asLong).compareTo(rounded) == 0) {
-        asLong
-    } else {
-        rounded
+private fun roundFloatValue(value: Double, precision: Int): Any {
+    if (precision > 0) {
+        return roundHalfEvenDouble(value, precision)
     }
+    val rounded = roundHalfEvenDouble(value, precision)
+    return doubleToInteger(rounded)
+}
+
+private fun roundBigIntValue(value: BLBigInt, precision: Int): Any {
+    if (precision > 0) {
+        return roundHalfEvenDouble(value.toBLBigDec().toDouble(), precision)
+    }
+    if (precision == 0) return narrowBigInt(value, preferInt = false)
+    val rounded = roundIntegralBigInt(value, precision)
+    return narrowBigInt(rounded, preferInt = false)
+}
+
+private fun roundBigDecValue(value: BLBigDec, precision: Int): Any {
+    if (precision > 0) {
+        return value.roundHalfEven(precision)
+    }
+    val rounded = value.roundHalfEven(precision).toBLBigInt()
+    return narrowBigInt(rounded, preferInt = false)
 }
 
 private fun roundIntegralBigInt(value: BLBigInt, precision: Int): BLBigInt {
@@ -210,6 +257,33 @@ private fun pow10BigInt(exp: Int): BLBigInt {
         i += 1
     }
     return result
+}
+
+private fun doubleToInteger(value: Double): Any {
+    require(value.isFinite()) { "ROUND: value must be finite" }
+    val asLong = value.toLong()
+    if (value == asLong.toDouble()) {
+        return narrowInteger(asLong, preferInt = true)
+    }
+    val bigInt = blBigDecOfDouble(value).toBLBigInt()
+    return narrowBigInt(bigInt, preferInt = true)
+}
+
+private fun narrowBigInt(value: BLBigInt, preferInt: Boolean): Any {
+    val asLong = value.toLong()
+    return if (blBigIntOfLong(asLong).compareTo(value) == 0) {
+        narrowInteger(asLong, preferInt)
+    } else {
+        value
+    }
+}
+
+private fun narrowInteger(value: Long, preferInt: Boolean): Any {
+    return if (preferInt && value in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) {
+        value.toInt()
+    } else {
+        value
+    }
 }
 
 /** POWER(base, exponent) – raises base to exponent. */
