@@ -87,6 +87,8 @@ class Exec(
     private val tracer: Tracer? = null,
     private val sharedStore: SharedStore? = null,
     private val caps: ExecutionCaps = ExecutionCaps.DEFAULT,
+    private val source: String? = null,
+    private val runtimeContextEnabled: Boolean = false,
     private val compiledFuncs: MutableMap<String, List<IRNode>> = HashMap(),
 ) {
     private val numericSites: MutableMap<BinaryExpr, NumericBinarySite> = HashMap()
@@ -153,6 +155,8 @@ class Exec(
         tracer = tracer,
         sharedStore = sharedStore,
         caps = caps,
+        source = source,
+        runtimeContextEnabled = runtimeContextEnabled,
         compiledFuncs = compiledFuncs,
     )
 
@@ -181,7 +185,7 @@ class Exec(
             v
         } catch (ex: Throwable) {
             t?.on(TraceEvent.Error("eval ${expr::class.simpleName}", ex))
-            throw ex
+            throw wrapRuntimeError(expr, ex)
         }
     }
 
@@ -203,6 +207,13 @@ class Exec(
         if (t != null && (t.opts.watch.isEmpty() || name in t.opts.watch)) {
             t.on(TraceEvent.Read(name, value))
         }
+    }
+
+    private fun wrapRuntimeError(expr: Expr, ex: Throwable): Throwable {
+        if (!runtimeContextEnabled) return ex
+        if (ex is RuntimeErrorWithContext) return ex
+        val snippet = source?.let { renderRuntimeSnippet(it, expr.token) }
+        return RuntimeErrorWithContext(expr.token, snippet, ex)
     }
 
     private fun renderNextPathSegment(container: Any?, segLabel: String, isDynamic: Boolean): String = when (container) {

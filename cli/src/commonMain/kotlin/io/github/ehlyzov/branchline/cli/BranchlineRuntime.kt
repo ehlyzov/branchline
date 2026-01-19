@@ -77,6 +77,8 @@ public class BranchlineProgram(
             funcs = funcs,
             tracer = tracer,
             sharedStore = SharedStoreProvider.store,
+            source = source,
+            runtimeContextEnabled = true,
         )
         val env = buildEnv(input)
         return exec.run(env, stringifyKeys = true)

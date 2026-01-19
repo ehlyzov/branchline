@@ -26,6 +26,7 @@ import io.github.ehlyzov.branchline.contract.ValueShape
 import io.github.ehlyzov.branchline.debug.CollectingTracer
 import io.github.ehlyzov.branchline.debug.TraceOptions
 import io.github.ehlyzov.branchline.debug.TraceReport
+import io.github.ehlyzov.branchline.ir.RuntimeErrorWithContext
 import io.github.ehlyzov.branchline.schema.NullabilityStyle
 import io.github.ehlyzov.branchline.sema.SemanticWarning
 import io.github.ehlyzov.branchline.std.StdLib
@@ -166,7 +167,7 @@ public object BranchlineCli {
             )
         } catch (ex: Exception) {
             handleCliError(
-                CliError(ex.message ?: ex.toString(), CliErrorKind.RUNTIME, parseResult.command),
+                CliError(formatRuntimeException(ex), CliErrorKind.RUNTIME, parseResult.command),
                 errorFormat,
             )
         }
@@ -1600,6 +1601,21 @@ private fun renderContractWarnings(warnings: List<SemanticWarning>): String {
 
 private fun indentLines(lines: List<String>, indent: String): List<String> =
     lines.map { line -> "$indent$line" }
+
+private fun formatRuntimeException(ex: Exception): String {
+    val base = ex.message ?: ex.toString()
+    val ctx = ex as? RuntimeErrorWithContext ?: return base
+    val snippet = ctx.snippet
+    return buildString {
+        append(base)
+        appendLine()
+        append("at [").append(ctx.token.line).append(":").append(ctx.token.column).append("]")
+        if (!snippet.isNullOrBlank()) {
+            appendLine()
+            append(snippet)
+        }
+    }
+}
 
 private fun handleCliError(error: CliError, format: ErrorFormat): Int {
     val payload = when (format) {

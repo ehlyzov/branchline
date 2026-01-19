@@ -1,8 +1,13 @@
 package io.github.ehlyzov.branchline.ir
 
 internal fun buildErrorValue(error: Throwable): Map<String, Any?> {
-    val message = error.message ?: error.toString()
-    val type = error::class.simpleName ?: "Exception"
+    val root = if (error is RuntimeErrorWithContext && error.cause != null) {
+        error.cause ?: error
+    } else {
+        error
+    }
+    val message = root.message ?: root.toString()
+    val type = root::class.simpleName ?: "Exception"
     return mapOf(
         "message" to message,
         "type" to type,
