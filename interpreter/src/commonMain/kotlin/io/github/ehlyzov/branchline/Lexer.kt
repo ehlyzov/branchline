@@ -127,7 +127,13 @@ class Lexer(private val source: String) {
                     else -> add(TokenType.PIPE, "|", startLine, startCol)
                 }
                 '/' -> when {
-                    match('/') -> while (!isAtEnd() && peek() != '\n') advance()
+                    match('/') -> {
+                        if (isLineCommentStart()) {
+                            while (!isAtEnd() && peek() != '\n') advance()
+                        } else {
+                            add(TokenType.SLASH_SLASH, "//", startLine, startCol)
+                        }
+                    }
                     match('*') -> blockComment(startLine, startCol)
                     else -> add(TokenType.SLASH, "/", startLine, startCol)
                 }
@@ -176,6 +182,32 @@ class Lexer(private val source: String) {
     private fun peekNext(): Char = if (index + 1 >= source.length) '\u0000' else source[index + 1]
     private fun peekPrev(): Char = if (index < 2) '\u0000' else source[index - 2]
     private fun isAtEnd(): Boolean = index >= source.length
+
+    private fun isLineCommentStart(): Boolean {
+        val prev = prevNonWhitespace()
+        if (prev == null || prev == '\n') return true
+        return !isExpressionTerminator(prev)
+    }
+
+    private fun prevNonWhitespace(): Char? {
+        var i = index - 3
+        while (i >= 0) {
+            val ch = source[i]
+            if (ch == ' ' || ch == '\t' || ch == '\r') {
+                i -= 1
+                continue
+            }
+            return ch
+        }
+        return null
+    }
+
+    private fun isExpressionTerminator(ch: Char): Boolean = when {
+        ch.isLetterOrDigit() -> true
+        ch == ')' || ch == ']' -> true
+        ch == '"' || ch == '_' || ch == '$' -> true
+        else -> false
+    }
 
     private fun blockComment(startLine: Int, startCol: Int) {
         while (!isAtEnd()) {

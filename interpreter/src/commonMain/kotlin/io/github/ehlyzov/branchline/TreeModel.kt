@@ -23,6 +23,9 @@ value class I32(val v: Int) : NumValue, ObjKey.Index
 value class I64(val v: Long) : NumValue, ObjKey.Index
 
 @JvmInline
+value class F64(val v: Double) : NumValue
+
+@JvmInline
 value class IBig(val v: BLBigInt) : NumValue, ObjKey.Index
 
 @JvmInline
@@ -70,4 +73,3 @@ class ObjMap(
         is IBig -> v
     }
 }
-

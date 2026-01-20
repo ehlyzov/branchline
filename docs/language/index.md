@@ -13,6 +13,7 @@ language specification is defined in an [EBNF grammar](grammar.md).
 - [Declarations](declarations.md)
 - [Statements](statements.md)
 - [Expressions](expressions.md)
+- [Numeric Semantics](numeric.md)
 
 
 ## Standard Library

@@ -1,0 +1,18 @@
+{
+  "title": "Stdlib: Numeric precision (DEC, /, //, ROUND)",
+  "description": "Compare float vs integer division, and opt into precise arithmetic with DEC().",
+  "program": [
+    "LET int_div = 7 // 2;",
+    "LET float_div = 7 / 2;",
+    "LET dec_sum = DEC(\"1.25\") + DEC(\"2.75\");",
+    "LET rounded = ROUND(2.5);",
+    "",
+    "OUTPUT {",
+    "    int_div: int_div,",
+    "    float_div: float_div,",
+    "    dec_sum: STRING(dec_sum),",
+    "    rounded: rounded",
+    "}"
+  ],
+  "input": {}
+}

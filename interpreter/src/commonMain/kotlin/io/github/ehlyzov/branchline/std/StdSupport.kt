@@ -2,18 +2,13 @@ package io.github.ehlyzov.branchline.std
 
 import io.github.ehlyzov.branchline.ir.FnValue
 import kotlin.collections.LinkedHashMap
-import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
-import io.github.ehlyzov.branchline.runtime.bignum.blBigDecOfDouble
-import io.github.ehlyzov.branchline.runtime.bignum.blBigDecOfLong
-import io.github.ehlyzov.branchline.runtime.bignum.blBigDecParse
 import io.github.ehlyzov.branchline.runtime.bignum.blBigIntParse
 import io.github.ehlyzov.branchline.runtime.bignum.bitLength
 import io.github.ehlyzov.branchline.runtime.bignum.signum
-import io.github.ehlyzov.branchline.runtime.bignum.toBLBigDec
-import io.github.ehlyzov.branchline.runtime.bignum.compareTo
 import io.github.ehlyzov.branchline.runtime.bignum.toInt
-import io.github.ehlyzov.branchline.runtime.bignum.toLong
+import io.github.ehlyzov.branchline.runtime.isNumericValue
+import io.github.ehlyzov.branchline.runtime.numericCompare
 import kotlin.comparisons.compareValues
 
 internal fun asIndex(x: Any?): Int = when (x) {
@@ -81,34 +76,8 @@ internal fun cloneDelete(map: Map<*, *>, key: Any): LinkedHashMap<Any?, Any?> =
         for ((k, v) in map) if (k != key) this[k] = v
     }
 
-internal fun toBigDecOrNull(value: Any?): BLBigDec? = when (value) {
-    is BLBigDec -> value
-    is BLBigInt -> value.toBLBigDec()
-    is Long -> blBigDecOfLong(value)
-    is Int -> blBigDecOfLong(value.toLong())
-    is Short -> blBigDecOfLong(value.toLong())
-    is Byte -> blBigDecOfLong(value.toLong())
-    is Double -> blBigDecOfDouble(value)
-    is Float -> blBigDecOfDouble(value.toDouble())
-    is Number -> blBigDecParse(value.toString())
-    is UInt -> blBigDecParse(value.toString())
-    is ULong -> blBigDecParse(value.toString())
-    is UShort -> blBigDecParse(value.toString())
-    is UByte -> blBigDecParse(value.toString())
-    is String -> try {
-        blBigDecParse(value)
-    } catch (_: IllegalArgumentException) {
-        null
-    } catch (_: NumberFormatException) {
-        null
-    }
-    else -> null
-}
-
 internal fun compareAny(a: Any?, b: Any?): Int {
-    val aNum = toBigDecOrNull(a)
-    val bNum = toBigDecOrNull(b)
-    if (aNum != null && bNum != null) return aNum.compareTo(bNum)
+    if (isNumericValue(a) && isNumericValue(b)) return numericCompare(a, b)
     if (a is Boolean && b is Boolean) {
         return when {
             a == b -> 0

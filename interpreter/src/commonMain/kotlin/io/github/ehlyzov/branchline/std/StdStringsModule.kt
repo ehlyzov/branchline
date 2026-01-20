@@ -3,7 +3,6 @@ package io.github.ehlyzov.branchline.std
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
 import io.github.ehlyzov.branchline.runtime.bignum.blBigDecOfDouble
-import io.github.ehlyzov.branchline.runtime.bignum.blBigDecParse
 import io.github.ehlyzov.branchline.runtime.bignum.blBigIntOfLong
 import io.github.ehlyzov.branchline.runtime.bignum.blBigIntParse
 import io.github.ehlyzov.branchline.runtime.bignum.compareTo
@@ -47,13 +46,7 @@ private fun fnNUMBER(args: List<Any?>): Any? {
     val v = args[0] ?: return null
     return when (v) {
         is Number -> v
-        is String -> try {
-            blBigDecParse(v)
-        } catch (_: IllegalArgumentException) {
-            error("NUMBER: cannot parse '$v'")
-        } catch (_: NumberFormatException) {
-            error("NUMBER: cannot parse '$v'")
-        }
+        is String -> parseNumericString(v)
 
         is Boolean -> if (v) 1 else 0
         else -> error("NUMBER: unsupported type ${v::class.simpleName}")
@@ -327,4 +320,18 @@ private fun requireWhole(value: BLBigDec, fnName: String): BLBigInt {
         "$fnName: expected integer, got ${value.toPlainString()}"
     }
     return asInt
+}
+
+private fun parseNumericString(value: String): Any {
+    val trimmed = value.trim()
+    if (trimmed.isEmpty()) {
+        error("NUMBER: cannot parse '$value'")
+    }
+    return if (trimmed.contains('.') || trimmed.contains('e', true)) {
+        trimmed.toDoubleOrNull() ?: error("NUMBER: cannot parse '$value'")
+    } else {
+        trimmed.toIntOrNull()
+            ?: trimmed.toLongOrNull()
+            ?: error("NUMBER: integer out of range; use DEC(\"$value\") for BigInt")
+    }
 }

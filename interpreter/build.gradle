@@ -14,7 +14,13 @@ kotlin {
         }
     }
     js(IR) {
-        browser()
+        browser {
+            testTask {
+                if (!System.getenv().containsKey("CHROME_BIN")) {
+                    enabled = false
+                }
+            }
+        }
         nodejs()
         binaries.library()
         binaries.executable()

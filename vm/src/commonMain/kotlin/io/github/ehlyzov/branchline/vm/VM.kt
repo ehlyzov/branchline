@@ -14,25 +14,41 @@ import io.github.ehlyzov.branchline.debug.TraceEvent
 import io.github.ehlyzov.branchline.debug.Tracer
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
-import io.github.ehlyzov.branchline.runtime.bignum.blBigDecOfDouble
 import io.github.ehlyzov.branchline.runtime.bignum.blBigDecOfLong
 import io.github.ehlyzov.branchline.runtime.bignum.blBigIntOfLong
-import io.github.ehlyzov.branchline.runtime.bignum.bitLength
+import io.github.ehlyzov.branchline.runtime.bignum.compareTo
 import io.github.ehlyzov.branchline.runtime.bignum.signum
+import io.github.ehlyzov.branchline.runtime.bignum.toDouble
 import io.github.ehlyzov.branchline.runtime.bignum.toBLBigDec
-import io.github.ehlyzov.branchline.runtime.bignum.toBLBigInt
 import io.github.ehlyzov.branchline.runtime.bignum.toLong
-import io.github.ehlyzov.branchline.runtime.bignum.toPlainString
 import io.github.ehlyzov.branchline.runtime.bignum.plus
 import io.github.ehlyzov.branchline.runtime.bignum.minus
 import io.github.ehlyzov.branchline.runtime.bignum.times
 import io.github.ehlyzov.branchline.runtime.bignum.div
 import io.github.ehlyzov.branchline.runtime.bignum.rem
 import io.github.ehlyzov.branchline.runtime.bignum.unaryMinus
-import io.github.ehlyzov.branchline.runtime.bignum.compareTo
 import io.github.ehlyzov.branchline.runtime.bignum.toInt
 import io.github.ehlyzov.branchline.runtime.isBigDec
 import io.github.ehlyzov.branchline.runtime.isBigInt
+import io.github.ehlyzov.branchline.runtime.NumericKind
+import io.github.ehlyzov.branchline.runtime.addIntegersFast
+import io.github.ehlyzov.branchline.runtime.addNumeric
+import io.github.ehlyzov.branchline.runtime.bigDecOfLongCached
+import io.github.ehlyzov.branchline.runtime.bigIntOfLongCached
+import io.github.ehlyzov.branchline.runtime.divNumeric
+import io.github.ehlyzov.branchline.runtime.idivIntegersFast
+import io.github.ehlyzov.branchline.runtime.idivNumeric
+import io.github.ehlyzov.branchline.runtime.isNumericValue
+import io.github.ehlyzov.branchline.runtime.mulIntegersFast
+import io.github.ehlyzov.branchline.runtime.mulNumeric
+import io.github.ehlyzov.branchline.runtime.negateNumeric
+import io.github.ehlyzov.branchline.runtime.numericCompare
+import io.github.ehlyzov.branchline.runtime.numericEquals
+import io.github.ehlyzov.branchline.runtime.numericKindOf
+import io.github.ehlyzov.branchline.runtime.remIntegersFast
+import io.github.ehlyzov.branchline.runtime.remNumeric
+import io.github.ehlyzov.branchline.runtime.subIntegersFast
+import io.github.ehlyzov.branchline.runtime.subNumeric
 
 /**
  * Stack-based Virtual Machine for Branchline DSL
@@ -71,6 +87,7 @@ class VM(
     private var pathWrites: Map<Int, PathWriteMeta> = emptyMap()
     private var activePc: Int = -1
     private val pathScratch = ArrayList<Any>(8)
+    private val numericSites: MutableMap<NumericSiteKey, NumericBinarySite> = HashMap()
 
     // Exception handling
     private val tryStack = ArrayDeque<TryFrame>()
@@ -319,11 +336,12 @@ class VM(
             }
 
             // Arithmetic Operations
-            is Instruction.ADD -> binaryArithmetic { l, r -> addNumbers(l, r) }
-            is Instruction.SUB -> binaryArithmetic { l, r -> subtractNumbers(l, r) }
-            is Instruction.MUL -> binaryArithmetic { l, r -> multiplyNumbers(l, r) }
-            is Instruction.DIV -> binaryArithmetic { l, r -> divideNumbers(l, r) }
-            is Instruction.MOD -> binaryArithmetic { l, r -> moduloNumbers(l, r) }
+            is Instruction.ADD -> binaryNumeric(VmNumericOp.ADD)
+            is Instruction.SUB -> binaryNumeric(VmNumericOp.SUB)
+            is Instruction.MUL -> binaryNumeric(VmNumericOp.MUL)
+            is Instruction.DIV -> binaryNumeric(VmNumericOp.DIV)
+            is Instruction.IDIV -> binaryNumeric(VmNumericOp.IDIV)
+            is Instruction.MOD -> binaryNumeric(VmNumericOp.MOD)
             is Instruction.NEG -> unaryArithmetic { negateNumber(it) }
 
             // Comparison Operations
@@ -461,11 +479,12 @@ class VM(
             }
 
             // Arithmetic Operations
-            Opcode.ADD -> binaryArithmetic { l, r -> addNumbers(l, r) }
-            Opcode.SUB -> binaryArithmetic { l, r -> subtractNumbers(l, r) }
-            Opcode.MUL -> binaryArithmetic { l, r -> multiplyNumbers(l, r) }
-            Opcode.DIV -> binaryArithmetic { l, r -> divideNumbers(l, r) }
-            Opcode.MOD -> binaryArithmetic { l, r -> moduloNumbers(l, r) }
+            Opcode.ADD -> binaryNumeric(VmNumericOp.ADD)
+            Opcode.SUB -> binaryNumeric(VmNumericOp.SUB)
+            Opcode.MUL -> binaryNumeric(VmNumericOp.MUL)
+            Opcode.DIV -> binaryNumeric(VmNumericOp.DIV)
+            Opcode.IDIV -> binaryNumeric(VmNumericOp.IDIV)
+            Opcode.MOD -> binaryNumeric(VmNumericOp.MOD)
             Opcode.NEG -> unaryArithmetic { negateNumber(it) }
 
             // Comparison Operations
@@ -604,23 +623,13 @@ class VM(
         else -> true
     }
 
-    private fun isNumeric(value: Any?): Boolean =
-        value is Number || isBigInt(value) || isBigDec(value)
+    private fun isNumeric(value: Any?): Boolean = isNumericValue(value)
 
     internal fun addNumbers(l: Any?, r: Any?): Any {
         return when {
             l is String || r is String -> l.toString() + r.toString()
             isNumeric(l) && isNumeric(r) -> {
-                val left = l
-                val right = r
-                when {
-                    isBigInt(left) || isBigInt(right) -> toBLBigInt(left) + toBLBigInt(right)
-                    isBigDec(left) || isBigDec(right) -> toBLBigDec(left) + toBLBigDec(right)
-                    left is Double || right is Double -> (left as Number).toDouble() + (right as Number).toDouble()
-                    left is Float || right is Float -> (left as Number).toFloat() + (right as Number).toFloat()
-                    left is Long || right is Long -> (left as Number).toLong() + (right as Number).toLong()
-                    else -> (left as Number).toInt() + (right as Number).toInt()
-                }
+                addNumeric(l, r)
             }
             else -> throw VMException.TypeMismatch(
                 "number or string",
@@ -633,171 +642,72 @@ class VM(
         if (!isNumeric(l) || !isNumeric(r)) {
             throw VMException.TypeMismatch("number", "${l} - ${r}")
         }
-        val left = l
-        val right = r
-        return when {
-            isBigInt(left) || isBigInt(right) -> toBLBigInt(left) - toBLBigInt(right)
-            isBigDec(left) || isBigDec(right) -> toBLBigDec(left) - toBLBigDec(right)
-            left is Double || right is Double -> (left as Number).toDouble() - (right as Number).toDouble()
-            left is Float || right is Float -> (left as Number).toFloat() - (right as Number).toFloat()
-            left is Long || right is Long -> (left as Number).toLong() - (right as Number).toLong()
-            else -> (left as Number).toInt() - (right as Number).toInt()
-        }
+        return subNumeric(l, r)
     }
 
     internal fun multiplyNumbers(l: Any?, r: Any?): Any {
         if (!isNumeric(l) || !isNumeric(r)) {
             throw VMException.TypeMismatch("number", "${l} * ${r}")
         }
-        val left = l
-        val right = r
-        return when {
-            isBigInt(left) || isBigInt(right) -> toBLBigInt(left) * toBLBigInt(right)
-            isBigDec(left) || isBigDec(right) -> toBLBigDec(left) * toBLBigDec(right)
-            left is Double || right is Double -> (left as Number).toDouble() * (right as Number).toDouble()
-            left is Float || right is Float -> (left as Number).toFloat() * (right as Number).toFloat()
-            left is Long || right is Long -> (left as Number).toLong() * (right as Number).toLong()
-            else -> (left as Number).toInt() * (right as Number).toInt()
-        }
+        return mulNumeric(l, r)
     }
 
     internal fun divideNumbers(l: Any?, r: Any?): Any {
         if (!isNumeric(l) || !isNumeric(r)) {
             throw VMException.TypeMismatch("number", "${l} / ${r}")
         }
-        val left = l
-        val right = r
-        if (right is Number && right.toDouble() == 0.0) {
-            throw VMException.DivisionByZero()
-        }
-        if (isBigDec(left) || isBigDec(right)) {
-            return toBLBigDec(left) / toBLBigDec(right)
-        }
-        val ai = toBLBigInt(left)
-        val bi = toBLBigInt(right)
-        if (bi.signum() == 0) {
-            throw VMException.DivisionByZero()
-        }
-        val rem = ai % bi
-        return if (rem.signum() == 0) {
-            val q = ai / bi
-            when {
-                q.bitLength() <= 31 -> q.toInt()
-                q.bitLength() <= 63 -> q.toLong()
-                else -> q
-            }
-        } else {
-            toBLBigDec(left) / toBLBigDec(right)
-        }
+        return divNumeric(l, r)
     }
 
     private fun moduloNumbers(l: Any?, r: Any?): Any {
         if (!isNumeric(l) || !isNumeric(r)) {
             throw VMException.TypeMismatch("number", "${l} % ${r}")
         }
-        val left = l
-        val right = r
-        if (right is Number && right.toDouble() == 0.0) {
-            throw VMException.DivisionByZero()
-        }
-        return when {
-            isBigInt(left) || isBigInt(right) -> toBLBigInt(left) % toBLBigInt(right)
-            isBigDec(left) || isBigDec(right) -> toBLBigDec(left) % toBLBigDec(right)
-            left is Double || right is Double -> (left as Number).toDouble() % (right as Number).toDouble()
-            left is Float || right is Float -> (left as Number).toFloat() % (right as Number).toFloat()
-            left is Long || right is Long -> (left as Number).toLong() % (right as Number).toLong()
-            else -> (left as Number).toInt() % (right as Number).toInt()
-        }
+        return remNumeric(l, r)
     }
 
     private fun negateNumber(value: Any?): Any {
         if (!isNumeric(value)) {
             throw VMException.TypeMismatch("number", value?.let { it::class.simpleName } ?: "null")
         }
-        val v = value
-        return when {
-            isBigInt(v) -> -(v as BLBigInt)
-            isBigDec(v) -> -(v as BLBigDec)
-            v is Double -> -v
-            v is Float -> -v
-            v is Long -> -v
-            v is Int -> -v
-            else -> -(v as Number).toInt()
-        }
-    }
-
-    private fun toBLBigInt(n: Any?): BLBigInt = when {
-        isBigInt(n) -> n as BLBigInt
-        isBigDec(n) -> (n as BLBigDec).toBLBigInt()
-        n is Long -> blBigIntOfLong(n)
-        n is Int -> blBigIntOfLong(n.toLong())
-        n is Number -> blBigIntOfLong(n.toLong())
-        else -> error("Expected numeric, got ${n?.let { it::class.simpleName } ?: "null"}")
-    }
-
-    private fun toBLBigDec(n: Any?): BLBigDec = when {
-        isBigDec(n) -> n as BLBigDec
-        isBigInt(n) -> (n as BLBigInt).toBLBigDec()
-        n is Double -> blBigDecOfDouble(n)
-        n is Float -> blBigDecOfDouble(n.toDouble())
-        n is Long -> blBigDecOfLong(n)
-        n is Int -> blBigDecOfLong(n.toLong())
-        n is Number -> blBigDecOfDouble(n.toDouble())
-        else -> error("Expected numeric, got ${n?.let { it::class.simpleName } ?: "null"}")
+        return negateNumeric(value)
     }
 
     internal fun compareValues(left: Any?, right: Any?): Int {
-        return when {
-            isNumeric(left) && isNumeric(right) -> {
-                val leftIsBig = isBigInt(left) || isBigDec(left)
-                val rightIsBig = isBigInt(right) || isBigDec(right)
-                if (leftIsBig || rightIsBig) {
-                    toBLBigDec(left).compareTo(toBLBigDec(right))
-                } else if ((left is Int || left is Long || left is Short || left is Byte) &&
-                    (right is Int || right is Long || right is Short || right is Byte)
-                ) {
-                    toLongPrimitive(left).compareTo(toLongPrimitive(right))
-                } else if (left is Double || right is Double || left is Float || right is Float) {
-                    (left as Number).toDouble().compareTo((right as Number).toDouble())
-                } else {
-                    toBLBigDec(left).compareTo(toBLBigDec(right))
-                }
-            }
-            else -> left.toString().compareTo(right.toString())
+        return if (isNumeric(left) && isNumeric(right)) {
+            numericCompare(left, right)
+        } else {
+            left.toString().compareTo(right.toString())
         }
     }
 
     internal fun equalsValues(left: Any?, right: Any?): Boolean {
-        if (!isNumeric(left) || !isNumeric(right)) return left == right
-        val leftIsBig = isBigInt(left) || isBigDec(left)
-        val rightIsBig = isBigInt(right) || isBigDec(right)
-        if (leftIsBig || rightIsBig) {
-            return toBLBigDec(left).compareTo(toBLBigDec(right)) == 0
+        return if (isNumeric(left) && isNumeric(right)) {
+            numericEquals(left, right)
+        } else {
+            left == right
         }
-        return when {
-            (left is Int || left is Long || left is Short || left is Byte) &&
-                (right is Int || right is Long || right is Short || right is Byte) ->
-                toLongPrimitive(left) == toLongPrimitive(right)
-            left is Double || right is Double || left is Float || right is Float ->
-                (left as Number).toDouble() == (right as Number).toDouble()
-            else -> toBLBigDec(left).compareTo(toBLBigDec(right)) == 0
-        }
-    }
-
-    private fun toLongPrimitive(n: Any?): Long = when (n) {
-        is Long -> n
-        is Int -> n.toLong()
-        is Short -> n.toLong()
-        is Byte -> n.toLong()
-        else -> error("Expected integer primitive, got ${n?.let { it::class.simpleName } ?: "null"}")
     }
 
     // === Binary Operations Helpers ===
 
-    private inline fun binaryArithmetic(op: (Any?, Any?) -> Any) {
+    private fun binaryNumeric(op: VmNumericOp) {
         val right = pop()
         val left = pop()
-        push(op(left, right))
+        if (op == VmNumericOp.ADD && (left is String || right is String)) {
+            push(left.toString() + right.toString())
+            return
+        }
+        val key = NumericSiteKey(bytecode, pc)
+        val site = numericSites.getOrPut(key) { NumericBinarySite(op) }
+        try {
+            push(site.eval(left, right))
+        } catch (e: IllegalArgumentException) {
+            if (e.message == "Division by zero") {
+                throw VMException.DivisionByZero()
+            }
+            throw e
+        }
     }
 
     private inline fun binaryComparison(op: (Any?, Any?) -> Boolean) {
@@ -1719,6 +1629,291 @@ class VM(
         val newSize = maxOf(4, maxOf(size, grow))
         locals = locals.copyOf(newSize)
     }
+}
+
+private enum class VmNumericOp {
+    ADD,
+    SUB,
+    MUL,
+    DIV,
+    IDIV,
+    MOD,
+}
+
+private data class NumericSiteKey(
+    val bytecode: Bytecode,
+    val pc: Int,
+)
+
+private const val NUMERIC_SITE_VARIANT_LIMIT = 4
+
+private class NumericBinarySite(
+    private val op: VmNumericOp,
+) {
+    private val variants: MutableList<NumericVariant> = ArrayList(NUMERIC_SITE_VARIANT_LIMIT)
+    private var megamorphic: Boolean = false
+
+    fun eval(left: Any?, right: Any?): Any {
+        val leftKind = numericKindOf(left) ?: error("$op expects numeric operands")
+        val rightKind = numericKindOf(right) ?: error("$op expects numeric operands")
+        if (!megamorphic) {
+            for (variant in variants) {
+                if (variant.matches(leftKind, rightKind)) {
+                    return variant.eval(left, right)
+                }
+            }
+            val variant = createNumericVariant(op, leftKind, rightKind)
+            if (variant != null) {
+                if (variants.size < NUMERIC_SITE_VARIANT_LIMIT) {
+                    variants.add(variant)
+                    return variant.eval(left, right)
+                }
+                megamorphic = true
+                return evalGenericNumeric(op, left, right)
+            }
+        }
+        return evalGenericNumeric(op, left, right)
+    }
+}
+
+private data class NumericVariant(
+    private val leftKind: NumericKind,
+    private val rightKind: NumericKind,
+    val eval: (Any?, Any?) -> Any,
+) {
+    fun matches(left: NumericKind, right: NumericKind): Boolean =
+        left == leftKind && right == rightKind
+}
+
+private fun createNumericVariant(
+    op: VmNumericOp,
+    leftKind: NumericKind,
+    rightKind: NumericKind,
+): NumericVariant? {
+    return when (op) {
+        VmNumericOp.ADD -> createAddVariant(leftKind, rightKind)
+        VmNumericOp.SUB -> createSubVariant(leftKind, rightKind)
+        VmNumericOp.MUL -> createMulVariant(leftKind, rightKind)
+        VmNumericOp.DIV -> createDivVariant(leftKind, rightKind)
+        VmNumericOp.IDIV -> createIDivVariant(leftKind, rightKind)
+        VmNumericOp.MOD -> createRemVariant(leftKind, rightKind)
+    }
+}
+
+private fun createAddVariant(leftKind: NumericKind, rightKind: NumericKind): NumericVariant? {
+    return when {
+        leftKind == NumericKind.I && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r ->
+                addIntegersFast(toLongValue(l), toLongValue(r), preferInt(l, r))
+            }
+        leftKind == NumericKind.F && rightKind == NumericKind.F ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) + toDoubleValue(r) }
+        leftKind == NumericKind.I && rightKind == NumericKind.F ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) + toDoubleValue(r) }
+        leftKind == NumericKind.F && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) + toDoubleValue(r) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt) + (r as BLBigInt) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt) + bigIntOfLongCached(toLongValue(r)) }
+        leftKind == NumericKind.I && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> bigIntOfLongCached(toLongValue(l)) + (r as BLBigInt) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.F ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) + toDoubleValue(r) }
+        leftKind == NumericKind.F && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) + toDoubleValue(r) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) + (r as BLBigDec) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) + bigDecOfLongCached(toLongValue(r)) }
+        leftKind == NumericKind.I && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> bigDecOfLongCached(toLongValue(l)) + (r as BLBigDec) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) + (r as BLBigInt).toBLBigDec() }
+        leftKind == NumericKind.BI && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt).toBLBigDec() + (r as BLBigDec) }
+        else -> null
+    }
+}
+
+private fun createSubVariant(leftKind: NumericKind, rightKind: NumericKind): NumericVariant? {
+    return when {
+        leftKind == NumericKind.I && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r ->
+                subIntegersFast(toLongValue(l), toLongValue(r), preferInt(l, r))
+            }
+        leftKind == NumericKind.F && rightKind == NumericKind.F ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) - toDoubleValue(r) }
+        leftKind == NumericKind.I && rightKind == NumericKind.F ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) - toDoubleValue(r) }
+        leftKind == NumericKind.F && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) - toDoubleValue(r) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt) - (r as BLBigInt) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt) - bigIntOfLongCached(toLongValue(r)) }
+        leftKind == NumericKind.I && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> bigIntOfLongCached(toLongValue(l)) - (r as BLBigInt) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.F ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) - toDoubleValue(r) }
+        leftKind == NumericKind.F && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) - toDoubleValue(r) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) - (r as BLBigDec) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) - bigDecOfLongCached(toLongValue(r)) }
+        leftKind == NumericKind.I && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> bigDecOfLongCached(toLongValue(l)) - (r as BLBigDec) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) - (r as BLBigInt).toBLBigDec() }
+        leftKind == NumericKind.BI && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt).toBLBigDec() - (r as BLBigDec) }
+        else -> null
+    }
+}
+
+private fun createMulVariant(leftKind: NumericKind, rightKind: NumericKind): NumericVariant? {
+    return when {
+        leftKind == NumericKind.I && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r ->
+                mulIntegersFast(toLongValue(l), toLongValue(r), preferInt(l, r))
+            }
+        leftKind == NumericKind.F && rightKind == NumericKind.F ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) * toDoubleValue(r) }
+        leftKind == NumericKind.I && rightKind == NumericKind.F ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) * toDoubleValue(r) }
+        leftKind == NumericKind.F && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) * toDoubleValue(r) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt) * (r as BLBigInt) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt) * bigIntOfLongCached(toLongValue(r)) }
+        leftKind == NumericKind.I && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> bigIntOfLongCached(toLongValue(l)) * (r as BLBigInt) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.F ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) * toDoubleValue(r) }
+        leftKind == NumericKind.F && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> toDoubleValue(l) * toDoubleValue(r) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) * (r as BLBigDec) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) * bigDecOfLongCached(toLongValue(r)) }
+        leftKind == NumericKind.I && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> bigDecOfLongCached(toLongValue(l)) * (r as BLBigDec) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) * (r as BLBigInt).toBLBigDec() }
+        leftKind == NumericKind.BI && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt).toBLBigDec() * (r as BLBigDec) }
+        else -> null
+    }
+}
+
+private fun createDivVariant(leftKind: NumericKind, rightKind: NumericKind): NumericVariant? {
+    return when {
+        leftKind == NumericKind.BD && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) / (r as BLBigDec) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) / bigDecOfLongCached(toLongValue(r)) }
+        leftKind == NumericKind.I && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> bigDecOfLongCached(toLongValue(l)) / (r as BLBigDec) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) / (r as BLBigInt).toBLBigDec() }
+        leftKind == NumericKind.BI && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt).toBLBigDec() / (r as BLBigDec) }
+        leftKind != NumericKind.BD && rightKind != NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r ->
+                val divisor = toDoubleValue(r)
+                require(divisor != 0.0) { "Division by zero" }
+                toDoubleValue(l) / divisor
+            }
+        else -> null
+    }
+}
+
+private fun createIDivVariant(leftKind: NumericKind, rightKind: NumericKind): NumericVariant? {
+    return when {
+        leftKind == NumericKind.I && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r ->
+                idivIntegersFast(toLongValue(l), toLongValue(r), preferInt(l, r))
+            }
+        leftKind == NumericKind.BI && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt) / (r as BLBigInt) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt) / bigIntOfLongCached(toLongValue(r)) }
+        leftKind == NumericKind.I && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> bigIntOfLongCached(toLongValue(l)) / (r as BLBigInt) }
+        else -> null
+    }
+}
+
+private fun createRemVariant(leftKind: NumericKind, rightKind: NumericKind): NumericVariant? {
+    return when {
+        leftKind == NumericKind.BD && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) % (r as BLBigDec) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) % bigDecOfLongCached(toLongValue(r)) }
+        leftKind == NumericKind.I && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> bigDecOfLongCached(toLongValue(l)) % (r as BLBigDec) }
+        leftKind == NumericKind.BD && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigDec) % (r as BLBigInt).toBLBigDec() }
+        leftKind == NumericKind.BI && rightKind == NumericKind.BD ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt).toBLBigDec() % (r as BLBigDec) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt) % (r as BLBigInt) }
+        leftKind == NumericKind.BI && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r -> (l as BLBigInt) % bigIntOfLongCached(toLongValue(r)) }
+        leftKind == NumericKind.I && rightKind == NumericKind.BI ->
+            NumericVariant(leftKind, rightKind) { l, r -> bigIntOfLongCached(toLongValue(l)) % (r as BLBigInt) }
+        leftKind == NumericKind.F || rightKind == NumericKind.F ->
+            NumericVariant(leftKind, rightKind) { l, r ->
+                val divisor = toDoubleValue(r)
+                require(divisor != 0.0) { "Division by zero" }
+                toDoubleValue(l) % divisor
+            }
+        leftKind == NumericKind.I && rightKind == NumericKind.I ->
+            NumericVariant(leftKind, rightKind) { l, r ->
+                remIntegersFast(toLongValue(l), toLongValue(r), preferInt(l, r))
+            }
+        else -> null
+    }
+}
+
+private fun evalGenericNumeric(op: VmNumericOp, left: Any?, right: Any?): Any = when (op) {
+    VmNumericOp.ADD -> addNumeric(left, right)
+    VmNumericOp.SUB -> subNumeric(left, right)
+    VmNumericOp.MUL -> mulNumeric(left, right)
+    VmNumericOp.DIV -> divNumeric(left, right)
+    VmNumericOp.IDIV -> idivNumeric(left, right)
+    VmNumericOp.MOD -> remNumeric(left, right)
+}
+
+private fun preferInt(left: Any?, right: Any?): Boolean =
+    isIntLike(left) && isIntLike(right)
+
+private fun isIntLike(value: Any?): Boolean =
+    value is Int || value is Short || value is Byte
+
+private fun toLongValue(value: Any?): Long = when (value) {
+    is Long -> value
+    is Int -> value.toLong()
+    is Short -> value.toLong()
+    is Byte -> value.toLong()
+    is Number -> value.toLong()
+    is BLBigInt -> value.toLong()
+    else -> error("Expected integer numeric")
+}
+
+private fun toDoubleValue(value: Any?): Double = when (value) {
+    is Double -> value
+    is Float -> value.toDouble()
+    is Long -> value.toDouble()
+    is Int -> value.toDouble()
+    is Short -> value.toDouble()
+    is Byte -> value.toDouble()
+    is BLBigInt -> value.toBLBigDec().toDouble()
+    is BLBigDec -> value.toDouble()
+    is Number -> value.toDouble()
+    else -> error("Expected numeric")
 }
 
 /**

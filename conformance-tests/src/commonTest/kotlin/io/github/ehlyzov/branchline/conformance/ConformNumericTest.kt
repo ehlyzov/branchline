@@ -2,6 +2,7 @@ package io.github.ehlyzov.branchline.conformance
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import io.github.ehlyzov.branchline.ir.buildRunnerFromProgramMP
 
 class ConformNumericTest {
@@ -30,15 +31,65 @@ class ConformNumericTest {
     }
 
     @Test
-    fun div_even_returns_int() {
+    fun div_always_returns_float() {
         val run = buildRunnerFromProgramMP(programOf("6 / 3"))
-        assertEquals(mapOf("v" to 2), run(emptyMap()))
+        assertEquals(mapOf("v" to 2.0), run(emptyMap()))
     }
 
     @Test
     fun mod_ints() {
         val run = buildRunnerFromProgramMP(programOf("7 % 3"))
         assertEquals(mapOf("v" to 1), run(emptyMap()))
+    }
+
+    @Test
+    fun int_div_truncates_toward_zero() {
+        val program = """
+            TRANSFORM T {
+                OUTPUT {
+                    pos: 7 // 2,
+                    neg: -7 // 2,
+                }
+            }
+        """.trimIndent()
+        val run = buildRunnerFromProgramMP(program)
+        assertEquals(mapOf("pos" to 3, "neg" to -3), run(emptyMap()))
+    }
+
+    @Test
+    fun dec_explicit_precision() {
+        val program = """
+            TRANSFORM T {
+                LET a = DEC("1.25");
+                LET b = DEC(2);
+                LET c = DEC(1.5);
+                OUTPUT {
+                    sumOk: (a + DEC("2.75")) == DEC("4.0"),
+                    intPromote: b == DEC("2"),
+                    floatPromote: (c + DEC("0.5")) == DEC("2.0"),
+                }
+            }
+        """.trimIndent()
+        val run = buildRunnerFromProgramMP(program)
+        assertEquals(
+            mapOf(
+                "sumOk" to true,
+                "intPromote" to true,
+                "floatPromote" to true,
+            ),
+            run(emptyMap()),
+        )
+    }
+
+    @Test
+    fun dec_rejects_mixed_float_ops() {
+        val program = """
+            TRANSFORM T {
+                OUTPUT { v: DEC("1.5") + 1.5 }
+            }
+        """.trimIndent()
+        val run = buildRunnerFromProgramMP(program)
+        assertFails { run(emptyMap()) }
     }
 
     @Test

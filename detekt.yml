@@ -1,0 +1,4 @@
+# Detekt configuration overrides.
+# Uses default rules via buildUponDefaultConfig in build.gradle.
+build:
+  maxIssues: 0

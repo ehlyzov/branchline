@@ -101,6 +101,7 @@ object BytecodeFormatter {
         is Instruction.SUB -> "SUB"
         is Instruction.MUL -> "MUL"
         is Instruction.DIV -> "DIV"
+        is Instruction.IDIV -> "IDIV"
         is Instruction.MOD -> "MOD"
         is Instruction.NEG -> "NEG"
         is Instruction.EQ -> "EQ"
