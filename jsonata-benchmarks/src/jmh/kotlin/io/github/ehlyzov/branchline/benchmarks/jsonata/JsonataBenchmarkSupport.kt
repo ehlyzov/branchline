@@ -15,6 +15,8 @@ import io.github.ehlyzov.branchline.ir.ToIR
 import io.github.ehlyzov.branchline.std.StdLib
 import io.github.ehlyzov.branchline.vm.VMFactory
 import java.lang.reflect.Method
+import java.nio.file.FileSystemNotFoundException
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -160,9 +162,16 @@ public object JsonataTestSuite {
 private fun resolveLocalTestSuiteRoot(): Path? {
     val resourceUrl = JsonataTestSuite::class.java.getResource(LOCAL_TEST_SUITE_RESOURCE) ?: return null
     return try {
-        if (resourceUrl.protocol != "file") {
-            return null
+        if (resourceUrl.protocol == "jar") {
+            val uri = resourceUrl.toURI()
+            try {
+                FileSystems.getFileSystem(uri)
+            } catch (_: FileSystemNotFoundException) {
+                FileSystems.newFileSystem(uri, emptyMap<String, Any>())
+            }
+            return Paths.get(uri)
         }
+        if (resourceUrl.protocol != "file") return null
         Paths.get(resourceUrl.toURI())
     } catch (_: Exception) {
         null

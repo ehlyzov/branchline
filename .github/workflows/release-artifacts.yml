@@ -201,6 +201,8 @@ jobs:
 
       - name: Run JSONata benchmarks
         if: env.RUN_JSONATA == 'true'
+        env:
+          JSONATA_TEST_SUITE_ROOT: ${{ github.workspace }}/jsonata-benchmarks/src/jmh/resources/jsonata-test-suite
         run: ./gradlew --no-daemon :jsonata-benchmarks:jmh
 
       - name: Build JSONata summary

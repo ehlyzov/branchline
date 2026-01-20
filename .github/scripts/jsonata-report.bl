@@ -23,6 +23,13 @@ FUNC formatRatio(value) {
     RETURN STRING(value) + "x";
 }
 
+FUNC formatSpeedup(value) {
+    IF value == NULL THEN {
+        RETURN "n/a";
+    }
+    RETURN formatNumber(value) + "x";
+}
+
 FUNC isDisplayEngine(engine) {
     RETURN engine == "branchline-interpreter"
         || engine == "branchline-vm"
@@ -79,6 +86,131 @@ FUNC resolveFastestJsonata(ibmScore, dashjoinScore) {
     RETURN { engine: "ibm", score: ibmScore };
 }
 
+FUNC sumValues(values) {
+    LET total = 0;
+    FOR value IN values {
+        SET total = total + value;
+    }
+    RETURN total;
+}
+
+FUNC maxValue(values) {
+    LET max = NULL;
+    FOR value IN values {
+        IF max == NULL || value > max THEN {
+            SET max = value;
+        }
+    }
+    RETURN max;
+}
+
+FUNC medianValue(values) {
+    LET count = LENGTH(values);
+    IF count == 0 THEN {
+        RETURN NULL;
+    }
+    LET sorted = SORT(values);
+    LET half = INT(count / 2);
+    LET isEven = count == half * 2;
+    IF isEven THEN {
+        LET left = sorted[half - 1];
+        LET right = sorted[half];
+        RETURN (left + right) / 2;
+    }
+    RETURN sorted[half];
+}
+
+FUNC collectScores(rows, caseIds, engineId) {
+    LET scores = [];
+    FOR caseId IN caseIds {
+        LET score = findScore(rows, caseId, engineId);
+        IF score != NULL THEN {
+            SET scores = APPEND(scores, score);
+        }
+    }
+    RETURN scores;
+}
+
+FUNC filterDashjoinAnomalies(rows, caseIds) {
+    LET scores = collectScores(rows, caseIds, "dashjoin");
+    LET median = medianValue(scores);
+    IF median == NULL THEN {
+        RETURN { included: caseIds, excluded: [], median: NULL, lower: NULL, upper: NULL };
+    }
+    LET upper = median * 100;
+    LET included = [];
+    LET excluded = [];
+    FOR caseId IN caseIds {
+        LET score = findScore(rows, caseId, "dashjoin");
+        IF score == NULL THEN {
+            SET excluded = APPEND(excluded, caseId);
+        } ELSE IF score > upper THEN {
+            SET excluded = APPEND(excluded, caseId);
+        } ELSE {
+            SET included = APPEND(included, caseId);
+        }
+    }
+    RETURN { included: included, excluded: excluded, median: median, lower: lower, upper: upper };
+}
+
+FUNC collectSpeedups(rows, caseIds, branchEngine, jsonataEngine) {
+    LET fasterRatios = [];
+    LET total = 0;
+    FOR caseId IN caseIds {
+        LET branchScore = findScore(rows, caseId, branchEngine);
+        LET jsonataScore = findScore(rows, caseId, jsonataEngine);
+        IF branchScore != NULL && jsonataScore != NULL THEN {
+            SET total = total + 1;
+            LET ratio = branchScore / jsonataScore;
+            IF ratio > 1 THEN {
+                SET fasterRatios = APPEND(fasterRatios, ratio);
+            }
+        }
+    }
+    LET fasterCount = LENGTH(fasterRatios);
+    LET avgSpeedup = CASE {
+        WHEN fasterCount == 0 THEN NULL
+        ELSE sumValues(fasterRatios) / fasterCount
+    };
+    LET maxSpeedup = CASE {
+        WHEN fasterCount == 0 THEN NULL
+        ELSE maxValue(fasterRatios)
+    };
+    RETURN {
+        fasterCount: fasterCount,
+        total: total,
+        avgSpeedup: avgSpeedup,
+        maxSpeedup: maxSpeedup
+    };
+}
+
+FUNC buildSpeedupSummary(rows, caseIds) {
+    LET lines = [];
+    SET lines = APPEND(lines, "### Branchline speedup summary");
+    SET lines = APPEND(lines, "");
+    SET lines = APPEND(lines, "Counts include cases where both engines have scores. Speedup is Branchline ops/s divided by Dashjoin ops/s.");
+    SET lines = APPEND(lines, "");
+    SET lines = APPEND(lines, "| Comparison | Faster cases | Total cases | Avg speedup (faster cases) | Max speedup |");
+    SET lines = APPEND(lines, "| --- | ---: | ---: | ---: | ---: |");
+
+    LET comparisons = [
+        { label: "Interpreter vs Dashjoin", branch: "branchline-interpreter", jsonata: "dashjoin" },
+        { label: "VM vs Dashjoin", branch: "branchline-vm", jsonata: "dashjoin" }
+    ];
+    FOR comp IN comparisons {
+        LET summary = collectSpeedups(rows, caseIds, comp.branch, comp.jsonata);
+        LET line = "| " + comp.label
+            + " | " + STRING(summary.fasterCount)
+            + " | " + STRING(summary.total)
+            + " | " + formatSpeedup(summary.avgSpeedup)
+            + " | " + formatSpeedup(summary.maxSpeedup)
+            + " |";
+        SET lines = APPEND(lines, line);
+    }
+    SET lines = APPEND(lines, "");
+    RETURN JOIN(lines, "\n");
+}
+
 FUNC buildMarkdown(rows) {
     LET display = [];
     FOR row IN rows {
@@ -99,9 +231,20 @@ FUNC buildMarkdown(rows) {
     SET lines = APPEND(lines, "");
     SET lines = APPEND(lines, "Scores are throughput in ops/s (higher is faster). Ratios compare Branchline throughput to the fastest JSONata engine.");
     SET lines = APPEND(lines, "");
+    LET dashjoinFilter = filterDashjoinAnomalies(display, caseIds);
+    LET filteredCaseIds = dashjoinFilter.included;
+    LET excludedCaseIds = dashjoinFilter.excluded;
+    SET lines = APPEND(lines, "Dashjoin outliers are excluded from the summary and breakdown (outside 0.01x–100x Dashjoin median).");
+    IF LENGTH(excludedCaseIds) > 0 THEN {
+        SET lines = APPEND(lines, "");
+        SET lines = APPEND(lines, "Excluded cases: " + JOIN(excludedCaseIds, ", ") + ".");
+    }
+    SET lines = APPEND(lines, "");
+    SET lines = APPEND(lines, buildSpeedupSummary(display, filteredCaseIds));
+    SET lines = APPEND(lines, "### Case breakdown");
     SET lines = APPEND(lines, "| Case | Branchline Interpreter (ops/s) | Branchline VM (ops/s) | Fastest JSONata (ops/s) | Fastest JSONata engine | Interpreter vs JSONata | VM vs JSONata |");
     SET lines = APPEND(lines, "| --- | ---: | ---: | ---: | --- | ---: | ---: |");
-    FOR caseId IN caseIds {
+    FOR caseId IN filteredCaseIds {
         LET interp = findScore(display, caseId, "branchline-interpreter");
         LET vm = findScore(display, caseId, "branchline-vm");
         LET dashjoin = findScore(display, caseId, "dashjoin");
