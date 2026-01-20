@@ -27,6 +27,7 @@ import io.github.ehlyzov.branchline.runtime.bignum.toDouble
 import io.github.ehlyzov.branchline.runtime.bignum.toInt
 import io.github.ehlyzov.branchline.runtime.bignum.toLong
 import io.github.ehlyzov.branchline.runtime.bignum.unaryMinus
+import io.github.ehlyzov.branchline.runtime.isPlatformIntegerNumber
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -135,15 +136,18 @@ private fun fnROUND(args: List<Any?>): Any? {
     require(args.size in 1..2) { "ROUND(number[, precision])" }
     val v = args[0] ?: return null
     val precision = if (args.size == 2) parsePrecision(args[1]) else 0
-    return when (v) {
-        is Int -> roundIntegerValue(v.toLong(), precision, preferInt = true)
-        is Long -> roundIntegerValue(v, precision, preferInt = false)
-        is Short -> roundIntegerValue(v.toLong(), precision, preferInt = true)
-        is Byte -> roundIntegerValue(v.toLong(), precision, preferInt = true)
-        is Float -> roundFloatValue(v.toDouble(), precision)
-        is Double -> roundFloatValue(v, precision)
-        is BLBigInt -> roundBigIntValue(v, precision)
-        is BLBigDec -> roundBigDecValue(v, precision)
+    return when {
+        v is BLBigDec -> roundBigDecValue(v, precision)
+        v is BLBigInt -> roundBigIntValue(v, precision)
+        isPlatformIntegerNumber(v) -> {
+            val asLong = when (v) {
+                is Long -> v
+                is Number -> v.toLong()
+                else -> error("ROUND: arg must be numeric")
+            }
+            roundIntegerValue(asLong, precision, preferInt = v is Int || v is Short || v is Byte)
+        }
+        v is Number -> roundFloatValue(v.toDouble(), precision)
         else -> error("ROUND: arg must be numeric")
     }
 }

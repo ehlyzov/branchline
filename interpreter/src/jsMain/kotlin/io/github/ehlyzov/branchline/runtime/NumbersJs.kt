@@ -11,3 +11,9 @@ actual fun isSafeInteger(value: Long): Boolean {
     val maxSafe = 9_007_199_254_740_991L
     return value in -maxSafe..maxSafe
 }
+
+actual fun isPlatformIntegerNumber(value: Any?): Boolean = when (value) {
+    is Long -> true
+    is Number -> js("Number.isInteger(value)") as Boolean
+    else -> false
+}

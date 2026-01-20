@@ -24,14 +24,39 @@ enum class NumericKind {
     BD,
 }
 
+private const val SMALL_INT_MIN = -128
+private const val SMALL_INT_MAX = 128
+private val SMALL_BIGINT_CACHE = Array(SMALL_INT_MAX - SMALL_INT_MIN + 1) { index ->
+    blBigIntOfLong((SMALL_INT_MIN + index).toLong())
+}
+private val SMALL_BIGDEC_CACHE = Array(SMALL_INT_MAX - SMALL_INT_MIN + 1) { index ->
+    blBigDecOfLong((SMALL_INT_MIN + index).toLong())
+}
+
+fun bigIntOfLongCached(value: Long): BLBigInt {
+    return if (value in SMALL_INT_MIN.toLong()..SMALL_INT_MAX.toLong()) {
+        SMALL_BIGINT_CACHE[(value - SMALL_INT_MIN).toInt()]
+    } else {
+        blBigIntOfLong(value)
+    }
+}
+
+fun bigDecOfLongCached(value: Long): BLBigDec {
+    return if (value in SMALL_INT_MIN.toLong()..SMALL_INT_MAX.toLong()) {
+        SMALL_BIGDEC_CACHE[(value - SMALL_INT_MIN).toInt()]
+    } else {
+        blBigDecOfLong(value)
+    }
+}
+
 fun isNumericValue(value: Any?): Boolean =
     value is Number || isBigInt(value) || isBigDec(value)
 
 fun numericKindOf(value: Any?): NumericKind? = when {
     isBigDec(value) -> NumericKind.BD
     isBigInt(value) -> NumericKind.BI
+    isPlatformIntegerNumber(value) -> NumericKind.I
     value is Double || value is Float -> NumericKind.F
-    value is Int || value is Long || value is Short || value is Byte -> NumericKind.I
     value is Number -> NumericKind.F
     else -> null
 }
@@ -169,7 +194,7 @@ fun negateNumeric(value: Any?): Any {
         NumericKind.I -> {
             val v = toLongValue(value)
             if (v == Long.MIN_VALUE) {
-                -(blBigIntOfLong(v))
+                -(bigIntOfLongCached(v))
             } else {
                 narrowInteger(-v, preferInt = isIntLike(value))
             }
@@ -179,37 +204,37 @@ fun negateNumeric(value: Any?): Any {
 
 fun addIntegersFast(left: Long, right: Long, preferInt: Boolean): Any {
     if (!isSafeInteger(left) || !isSafeInteger(right)) {
-        return blBigIntOfLong(left) + blBigIntOfLong(right)
+        return bigIntOfLongCached(left) + bigIntOfLongCached(right)
     }
     val result = safeAddLong(left, right)
     return if (result != null && isSafeInteger(result)) {
         narrowInteger(result, preferInt)
     } else {
-        blBigIntOfLong(left) + blBigIntOfLong(right)
+        bigIntOfLongCached(left) + bigIntOfLongCached(right)
     }
 }
 
 fun subIntegersFast(left: Long, right: Long, preferInt: Boolean): Any {
     if (!isSafeInteger(left) || !isSafeInteger(right)) {
-        return blBigIntOfLong(left) - blBigIntOfLong(right)
+        return bigIntOfLongCached(left) - bigIntOfLongCached(right)
     }
     val result = safeSubLong(left, right)
     return if (result != null && isSafeInteger(result)) {
         narrowInteger(result, preferInt)
     } else {
-        blBigIntOfLong(left) - blBigIntOfLong(right)
+        bigIntOfLongCached(left) - bigIntOfLongCached(right)
     }
 }
 
 fun mulIntegersFast(left: Long, right: Long, preferInt: Boolean): Any {
     if (!isSafeInteger(left) || !isSafeInteger(right)) {
-        return blBigIntOfLong(left) * blBigIntOfLong(right)
+        return bigIntOfLongCached(left) * bigIntOfLongCached(right)
     }
     val result = safeMulLong(left, right)
     return if (result != null && isSafeInteger(result)) {
         narrowInteger(result, preferInt)
     } else {
-        blBigIntOfLong(left) * blBigIntOfLong(right)
+        bigIntOfLongCached(left) * bigIntOfLongCached(right)
     }
 }
 
@@ -241,21 +266,21 @@ private fun ensureNoDecimalFloatMix(left: NumericKind, right: NumericKind, opNam
 private fun toBigIntExact(value: Any?): BLBigInt = when (value) {
     is BLBigInt -> value
     is BLBigDec -> value.toBLBigInt()
-    is Long -> blBigIntOfLong(value)
-    is Int -> blBigIntOfLong(value.toLong())
-    is Short -> blBigIntOfLong(value.toLong())
-    is Byte -> blBigIntOfLong(value.toLong())
-    is Number -> blBigIntOfLong(value.toLong())
+    is Long -> bigIntOfLongCached(value)
+    is Int -> bigIntOfLongCached(value.toLong())
+    is Short -> bigIntOfLongCached(value.toLong())
+    is Byte -> bigIntOfLongCached(value.toLong())
+    is Number -> bigIntOfLongCached(value.toLong())
     else -> error("Expected integer numeric")
 }
 
 private fun toBigDecExact(value: Any?): BLBigDec = when (value) {
     is BLBigDec -> value
     is BLBigInt -> value.toBLBigDec()
-    is Long -> blBigDecOfLong(value)
-    is Int -> blBigDecOfLong(value.toLong())
-    is Short -> blBigDecOfLong(value.toLong())
-    is Byte -> blBigDecOfLong(value.toLong())
+    is Long -> bigDecOfLongCached(value)
+    is Int -> bigDecOfLongCached(value.toLong())
+    is Short -> bigDecOfLongCached(value.toLong())
+    is Byte -> bigDecOfLongCached(value.toLong())
     else -> error("Expected decimal-compatible numeric")
 }
 

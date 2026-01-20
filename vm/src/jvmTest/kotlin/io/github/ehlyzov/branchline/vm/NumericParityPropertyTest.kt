@@ -6,6 +6,7 @@ import net.jqwik.api.constraints.LongRange
 import java.math.BigDecimal
 import java.math.BigInteger
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import io.github.ehlyzov.branchline.ExecutionEngine
 import io.github.ehlyzov.branchline.testutils.compileAndRun
 
@@ -67,7 +68,13 @@ class NumericParityPropertyTest {
                 |eq: row.a == row.b, 
                 |ne: row.a != row.b 
             |};""".trimMargin()
-        val (i, v) = runBoth(body, mapOf("a" to a, "b" to b))
-        assertEquals(i, v)
+        val interpreter = runCatching {
+            compileAndRun(body, row = mapOf("a" to a, "b" to b), engine = ExecutionEngine.INTERPRETER)
+        }
+        val vm = runCatching {
+            compileAndRun(body, row = mapOf("a" to a, "b" to b), engine = ExecutionEngine.VM)
+        }
+        assertTrue(interpreter.isFailure, "Interpreter should reject decimal/float comparisons")
+        assertTrue(vm.isFailure, "VM should reject decimal/float comparisons")
     }
 }

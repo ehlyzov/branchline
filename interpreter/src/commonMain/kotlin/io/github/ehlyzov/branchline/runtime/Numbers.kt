@@ -10,6 +10,7 @@ import io.github.ehlyzov.branchline.runtime.bignum.blBigIntOfLong
 expect fun isBigInt(x: Any?): Boolean
 expect fun isBigDec(x: Any?): Boolean
 expect fun isSafeInteger(value: Long): Boolean
+expect fun isPlatformIntegerNumber(value: Any?): Boolean
 
 fun toBigInt(n: Number): BLBigInt =
     (n as? BLBigInt) ?: blBigIntOfLong(n.toLong())

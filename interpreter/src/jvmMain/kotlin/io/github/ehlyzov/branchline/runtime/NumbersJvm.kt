@@ -8,3 +8,6 @@ actual fun isBigInt(x: Any?): Boolean = x is BigInteger
 actual fun isBigDec(x: Any?): Boolean = x is BigDecimal
 
 actual fun isSafeInteger(value: Long): Boolean = true
+
+actual fun isPlatformIntegerNumber(value: Any?): Boolean =
+    value is Int || value is Long || value is Short || value is Byte

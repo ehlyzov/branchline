@@ -190,7 +190,7 @@ class Lexer(private val source: String) {
     }
 
     private fun prevNonWhitespace(): Char? {
-        var i = index - 2
+        var i = index - 3
         while (i >= 0) {
             val ch = source[i]
             if (ch == ' ' || ch == '\t' || ch == '\r') {
