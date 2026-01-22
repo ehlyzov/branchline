@@ -4,8 +4,13 @@ title: Time Standard Library
 
 # Time
 
-Utilities for working with time.
+Time helpers for timestamps.
 
+## Functions
 - `NOW()` → current timestamp string in ISO format using the host clock.
 
-Run it: [NOW example](../playground.md?example=stdlib-time-now).
+## Example
+- [stdlib-time-now](../playground.md?example=stdlib-time-now)
+
+## Notes
+- Timestamps depend on the host clock (browser or runtime).

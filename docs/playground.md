@@ -1,84 +1,11 @@
 ---
 title: Interactive Playground
 description: Try Branchline in your browser with the interactive playground.
-hide:
-  - navigation
-  - toc
 ---
 
 # Interactive Playground
 
-Experiment with Branchline directly in your browser—no installs required. The layout below is full-width to give editors more room. Pick an example, edit the program and input, enable tracing, and run.
-
-<script>
-  // Add a page-specific class so we can scope layout overrides to this page only.
-  document.addEventListener('DOMContentLoaded', () => {
-    document.body.classList.add('page-playground');
-  });
-</script>
-
-<style>
-  /* Full-width layout for this page only */
-  body.page-playground .md-sidebar--primary,
-  body.page-playground .md-sidebar--secondary {
-    display: none;
-  }
-  body.page-playground .md-main__inner {
-    margin: 0;
-  }
-  body.page-playground .md-content {
-    margin: 0;
-    max-width: none;
-    width: 100%;
-  }
-  body.page-playground .md-content__inner {
-    max-width: none;
-    padding: 0;
-  }
-  body.page-playground .md-typeset {
-    max-width: none;
-    padding: 0;
-  }
-  body.page-playground .md-content .playground-embed,
-  body.page-playground .md-content .playground-frame,
-  body.page-playground .md-content .bl-playground {
-    width: 100%;
-  }
-  /* Shell styling around the embed */
-  body.page-playground .playground-embed {
-    margin: 0;
-    padding: 8px 0 0;
-  }
-  body.page-playground .playground-embed__intro {
-    background: rgba(37, 99, 235, 0.06);
-    border: 1px solid rgba(37, 99, 235, 0.12);
-    border-radius: 12px;
-    padding: 12px 16px;
-    margin-bottom: 12px;
-    color: var(--md-default-fg-color--light, #475569);
-  }
-  body.page-playground .playground-embed__intro code {
-    background: rgba(37, 99, 235, 0.12);
-    padding: 2px 6px;
-    border-radius: 6px;
-  }
-  body.page-playground .playground-frame {
-    border-radius: 14px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    overflow: hidden;
-  }
-  body.page-playground .playground-embed__actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-  }
-  body.page-playground .playground-embed__hint {
-    font-size: 14px;
-    color: var(--md-default-fg-color--light, #475569);
-  }
-</style>
+Experiment with Branchline directly in your browser—no installs required. Pick an example, edit the program and input, enable tracing, and run.
 
 <link rel="stylesheet" href="../assets/playground.css">
 

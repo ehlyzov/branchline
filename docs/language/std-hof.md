@@ -8,6 +8,7 @@ Functional helpers that take other functions as arguments.
 
 Each helper expects a function value of the form `(value, index, list) -> ...` unless noted.
 
+## Functions
 - `MAP(list, fn)` → transforms each element.
 - `FILTER(list, fn)` → keeps elements where `fn` is truthy.
 - `REDUCE(list, init, fn)` → accumulates from `init`.
@@ -18,4 +19,5 @@ Each helper expects a function value of the form `(value, index, list) -> ...` u
 
 Truthy rules: `null` and `false` are falsey; numbers are falsey only when `0`; strings are falsey only when empty.
 
-Run it: [Higher-order helpers example](../playground.md?example=stdlib-hof-overview).
+## Example
+- [stdlib-hof-overview](../playground.md?example=stdlib-hof-overview)

@@ -7,225 +7,106 @@ title: Statements
 Statements control execution and side effects within blocks.
 
 ## Quick patterns
-- Use `LET` for new bindings and `SET` for mutation inside loops.
-- Guard code with `IF` and `TRY/CATCH`; pair `ASSERT`/`THROW` for explicit failures.
-- `FOR`/`FOR EACH` iterate collections; comprehensions in expressions provide a shorthand for building arrays.
-- `OUTPUT { ... }` shapes final payloads; nested `OUTPUT` is allowed for intermediate blocks.
-- `CALL` bridges to host functions; `AWAIT`/`SUSPEND` require host support for async/concurrency.
+- Use `LET` for new bindings and `SET` for mutation.
+- Guard code with `IF` and `TRY/CATCH`.
+- `FOR EACH` iterates collections; comprehensions provide shorthand for arrays.
+- `OUTPUT { ... }` shapes final payloads.
 
 ## Output {#output}
+`OUTPUT` specifies how results are emitted from the pipeline.
 
-The `OUTPUT` statement specifies how results are emitted from the pipeline.
+```branchline
+OUTPUT { id: input.id, total: input.total };
+```
 
 ## Using {#using}
-
-The `USING` clause references adapters and external modules.
+`USING` references adapters and external modules.
 
 ## Transform {#transform}
+`TRANSFORM` defines transformation steps. Use `TRANSFORM Name { ... }` or include `{ buffer }` after the name to mark buffer mode explicitly.
 
-The `TRANSFORM` statement defines transformation steps in the pipeline. Use
-`TRANSFORM Name { ... }` or include `{ buffer }` after the name to mark buffer
-mode explicitly.
+## For loops {#for}
+`FOR` and `FOR EACH` iterate over collections.
 
-## For Loops {#for}
+```branchline
+FOR EACH item IN input.items WHERE item.qty > 0 {
+    OUTPUT { name: item.name, qty: item.qty };
+}
+```
 
-The `FOR` and `FOR EACH` statements provide iteration over collections.
+## If statements {#if}
+`IF` provides conditional branching.
 
-## If Statements {#if}
-
-The `IF` statement provides conditional branching.
+```branchline
+IF input.enabled {
+    OUTPUT { status: "enabled" };
+} ELSE {
+    OUTPUT { status: "disabled" };
+}
+```
 
 ## Enumerations {#enum}
+`ENUM` defines enumerated types inside `TYPE` declarations.
 
-The `ENUM` statement defines enumerated types.
-
-## For Each {#foreach}
-
-The `FOREACH` statement provides a shortcut for iteration.
+## For each shorthand {#foreach}
+`FOREACH` is a shorthand loop form.
 
 ## Input {#input}
-
-The `INPUT` keyword references the pipeline input data (alias: `input`).
+`INPUT` references the pipeline input data.
 
 ## Abort {#abort}
-
-The `ABORT` statement terminates execution immediately.
+`ABORT` terminates execution immediately.
 
 ## Throw {#throw}
+`THROW` raises an error.
 
-The `THROW` statement raises an exception.
+## Try/Catch {#try}
+`TRY` handles errors and exceptions.
 
-## Try {#try}
-
-The `TRY` statement handles errors and exceptions.
+```branchline
+TRY {
+    OUTPUT { value: input.value };
+} CATCH {
+    OUTPUT { value: null };
+}
+```
 
 ## Call {#call}
-
-The `CALL` statement invokes host-provided functions and binds the result to
-an identifier.
-
-Example:
+`CALL` invokes host-provided functions.
 
 ```branchline
 CALL inventoryService(input) -> payload;
 ```
 
 ## Shared {#shared}
-
-The `SHARED` statement declares shared memory resources.
-
-To wait for a shared entry from within a program, use the `AWAIT_SHARED(resource, key)` stdlib function (requires a configured shared store in the host). This cannot be demonstrated in the playground because no shared store is wired there.
-
-Example:
+`SHARED` declares shared memory resources.
 
 ```branchline
 SHARED session MANY;
-
-session["lastSeen"] = NOW();
-session["userId"] = input.user.id;
 ```
-
-For `SINGLE` shared resources, you can omit the key (`cache[] = value`) and the default key is used. `MANY` resources require an explicit key.
 
 ## Functions {#func}
-
-The `FUNC` statement declares functions.
+`FUNC` declares reusable functions.
 
 ## Types {#type}
-
-The `TYPE` statement declares custom types.
+`TYPE` declares custom types.
 
 ## Return {#return}
-
-The `RETURN` statement exits from functions.
-
-```
-returnStmt ::= RETURN expression? ";"
-```
+`RETURN` exits from functions.
 
 ## Modify {#modify}
-
-The `MODIFY` statement changes existing values.
-
-```
-modifyStmt ::= MODIFY modifyTarget modifyBlock ";"
-```
+`MODIFY` changes existing values.
 
 ## Where {#where}
+`WHERE` filters loop iterations and comprehensions.
 
-The `WHERE` clause provides filtering conditions.
-
-```
-forStmt   ::= ( FOR EACH | FOR ) IDENTIFIER IN expression ( WHERE expression )? block
-arrayComp ::= "[" expression FOR EACH IDENTIFIER IN expression ( WHERE expression )? "]"
-```
-
-## Set {#set}
-
-The `SET` statement performs assignments.
-
-```
-setStmt ::= SET setTarget "=" expression ";"
-```
+## Set/Append/Init {#set}
+`SET`, `APPEND`, `TO`, and `INIT` are assignment operations used in loops and shared writes.
 
 ## Init {#init}
+`INIT` provides an initial value when appending to a missing target.
 
-The `INIT` statement provides initial values.
-
-```
-appendStmt ::= APPEND TO setTarget expression ( INIT expression )? ";"
-```
-
-```
-statement ::= letStmt | ifStmt | forStmt | tryStmt | callStmt
-            | setStmt | appendStmt | modifyStmt | returnStmt
-            | sharedWrite | suspendStmt | abortStmt | throwStmt
-            | nestedOutput | expressionStmt | ;
-```
-
-## Variable binding
-
-```
-letStmt ::= LET IDENTIFIER "=" expression ";"
-```
-
-`LET` introduces a new variable bound to the result of an expression.
-
-## Control flow
-
-```
-ifStmt ::= IF expression block ( ELSE block )?
-forStmt ::= ( FOR EACH | FOR ) IDENTIFIER IN expression
-            ( WHERE expression )? block
-```
-
-Conditionals and loops evaluate expressions to drive branching and iteration.
-
-## Error handling
-
-```
-tryStmt ::= TRY expression CATCH "(" IDENTIFIER ")" retrySpec? arrow expression
-retrySpec ::= RETRY NUMBER TIMES ( BACKOFF STRING )?
-```
-
-`TRY` evaluates an expression and binds an error to the given identifier if one
-occurs. The same syntax is available as an expression; see
-[Expressions](expressions.md#try).
-
-## Calls and mutation
-
-```
-callStmt    ::= optAwait CALL IDENTIFIER "(" argList? ")" arrow IDENTIFIER ";"
-setStmt     ::= SET setTarget "=" expression ";"
-appendStmt  ::= APPEND TO setTarget expression ( INIT expression )? ";"
-modifyStmt  ::= MODIFY modifyTarget modifyBlock ";"
-returnStmt  ::= RETURN expression? ";"
-sharedWrite ::= IDENTIFIER "[" expression? "]" "=" expression ";"
-```
-
-Call statements invoke suspended functions, while `sharedWrite` mutates shared
-memory slots.
-
-## Mutation statements
-
-```
-setStmt    ::= SET setTarget "=" expression ";"
-appendStmt ::= APPEND TO setTarget expression ( INIT expression )? ";"
-modifyStmt ::= MODIFY modifyTarget modifyBlock ";"
-```
-
-`SET` assigns values to variables or paths, `APPEND TO` pushes values into lists
-(optionally seeding with `INIT`), and `MODIFY` applies updates to a static
-object path.
-
-## Suspension and termination
-
-```
-suspendStmt ::= SUSPEND expression ";"
-abortStmt  ::= ABORT expression? ";"
-throwStmt  ::= THROW expression? ";"
-```
-
-These statements pause or terminate execution, optionally carrying an
-expression.
-
-## Nested output and expressions
-
-```
-nestedOutput   ::= OUTPUT expression
-expressionStmt ::= expression ";"
-```
-
-Nested `OUTPUT` blocks and bare expressions complete the statement set.
-
-## Constraints
-
-- `TRY` wraps expressions and binds errors to the identifier in `CATCH`.
-- `CALL`, `AWAIT`, and `SUSPEND` require host support to execute.
-- `SHARED` resources must be declared before use and rely on host-provided storage.
-
-## Performance tips
-
-- Bind frequently used paths with `LET` to avoid repeated traversal.
-- Prefer `FOREACH`/comprehensions over manual index loops when shaping arrays.
-- Keep `OUTPUT` blocks focused; build intermediate objects with `LET` for clarity.
+## Related
+- [Expressions](expressions.md)
+- [Declarations](declarations.md)
+- [FOR EACH Loops](../guides/for-each.md)

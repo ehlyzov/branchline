@@ -4,7 +4,7 @@ title: JSONata Benchmarks
 
 # JSONata Benchmarks
 
-This page tracks Branchline vs JSONata performance on a curated case matrix.
+Branchline vs JSONata performance on a curated case matrix.
 
 ## Latest release results
 
@@ -14,7 +14,7 @@ This page tracks Branchline vs JSONata performance on a curated case matrix.
 
 --8<-- "benchmarks/jsonata/releases/list.md"
 
-Full archive: [Release benchmark history](releases/).
+Full archive: [Release benchmark history](jsonata/releases/index.md).
 
 ## Scope
 

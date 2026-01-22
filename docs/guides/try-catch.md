@@ -1,55 +1,48 @@
 ---
-title: Error Handling with TRY/CATCH
+title: TRY/CATCH
 ---
 
-# Error Handling with TRY/CATCH
+# TRY/CATCH
 
-Use `TRY` / `CATCH` to handle failures and optionally retry operations. `TRY`
-is an expression, so it can be used in `LET`, `CASE`, or output templates.
+`TRY/CATCH` handles failures without aborting the whole transform. `TRY` is an expression, so it can be used in `LET`, `CASE`, or output templates.
 
-## Catching failures
+## When to use it
+Use `TRY/CATCH` around risky lookups, parsing, or assertions so you can emit a safe fallback value.
 
+## Syntax
 ```branchline
-TRY riskyCall()
-CATCH(e) => { err: e.message };
+LET value = TRY parse(input.raw)
+CATCH(err) => { ok: false, error: err.message };
+```
+The identifier in `CATCH(...)` is bound to an error object with `message` and `type` fields.
+
+## Example
+```branchline
+TRANSFORM SafeTotals {
+    LET total = TRY SUM(input.items)
+    CATCH(err) => 0;
+
+    OUTPUT { total: total };
+}
 ```
 
-If `riskyCall()` throws, the fallback block produces an error object. The
-identifier in `CATCH(...)` is bound to a small error object with `message` and
-`type` fields.
-
-## Retrying
-
-Add `RETRY n TIMES` to re-run the expression before giving up.
+## Retry logic
+Use `RETRY` with `TIMES` and optional `BACKOFF` for transient failures.
 
 ```branchline
-TRY fetch(input.id)
-CATCH(e) RETRY 3 TIMES => { err: "failed" };
+LET result = TRY fetch(input.url)
+CATCH(err) RETRY 3 TIMES BACKOFF 200ms => null;
 ```
 
-The call is attempted three additional times. If all attempts fail, the fallback runs.
-
-## With backoff
-```branchline
-TRY remoteService(input)
-CATCH(err) RETRY 2 TIMES BACKOFF 500ms => {
-    error: err.message ?? "service failed"
-};
-```
-Adds a fixed backoff between attempts. (Host must support `CALL` and backoff semantics.)
-
-## Guardrails with ASSERT
-Combine `ASSERT` to fail fast on bad states:
-```branchline
-LET result = TRY risky(input) CATCH(e) => NULL;
-ASSERT(result != NULL, "Risky call failed");
-```
-
-## Tips
-- `TRY` wraps expressions; use it sparingly and close to the failing call.
-- Provide clear fallback values/objects for downstream logic.
-- `BACKOFF` units follow host runtime defaults (e.g., ms).
-- Pair with `CHECKPOINT` when you need progress markers around retries.
+## Pitfalls
+- Keep the `TRY` body small so errors are easy to interpret.
+- Prefer `ASSERT` for explicit failure conditions; use `TRY/CATCH` to keep the pipeline running.
+- `BACKOFF` units follow host runtime defaults (for example, ms).
 
 ## Try it
-Open the [pipeline-health-gating](../playground.md?example=pipeline-health-gating) example in the playground to see ASSERT and tracing in action; adapt it to wrap `TRY/CATCH` around external calls in your own snippets.
+- [error-handling-try-catch](../playground.md?example=error-handling-try-catch){ target="_blank" }
+- [stdlib-debug-explain](../playground.md?example=stdlib-debug-explain){ target="_blank" }
+
+## Related
+- [Error Handling and Tracing](../learn/error-handling.md)
+- [Statements](../language/statements.md#try)
