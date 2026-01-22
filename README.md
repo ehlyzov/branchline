@@ -30,17 +30,18 @@ Branchline ships with experimental CLI helpers for JVM and Node runtimes. Runnin
 
 **Quick usage (JVM)**
 
-- Run a script: `./gradlew :cli:runBl --args "examples/hello.bl --input fixtures/hello.json"`
-- Compile to bytecode: `./gradlew :cli:runBlc --args "examples/hello.bl --output build/hello.blc"`
-- Execute bytecode (VM): `./gradlew :cli:runBlvm --args "build/hello.blc --input fixtures/hello.json"`
-- Pipe input via stdin: `cat fixtures/hello.json | ./gradlew :cli:runBl --args "examples/hello.bl --input -" --quiet`
+1. Download the JVM CLI fat jar from GitHub Releases (asset: `branchline-cli-<tag>-all.jar`).
+2. Run a script:
+   `java -jar branchline-cli-<tag>-all.jar examples/hello.bl --input fixtures/hello.json`
+3. Pipe input via stdin:
+   `cat fixtures/hello.json | java -jar branchline-cli-<tag>-all.jar examples/hello.bl --input - --quiet`
 
-**Node bundle**
+**Quick usage (Node)**
 
-1. Build the package (installs dependencies automatically): `./gradlew :cli:prepareJsCliPackage`
-2. Run the CLI: `node cli/build/cliJsPackage/bin/bl.cjs path/to/program.bl --input sample.json`
-
-The Gradle build also produces a distributable archive via `./gradlew :cli:packageJsCli` (tarball under `cli/build/distributions/`) that bundles the CLI entry point, compiled Kotlin/JS artifacts, and the packaged `node_modules/` dependencies.
+1. Download the Node CLI tarball from GitHub Releases (asset: `branchline-cli-js-<tag>.tgz`).
+2. Extract it and run:
+   `tar -xzf branchline-cli-js-<tag>.tgz`
+   `./bin/bl.cjs path/to/program.bl --input sample.json`
 
 Both runtimes accept `--input-format xml` for XML payloads.
 
@@ -48,7 +49,7 @@ Both runtimes accept `--input-format xml` for XML payloads.
 
 - CLI: `branchline-cli-js-<tag>.tgz` (Node), `branchline-cli-<tag>-all.jar` (JVM, fat jar).
 - Libraries: `branchline-interpreter-<tag>-jvm.jar`, `branchline-vm-<tag>-jvm.jar`, plus JS packages `branchline-interpreter-<tag>-js.tgz` and `branchline-vm-<tag>-js.tgz` for Node/JS runtimes.
-- Download from GitHub Releases or build locally with `./gradlew :cli:packageJsCli :cli:blShadowJar :interpreter:jvmJar :vm:jvmJar :interpreter:jsNodeProductionLibraryDistribution :vm:jsNodeProductionLibraryDistribution`.
+- Download from GitHub Releases (assets attached per tag).
 
 ## Project Status
 
@@ -68,16 +69,12 @@ See the [Release Readiness & Stability guide](docs/guides/release-readiness.md) 
 
 Branchline uses JMH benchmarks for the interpreter and VM with shared datasets.
 
-- Run locally: `./gradlew :interpreter-benchmarks:jmh :vm-benchmarks:jmh`.
-- Results: `interpreter-benchmarks/build/results/jmh/results.json` and
-  `vm-benchmarks/build/results/jmh/results.json`.
-- Release summary: `./gradlew :cli:runBl --args ".github/scripts/jmh-report.bl --shared-file jmh=interpreter-benchmarks/build/results/jmh/results.json --shared-file jmh=vm-benchmarks/build/results/jmh/results.json --shared-format json --shared-key relative --write-output --write-output-dir build/benchmarks"`.
+- Release summaries are attached to GitHub Releases when available.
 - Methodology and comparison guidance: `docs/benchmarks.md`.
 - Planned automation: publish per-release results and highlight regressions
   without blocking the release.
 
-You can also run benchmarks for dashjoint's and IBM's implementation of JSONata. For JSONata code snippets from official repository is used.
-You can run it yourself via: `./gradlew :jsonata-benchmarks:jmh -PjmhIncludes=io.github.ehlyzov.branchline.benchmarks.jsonata.CrossEngineBenchmark`
+JSONata comparisons are tracked alongside the JMH summaries in releases.
 
 
 

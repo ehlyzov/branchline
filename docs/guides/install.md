@@ -4,31 +4,28 @@ title: Install Branchline
 
 # Install Branchline
 
-Install and verify Branchline for local development.
+Install and verify Branchline from GitHub Releases.
 
 ## Prerequisites
-- Java 17+
-- Node 18+ (for JS CLI)
+- Java 17+ (for JVM CLI)
+- Node 18+ (for Node CLI)
 
-## Clone and verify
+## JVM CLI (recommended for JVM users)
+1. Download `branchline-cli-<tag>-all.jar` from GitHub Releases.
+2. Run:
 ```bash
-git clone https://github.com/ehlyzov/branchline-public.git
-cd branchline-public
-./gradlew --version
+java -jar branchline-cli-<tag>-all.jar path/to/program.bl --input sample.json
 ```
 
-## Run on JVM
+## Node CLI
+1. Download `branchline-cli-js-<tag>.tgz` from GitHub Releases.
+2. Extract and run:
 ```bash
-./gradlew :cli:runBl --args "path/to/program.bl --input sample.json"
-```
-
-## Run on Node
-```bash
-./gradlew :cli:jsNodeProductionRun --args="path/to/program.bl --input sample.json"
+tar -xzf branchline-cli-js-<tag>.tgz
+./bin/bl.cjs path/to/program.bl --input sample.json
 ```
 
 ## Common issues
-- If Gradle is slow, run once to warm caches.
 - Use `--input-format xml` when providing XML inputs.
 
 ## Related

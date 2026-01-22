@@ -1,6 +1,7 @@
 plugins {
     id 'org.jetbrains.kotlin.multiplatform'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
+    id 'maven-publish'
 }
 
 kotlin {
@@ -168,6 +169,25 @@ tasks.named('jvmTest') {
 
 tasks.named('assemble') {
     dependsOn 'packageJsCli'
+}
+
+publishing {
+    publications {
+        mavenCli(MavenPublication) {
+            artifact tasks.named('blShadowJar')
+            artifactId = 'branchline-cli'
+        }
+    }
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri("https://maven.pkg.github.com/ehlyzov/branchline-public")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
 }
 
 tasks.register('runBl', JavaExec) {

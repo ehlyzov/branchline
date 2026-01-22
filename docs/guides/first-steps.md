@@ -20,7 +20,7 @@ A short path to confident usage.
 
 ## Run locally
 ```bash
-./gradlew :cli:runBl --args "path/to/program.bl --input sample.json"
+java -jar branchline-cli-<tag>-all.jar path/to/program.bl --input sample.json
 ```
 Use `--input-format xml` for XML payloads.
 

@@ -1,7 +1,10 @@
 {
-  "name": "branchline-cli-js",
+  "name": "@ehlyzov/branchline-cli",
   "version": "__VERSION__",
   "type": "commonjs",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "bin": {
     "bl": "bin/bl.cjs"
   },

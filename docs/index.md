@@ -21,7 +21,7 @@ TRANSFORM Hello {
 
 ## Run locally
 ```bash
-./gradlew :cli:runBl --args "path/to/program.bl --input sample.json"
+java -jar branchline-cli-<tag>-all.jar path/to/program.bl --input sample.json
 ```
 Need setup help? See [Install Branchline](guides/install.md).
 

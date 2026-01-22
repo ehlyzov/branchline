@@ -18,7 +18,7 @@ TRANSFORM Hello {
 
 ## 2) Run it locally
 ```bash
-./gradlew :cli:runBl --args "hello.bl --input sample.json"
+java -jar branchline-cli-<tag>-all.jar hello.bl --input sample.json
 ```
 
 ## 3) Try it in the Playground
