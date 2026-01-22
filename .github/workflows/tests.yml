@@ -11,9 +11,35 @@ permissions:
   contents: write
 
 jobs:
+  cli-jar:
+    name: Build CLI Jar
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '23'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Branchline CLI (JVM)
+        run: ./gradlew --no-daemon :cli:blShadowJar
+
+      - name: Upload Branchline CLI jar
+        uses: actions/upload-artifact@v4
+        with:
+          name: branchline-cli-jar
+          path: cli/build/libs/branchline-cli-*-all.jar
+
   interpreter:
     name: Interpreter Tests
     runs-on: ubuntu-latest
+    needs: cli-jar
     outputs:
       status: ${{ steps.summary.outputs.status }}
       tests: ${{ steps.summary.outputs.tests }}
@@ -57,18 +83,23 @@ jobs:
 
       - name: Download Branchline CLI (JVM)
         if: ${{ always() }}
+        uses: actions/download-artifact@v4
+        with:
+          name: branchline-cli-jar
+          path: build/branchline-cli
+
+      - name: Configure Branchline CLI jar path
+        if: ${{ always() }}
         run: |
           set -euo pipefail
-          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=5"
-          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" \
-            | jq -r '[.[] | select(.draft == false) | .assets[]? | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url] | first // ""')
-          if [ -z "$URL" ]; then
-            echo "No CLI jar found in latest release" >&2
+          shopt -s nullglob
+          jars=(build/branchline-cli/branchline-cli-*-all.jar)
+          if [ ${#jars[@]} -eq 0 ]; then
+            echo "Branchline CLI jar artifact not found in build/branchline-cli" >&2
             exit 1
           fi
-          echo "Using CLI: $URL"
-          curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -o branchline-cli.jar "$URL"
-          echo "BRANCHLINE_CLI_JAR=$PWD/branchline-cli.jar" >> $GITHUB_ENV
+          JAR="${jars[0]}"
+          echo "BRANCHLINE_CLI_JAR=$PWD/$JAR" >> $GITHUB_ENV
 
       - name: Summarize interpreter tests
         id: summary
@@ -105,6 +136,7 @@ jobs:
   vm:
     name: VM Tests
     runs-on: ubuntu-latest
+    needs: cli-jar
     outputs:
       status: ${{ steps.summary.outputs.status }}
       tests: ${{ steps.summary.outputs.tests }}
@@ -148,17 +180,23 @@ jobs:
 
       - name: Download Branchline CLI (JVM)
         if: ${{ always() }}
+        uses: actions/download-artifact@v4
+        with:
+          name: branchline-cli-jar
+          path: build/branchline-cli
+
+      - name: Configure Branchline CLI jar path
+        if: ${{ always() }}
         run: |
           set -euo pipefail
-          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=5"
-          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" \
-            | jq -r '[.[] | select(.draft == false) | .assets[]? | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url] | first // ""')
-          if [ -z "$URL" ]; then
-            echo "No CLI jar found in latest release" >&2
+          shopt -s nullglob
+          jars=(build/branchline-cli/branchline-cli-*-all.jar)
+          if [ ${#jars[@]} -eq 0 ]; then
+            echo "Branchline CLI jar artifact not found in build/branchline-cli" >&2
             exit 1
           fi
-          curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -o branchline-cli.jar "$URL"
-          echo "BRANCHLINE_CLI_JAR=$PWD/branchline-cli.jar" >> $GITHUB_ENV
+          JAR="${jars[0]}"
+          echo "BRANCHLINE_CLI_JAR=$PWD/$JAR" >> $GITHUB_ENV
 
       - name: Summarize VM tests
         id: summary
@@ -195,6 +233,7 @@ jobs:
   conformance:
     name: Conformance Tests
     runs-on: ubuntu-latest
+    needs: cli-jar
     outputs:
       status: ${{ steps.summary.outputs.status }}
       tests: ${{ steps.summary.outputs.tests }}
@@ -238,17 +277,23 @@ jobs:
 
       - name: Download Branchline CLI (JVM)
         if: ${{ always() }}
+        uses: actions/download-artifact@v4
+        with:
+          name: branchline-cli-jar
+          path: build/branchline-cli
+
+      - name: Configure Branchline CLI jar path
+        if: ${{ always() }}
         run: |
           set -euo pipefail
-          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=5"
-          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" \
-            | jq -r '[.[] | select(.draft == false) | .assets[]? | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url] | first // ""')
-          if [ -z "$URL" ]; then
-            echo "No CLI jar found in latest release" >&2
+          shopt -s nullglob
+          jars=(build/branchline-cli/branchline-cli-*-all.jar)
+          if [ ${#jars[@]} -eq 0 ]; then
+            echo "Branchline CLI jar artifact not found in build/branchline-cli" >&2
             exit 1
           fi
-          curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -o branchline-cli.jar "$URL"
-          echo "BRANCHLINE_CLI_JAR=$PWD/branchline-cli.jar" >> $GITHUB_ENV
+          JAR="${jars[0]}"
+          echo "BRANCHLINE_CLI_JAR=$PWD/$JAR" >> $GITHUB_ENV
 
       - name: Summarize conformance tests
         id: summary
@@ -285,6 +330,7 @@ jobs:
   cli:
     name: CLI Tests
     runs-on: ubuntu-latest
+    needs: cli-jar
     outputs:
       status: ${{ steps.summary.outputs.status }}
       tests: ${{ steps.summary.outputs.tests }}
@@ -314,17 +360,23 @@ jobs:
 
       - name: Download Branchline CLI (JVM)
         if: ${{ always() }}
+        uses: actions/download-artifact@v4
+        with:
+          name: branchline-cli-jar
+          path: build/branchline-cli
+
+      - name: Configure Branchline CLI jar path
+        if: ${{ always() }}
         run: |
           set -euo pipefail
-          API="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases?per_page=5"
-          URL=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API" \
-            | jq -r '[.[] | select(.draft == false) | .assets[]? | select(.name | test("^branchline-cli-.*-all\\.jar$")) | .browser_download_url] | first // ""')
-          if [ -z "$URL" ]; then
-            echo "No CLI jar found in latest release" >&2
+          shopt -s nullglob
+          jars=(build/branchline-cli/branchline-cli-*-all.jar)
+          if [ ${#jars[@]} -eq 0 ]; then
+            echo "Branchline CLI jar artifact not found in build/branchline-cli" >&2
             exit 1
           fi
-          curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -o branchline-cli.jar "$URL"
-          echo "BRANCHLINE_CLI_JAR=$PWD/branchline-cli.jar" >> $GITHUB_ENV
+          JAR="${jars[0]}"
+          echo "BRANCHLINE_CLI_JAR=$PWD/$JAR" >> $GITHUB_ENV
 
       - name: Summarize CLI tests
         id: summary
