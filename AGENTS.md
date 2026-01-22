@@ -16,6 +16,7 @@
 - `playground/`: online demo assets; **all new language features must include a demo in `playground/examples/`**.
 - `research/`: design notes and proposals.
 - `test-fixtures/`: shared test data.
+- `perf/`: performance artifacts and workflow notes (see [perf/README.md](perf/README.md)).
 
 Language design priorities:
 - Prefer desugaring over VM/interpreter complexity when possible.
