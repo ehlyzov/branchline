@@ -27,7 +27,7 @@ TRANSFORM Hello {
 ```
 
 ## Try it in the Playground
-- [customer-profile](../playground.md?example=customer-profile){ target="_blank" }
+- [hello-transform](../playground.md?example=hello-transform){ target="_blank" }
 
 ## Next steps
 Continue to [Paths and Reshaping](paths-and-reshaping.md).

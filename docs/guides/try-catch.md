@@ -4,7 +4,7 @@ title: TRY/CATCH
 
 # TRY/CATCH
 
-`TRY/CATCH` handles failures without aborting the whole transform.
+`TRY/CATCH` handles failures without aborting the whole transform. `TRY` is an expression, so it can be used in `LET`, `CASE`, or output templates.
 
 ## When to use it
 Use `TRY/CATCH` around risky lookups, parsing, or assertions so you can emit a safe fallback value.
@@ -14,6 +14,7 @@ Use `TRY/CATCH` around risky lookups, parsing, or assertions so you can emit a s
 LET value = TRY parse(input.raw)
 CATCH(err) => { ok: false, error: err.message };
 ```
+The identifier in `CATCH(...)` is bound to an error object with `message` and `type` fields.
 
 ## Example
 ```branchline
@@ -30,12 +31,13 @@ Use `RETRY` with `TIMES` and optional `BACKOFF` for transient failures.
 
 ```branchline
 LET result = TRY fetch(input.url)
-CATCH(err) RETRY 3 TIMES BACKOFF "200ms" => null;
+CATCH(err) RETRY 3 TIMES BACKOFF 200ms => null;
 ```
 
 ## Pitfalls
 - Keep the `TRY` body small so errors are easy to interpret.
 - Prefer `ASSERT` for explicit failure conditions; use `TRY/CATCH` to keep the pipeline running.
+- `BACKOFF` units follow host runtime defaults (for example, ms).
 
 ## Try it
 - [error-handling-try-catch](../playground.md?example=error-handling-try-catch){ target="_blank" }

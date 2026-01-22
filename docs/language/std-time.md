@@ -7,7 +7,7 @@ title: Time Standard Library
 Time helpers for timestamps.
 
 ## Functions
-- `NOW()` → current timestamp (ISO 8601).
+- `NOW()` → current timestamp string in ISO format using the host clock.
 
 ## Example
 - [stdlib-time-now](../playground.md?example=stdlib-time-now)

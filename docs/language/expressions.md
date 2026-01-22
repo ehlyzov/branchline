@@ -11,28 +11,30 @@ Expressions compute values and support operators, function calls, and data const
 - Use `??` to provide fallbacks for missing or null fields.
 - Lambdas `(x) -> expr` feed higher-order stdlib functions (`MAP`, `FILTER`, `REDUCE`).
 
-## As {#as}
+## Constraints
+- `CASE` requires an `ELSE` branch.
+- `TRY/CATCH` is an expression and can be used in `LET`, `CASE`, or output templates.
+- `AWAIT` and `SUSPEND` require host support and may error without it.
 
+## As {#as}
 `AS` provides aliasing or casting when supported by the host.
 
 ## Let {#let}
-
 `LET` creates local variable bindings inside expressions.
 
 ## Await {#await}
-
 `AWAIT` waits for an asynchronous result (host-dependent).
 
 ## Suspend {#suspend}
-
 `SUSPEND` yields control (host-dependent).
 
-## Literals {#literals}
+## Function calls {#call}
+Function calls use `identifier(...)` syntax and can target user-defined `FUNC` declarations or host helpers.
 
+## Literals {#literals}
 Literals include numbers, strings, booleans, and null.
 
 ## Union {#union}
-
 `UNION` creates union type expressions.
 
 ## Example
@@ -79,6 +81,7 @@ LET evens = [FOR (n IN input.numbers) IF n % 2 == 0 => n];
 
 ## Try/Catch {#try}
 `TRY` evaluates an expression and yields the fallback expression if it fails.
+The identifier in `CATCH(...)` is bound to an error object with `message` and `type` fields.
 
 ```branchline
 LET total = TRY SUM(input.items)

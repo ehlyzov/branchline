@@ -1,0 +1,13 @@
+{
+  "title": "Hello, Transform",
+  "description": "Minimal transform that reads input and emits a greeting.",
+  "showContracts": false,
+  "program": [
+    "TRANSFORM Hello {",
+    "    OUTPUT { greeting: \"Hello, \" + input.name };",
+    "}"
+  ],
+  "input": {
+    "name": "Dana"
+  }
+}

@@ -4,22 +4,28 @@ site_description: A public version of the Branchline data transformation languag
 site_author: Eugene Hlyzov
 repo_name: ehlyzov/branchline-public
 repo_url: https://github.com/ehlyzov/branchline-public
+exclude_docs: |
+  benchmarks/jsonata/**
 
 theme:
   name: material
+  font:
+    text: "Source Serif 4"
+    code: "Source Code Pro"
   palette:
     - scheme: default
-      primary: blue
+      primary: brown
+      accent: deep orange
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
     - scheme: slate
-      primary: blue
+      primary: brown
+      accent: deep orange
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
   features:
-    - navigation.tabs
     - navigation.sections
     - navigation.expand
     - navigation.top
@@ -47,6 +53,11 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Playground: playground.md
+  - Start:
+    - Getting Started: guides/getting-started.md
+    - First Steps: guides/first-steps.md
+    - Install Branchline: guides/install.md
+    - Branchline CLI: guides/cli.md
   - Learn:
     - Tour of Branchline: learn/index.md
     - Hello, Transform: learn/hello-transform.md
@@ -54,49 +65,46 @@ nav:
     - Control Flow for Pipelines: learn/control-flow.md
     - Error Handling and Tracing: learn/error-handling.md
     - Real-world Recipes: learn/recipes.md
+  - Guides:
     - Guides Index: guides/index.md
-    - First Steps: guides/first-steps.md
-    - Install Branchline: guides/install.md
-    - Getting Started: guides/getting-started.md
     - FOR EACH Loops: guides/for-each.md
     - Array Comprehensions: guides/array-comprehension.md
     - TRY/CATCH: guides/try-catch.md
+    - Examples: guides/examples.md
   - Reference:
     - Overview: language/index.md
     - Lexical Structure: language/lexical.md
     - Declarations: language/declarations.md
     - Statements: language/statements.md
     - Expressions: language/expressions.md
+    - Numeric Semantics: language/numeric.md
     - Grammar: language/grammar.md
   - Standard Library:
     - Core Functions: language/std-core.md
     - Array Operations: language/std-arrays.md
-    - Time Functions: language/std-time.md
     - Aggregation: language/std-agg.md
     - Higher-order Functions: language/std-hof.md
     - Strings: language/std-strings.md
+    - Time Functions: language/std-time.md
     - Debug Utilities: language/std-debug.md
-  - Advanced:
-    - Examples: guides/examples.md
-    - Branchline CLI: guides/cli.md
+  - Operations:
     - Production Use: guides/production-use.md
     - Migration Guides: guides/migrations.md
     - Release Readiness & Stability: guides/release-readiness.md
-    - Architecture:
-      - VM Overview: vm.md
-    - Benchmarks:
-      - Overview: benchmarks.md
-      - Latest: benchmarks/latest.md
-      - Releases: benchmarks/releases/index.md
-      - Release List: benchmarks/releases/list.md
-      - JSONata Overview: benchmarks/jsonata.md
-      - JSONata Latest: benchmarks/jsonata/latest.md
-      - JSONata Releases: benchmarks/jsonata/releases/index.md
-      - JSONata Release List: benchmarks/jsonata/releases/list.md
+  - Architecture:
+    - VM Overview: vm.md
+  - Benchmarks:
+    - Overview: benchmarks.md
+    - Latest: benchmarks/latest.md
+    - Releases: benchmarks/releases/index.md
+    - Release List: benchmarks/releases/list.md
 
 plugins:
   - search
   - autorefs
+
+extra_css:
+  - stylesheets/extra.css
 
 extra:
   social:

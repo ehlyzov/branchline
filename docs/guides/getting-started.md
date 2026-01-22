@@ -4,9 +4,9 @@ title: Getting Started
 
 # Getting Started
 
-Write a minimal transform and run it locally or in the Playground.
+A minimal path from code to output.
 
-## Step 1: Write a transform
+## 1) Write a transform
 Create `hello.bl`:
 
 ```branchline
@@ -16,15 +16,15 @@ TRANSFORM Hello {
 }
 ```
 
-## Step 2: Run locally
+## 2) Run it locally
 ```bash
 ./gradlew :cli:runBl --args "hello.bl --input sample.json"
 ```
 
-## Step 3: Try in the Playground
-Open [customer-profile](../playground.md?example=customer-profile){ target="_blank" } and edit the program or input.
+## 3) Try it in the Playground
+Open [hello-transform](../playground.md?example=hello-transform){ target="_blank" } and edit the program or input.
 
 ## Next steps
-- Add a new field to the output and rerun.
-- Read the [Language Overview](../language/index.md) for syntax details.
-- Explore [Standard Library](../language/std-core.md) pages for reusable helpers.
+- Learn the syntax in the [Tour of Branchline](../learn/index.md).
+- Use [TRY/CATCH](try-catch.md) to keep pipelines resilient.
+- Explore the [Standard Library](../language/std-core.md).

@@ -1,0 +1,158 @@
+:root {
+  --bl-nav-width: 18rem;
+  --bl-content-max: 76rem;
+}
+
+html body div.md-sidebar.md-sidebar--secondary[data-md-type="toc"] {
+  display: none !important;
+  width: 0 !important;
+}
+
+html body .md-nav--secondary {
+  display: none !important;
+}
+
+/* Left nav pinned, content uses remaining space */
+html body .md-sidebar--primary {
+  flex: 0 0 var(--bl-nav-width);
+}
+
+html body .md-main__inner {
+  max-width: none;
+  margin-right: 0 !important;
+}
+
+html body .md-content {
+  max-width: var(--bl-content-max);
+}
+
+/* Playground page styling */
+.playground-embed {
+  margin: 0;
+  padding: 8px 0 0;
+}
+
+.playground-embed__intro {
+  background: #f6efe7;
+  border: 1px solid #e6d9cc;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  color: var(--md-default-fg-color--light, #475569);
+}
+
+.playground-embed__intro code {
+  background: #efe3d7;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.playground-frame {
+  border-radius: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.playground-embed__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.playground-embed__hint {
+  font-size: 14px;
+  color: var(--md-default-fg-color--light, #475569);
+}
+
+/* Align controls and group action buttons */
+.playground-controls {
+  align-items: center !important;
+}
+
+.playground-controls::after {
+  content: "";
+  flex-basis: 100%;
+  order: 90;
+}
+
+.playground-controls > .playground-button,
+.playground-controls > a.playground-button {
+  order: 100;
+  height: 40px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.playground-controls > .playground-button--ghost:first-of-type {
+  margin-left: auto;
+}
+
+/* Override playground button colors to match site palette */
+.playground-controls .playground-button:not(.playground-button--ghost) {
+  background: var(--md-primary-fg-color) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.playground-controls .playground-button:not(.playground-button--ghost):hover:not(:disabled) {
+  background: var(--md-accent-fg-color) !important;
+  box-shadow: none !important;
+}
+
+.playground-controls .playground-button.playground-button--ghost {
+  background: transparent !important;
+  color: #5a4034 !important;
+  border-color: #d9c7b6 !important;
+}
+
+.playground-controls .playground-button.playground-button--ghost:hover {
+  background: #f3e7dc !important;
+}
+
+/* Remove blue accents from playground panels */
+.playground-select select {
+  border-color: #d9c7b6 !important;
+}
+
+.playground-select select:focus {
+  outline: 3px solid rgba(170, 128, 102, 0.25) !important;
+  border-color: #a66b4f !important;
+}
+
+.example-description {
+  background: #f2e7dc !important;
+  border-color: #e2cdbb !important;
+  color: #5a4034 !important;
+}
+
+.playground-note {
+  border-left-color: #a66b4f !important;
+  background-color: #f3e7dc !important;
+  color: #5a4034 !important;
+}
+
+.playground-note code {
+  background-color: #efe3d7 !important;
+}
+
+.panel-subheader {
+  color: #7a5c4a !important;
+}
+
+.panel-header code {
+  color: #7a5c4a !important;
+}
+
+.editor-surface {
+  border-color: #e2cdbb !important;
+}
+
+.contracts-panel {
+  border-color: #e2cdbb !important;
+  background-color: #f6efe7 !important;
+}
