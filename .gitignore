@@ -16,3 +16,4 @@ site
 .env
 docs-compiled
 perf
+research/planner.md
