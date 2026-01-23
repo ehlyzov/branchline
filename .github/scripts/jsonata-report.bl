@@ -144,10 +144,12 @@ FUNC filterDashjoinAnomalies(rows, caseIds) {
         LET score = findScore(rows, caseId, "dashjoin");
         IF score == NULL THEN {
             SET excluded = APPEND(excluded, caseId);
-        } ELSE IF score > upper THEN {
-            SET excluded = APPEND(excluded, caseId);
         } ELSE {
-            SET included = APPEND(included, caseId);
+            IF score > upper THEN {
+                SET excluded = APPEND(excluded, caseId);
+            } ELSE {
+                SET included = APPEND(included, caseId);
+            }
         }
     }
     RETURN { included: included, excluded: excluded, median: median, lower: lower, upper: upper };
