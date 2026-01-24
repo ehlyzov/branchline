@@ -135,7 +135,7 @@ FUNC filterDashjoinAnomalies(rows, caseIds) {
     LET scores = collectScores(rows, caseIds, "dashjoin");
     LET median = medianValue(scores);
     IF median == NULL THEN {
-        RETURN { included: caseIds, excluded: [], median: NULL, lower: NULL, upper: NULL };
+        RETURN { included: caseIds, excluded: [], median: NULL, upper: NULL };
     }
     LET upper = median * 100;
     LET included = [];
@@ -152,7 +152,7 @@ FUNC filterDashjoinAnomalies(rows, caseIds) {
             }
         }
     }
-    RETURN { included: included, excluded: excluded, median: median, lower: lower, upper: upper };
+    RETURN { included: included, excluded: excluded, median: median, upper: upper };
 }
 
 FUNC collectSpeedups(rows, caseIds, branchEngine, jsonataEngine) {
