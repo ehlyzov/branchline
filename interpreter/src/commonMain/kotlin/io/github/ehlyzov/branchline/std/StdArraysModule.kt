@@ -24,8 +24,15 @@ private fun fnDISTINCT(args: List<Any?>): Any {
 private fun fnFLATTEN(args: List<Any?>): Any {
     require(args.size == 1) { "FLATTEN(listOfLists)" }
     val src = args[0] as? List<*> ?: error("FLATTEN: arg must be list")
-    val out = ArrayList<Any?>()
-    src.forEach { e -> if (e is List<*>) out.addAll(e) else out.add(e) }
+    val out = ArrayList<Any?>(src.size)
+    src.forEach { e ->
+        if (e is List<*>) {
+            out.ensureCapacity(out.size + e.size)
+            out.addAll(e)
+        } else {
+            out.add(e)
+        }
+    }
     return out
 }
 
@@ -80,4 +87,3 @@ private fun fnREVERSE(args: List<Any?>): Any {
     // Kotlin’s reversed() returns a new list with elements in reverse order
     return src.reversed()
 }
-

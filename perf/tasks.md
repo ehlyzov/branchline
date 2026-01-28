@@ -105,3 +105,16 @@ Verification (workflow):
   - `/Library/Java/JavaVirtualMachines/liberica-jdk-21.jdk/Contents/Home/bin/jfr print --json --events jdk.ExecutionSample --stack-depth 20 <profile.jfr> > perf/jfr/<case>-exec.json`
 - Summarize top frames using a script or manual inspection and update `perf/report.md`.
 
+## Progress
+
+- Task 1 (MAP/FILTER/FLATTEN fast paths):
+  - Reused a mutable 3-slot argument list for MAP/FILTER and pre-sized FLATTEN with capacity growth to reduce list churn and dynamic resizing.
+  - JMH baseline (pre-change) for branchline-interpreter:
+    - simple-array-selectors/case000: 17,074.661 ops/s
+    - function-count/case000: 19,162.461 ops/s
+    - function-sum/case000: 17,864.502 ops/s
+  - JMH after change:
+    - simple-array-selectors/case000: 18,909.554 ops/s (+10.75%)
+    - function-count/case000: 19,198.496 ops/s (+0.19%)
+    - function-sum/case000: 18,724.201 ops/s (+4.81%)
+  - Net effect: interpreter throughput improved on all three cases; biggest gain in simple-array-selectors.
