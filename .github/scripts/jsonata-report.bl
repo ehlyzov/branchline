@@ -13,7 +13,20 @@ FUNC formatNumber(value) {
     IF value == NULL THEN {
         RETURN "n/a";
     }
-    RETURN STRING(ROUND(value, 3));
+    LET text = TRIM(STRING(value));
+    IF text == "" THEN {
+        RETURN "n/a";
+    }
+    LET lower = LOWER(text);
+    IF lower == "nan" || lower == "inf" || lower == "+inf" || lower == "-inf"
+        || lower == "infinity" || lower == "+infinity" || lower == "-infinity" THEN {
+        RETURN "n/a";
+    }
+    LET numeric = MATCH(text, "^[+-]?([0-9]+\\.[0-9]+|[0-9]+\\.?|\\.[0-9]+)([eE][+-]?[0-9]+)?$");
+    IF numeric == NULL THEN {
+        RETURN "n/a";
+    }
+    RETURN STRING(ROUND(NUMBER(text), 3));
 }
 
 FUNC formatRatio(value) {
@@ -110,7 +123,7 @@ FUNC medianValue(values) {
         RETURN NULL;
     }
     LET sorted = SORT(values);
-    LET half = INT(count / 2);
+    LET half = INT(FLOOR(count / 2));
     LET isEven = count == half * 2;
     IF isEven THEN {
         LET left = sorted[half - 1];

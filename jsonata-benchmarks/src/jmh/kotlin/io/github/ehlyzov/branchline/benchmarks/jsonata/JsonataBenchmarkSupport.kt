@@ -60,6 +60,7 @@ public data class CrossEngineCase(
     public val branchlineProgram: String?,
     public val kotlinEvalId: String?,
     public val expectedFailures: Map<String, String>,
+    public val expectedResult: JsonElement?,
     public val loadError: String?,
 )
 
@@ -433,6 +434,7 @@ public object CrossEngineCases {
                     branchlineProgram = entry.branchlineProgram,
                     kotlinEvalId = entry.kotlinEvalId,
                     expectedFailures = expectedFailures,
+                    expectedResult = testSuiteCase?.expectedResult,
                     loadError = loadError,
                 ),
             )
@@ -760,6 +762,33 @@ private fun fromJsonElement(element: JsonElement): Any? = when (element) {
     is JsonArray -> ArrayList<Any?>(element.size).apply {
         element.forEach { add(fromJsonElement(it)) }
     }
+}
+
+private val jsonElementParser: Json = Json { ignoreUnknownKeys = true }
+private val jsonNodeMapper: ObjectMapper = ObjectMapper()
+
+internal fun toJsonElement(value: Any?): JsonElement {
+    return when (value) {
+        null -> JsonNull
+        is JsonElement -> value
+        is JsonNode -> parseJsonNode(value)
+        is Map<*, *> -> JsonObject(
+            value.entries.associate { (key, entryValue) ->
+                (key as? String ?: key.toString()) to toJsonElement(entryValue)
+            },
+        )
+        is Iterable<*> -> JsonArray(value.map { toJsonElement(it) })
+        is Array<*> -> JsonArray(value.map { toJsonElement(it) })
+        is Boolean -> JsonPrimitive(value)
+        is Number -> JsonPrimitive(value)
+        is String -> JsonPrimitive(value)
+        else -> JsonPrimitive(value.toString())
+    }
+}
+
+private fun parseJsonNode(node: JsonNode): JsonElement {
+    val text = jsonNodeMapper.writeValueAsString(node)
+    return jsonElementParser.parseToJsonElement(text)
 }
 
 private fun fromPrimitive(primitive: JsonPrimitive): Any? {

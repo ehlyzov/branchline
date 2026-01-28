@@ -182,13 +182,53 @@ private fun prepareJsonata(
     val compiled = try {
         engine.compile(case.jsonataExpression)
     } catch (ex: Throwable) {
-        BenchmarkErrorReporter.record(engineId, case.id, "compile", ex)
-        return PreparedCase(case.id, engineId, ex.message ?: ex::class.simpleName)
+        val cause = unwrapInvocationTarget(ex)
+        BenchmarkErrorReporter.record(engineId, case.id, "compile", cause)
+        throw IllegalStateException(
+            "JSONata compile failed for ${case.id} (engine=$engineId).",
+            cause,
+        )
+    }
+    val validationError = validateJsonataResult(case, engineId, engine, compiled, inputs)
+    if (validationError != null) {
+        return PreparedCase(case.id, engineId, validationError)
     }
     return PreparedCase(case.id, engineId) {
         val input = if (engineId == ENGINE_DASHJOIN) inputs.dashjoinInput else inputs.ibmInput
         engine.evaluate(compiled, input)
     }
+}
+
+private fun unwrapInvocationTarget(ex: Throwable): Throwable {
+    return if (ex is java.lang.reflect.InvocationTargetException && ex.targetException != null) {
+        ex.targetException
+    } else {
+        ex
+    }
+}
+
+private fun validateJsonataResult(
+    case: CrossEngineCase,
+    engineId: String,
+    engine: JsonataEngine,
+    compiled: Any,
+    inputs: CrossEngineInput,
+): String? {
+    val expected = case.expectedResult ?: return null
+    val input = if (engineId == ENGINE_DASHJOIN) inputs.dashjoinInput else inputs.ibmInput
+    val actual = try {
+        engine.evaluate(compiled, input)
+    } catch (ex: Throwable) {
+        BenchmarkErrorReporter.record(engineId, case.id, "validate", ex)
+        return ex.message ?: ex::class.simpleName
+    }
+    val actualJson = toJsonElement(actual)
+    if (actualJson != expected) {
+        val message = "Unexpected result during validation."
+        BenchmarkErrorReporter.recordMessage(engineId, case.id, "validate", message)
+        return message
+    }
+    return null
 }
 
 private fun resolveCaseFilter(paramFilter: String): String {

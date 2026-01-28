@@ -153,3 +153,10 @@ jmh {
 tasks.named('jmh', me.champeau.jmh.JMHTask).configure {
     profilers = jmhProfilerList
 }
+
+tasks.register('runJsonataMain', JavaExec) {
+    group = 'application'
+    description = 'Run jsonata-benchmarks MainKt for ad-hoc case evaluation.'
+    mainClass = 'io.github.ehlyzov.branchline.benchmarks.jsonata.test.MainKt'
+    classpath = sourceSets.jmh.runtimeClasspath
+}
