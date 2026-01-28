@@ -24,8 +24,15 @@ private fun fnDISTINCT(args: List<Any?>): Any {
 private fun fnFLATTEN(args: List<Any?>): Any {
     require(args.size == 1) { "FLATTEN(listOfLists)" }
     val src = args[0] as? List<*> ?: error("FLATTEN: arg must be list")
-    val out = ArrayList<Any?>()
-    src.forEach { e -> if (e is List<*>) out.addAll(e) else out.add(e) }
+    val out = ArrayList<Any?>(src.size)
+    src.forEach { e ->
+        if (e is List<*>) {
+            out.ensureCapacity(out.size + e.size)
+            out.addAll(e)
+        } else {
+            out.add(e)
+        }
+    }
     return out
 }
 
@@ -42,7 +49,12 @@ private fun fnRANGE(args: List<Any?>): Any {
         2 -> Triple(asIndex(args[0]), asIndex(args[1]), 1)
         else -> Triple(asIndex(args[0]), asIndex(args[1]), asIndex(args[2]).coerceAtLeast(1))
     }
-    val out = ArrayList<Int>()
+    val outSize = if (start <= end) {
+        ((end - start) / step) + 1
+    } else {
+        ((start - end) / step) + 1
+    }
+    val out = ArrayList<Int>(outSize)
     if (step <= 0) error("RANGE: step must be > 0")
     var i = start
     if (start <= end) {
@@ -80,4 +92,3 @@ private fun fnREVERSE(args: List<Any?>): Any {
     // Kotlin’s reversed() returns a new list with elements in reverse order
     return src.reversed()
 }
-

@@ -21,7 +21,14 @@ private fun fnMAP(args: List<Any?>): Any {
     val src = asList("MAP", args, 0)
     val f = asFn("MAP", args, 1)
     val out = ArrayList<Any?>(src.size)
-    src.forEachIndexed { i, v -> out += f(listOf(v, i, src)) }
+    val callList = arrayListOf<Any?>(null, null, null)
+    for (i in src.indices) {
+        val v = src[i]
+        callList[0] = v
+        callList[1] = i
+        callList[2] = src
+        out.add(f(callList))
+    }
     return out
 }
 
@@ -30,7 +37,16 @@ private fun fnFILTER(args: List<Any?>): Any {
     val src = asList("FILTER", args, 0)
     val f = asFn("FILTER", args, 1)
     val out = ArrayList<Any?>(src.size)
-    src.forEachIndexed { i, v -> if (truthy(f(listOf(v, i, src)))) out += v }
+    val callList = arrayListOf<Any?>(null, null, null)
+    for (i in src.indices) {
+        val v = src[i]
+        callList[0] = v
+        callList[1] = i
+        callList[2] = src
+        if (truthy(f(callList))) {
+            out.add(v)
+        }
+    }
     return out
 }
 

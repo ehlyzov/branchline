@@ -92,8 +92,20 @@ class Exec(
     private val compiledFuncs: MutableMap<String, List<IRNode>> = HashMap(),
 ) {
     private val numericSites: MutableMap<BinaryExpr, NumericBinarySite> = HashMap()
+    private var activeTracer: Tracer? = null
     // ---------- tracer helpers (resolve at call-time) ----------
-    private fun currentTracer(): Tracer? = tracer ?: Debug.tracer
+    private fun currentTracer(): Tracer? = activeTracer ?: tracer ?: Debug.tracer
+    private inline fun <T> withActiveTracer(block: () -> T): T {
+        val prev = activeTracer
+        if (prev == null) {
+            activeTracer = tracer ?: Debug.tracer
+        }
+        return try {
+            block()
+        } finally {
+            activeTracer = prev
+        }
+    }
     private fun emitEnter(n: IRNode) {
         val t = currentTracer()
         if (t?.opts?.step == true) t.on(TraceEvent.Enter(n))
@@ -123,7 +135,7 @@ class Exec(
      * If stringifyKeys=true — recursively converts object keys to strings on
      * the boundary.
      */
-    public fun run(env: Env, stringifyKeys: Boolean = false): Any? {
+    public fun run(env: Env, stringifyKeys: Boolean = false): Any? = withActiveTracer {
         val out = mutableListOf<Map<Any, Any?>>()
         execObject(ir, env, out)
         val res: Any? = when (out.size) {
@@ -131,20 +143,20 @@ class Exec(
             1 -> out.first()
             else -> out
         }
-        return if (!stringifyKeys) res else stringify(res)
+        if (!stringifyKeys) res else stringify(res)
     }
 
     public fun run(env: MutableMap<String, Any?>, stringifyKeys: Boolean = false): Any? =
         run(Env(env), stringifyKeys)
 
-    public fun eval(expr: Expr, env: Env): Any? = evalExpr(expr, env)
+    public fun eval(expr: Expr, env: Env): Any? = withActiveTracer { evalExpr(expr, env) }
 
-    public fun eval(expr: Expr, env: MutableMap<String, Any?>): Any? = evalExpr(expr, Env(env))
+    public fun eval(expr: Expr, env: MutableMap<String, Any?>): Any? = withActiveTracer { evalExpr(expr, Env(env)) }
 
-    private fun runForValue(env: Env): Any? {
+    private fun runForValue(env: Env): Any? = withActiveTracer {
         val out = mutableListOf<Map<Any, Any?>>()
         val res = execObject(ir, env, out)
-        return if (res.returned) res.value else null
+        if (res.returned) res.value else null
     }
 
     private fun childExec(ir: List<IRNode>, caps: ExecutionCaps): Exec = Exec(
@@ -177,7 +189,7 @@ class Exec(
     // ---------------------------------------------------------------------
 
     private inline fun <T> tracedEval(expr: Expr, crossinline block: () -> T): T {
-        val t = Debug.tracer
+        val t = currentTracer()
         if (t?.opts?.includeEval == true) t.on(TraceEvent.EvalEnter(expr))
         return try {
             val v = block()
@@ -190,7 +202,7 @@ class Exec(
     }
 
     private inline fun <T> tracedCall(kind: String, name: String?, args: List<Any?>, crossinline inv: () -> T): T {
-        val t = Debug.tracer
+        val t = currentTracer()
         if (t?.opts?.includeCalls == true) t.on(TraceEvent.Call(kind, name, args))
         return try {
             val r = inv()
@@ -203,7 +215,7 @@ class Exec(
     }
 
     private fun traceRead(name: String, value: Any?) {
-        val t = Debug.tracer
+        val t = currentTracer()
         if (t != null && (t.opts.watch.isEmpty() || name in t.opts.watch)) {
             t.on(TraceEvent.Read(name, value))
         }
@@ -416,7 +428,7 @@ class Exec(
 
         return { args: List<Any?> ->
             val local = Env(parent = env)
-            e.params.zip(args).forEach { (p, v) -> local.setLocal(p, v) }
+            bindParams(e.params, args, local)
             tracedCall("LAMBDA", null, args) {
                 when (val b = e.body) {
                     is ExprBody -> evalExpr(b.expr, local)
@@ -431,7 +443,7 @@ class Exec(
     }
 
     private fun handleFuncCall(c: CallExpr, env: Env): Any? {
-        val args = c.args.map { evalExpr(it, env) }
+        val args = evalArgs(c.args, env)
 
         hostFns[c.callee.name]?.let { fn ->
             val meta = hostFnMeta[c.callee.name]
@@ -447,9 +459,7 @@ class Exec(
 
         val fd = funcs[c.callee.name] ?: error("FUNC '${c.callee.name}' undefined")
         val local = Env()
-        fd.params.zip(args).forEach { (p, v) ->
-            local.setLocal(p, v)
-        }
+        bindParams(fd.params, args, local)
 
         return tracedCall("FUNC", fd.name, args) {
             when (val body = fd.body) {
@@ -535,7 +545,7 @@ class Exec(
     }
 
     private fun handleObject(e: ObjectExpr, env: Env): Map<Any, Any?> {
-        val out = LinkedHashMap<Any, Any?>()
+        val out = LinkedHashMap<Any, Any?>(e.fields.size)
         e.fields.forEach { p ->
             when (p) {
                 is ComputedProperty -> {
@@ -550,8 +560,23 @@ class Exec(
 
     private fun handleInvoke(e: InvokeExpr, env: Env): Any? {
         val fn = evalExpr(e.target, env).toFnValue() ?: error("Value is not callable")
-        val argv = e.args.map { evalExpr(it, env) }
+        val argv = evalArgs(e.args, env)
         return tracedCall("CALL", null, argv) { fn(argv) }
+    }
+
+    private fun evalArgs(args: List<Expr>, env: Env): ArrayList<Any?> {
+        val out = ArrayList<Any?>(args.size)
+        for (arg in args) {
+            out.add(evalExpr(arg, env))
+        }
+        return out
+    }
+
+    private fun bindParams(params: List<String>, args: List<Any?>, env: Env) {
+        val count = minOf(params.size, args.size)
+        for (i in 0 until count) {
+            env.setLocal(params[i], args[i])
+        }
     }
 
     private fun handleSharedStateAwait(e: SharedStateAwaitExpr, env: Env): Any? {
@@ -701,11 +726,11 @@ class Exec(
         ArrayList<Any?>(this.size + 1).apply {
             addAll(this@withAppended)
             add(value)
-        }
+    }
 
     // --- Properties → Map
     private fun propertiesToMap(fields: List<Property>, env: Env): LinkedHashMap<Any, Any?> =
-        LinkedHashMap<Any, Any?>().apply {
+        LinkedHashMap<Any, Any?>(fields.size).apply {
             fields.forEach { p ->
                 when (p) {
                     is LiteralProperty -> {
