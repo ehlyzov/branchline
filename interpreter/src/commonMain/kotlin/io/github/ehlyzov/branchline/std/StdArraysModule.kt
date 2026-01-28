@@ -49,7 +49,12 @@ private fun fnRANGE(args: List<Any?>): Any {
         2 -> Triple(asIndex(args[0]), asIndex(args[1]), 1)
         else -> Triple(asIndex(args[0]), asIndex(args[1]), asIndex(args[2]).coerceAtLeast(1))
     }
-    val out = ArrayList<Int>()
+    val outSize = if (start <= end) {
+        ((end - start) / step) + 1
+    } else {
+        ((start - end) / step) + 1
+    }
+    val out = ArrayList<Int>(outSize)
     if (step <= 0) error("RANGE: step must be > 0")
     var i = start
     if (start <= end) {

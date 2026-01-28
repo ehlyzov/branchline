@@ -118,3 +118,44 @@ Verification (workflow):
     - function-count/case000: 19,198.496 ops/s (+0.19%)
     - function-sum/case000: 18,724.201 ops/s (+4.81%)
   - Net effect: interpreter throughput improved on all three cases; biggest gain in simple-array-selectors.
+- Task 2 (Function call dispatch and lambda invocation):
+  - Replaced argument list mapping with pre-sized collection and avoided zip allocations for parameter binding in calls/lambdas.
+  - JMH baseline (pre-change) for branchline-interpreter:
+    - performance/case001: 688.462 ops/s
+    - function-sum/case000: 16,673.914 ops/s
+    - function-count/case000: 17,313.300 ops/s
+  - JMH after change:
+    - performance/case001: 696.959 ops/s (+1.23%)
+    - function-sum/case000: 18,091.117 ops/s (+8.50%)
+    - function-count/case000: 19,452.802 ops/s (+12.36%)
+  - Net effect: interpreter throughput improved across all three cases.
+- Task 3 (Property access and object/map construction):
+  - Pre-sized object and property maps based on field counts to reduce growth overhead.
+  - JMH baseline (pre-change) for branchline-interpreter:
+    - string-concat/case000: 28,711.926 ops/s
+    - fields/case000: 25,447.772 ops/s
+    - numeric-operators/case000: 22,633.035 ops/s
+  - JMH after change:
+    - string-concat/case000: 27,194.529 ops/s (-5.28%)
+    - fields/case000: 28,234.726 ops/s (+10.95%)
+    - numeric-operators/case000: 26,415.076 ops/s (+16.71%)
+  - Net effect: improvements in fields/numeric-operators, slight regression in string-concat.
+- Task 4 (Array comprehension and range evaluation):
+  - Pre-sized RANGE output based on computed length to reduce allocation growth in range-heavy cases.
+  - JMH baseline (pre-change) for branchline-interpreter:
+    - performance/case001: 767.579 ops/s
+    - range-operator/case000: 22,890.288 ops/s
+  - JMH after change:
+    - performance/case001: 652.753 ops/s (-14.96%)
+    - range-operator/case000: 25,682.958 ops/s (+12.20%)
+  - Net effect: range-operator improved, performance/case001 regressed.
+- Task 5 (Debug/trace checks in hot paths):
+  - Cached tracer resolution during execution to avoid repeated Debug.tracer lookups in hot paths.
+  - JMH baseline (pre-change) for branchline-interpreter:
+    - performance/case001: 741.443 ops/s
+  - JMH after change:
+    - performance/case001: 767.896 ops/s (+3.57%)
+  - Net effect: modest improvement on performance/case001.
+- Task 6 (Standardize JFR analysis workflow):
+  - Added `perf/scripts/jfr_extract.sh` to standardize extracting `jdk.ExecutionSample` stacks with consistent depth.
+  - No runtime performance change; no JMH delta recorded.
