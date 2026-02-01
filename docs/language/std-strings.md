@@ -10,7 +10,7 @@ Text processing helpers.
 - `STRING(x)` → string representation or `null` for `null`.
 - `NUMBER(x)` → parses numbers/booleans/strings into the float (`F`) or integer (`I`) domains. Use `DEC(...)` for BigInt/BigDec parsing; invalid strings error, and `null` stays `null`.
 - `BOOLEAN(x)` → truthiness: `false` for `null`, empty string, or zero; `true` otherwise.
-- `INT(x)` → strict integer conversion for numbers/booleans/strings; errors on fractional values; returns `null` for `null`.
+- `INT(x)` → strict integer conversion for numbers/booleans/strings; errors on fractional values; returns `null` for `null`; large values may return BigInt.
 - `PARSE_INT(x[, default])` → tolerant integer parsing for strings; uses digits only and returns `default` (or `0`) on `null`/no digits.
 
 ## Text operations

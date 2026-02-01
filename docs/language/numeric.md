@@ -8,13 +8,13 @@ Branchline exposes a single user-facing type, **Numeric**. Internally, values ar
 
 - **I**: fast integer (I64 on JVM; JS safe-integer range)
 - **F**: float (F64 / double)
-- **BI**: BigInt (arbitrary precision integer)
-- **BD**: BigDec (arbitrary precision decimal)
+- **BI**: BigInt (arbitrary precision on JVM; 64-bit on JS)
+- **BD**: BigDec (arbitrary precision on JVM; Double-backed on JS)
 
 ## Explicit precision with `DEC(...)`
 
-`DEC(...)` is the **only** entry point into precise arithmetic. No operator will implicitly convert
-float values (`F`) into BigDec (`BD`) or BigInt (`BI`).
+`DEC(...)` is the primary explicit entry point into precise arithmetic. No operator will implicitly
+convert float values (`F`) into BigDec (`BD`) or BigInt (`BI`).
 
 Rules:
 
@@ -29,6 +29,11 @@ Rules:
 
 > **Tip:** prefer `DEC("0.1")` for human-authored precise values.
 
+Notes:
+- Large integer literals may parse as **BI**.
+- `INT("...")` can return **BI** for large values.
+- `NUMBER("...")` does **not** produce **BI** or **BD**.
+
 ## Arithmetic promotion
 
 For `+`, `-`, `*` (same pattern):
@@ -41,6 +46,8 @@ For `+`, `-`, `*` (same pattern):
 6. If either operand is `BD`, result is `BD` **unless** the other operand is `F`
    (mixing `BD` and `F` is rejected; wrap floats in `DEC(...)`).
 
+This same `BD`/`F` mixing rule applies to comparisons and equality.
+
 ## Division
 
 - `/` always returns **F** (double) unless a `BD` is involved:
@@ -52,7 +59,7 @@ For `+`, `-`, `*` (same pattern):
 - `//` is **integer division**:
   - `I // I → I` (truncates toward zero; overflow promotes to `BI`)
   - `BI // BI → BI`
-  - `BD // ...` is rejected
+  - `BD` or `F` with `//` is rejected
 
 ## Rounding (`ROUND`)
 
@@ -70,6 +77,7 @@ For `+`, `-`, `*` (same pattern):
 
 - The `I` kind is restricted to the JS safe-integer range (±(2^53 − 1)).
 - When integer operations exceed the safe range, results promote to `BI`.
+- On JS, `BI` is **64-bit** (Long-backed), not arbitrary precision.
 - `BD` uses the platform BigDec implementation (Double-backed in JS); use `DEC("...")` for explicit
   precision and to avoid float rounding surprises.
 
