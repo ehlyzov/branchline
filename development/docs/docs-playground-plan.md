@@ -10,6 +10,8 @@ changelog:
     change: "Migrated from research/docs-plan.md and added YAML front matter."
   - date: 2026-02-01
     change: "Updated links to /development paths and buffer-only wording."
+  - date: 2026-02-01
+    change: "Updated modules/adapters notes for OPTIONS blocks."
 ---
 # Branchline docs + playground refactor plan
 
@@ -45,7 +47,7 @@ changelog:
   - Variables/bindings: `LET`, assignment rules, scoping, shadowing, immutability expectations.
   - Control flow: `IF/ELSE`, `FOR` / `FOR EACH` / `FOREACH`, comprehensions, `WHERE` usage, `TRY/CATCH`, `RETRY` modifiers, `ASSERT/THROW/ABORT`.
   - Functions: `FUNC` forms, parameters, returns, higher-order usage, lambda syntax, `APPLY`, `CALL` for host invocations.
-  - Modules/adapters: `SOURCE`, `OUTPUT`, `USING`, buffer-only transforms (stream unsupported), annotations, `INIT`, `SHARED` with `SINGLE`/`MANY`, `AWAIT_SHARED`.
+  - Modules/adapters: `OPTIONS`, `OUTPUT`, `USING`, buffer-only transforms (stream unsupported), annotations, `INIT`, `SHARED` with `SINGLE`/`MANY`, `AWAIT_SHARED`.
   - Concurrency/suspension: `SUSPEND`, `AWAIT`, shared memory considerations.
   - Paths and selectors: `$`/`INPUT`, dot access, wildcards, slices, predicates; edge cases (missing fields, null coalescing, pattern for XML attributes).
   - Error handling and tracing: `TRY/CATCH`, `CHECKPOINT`, `EXPLAIN`, provenance expectations.

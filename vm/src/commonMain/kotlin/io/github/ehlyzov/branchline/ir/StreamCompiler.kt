@@ -2,10 +2,12 @@ package io.github.ehlyzov.branchline.ir
 
 import io.github.ehlyzov.branchline.ExecutionEngine
 import io.github.ehlyzov.branchline.FuncDecl
-import io.github.ehlyzov.branchline.Mode
 import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.ir.TransformDescriptor
 import io.github.ehlyzov.branchline.std.HostFnMetadata
+import io.github.ehlyzov.branchline.std.SharedResourceHandle
+import io.github.ehlyzov.branchline.std.SharedResourceKind
+import io.github.ehlyzov.branchline.std.SharedStoreProvider
 import io.github.ehlyzov.branchline.vm.VMExec
 
 private fun dumpIR(nodes: List<IRNode>, indent: String = "") {
@@ -53,7 +55,18 @@ fun compileStream(
     transforms: Map<String, TransformDescriptor> = emptyMap(), // обязателен!
     engine: ExecutionEngine = ExecutionEngine.INTERPRETER,
 ): (Map<String, Any?>) -> Any? {
-    require(t.mode == Mode.BUFFER) { "Only buffer mode is supported" }
+    val sharedDecls = t.options.shared
+    SharedStoreProvider.store?.let { store ->
+        for (sharedDecl in sharedDecls) {
+            val kind = when (sharedDecl.kind) {
+                io.github.ehlyzov.branchline.SharedKind.SINGLE -> SharedResourceKind.SINGLE
+                io.github.ehlyzov.branchline.SharedKind.MANY -> SharedResourceKind.MANY
+            }
+            if (!store.hasResource(sharedDecl.name)) {
+                store.addResource(sharedDecl.name, kind)
+            }
+        }
+    }
 
     /* 1. compile AST → IR */
     val irRoot = ToIR(funcs, hostFns).compile(t.body.statements)
@@ -80,6 +93,11 @@ fun compileStream(
                 for (alias in io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES) {
                     this[alias] = input
                 }
+                for (sharedDecl in sharedDecls) {
+                    if (!containsKey(sharedDecl.name)) {
+                        this[sharedDecl.name] = SharedResourceHandle(sharedDecl.name)
+                    }
+                }
             }
             val produced = vmExec.run(env)
             produced ?: error("No OUTPUT")
@@ -92,6 +110,11 @@ fun compileStream(
             putAll(input)
             for (alias in io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES) {
                 this[alias] = input
+            }
+            for (sharedDecl in sharedDecls) {
+                if (!containsKey(sharedDecl.name)) {
+                    this[sharedDecl.name] = SharedResourceHandle(sharedDecl.name)
+                }
             }
         }
         val produced = exec.run(env)

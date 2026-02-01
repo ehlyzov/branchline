@@ -80,7 +80,7 @@ public class BranchlineProgram(
             source = source,
             runtimeContextEnabled = true,
         )
-        val env = buildEnv(input)
+        val env = buildEnv(transform, input)
         return exec.run(env, stringifyKeys = true)
     }
 
@@ -110,30 +110,32 @@ public class BranchlineProgram(
 
     fun typeDecls(): List<TypeDecl> = program.decls.filterIsInstance<TypeDecl>()
 
-    fun sharedDecls(): List<SharedDecl> = sharedDecls
+    fun sharedDecls(): List<SharedDecl> = allSharedDecls()
 
     fun contractForTransform(transform: TransformDecl): TransformContract =
         contractBuilder.build(transform)
 
     private fun compileIr(transform: TransformDecl) = _root_ide_package_.io.github.ehlyzov.branchline.ir.ToIR(funcs, hostFns).compile(transform.body.statements)
 
-    fun buildEnv(input: Map<String, Any?>): MutableMap<String, Any?> =
-        HashMap<String, Any?>(input.size + sharedDecls.size + 1).apply {
+    fun buildEnv(transform: TransformDecl, input: Map<String, Any?>): MutableMap<String, Any?> {
+        val mergedSharedDecls = mergeSharedDecls(transform)
+        return HashMap<String, Any?>(input.size + mergedSharedDecls.size + 1).apply {
             this[DEFAULT_INPUT_ALIAS] = input
             putAll(input)
             for (alias in COMPAT_INPUT_ALIASES) {
                 this[alias] = input
             }
-            for (decl in sharedDecls) {
+            for (decl in mergedSharedDecls) {
                 if (!containsKey(decl.name)) {
                     this[decl.name] = SharedResourceHandle(decl.name)
                 }
             }
         }
+    }
 
     private fun registerSharedDecls() {
         val store = SharedStoreProvider.store ?: return
-        for (decl in sharedDecls) {
+        for (decl in allSharedDecls()) {
             if (store.hasResource(decl.name)) continue
             val kind = when (decl.kind) {
                 SharedKind.SINGLE -> SharedResourceKind.SINGLE
@@ -141,6 +143,31 @@ public class BranchlineProgram(
             }
             store.addResource(decl.name, kind)
         }
+    }
+
+    private fun mergeSharedDecls(transform: TransformDecl): List<SharedDecl> {
+        if (transform.options.shared.isEmpty()) return sharedDecls
+        val merged = LinkedHashMap<String, SharedDecl>()
+        for (decl in sharedDecls) {
+            merged[decl.name] = decl
+        }
+        for (decl in transform.options.shared) {
+            merged[decl.name] = decl
+        }
+        return merged.values.toList()
+    }
+
+    private fun allSharedDecls(): List<SharedDecl> {
+        val merged = LinkedHashMap<String, SharedDecl>()
+        for (decl in sharedDecls) {
+            merged[decl.name] = decl
+        }
+        for (transform in transforms) {
+            for (decl in transform.options.shared) {
+                merged[decl.name] = decl
+            }
+        }
+        return merged.values.toList()
     }
 }
 

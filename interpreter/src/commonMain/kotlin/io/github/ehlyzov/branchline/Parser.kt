@@ -99,14 +99,13 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             TokenType.LET,
             TokenType.MANY,
             TokenType.MODIFY,
+            TokenType.OPTIONS,
             TokenType.OUTPUT,
             TokenType.RETRY,
             TokenType.RETURN,
             TokenType.SET,
             TokenType.SHARED,
             TokenType.SINGLE,
-            TokenType.SOURCE,
-            TokenType.STREAM,
             TokenType.THROW,
             TokenType.TIMES,
             TokenType.TO,
@@ -142,7 +141,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
 
     private fun parseTransform(): TransformDecl {
         val start = advance() // TRANSFORM
-        val nameTok = if (checkName()) advance() else null
+        val nameTok = if (checkName() && !check(TokenType.OPTIONS)) advance() else null
 
         val params = mutableListOf<String>()
         var signature: TransformSignature? = null
@@ -184,26 +183,19 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             )
         }
 
-        // Optional mode block; only BUFFER supported. STREAM not supported yet.
-        var mode: Mode = Mode.BUFFER
-        if (check(TokenType.LEFT_BRACE) && (checkNext(TokenType.STREAM) || checkNext(TokenType.BUFFER))) {
-            advance() // consume '{'
-            val modeTok = advance()
-            mode = when (modeTok.type) {
-                TokenType.BUFFER -> Mode.BUFFER
-                TokenType.STREAM -> error(modeTok, "STREAM mode is not supported yet. Omit mode to use BUFFER.")
-                else -> error(modeTok, "Expect BUFFER")
-            }
-            consume(TokenType.RIGHT_BRACE, "Expect '}' after mode")
-        }
+        val options = if (match(TokenType.OPTIONS)) parseTransformOptions(previous()) else TransformOptions()
 
         val body: TransformBody = parseBlock()
 
-        return TransformDecl(nameTok?.lexeme, params, signature, mode, body, start)
+        return TransformDecl(nameTok?.lexeme, params, signature, options, body, start)
     }
 
     private fun parseAdapter(): AdapterSpec {
-        val nameTok = consumeName("Expect adapter name after USING")
+        return parseAdapterSpec("Expect adapter name after USING")
+    }
+
+    private fun parseAdapterSpec(message: String): AdapterSpec {
+        val nameTok = consumeName(message)
         val args = mutableListOf<Expr>()
         if (match(TokenType.LEFT_PAREN)) {
             if (!check(TokenType.RIGHT_PAREN)) {
@@ -214,6 +206,95 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
             consume(TokenType.RIGHT_PAREN, "Expect ')' after adapter args")
         }
         return AdapterSpec(nameTok.lexeme, args, nameTok)
+    }
+
+    private fun parseTransformOptions(optionsToken: Token): TransformOptions {
+        consume(TokenType.LEFT_BRACE, "Expect '{' after OPTIONS")
+        var mode: Mode = Mode.BUFFER
+        var inputAdapter: AdapterSpec? = null
+        var outputAdapter: AdapterSpec? = null
+        val sharedDecls = mutableListOf<SharedDecl>()
+        val seen = mutableSetOf<String>()
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            val keyTok = consumeName("Expect option name in OPTIONS block")
+            val key = keyTok.lexeme.lowercase()
+            if (!seen.add(key)) {
+                error(keyTok, "Duplicate OPTIONS entry '$key'")
+            }
+            consume(TokenType.COLON, "Expect ':' after option name")
+            when (key) {
+                "mode" -> mode = parseModeOption()
+                "input" -> inputAdapter = parseAdapterBlock("input")
+                "output" -> outputAdapter = parseAdapterBlock("output")
+                "shared" -> sharedDecls.addAll(parseSharedOptionList())
+                else -> error(keyTok, "Unknown OPTIONS entry '$key'")
+            }
+            consumeOptionsSeparator(TokenType.RIGHT_BRACE)
+        }
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after OPTIONS block")
+        return TransformOptions(
+            mode = mode,
+            inputAdapter = inputAdapter,
+            outputAdapter = outputAdapter,
+            shared = sharedDecls,
+            token = optionsToken,
+        )
+    }
+
+    private fun parseModeOption(): Mode {
+        val valueTok = consumeName("Expect mode value after 'mode:'")
+        return when (valueTok.lexeme.lowercase()) {
+            "buffer" -> Mode.BUFFER
+            "stream" -> error(valueTok, "STREAM mode is not supported. Use 'buffer'.")
+            else -> error(valueTok, "Expect 'buffer' after 'mode:'")
+        }
+    }
+
+    private fun parseAdapterBlock(label: String): AdapterSpec? {
+        consume(TokenType.LEFT_BRACE, "Expect '{' after $label option")
+        var adapter: AdapterSpec? = null
+        val seen = mutableSetOf<String>()
+        while (!check(TokenType.RIGHT_BRACE) && !isAtEnd()) {
+            val keyTok = consumeName("Expect option field in $label block")
+            val key = keyTok.lexeme.lowercase()
+            if (!seen.add(key)) {
+                error(keyTok, "Duplicate $label option '$key'")
+            }
+            consume(TokenType.COLON, "Expect ':' after $label option field")
+            when (key) {
+                "adapter" -> adapter = parseAdapterSpec("Expect adapter name in $label option")
+                else -> error(keyTok, "Unknown $label option '$key'")
+            }
+            consumeOptionsSeparator(TokenType.RIGHT_BRACE)
+        }
+        consume(TokenType.RIGHT_BRACE, "Expect '}' after $label option")
+        return adapter
+    }
+
+    private fun parseSharedOptionList(): List<SharedDecl> {
+        consume(TokenType.LEFT_BRACKET, "Expect '[' after shared option")
+        val sharedDecls = mutableListOf<SharedDecl>()
+        while (!check(TokenType.RIGHT_BRACKET) && !isAtEnd()) {
+            val nameTok = consumeName("Expect shared resource name")
+            val kind = when {
+                match(TokenType.SINGLE) -> SharedKind.SINGLE
+                match(TokenType.MANY) -> SharedKind.MANY
+                else -> error(peek(), "Expect SINGLE or MANY after shared name")
+            }
+            sharedDecls += SharedDecl(nameTok.lexeme, kind, nameTok)
+            consumeOptionsSeparator(TokenType.RIGHT_BRACKET)
+        }
+        consume(TokenType.RIGHT_BRACKET, "Expect ']' after shared list")
+        return sharedDecls
+    }
+
+    private fun consumeOptionsSeparator(terminator: TokenType) {
+        if (match(TokenType.COMMA)) return
+        if (match(TokenType.SEMICOLON)) return
+        val next = peek()
+        if (next.type == terminator) return
+        if (next.line != previous().line) return
+        error(next, "Expect ',' or newline between options")
     }
 
     // --------------------------------------------------------------------

@@ -336,14 +336,14 @@ public object BranchlineCli {
                 baseInput = input,
                 summaryTransform = summaryTransform,
                 runTransform = { data ->
-                    val env = runtime.buildEnv(data)
+                    val env = runtime.buildEnv(transform, data)
                     vmExec.run(env, stringifyKeys = true)
                 },
                 runSummary = { data ->
                     summaryTransform?.let { runtime.execute(it, data) }
                 },
             ) ?: run {
-                val env = runtime.buildEnv(input)
+                val env = runtime.buildEnv(transform, input)
                 vmExec.run(env, stringifyKeys = true)
             }
             emitOutput(

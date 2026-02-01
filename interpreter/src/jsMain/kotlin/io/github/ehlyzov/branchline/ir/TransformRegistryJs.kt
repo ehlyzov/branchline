@@ -1,10 +1,11 @@
 package io.github.ehlyzov.branchline.ir
 
 import io.github.ehlyzov.branchline.FuncDecl
-import io.github.ehlyzov.branchline.Mode
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
 import io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES
 import io.github.ehlyzov.branchline.std.HostFnMetadata
+import io.github.ehlyzov.branchline.std.SharedResourceHandle
+import io.github.ehlyzov.branchline.std.SharedResourceKind
 import io.github.ehlyzov.branchline.std.SharedStoreProvider
 
 actual class TransformRegistry actual constructor(
@@ -19,7 +20,18 @@ actual class TransformRegistry actual constructor(
         cache.getOrPut(name) {
             val descriptor = transforms[name] ?: error("Transform '$name' not found")
             val decl = descriptor.decl
-            require(decl.mode == Mode.BUFFER) { "Only buffer mode is supported" }
+            val sharedDecls = decl.options.shared
+            SharedStoreProvider.store?.let { store ->
+                for (sharedDecl in sharedDecls) {
+                    val kind = when (sharedDecl.kind) {
+                        io.github.ehlyzov.branchline.SharedKind.SINGLE -> SharedResourceKind.SINGLE
+                        io.github.ehlyzov.branchline.SharedKind.MANY -> SharedResourceKind.MANY
+                    }
+                    if (!store.hasResource(sharedDecl.name)) {
+                        store.addResource(sharedDecl.name, kind)
+                    }
+                }
+            }
             val ir = ToIR(funcs, hostFns).compile(decl.body.statements)
             val exec = Exec(
                 ir = ir,
@@ -34,6 +46,11 @@ actual class TransformRegistry actual constructor(
                     putAll(input)
                     for (alias in COMPAT_INPUT_ALIASES) {
                         this[alias] = input
+                    }
+                    for (sharedDecl in sharedDecls) {
+                        if (!containsKey(sharedDecl.name)) {
+                            this[sharedDecl.name] = SharedResourceHandle(sharedDecl.name)
+                        }
                     }
                 }
                 val produced = exec.run(env)

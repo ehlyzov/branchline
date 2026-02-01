@@ -59,7 +59,7 @@ fun buildRunnerFromIRMP(
     }
 }
 
-/** Build a runner from a full Branchline program listing (STREAM transform). */
+/** Build a runner from a full Branchline program listing (BUFFER transform). */
 fun buildRunnerFromProgramMP(
     program: String,
     hostFns: Map<String, (List<Any?>) -> Any?> = StdLib.fns,
@@ -70,7 +70,13 @@ fun buildRunnerFromProgramMP(
 ): (Map<String, Any?>) -> Any? {
     val tokens = io.github.ehlyzov.branchline.Lexer(program).lex()
     val prog = Parser(tokens, program).parse()
-    val sharedDecls = prog.decls.filterIsInstance<SharedDecl>()
+    val transforms = prog.decls.filterIsInstance<io.github.ehlyzov.branchline.TransformDecl>()
+    require(transforms.size == 1) { "Program must contain exactly one TRANSFORM" }
+    val t = transforms.single()
+    val sharedDecls = mergeSharedDecls(
+        prog.decls.filterIsInstance<SharedDecl>(),
+        t.options.shared,
+    )
     SharedStoreProvider.store?.let { store ->
         for (decl in sharedDecls) {
             val kind = when (decl.kind) {
@@ -84,10 +90,6 @@ fun buildRunnerFromProgramMP(
     }
 
     val funcs = prog.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
-    val transforms = prog.decls.filterIsInstance<io.github.ehlyzov.branchline.TransformDecl>()
-    require(transforms.size == 1) { "Program must contain exactly one TRANSFORM" }
-    val t = transforms.single()
-    require(t.mode == io.github.ehlyzov.branchline.Mode.BUFFER) { "Only buffer mode is supported" }
 
     if (runSema) {
         io.github.ehlyzov.branchline.sema.SemanticAnalyzer(hostFns.keys).analyze(prog)
@@ -110,15 +112,30 @@ fun buildRunnerFromProgramMP(
         val env = HashMap<String, Any?>().apply {
             this[io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS] = input
             putAll(input)
-        for (alias in io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES) {
-            this[alias] = input
-        }
-        for (decl in sharedDecls) {
-            if (!containsKey(decl.name)) {
-                this[decl.name] = SharedResourceHandle(decl.name)
+            for (alias in io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES) {
+                this[alias] = input
+            }
+            for (decl in sharedDecls) {
+                if (!containsKey(decl.name)) {
+                    this[decl.name] = SharedResourceHandle(decl.name)
+                }
             }
         }
-    }
         exec.run(env)
     }
+}
+
+private fun mergeSharedDecls(
+    globalDecls: List<SharedDecl>,
+    transformDecls: List<SharedDecl>,
+): List<SharedDecl> {
+    if (transformDecls.isEmpty()) return globalDecls
+    val merged = LinkedHashMap<String, SharedDecl>()
+    for (decl in globalDecls) {
+        merged[decl.name] = decl
+    }
+    for (decl in transformDecls) {
+        merged[decl.name] = decl
+    }
+    return merged.values.toList()
 }

@@ -10,6 +10,8 @@ changelog:
     change: "Migrated from research/docs.md and added YAML front matter."
   - date: 2026-02-01
     change: "Aligned docs examples with buffer-only mode and input binding."
+  - date: 2026-02-01
+    change: "Updated language tour notes for OPTIONS blocks."
 ---
 # Branchline documentation refresh (draft)
 
@@ -142,9 +144,10 @@ Use `--input-format xml` if providing XML.
 - `APPLY(fn, ...)` to invoke a function value with dynamic args.
 
 ### Sources, outputs, adapters
-- `SOURCE name USING adapter(args);` to declare inputs (legacy). If omitted, `input` is the default binding and `$`/`INPUT` refer to it.
+- `input` is the default binding and `$`/`INPUT` refer to it.
+- Use per-transform `OPTIONS` to declare adapters: `OPTIONS { input: { adapter: ... }, output: { adapter: ... } }`.
 - `OUTPUT USING adapter(...) { ... }` or `OUTPUT { ... }` for default JSON output.
-- `TRANSFORM Name(input) { ... }` to define pipeline stages (buffer mode only; stream is not supported); `@annotation` supported.
+- `TRANSFORM Name(input) OPTIONS { ... } { ... }` defines pipeline stages (buffer mode only); `@annotation` supported.
 
 ### Paths & selectors
 - `$` or `INPUT` refers to the root input; `msg.field`, `items[0]`, slices `[start:end]`, predicates `[expr]`, wildcard `.*`.

@@ -14,8 +14,9 @@ outputDecl ::= OUTPUT adapterSpec? templateBlock
 
 ## Transform declarations
 ```
-transformDecl ::= annotation* TRANSFORM IDENTIFIER? transformSig? transformMode? block
+transformDecl ::= annotation* TRANSFORM IDENTIFIER? transformSig? transformOptions? block
 transformSig  ::= "(" transformParamList? ")" "->" typeExpr
+transformOptions ::= OPTIONS "{" optionEntry* "}"
 ```
 Transforms process data from sources to outputs. Signatures document parameter and result types. When omitted, both input and output types default to `Any`. Use `_`/`_?` as placeholders for `Any`/`Any?`.
 
@@ -23,6 +24,16 @@ Example signatures:
 ```
 TRANSFORM X(input: _) -> _ { ... }
 TRANSFORM Enrich(user: { id: string, email?: string }) -> { user: string } { ... }
+```
+
+`OPTIONS` is optional and keeps per-transform configuration close to the transform:
+```
+TRANSFORM Normalize OPTIONS {
+    mode: buffer
+    input: { adapter: kafka("topic") }
+    output: { adapter: json() }
+    shared: [ cache SINGLE, tokens MANY ]
+} { ... }
 ```
 
 ## Shared declarations

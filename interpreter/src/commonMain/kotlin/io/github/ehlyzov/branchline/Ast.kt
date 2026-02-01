@@ -68,15 +68,21 @@ data class TypeDecl(
 
 enum class TypeKind { ENUM, UNION }
 
-data class SourceDecl(val name: String, val adapter: AdapterSpec?, val token: Token) : TopLevelDecl
-
 data class OutputDecl(val adapter: AdapterSpec?, val template: Expr, val token: Token) : TopLevelDecl
+
+public data class TransformOptions(
+    val mode: Mode = Mode.BUFFER,
+    val inputAdapter: AdapterSpec? = null,
+    val outputAdapter: AdapterSpec? = null,
+    val shared: List<SharedDecl> = emptyList(),
+    val token: Token? = null,
+) : Ast
 
 data class TransformDecl(
     val name: String?,
     val params: List<String>,
     val signature: TransformSignature?,
-    val mode: Mode,
+    val options: TransformOptions,
     val body: TransformBody,
     val token: Token,
 ) : TopLevelDecl
@@ -87,7 +93,7 @@ public data class TransformSignature(
     val tokenSpan: TokenSpan,
 )
 
-enum class Mode { STREAM, BUFFER }
+public enum class Mode { BUFFER }
 
 data class AdapterSpec(val name: String, val args: List<Expr>, val token: Token) : Ast
 

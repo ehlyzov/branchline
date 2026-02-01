@@ -17,7 +17,7 @@ changelog:
 - Stage: Implemented.
 - `input` is the canonical binding and the source parameter.
 - `row` is a compatibility alias.
-- `SOURCE` is no longer parsed by the top-level parser.
+- `SOURCE` has been removed from the language surface.
 
 ## Current behavior
 - Default binding lives in `interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/InputAliases.kt`:
@@ -30,8 +30,7 @@ changelog:
 - Semantic analysis treats `input` and `row` as always-visible identifiers and prevents redefinition.
 
 ## Migration notes
-- Remove `SOURCE row;` from program headers; use `input` directly in expressions.
-- Some examples still use `SOURCE row` (e.g., `vm/examples/kotlin/v2/vm/VMExample.kt`); update when touching those files.
+- Use `input` directly in expressions; `row` remains as a compatibility alias.
 
 ## Deferred / future work
 - Custom input aliases are deferred to the type system plan. When added, `input` will remain the default and `row` will be phased out on a defined timeline.

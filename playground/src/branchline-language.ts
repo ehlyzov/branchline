@@ -3,9 +3,8 @@ import * as monaco from 'monaco-editor';
 const LANGUAGE_ID = 'branchline';
 
 const keywords = [
-  'SOURCE',
   'TRANSFORM',
-  'STREAM',
+  'OPTIONS',
   'BUFFER',
   'LET',
   'SET',

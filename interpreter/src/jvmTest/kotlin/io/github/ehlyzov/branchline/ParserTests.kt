@@ -45,9 +45,49 @@ class ParserTest {
         assertEquals(1, program.decls.size)
         val tr = program.decls[0] as TransformDecl
         assertEquals("NormaliseOne", tr.name)
-        assertEquals(Mode.BUFFER, tr.mode)
+        assertEquals(Mode.BUFFER, tr.options.mode)
         assertEquals(2, tr.body.statements.size)
         println(program)
+    }
+
+    @Test
+    fun `parses options block`() {
+        val program = parse(
+            """
+            TRANSFORM OptionsDemo OPTIONS {
+                mode: buffer
+                input: { adapter: kafka("topic") }
+                output: { adapter: json() }
+                shared: [ cache SINGLE, tokens MANY ]
+            } {
+                OUTPUT { ok: true }
+            }
+            """.trimIndent()
+        )
+        val tr = program.decls[0] as TransformDecl
+        val options = tr.options
+        assertEquals(Mode.BUFFER, options.mode)
+        assertNotNull(options.inputAdapter)
+        assertEquals("kafka", options.inputAdapter?.name)
+        assertEquals(1, options.inputAdapter?.args?.size)
+        assertNotNull(options.outputAdapter)
+        assertEquals("json", options.outputAdapter?.name)
+        assertEquals(2, options.shared.size)
+        assertEquals("cache", options.shared[0].name)
+        assertEquals(SharedKind.SINGLE, options.shared[0].kind)
+        assertEquals("tokens", options.shared[1].name)
+        assertEquals(SharedKind.MANY, options.shared[1].kind)
+    }
+
+    @Test
+    fun `unknown option rejected`() {
+        assertThrows<ParseException> {
+            parse(
+                """
+                TRANSFORM Bad OPTIONS { bogus: 1 } { OUTPUT { ok: true } }
+                """.trimIndent()
+            )
+        }
     }
 
     @Test
