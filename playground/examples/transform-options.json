@@ -1,0 +1,18 @@
+{
+  "title": "Transform Options",
+  "description": "Demonstrates per-transform OPTIONS configuration.",
+  "showContracts": false,
+  "program": [
+    "TRANSFORM OptionsDemo OPTIONS {",
+    "    mode: buffer",
+    "    input: { adapter: json() }",
+    "    output: { adapter: json() }",
+    "    shared: [ cache SINGLE ]",
+    "} {",
+    "    OUTPUT { greeting: \"Hello, \" + input.name };",
+    "}"
+  ],
+  "input": {
+    "name": "Riley"
+  }
+}
