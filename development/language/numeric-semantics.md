@@ -11,8 +11,8 @@ changelog:
 ---
 # Numeric semantics and performance
 
-## Status (as of 2026-01-31)
-- Numeric equality/comparison now treat all numeric types (`Int`/`Long`/`Float`/`Double`/`BLBigInt`/`BLBigDec`) as value-equal; `NUMBER("0") == 0` works in both interpreter and VM.
+## Status (as of 2026-02-01)
+- Numeric equality/comparison treat numeric types as value-equal except for mixed `BD`/`F`, which is rejected; `NUMBER("0") == 0` works in both interpreter and VM.
 - Truthiness avoids extra BigDec allocations for primitives and BigInts/BigDecs, using direct sign checks.
 - CLI regression tests cover interpreter + VM execution paths for numeric equality on JVM/JS.
 - JS BigNum helpers pool common zero/one instances to reduce allocations for frequent literals.

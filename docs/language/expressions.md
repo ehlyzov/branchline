@@ -15,6 +15,7 @@ Expressions compute values and support operators, function calls, and data const
 - `CASE` requires an `ELSE` branch.
 - `TRY/CATCH` is an expression and can be used in `LET`, `CASE`, or output templates.
 - `AWAIT` and `SUSPEND` require host support and may error without it.
+- Comparisons reject mixed `BD`/`F` numeric values; wrap floats with `DEC(...)`.
 
 ## As {#as}
 `AS` provides aliasing or casting when supported by the host.
