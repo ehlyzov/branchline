@@ -6,6 +6,7 @@
 - If you notice unexpected changes while working, stop immediately and ask how to proceed.
 - Never run destructive git commands (reset/checkout/restore/hard) unless explicitly instructed.
 - Never edit `.env` or environment variable files.
+- When adding or updating proposals in `/development`, always update `development/INDEX.md`.
 
 ## Project Structure & Priorities
 - `cli/`: CLI tools and scripts.

@@ -12,6 +12,8 @@ changelog:
     change: "Updated language doc status listings (CASE, input aliases, contracts)."
   - date: 2026-02-01
     change: "Moved Transform Options to implemented."
+  - date: 2026-02-01
+    change: "Added implicit transform CLI proposal and moved Numeric Refactor to implemented."
 ---
 # Development Knowledge Base Index
 
@@ -21,9 +23,9 @@ This index is the canonical entry point for the /development knowledge base. All
 
 ### Proposed
 - [Advanced CLI](tooling/advanced-cli.md) -- CLI+CI scripting plan.
+- [Implicit Transform (CLI)](tooling/implicit-transform-cli.md) -- opt-in single-transform wrapper mode.
 - [LLM Pipelines](ai/llm-pipelines.md) -- pipeline runtime spec.
 - [Planitforme Integration](ai/planitforme-integration.md) -- migration sketches; depends on LLM Pipelines.
-- [Numeric Refactor](language/numeric-refactor.md) -- DEC + numeric kinds redesign.
 - [Tree Structures](runtime/tree-structures.md) -- arena/array tree structure recommendations.
 - [Benchmarks Docs Fix Plan](docs/benchmarks-docs-fix-plan.md) -- MkDocs/benchmarks patch plan.
 - [Docs + Playground Plan](docs/docs-playground-plan.md) -- docs plan; depends on Docs Refresh.
@@ -44,6 +46,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Interpreter Refactor](runtime/interpreter-refactor.md) -- Exec/caps refactor.
 - [Optional Semicolons](language/optional-semicolons.md) -- parser accepts newlines.
 - [Reserved Words](language/reserved-words.md) -- keyword rules.
+- [Numeric Refactor](language/numeric-refactor.md) -- DEC + numeric kinds redesign.
 - [Numeric Semantics](language/numeric-semantics.md) -- current numeric behavior.
 - [CASE/WHEN](language/case-when.md) -- guard-only CASE expression implemented.
 - [Input Aliases](language/input-aliases.md) -- `input` default with `row` compatibility alias.
