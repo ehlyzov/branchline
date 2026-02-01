@@ -310,7 +310,7 @@ public object BranchlineCompiler {
         val transforms = parsed.decls.filterIsInstance<TransformDecl>()
         require(transforms.size == 1) { "Program must contain exactly one TRANSFORM." }
         val transform = transforms.single()
-        require(transform.mode == Mode.BUFFER) { "Only buffer mode transforms are supported." }
+        require(transform.options.mode == Mode.BUFFER) { "Only buffer mode transforms are supported." }
         val ir = ToIR(funcs, hostFns).compile(transform.body.statements)
         return BranchlineCompiled(
             ir = ir,

@@ -144,6 +144,6 @@ class SharedMemoryDSLIntegrationTest {
         // Check transform
         val transform = program.decls[2] as TransformDecl
         assertEquals("TestSemantics", transform.name)
-        assertEquals(Mode.BUFFER, transform.mode)
+        assertEquals(Mode.BUFFER, transform.options.mode)
     }
 }

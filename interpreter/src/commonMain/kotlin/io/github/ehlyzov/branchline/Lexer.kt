@@ -8,11 +8,10 @@ class Lexer(private val source: String) {
     private val tokens = mutableListOf<Token>()
 
     private val keywords = mapOf(
-        "SOURCE" to TokenType.SOURCE,
         "OUTPUT" to TokenType.OUTPUT,
         "USING" to TokenType.USING,
         "TRANSFORM" to TokenType.TRANSFORM,
-        "STREAM" to TokenType.STREAM,
+        "OPTIONS" to TokenType.OPTIONS,
         "BUFFER" to TokenType.BUFFER,
         "FOR" to TokenType.FOR,
         "EACH" to TokenType.EACH,

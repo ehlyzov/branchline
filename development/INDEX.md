@@ -10,6 +10,8 @@ changelog:
     change: "Created development knowledge base index."
   - date: 2026-02-01
     change: "Updated language doc status listings (CASE, input aliases, contracts)."
+  - date: 2026-02-01
+    change: "Moved Transform Options to implemented."
 ---
 # Development Knowledge Base Index
 
@@ -21,7 +23,6 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Advanced CLI](tooling/advanced-cli.md) -- CLI+CI scripting plan.
 - [LLM Pipelines](ai/llm-pipelines.md) -- pipeline runtime spec.
 - [Planitforme Integration](ai/planitforme-integration.md) -- migration sketches; depends on LLM Pipelines.
-- [Transform Options](language/transform-options.md) -- OPTIONS block proposal; depends on Input Aliases.
 - [Numeric Refactor](language/numeric-refactor.md) -- DEC + numeric kinds redesign.
 - [Tree Structures](runtime/tree-structures.md) -- arena/array tree structure recommendations.
 - [Benchmarks Docs Fix Plan](docs/benchmarks-docs-fix-plan.md) -- MkDocs/benchmarks patch plan.
@@ -47,6 +48,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [CASE/WHEN](language/case-when.md) -- guard-only CASE expression implemented.
 - [Input Aliases](language/input-aliases.md) -- `input` default with `row` compatibility alias.
 - [Transform Contracts](language/transform-contracts.md) -- signatures and contract inference.
+- [Transform Options](language/transform-options.md) -- per-transform OPTIONS blocks.
 
 ### Deprecated
 - None.

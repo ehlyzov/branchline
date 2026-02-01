@@ -56,13 +56,10 @@ changelog:
 
 ### Language & Semantics
 
-#### LANG-1: Implement `OPTIONS` block + input/SOURCE migration (Impact: 5)
-- Goal: standardize per-transform execution options and finish input binding cleanup.
+#### LANG-1: Implement `OPTIONS` block (Done)
+- Goal: standardize per-transform execution options and finalize input binding cleanup.
 - References: `development/language/transform-options.md`, `development/language/input-aliases.md`.
-- Subtasks:
-  - Add grammar + AST for `OPTIONS`.
-  - Thread options through interpreter/VM runners.
-  - Add conformance tests and docs; define deprecation timeline for `SOURCE`.
+- Status: implemented; legacy `SOURCE`/mode blocks removed.
 
 #### LANG-2: Transform contracts and type annotations (Impact: 4)
 - Goal: enable explicit input/output schemas and inferred contracts.

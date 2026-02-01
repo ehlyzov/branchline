@@ -38,7 +38,7 @@ class AwaitSuspendTest {
     @Test fun `stream mode rejected`() {
         val code = """
             FUNC waitFor(t) = 1;
-            TRANSFORM Bad { stream } { LET x = suspend waitFor("late"); OUTPUT x; }
+            TRANSFORM Bad OPTIONS { mode: stream } { LET x = suspend waitFor("late"); OUTPUT x; }
         """
         assertThrows<ParseException> { semaOK(code) }
     }
