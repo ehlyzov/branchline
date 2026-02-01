@@ -63,6 +63,10 @@ def jvmCompilation = kotlin.targets.jvm.compilations.main
 
 def jsProductionKotlinDir = layout.buildDirectory.dir("compileSync/js/main/productionExecutable/kotlin")
 def jsCliPackageDir = layout.buildDirectory.dir("cliJsPackage")
+def execOps = project.services.get(org.gradle.process.ExecOperations)
+def fsOps = project.services.get(org.gradle.api.file.FileSystemOperations)
+def projectDirFile = layout.projectDirectory.asFile
+def projectVersion = project.version.toString()
 def resolveNpmExecutable = {
     def envNpmBin = System.getenv("NPM_BIN") ?: System.getenv("NVM_BIN")
     if (envNpmBin) {
@@ -101,32 +105,36 @@ tasks.register('prepareJsCliPackage') {
     dependsOn 'jsProductionExecutableCompileSync'
     doLast {
         def targetRoot = jsCliPackageDir.get().asFile
-        project.delete(targetRoot)
+        fsOps.delete {
+            delete(targetRoot)
+        }
 
         // Copy compiled Kotlin JS artifacts
-        copy {
+        fsOps.copy {
             from(jsProductionKotlinDir.get().asFile)
             into(new File(targetRoot, 'kotlin'))
         }
 
         // Copy launcher script (ensure executable bit)
-        copy {
-            from("${projectDir}/js-package/bin/bl.cjs")
+        fsOps.copy {
+            from(new File(projectDirFile, 'js-package/bin/bl.cjs'))
             into(new File(targetRoot, 'bin'))
-            fileMode = 0755
+            filePermissions {
+                unix("rwxr-xr-x")
+            }
         }
 
         // Generate package.json from template with current version
-        def template = file("${projectDir}/js-package/package.json.tpl").text
-        def resolved = template.replace('__VERSION__', project.version.toString())
+        def template = new File(projectDirFile, 'js-package/package.json.tpl').text
+        def resolved = template.replace('__VERSION__', projectVersion)
         def pkgFile = new File(targetRoot, 'package.json')
         pkgFile.text = resolved
 
-        def lockTemplate = file("${projectDir}/js-package/package-lock.json.tpl")
+        def lockTemplate = new File(projectDirFile, 'js-package/package-lock.json.tpl')
         if (!lockTemplate.exists()) {
             throw new GradleException("Missing js-package/package-lock.json.tpl; generate it via npm install --package-lock-only.")
         }
-        def lockResolved = lockTemplate.text.replace('__VERSION__', project.version.toString())
+        def lockResolved = lockTemplate.text.replace('__VERSION__', projectVersion)
         new File(targetRoot, 'package-lock.json').text = lockResolved
 
         // Install production dependencies so the packaged CLI ships a self-contained node_modules tree
@@ -134,7 +142,7 @@ tasks.register('prepareJsCliPackage') {
         if (npmExecutable == null) {
             throw new GradleException("npm executable not found; ensure NVM_BIN or PATH includes npm.")
         }
-        exec {
+        execOps.exec {
             workingDir targetRoot
             commandLine npmExecutable, 'ci', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'
         }
