@@ -123,9 +123,8 @@ class VMExample {
     fun runStreamVMOutputExample() {
         println("\n=== Stream VM OUTPUT Example ===")
         val program = """
-            SOURCE row;
             TRANSFORM __T { // Produce multiple OUTPUTs; VM will normalize to list
-                FOR EACH n IN row.nums {
+                FOR EACH n IN input.nums {
                     OUTPUT { val: n }
                 }
             }
@@ -205,9 +204,8 @@ class VMExample {
         println("VMEval(1+2) = $v1")
         println("Stats after VMEval: ${VMFactory.getCompilationStats()}")
 
-        // 2) VMExec on a stream transform: increments compile & execute metrics
+        // 2) VMExec on a buffer transform: increments compile & execute metrics
         val program = """
-            SOURCE row;
             TRANSFORM __T { LET a = 1; LET b = 2; OUTPUT { s: a + b };
             }
         """.trimIndent()
@@ -225,7 +223,7 @@ class VMExample {
             hostFnMeta = io.github.ehlyzov.branchline.std.StdLib.meta,
             funcs = funcs,
         )
-        val v2res = vmExec.run(mutableMapOf("row" to emptyMap<String, Any?>()))
+        val v2res = vmExec.run(mutableMapOf("input" to emptyMap<String, Any?>()))
         println("VMExec output: $v2res")
         println("Final stats: ${VMFactory.getCompilationStats()}")
     }
@@ -233,9 +231,8 @@ class VMExample {
     fun runInstructionHistogramDemo() {
         println("\n=== VM Instruction Histogram Demo ===")
         val program = """
-            SOURCE row;
             TRANSFORM __T { LET acc = 0;
-                FOR EACH n IN row.nums {
+                FOR EACH n IN input.nums {
                     IF n % 2 == 0 THEN { SET acc = acc + n; } ELSE { }
                 }
                 OUTPUT { sum: acc };
@@ -259,7 +256,7 @@ class VMExample {
             hostFnMeta = io.github.ehlyzov.branchline.std.StdLib.meta,
             funcs = funcs,
         )
-        val out = exec.run(mutableMapOf("row" to mapOf("nums" to (1..10).toList())))
+        val out = exec.run(mutableMapOf("input" to mapOf("nums" to (1..10).toList())))
         println("Transform output: $out")
 
         val hist = tracer.instructionCounts.toList().sortedByDescending { it.second }

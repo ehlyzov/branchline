@@ -157,12 +157,7 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
         val lines = ArrayList<String>()
         val direct = directInputs.ifEmpty { flattenedInputs }
         if (direct.isNotEmpty()) {
-            direct.forEach { (n, v) ->
-                if (v is Map<*, *> || v is Iterable<*> || v is Array<*>) {
-                    return@forEach
-                }
-                lines += "$n = ${formatDebugValue(v)}"
-            }
+            lines += renderInputDebugLines(direct)
         }
         if (rendered.isNotBlank()) {
             lines += "$rendered -> $rhs"
@@ -180,19 +175,7 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
         result: Any?
     ): List<String> {
         val rhs = formatDebugValue(result)
-        val preferredDirect = directInputs.firstOrNull { (_, v) ->
-            when (v) {
-                is Map<*, *> -> false
-                is Iterable<*> -> false
-                is Array<*> -> false
-                else -> true
-            }
-        }
-        val primary = preferredDirect?.first
-            ?: flattenedInputs.firstOrNull()?.first
-            ?: directInputs.firstOrNull()?.first
-            ?: name
-        return listOf("$primary -> $rhs")
+        return listOf("$name -> $rhs")
     }
 
     private fun renderExprForDebug(expr: Expr, values: Map<String, Any?>): String = when (expr) {
@@ -293,7 +276,91 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
 
     private fun formatDebugValue(value: Any?): String = when (value) {
         is String -> "\"$value\""
+        is List<*> -> formatDebugListValue(value)
+        is Array<*> -> formatDebugListValue(value.asList())
+        is Map<*, *> -> formatDebugMapValue(value)
         else -> short(value)
+    }
+
+    private fun renderInputDebugLines(inputs: List<Pair<String, Any?>>): List<String> {
+        if (inputs.isEmpty()) return emptyList()
+        val grouped = LinkedHashMap<String, MutableList<Any?>>()
+        for ((name, value) in inputs) {
+            if (value is Map<*, *> || value is Iterable<*> || value is Array<*>) {
+                continue
+            }
+            grouped.getOrPut(name) { mutableListOf() }.add(value)
+        }
+        if (grouped.isEmpty()) return emptyList()
+        val lines = ArrayList<String>(grouped.size)
+        for ((name, values) in grouped) {
+            if (values.size == 1) {
+                lines += "$name = ${formatDebugValue(values[0])}"
+            } else {
+                lines += "$name = ${formatDebugList(values)}"
+            }
+        }
+        return lines
+    }
+
+    private fun formatDebugList(values: List<Any?>): String {
+        if (values.isEmpty()) return "[]"
+        val maxItems = 12
+        val shown = values.take(maxItems)
+        val rendered = shown.joinToString(", ") { formatDebugValue(it) }
+        return if (values.size > maxItems) {
+            val remaining = values.size - maxItems
+            "[$rendered, ... +$remaining]"
+        } else {
+            "[$rendered]"
+        }
+    }
+
+    private fun formatDebugListValue(values: List<*>): String {
+        if (values.isEmpty()) return "[]"
+        val maxItems = 10
+        val shown = values.take(maxItems)
+        val rendered = shown.joinToString(", ") { formatDebugValue(it) }
+        return if (values.size > maxItems) {
+            val remaining = values.size - maxItems
+            "[$rendered, ... +$remaining]"
+        } else {
+            "[$rendered]"
+        }
+    }
+
+    private fun formatDebugMapValue(values: Map<*, *>): String {
+        if (values.isEmpty()) return "{}"
+        val maxItems = 8
+        val shown = values.entries.take(maxItems)
+        val rendered = shown.joinToString(", ") { (k, v) ->
+            "${formatDebugKey(k)}: ${formatDebugValue(v)}"
+        }
+        return if (values.size > maxItems) {
+            val remaining = values.size - maxItems
+            "{$rendered, ... +$remaining}"
+        } else {
+            "{$rendered}"
+        }
+    }
+
+    private fun formatDebugKey(key: Any?): String = when (key) {
+        is String -> if (key.all { it.isLetterOrDigit() || it == '_' }) key else "\"$key\""
+        else -> formatDebugValue(key)
+    }
+
+    private fun formatInputNames(names: List<String>): String {
+        if (names.isEmpty()) return ""
+        val deduped = LinkedHashSet<String>(names.size).apply { addAll(names) }.toList()
+        val maxItems = 10
+        val shown = deduped.take(maxItems)
+        val rendered = shown.joinToString(", ")
+        return if (deduped.size > maxItems) {
+            val remaining = deduped.size - maxItems
+            "$rendered, ... +$remaining"
+        } else {
+            rendered
+        }
     }
 
     private fun popCaptureFor(node: IRNode) {
@@ -643,6 +710,7 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
             val topLabel = top.toString()
             val header = if (topLabel == name) name else "$name.$topLabel"
             sb.append("• ").append(header).append('\n')
+            val seenCalcLines = LinkedHashSet<String>()
             for (s in lst) {
                 val op = s["op"] as String
                 sb.append("  → ").append(op)
@@ -658,34 +726,59 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
                     "MODIFY" -> sb.append('\n')
                     else -> sb.append('\n')
                 }
-                val debugLines = (s["debug"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                val debugLinesRaw = (s["debug"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
                 val inputPairs = canonicalizeInputPairs(asTraceMapList(s["inputs"], "inputs"))
-                if (inputPairs.isNotEmpty() && debugLines.isEmpty()) {
+                val calc = asTraceMapList(s["calc"], "calc")
+                val debugLines = when {
+                    op == "OUTPUT" -> debugLinesRaw
+                    calc.isNotEmpty() -> emptyList()
+                    else -> debugLinesRaw
+                }
+
+                if (inputPairs.isNotEmpty() && debugLines.isEmpty() && calc.isEmpty()) {
                     sb.append("    inputs: ")
-                        .append(inputPairs.joinToString(", ") { (n, v) -> "$n=${short(v)}" })
+                        .append(inputPairs.joinToString(", ") { (n, v) -> "$n=${formatDebugValue(v)}" })
                         .append('\n')
                 }
 
-                val calc = asTraceMapList(s["calc"], "calc")
-                if (debugLines.isNotEmpty() || calc.isNotEmpty()) {
+                val calcLines = ArrayList<String>()
+                for (c in calc) {
+                    val kind = c["kind"] as? String
+                    val cname = c["name"] as String?
+                    val funcName = cname ?: when (kind) {
+                        "LAMBDA" -> "<lambda>"
+                        null -> "<calc>"
+                        else -> kind
+                    }
+
+                    @Suppress("UNCHECKED_CAST")
+                    val args = c["args"] as List<Any?>
+                    val renderedArgs = args.joinToString(", ") { formatDebugValue(it) }
+                    val value = formatDebugValue(c["value"])
+                    val line = buildString {
+                        append(funcName)
+                        append('(')
+                        append(renderedArgs)
+                        append(") -> ").append(value)
+                    }
+                    if (seenCalcLines.add(line)) {
+                        calcLines += line
+                    }
+                }
+
+                if (inputPairs.isNotEmpty() && debugLines.isEmpty() && calcLines.isNotEmpty()) {
+                    sb.append("    inputs: ")
+                        .append(formatInputNames(inputPairs.map { it.first }))
+                        .append('\n')
+                }
+
+                if (debugLines.isNotEmpty() || calcLines.isNotEmpty()) {
                     sb.append("    calc:\n")
                     for (line in debugLines) {
                         sb.append("      ").append(line).append('\n')
                     }
-                    for (c in calc) {
-                        val kind = c["kind"] as? String
-                        val name = c["name"] as String?
-
-                        @Suppress("UNCHECKED_CAST")
-                        val args = (c["args"] as List<Any?>).joinToString(", ") { short(it) }
-                        val value = short(c["value"])
-                        sb.append("      ")
-                            .append(name ?: kind ?: "<calc>")
-                            .append('(')
-                            .append(args)
-                            .append(") = ")
-                            .append(value)
-                            .append('\n')
+                    for (line in calcLines) {
+                        sb.append("      ").append(line).append('\n')
                     }
                 }
             }
@@ -735,6 +828,7 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
         null -> "null"
         is io.github.ehlyzov.branchline.runtime.bignum.BLBigDec -> v.toPlainString()
         is Number -> v.toString()
+        is Function<*> -> "<lambda>"
         is Pair<*, *> -> {
             val second = short(v.second)
             "${v.first}=$second"
