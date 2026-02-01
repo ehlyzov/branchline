@@ -349,6 +349,20 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
         else -> formatDebugValue(key)
     }
 
+    private fun formatInputNames(names: List<String>): String {
+        if (names.isEmpty()) return ""
+        val deduped = LinkedHashSet<String>(names.size).apply { addAll(names) }.toList()
+        val maxItems = 10
+        val shown = deduped.take(maxItems)
+        val rendered = shown.joinToString(", ")
+        return if (deduped.size > maxItems) {
+            val remaining = deduped.size - maxItems
+            "$rendered, ... +$remaining"
+        } else {
+            rendered
+        }
+    }
+
     private fun popCaptureFor(node: IRNode) {
         when (node) {
             is IRSet, is IRAppendTo, is IRModify -> if (capStack.isNotEmpty()) capStack.removeLast()
@@ -731,20 +745,31 @@ class CollectingTracer(override val opts: TraceOptions = TraceOptions()) : Trace
                 for (c in calc) {
                     val kind = c["kind"] as? String
                     val cname = c["name"] as String?
+                    val funcName = cname ?: when (kind) {
+                        "LAMBDA" -> "<lambda>"
+                        null -> "<calc>"
+                        else -> kind
+                    }
 
                     @Suppress("UNCHECKED_CAST")
                     val args = c["args"] as List<Any?>
-                    val renderedArgs = args.joinToString(" ") { formatDebugValue(it) }
+                    val renderedArgs = args.joinToString(", ") { formatDebugValue(it) }
                     val value = formatDebugValue(c["value"])
                     val line = buildString {
+                        append(funcName)
                         append('(')
-                        append(cname ?: kind ?: "<calc>")
-                        if (renderedArgs.isNotEmpty()) append(' ').append(renderedArgs)
+                        append(renderedArgs)
                         append(") -> ").append(value)
                     }
                     if (seenCalcLines.add(line)) {
                         calcLines += line
                     }
+                }
+
+                if (inputPairs.isNotEmpty() && debugLines.isEmpty() && calcLines.isNotEmpty()) {
+                    sb.append("    inputs: ")
+                        .append(formatInputNames(inputPairs.map { it.first }))
+                        .append('\n')
                 }
 
                 if (debugLines.isNotEmpty() || calcLines.isNotEmpty()) {
