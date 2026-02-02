@@ -22,6 +22,7 @@
 Language design priorities:
 - Prefer desugaring over VM/interpreter complexity when possible.
 - Update the canonical grammar in `interpreter/src/jvmTest/resources/v2/ebnf.txt` for syntax changes.
+- Update playground editor keywords in `playground/src/branchline-language.ts` when syntax changes.
 - Add conformance tests in `conformance-tests/src/commonTest` for new behavior.
 - Update `docs/language/` and add a playground demo for new features.
 
