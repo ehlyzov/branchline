@@ -56,7 +56,7 @@ class ToIR(
         is SetVarStmt -> listOf(IRSetVar(s.name, s.value))
         is AppendToVarStmt -> listOf(IRAppendVar(s.name, s.value, s.init))
         is SharedWriteStmt -> listOf(IRExprStmt(buildSharedWriteCall(s)))
-        else -> error("Stmt kind ${s::class.simpleName} unsupported in STREAM")
+        else -> error("Stmt kind ${s::class.simpleName} unsupported in transform body")
     }
 
     private fun buildSharedWriteCall(stmt: SharedWriteStmt): Expr {

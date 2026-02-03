@@ -99,10 +99,10 @@ class LexerTest {
 
     @Test
     fun `keywords are case-insensitive`() {
-        val tokens = lex("source SOURCE Source")
-        assertEquals(TokenType.SOURCE, tokens[0].type)
-        assertEquals(TokenType.SOURCE, tokens[1].type)
-        assertEquals(TokenType.SOURCE, tokens[2].type)
+        val tokens = lex("options OPTIONS Options")
+        assertEquals(TokenType.OPTIONS, tokens[0].type)
+        assertEquals(TokenType.OPTIONS, tokens[1].type)
+        assertEquals(TokenType.OPTIONS, tokens[2].type)
     }
 
     // ------------------------------------------------------------------
@@ -165,11 +165,11 @@ class LexerTest {
                        line
                        comment
                      */
-                     SOURCE x;
+                     OPTIONS x;
         """.trimIndent()
         val tokens = lex(src)
-        val sourceToken = tokens.first { it.type == TokenType.SOURCE }
-        assertEquals(7, sourceToken.line)
+        val optionsToken = tokens.first { it.type == TokenType.OPTIONS }
+        assertEquals(7, optionsToken.line)
     }
 
     @Test

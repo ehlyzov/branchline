@@ -27,7 +27,6 @@ import io.github.ehlyzov.branchline.IdentifierExpr
 import io.github.ehlyzov.branchline.IfElseExpr
 import io.github.ehlyzov.branchline.IfStmt
 import io.github.ehlyzov.branchline.InvokeExpr
-import io.github.ehlyzov.branchline.Mode
 import io.github.ehlyzov.branchline.LetStmt
 import io.github.ehlyzov.branchline.LambdaExpr
 import io.github.ehlyzov.branchline.LiteralProperty
@@ -39,7 +38,6 @@ import io.github.ehlyzov.branchline.OutputDecl
 import io.github.ehlyzov.branchline.OutputStmt
 import io.github.ehlyzov.branchline.Program
 import io.github.ehlyzov.branchline.ReturnStmt
-import io.github.ehlyzov.branchline.SourceDecl
 import io.github.ehlyzov.branchline.SetStmt
 import io.github.ehlyzov.branchline.SetVarStmt
 import io.github.ehlyzov.branchline.SharedDecl
@@ -81,13 +79,13 @@ class SemanticAnalyzer(
 
     public val warnings: MutableList<SemanticWarning> = mutableListOf()
 
-    /** для top-level: FUNC / SHARED / TYPE / SOURCE / TRANSFORM / OUTPUT */
+    /** для top-level: FUNC / SHARED / TYPE / TRANSFORM / OUTPUT */
     private val globals = mutableMapOf<String, TopLevelDecl>()
 
     /** вложенные блоки → собственная “scope” LET-переменных */
     private val scopes = ArrayDeque<MutableSet<String>>() // LIFO
 
-    private var currentTransformMode: Mode? = null
+    private var currentTransformShared: Set<String> = emptySet()
     private var currentTransformSignature: TransformSignature? = null
     private var currentInputContract: TypeRef? = null
     private var currentOutputContract: TypeRef? = null
@@ -110,7 +108,6 @@ class SemanticAnalyzer(
                 is FuncDecl -> decl.name
                 is SharedDecl -> decl.name
                 is TypeDecl -> decl.name
-                is SourceDecl -> decl.name
                 is TransformDecl -> decl.name ?: continue
                 is OutputDecl -> continue
             }
@@ -125,7 +122,6 @@ class SemanticAnalyzer(
                 is FuncDecl -> prev.token
                 is SharedDecl -> prev.token
                 is TypeDecl -> prev.token
-                is SourceDecl -> prev.token
                 is TransformDecl -> prev.token
                 else -> error("should not be here") // fallback
             }
@@ -137,17 +133,17 @@ class SemanticAnalyzer(
 
     private fun checkTopLevel(decl: TopLevelDecl) = when (decl) {
         is TransformDecl -> {
-            val prev = currentTransformMode // save
+            val prevShared = currentTransformShared
             val prevSignature = currentTransformSignature
             val prevInput = currentInputContract
             val prevOutput = currentOutputContract
-            currentTransformMode = decl.mode
+            currentTransformShared = sharedNamesForTransform(decl)
             currentTransformSignature = decl.signature
             currentInputContract = decl.signature?.input?.let { resolveTypeRef(it) }
             currentOutputContract = decl.signature?.output?.let { resolveTypeRef(it) }
             decl.body as CodeBlock
             checkBlock(decl.body)
-            currentTransformMode = prev // restore
+            currentTransformShared = prevShared
             currentTransformSignature = prevSignature
             currentInputContract = prevInput
             currentOutputContract = prevOutput
@@ -158,7 +154,7 @@ class SemanticAnalyzer(
             is BlockBody -> checkBlock(b.block, decl.params)
         }
 
-        else -> Unit // SOURCE / SHARED / TYPE / OUTPUT – пока ничего
+        else -> Unit // SHARED / TYPE / OUTPUT – пока ничего
     }
 
     private fun checkBlock(block: CodeBlock, initialNames: Collection<String> = emptyList()) {
@@ -353,14 +349,6 @@ class SemanticAnalyzer(
             }
 
             is UnaryExpr -> {
-                if (expr.token.type == TokenType.SUSPEND &&
-                    currentTransformMode == Mode.STREAM
-                ) {
-                    throw SemanticException(
-                        "Cannot use 'suspend' inside stream transform",
-                        expr.token
-                    )
-                }
                 checkExpr(expr.expr)
             }
 
@@ -421,16 +409,31 @@ class SemanticAnalyzer(
         }
     }
 
+    private fun sharedNamesForTransform(decl: TransformDecl): Set<String> {
+        if (globals.isEmpty() && decl.options.shared.isEmpty()) return emptySet()
+        val names = LinkedHashSet<String>()
+        for (globalDecl in globals.values) {
+            if (globalDecl is SharedDecl) {
+                names.add(globalDecl.name)
+            }
+        }
+        for (sharedDecl in decl.options.shared) {
+            names.add(sharedDecl.name)
+        }
+        return names
+    }
+
     private fun isIdentifierVisible(name: String): Boolean =
         name == "$" || // глобальный JSON-корень
                 name == DEFAULT_INPUT_ALIAS ||
                 name in COMPAT_INPUT_ALIASES ||
                 scopes.any { name in it } || // LET / var цикла
-                name in globals || // SOURCE / SHARED / TYPE / FUNC
+                name in globals || // SHARED / TYPE / FUNC
+                name in currentTransformShared ||
                 name in hostFns
 
     private fun isSharedResource(name: String): Boolean =
-        globals[name] is SharedDecl
+        name in currentTransformShared
 
     private fun resolveTypeRef(typeRef: TypeRef): TypeRef =
         resolveTypeRef(typeRef, resolvingTypeNames)

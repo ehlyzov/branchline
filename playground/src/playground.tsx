@@ -24,6 +24,8 @@ const DEFAULT_INPUT = `{
   }
 }`;
 
+const PLAYGROUND_HOSTED_URL = 'https://ehlyzov.github.io/branchline-public/playground/';
+
 type InputFormat = 'json' | 'xml';
 
 type RawExample = {
@@ -127,6 +129,13 @@ function resolveDefaultExample(examples: PlaygroundExample[], preferred?: string
   return examples[0]?.id ?? '';
 }
 
+function buildHostedPlaygroundUrl(exampleId: string): string {
+  if (!exampleId) {
+    return PLAYGROUND_HOSTED_URL;
+  }
+  return `${PLAYGROUND_HOSTED_URL}?example=${encodeURIComponent(exampleId)}`;
+}
+
 export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundProps) {
   const programContainerRef = React.useRef<HTMLDivElement | null>(null);
   const inputContainerRef = React.useRef<HTMLDivElement | null>(null);
@@ -173,6 +182,10 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   const selectedExample = React.useMemo(
     () => examples.find((item) => item.id === selectedExampleId) ?? null,
     [examples, selectedExampleId]
+  );
+  const openInNewTabUrl = React.useMemo(
+    () => buildHostedPlaygroundUrl(selectedExampleId),
+    [selectedExampleId]
   );
 
   const run = React.useCallback(() => {
@@ -448,7 +461,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
           <button className="playground-button playground-button--ghost" onClick={resetExample}>
             Reset example
           </button>
-          <a className="playground-button playground-button--ghost" href="../playground/demo.html" target="_blank" rel="noreferrer">
+          <a className="playground-button playground-button--ghost" href={openInNewTabUrl} target="_blank" rel="noreferrer">
             Open in new tab
           </a>
           <button className="playground-button" onClick={run} disabled={isRunning}>

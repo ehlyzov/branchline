@@ -16,9 +16,9 @@ name             ::= IDENTIFIER | softKeyword                               ;
 softKeyword      ::= **ABORT** | **APPEND** | **AS** | **BACKOFF**
                    | **buffer** | **CALL** | **enum** | **FOREACH**
                    | **FUNC** | **INIT** | **LET** | **MANY**
-                   | **MODIFY** | **OUTPUT** | **RETRY** | **RETURN**
-                   | **SET** | **SHARED** | **SINGLE** | **SOURCE**
-                   | **stream** | **THROW** | **TIMES** | **TO**
+                   | **MODIFY** | **OPTIONS** | **OUTPUT** | **RETRY** | **RETURN**
+                   | **SET** | **SHARED** | **SINGLE**
+                   | **THROW** | **TIMES** | **TO**
                    | **TRANSFORM** | **TYPE** | **union** | **USING**       ;
 
 #---------------------------------------------------------------------------
@@ -26,13 +26,22 @@ softKeyword      ::= **ABORT** | **APPEND** | **AS** | **BACKOFF**
 #---------------------------------------------------------------------------
 
 transformDecl    ::= annotation* **TRANSFORM** name? transformSig?
-                     transformMode? block                                     ;
+                     transformOptions? block                                  ;
 
 annotation       ::= **@** name                                              ;
-transformMode    ::= "{" ( **stream** | **buffer** ) "}"                    ;
+transformOptions ::= **OPTIONS** "{" optionEntry* "}"                         ;
 transformSig     ::= "(" transformParamList? ")" "->" typeExpr              ;
 transformParamList ::= transformParam ( "," transformParam )*               ;
 transformParam   ::= name ":" typeExpr                                       ;
+
+optionEntry      ::= optionMode | optionInput | optionOutput | optionShared   ;
+optionMode       ::= "mode" ":" **buffer**                                   ;
+optionInput      ::= "input" ":" optionAdapterBlock                          ;
+optionOutput     ::= "output" ":" optionAdapterBlock                         ;
+optionShared     ::= "shared" ":" "[" sharedItem ("," sharedItem)* "]"       ;
+sharedItem       ::= name ( **SINGLE** | **MANY** )                          ;
+optionAdapterBlock ::= "{" "adapter" ":" adapterSpec "}"                     ;
+adapterSpec      ::= name ("(" argList? ")")?                                ;
 
 #---------------------------------------------------------------------------
 # Shared memory
