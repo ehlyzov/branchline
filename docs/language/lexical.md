@@ -68,7 +68,8 @@ with the `//` integer division operator.
 | `OUTPUT` | Specify pipeline output. | [example](statements.md#output) |
 | `USING` | Reference an adapter or module. | [example](statements.md#using) |
 | `TRANSFORM` | Define a transformation step. | [example](statements.md#transform) |
-| `BUFFER` | Declare a buffer block. | [example](statements.md#transform) |
+| `OPTIONS` | Configure per-transform settings. | [example](declarations.md#transform-declarations) |
+| `BUFFER` | Buffer mode value for `OPTIONS`. | [example](declarations.md#transform-declarations) |
 | `FOR` / `EACH` | Start a loop over items. | [example](statements.md#for) |
 | `IF` / `THEN` / `ELSE` | Conditional branching. | [example](statements.md#if) |
 | `ENUM` | Define an enumeration. | [example](statements.md#enum) |
@@ -107,7 +108,7 @@ with the `//` integer division operator.
 # Summary
 
 Branchline uses a small set of tokens. Keywords are written in upper case and
-include `OUTPUT`, `TRANSFORM`, `BUFFER`, `SHARED`, `FUNC`, `TYPE`, `LET`,
+include `OUTPUT`, `TRANSFORM`, `OPTIONS`, `BUFFER`, `SHARED`, `FUNC`, `TYPE`, `LET`,
 `IF`, `FOR`, `TRY`, `CALL`, `AWAIT`, and `SUSPEND`, among others
 as seen throughout the grammar.
 

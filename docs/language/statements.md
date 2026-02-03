@@ -23,7 +23,7 @@ OUTPUT { id: input.id, total: input.total };
 `USING` references adapters and external modules.
 
 ## Transform {#transform}
-`TRANSFORM` defines transformation steps. Use `TRANSFORM Name { ... }` or include `{ buffer }` after the name to mark buffer mode explicitly.
+`TRANSFORM` defines transformation steps. Use `OPTIONS { ... }` after the signature to declare per-transform settings.
 
 ## For loops {#for}
 `FOR` and `FOR EACH` iterate over collections.

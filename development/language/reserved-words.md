@@ -27,8 +27,8 @@ Allow keyword-looking names in identifier positions when unambiguous (for exampl
   `TRY`, `CATCH`, `AWAIT`, `SUSPEND`, `TRUE`, `FALSE`, `NULL`.
 - Soft keywords (accepted as names without backticks when a name is expected):
   `ABORT`, `APPEND`, `AS`, `BACKOFF`, `BUFFER`, `CALL`, `ENUM`, `FOREACH`,
-  `FUNC`, `INIT`, `LET`, `MANY`, `MODIFY`, `OUTPUT`, `RETRY`, `RETURN`,
-  `SET`, `SHARED`, `SINGLE`, `SOURCE`, `STREAM`, `THROW`, `TIMES`, `TO`,
+  `FUNC`, `INIT`, `LET`, `MANY`, `MODIFY`, `OPTIONS`, `OUTPUT`, `RETRY`, `RETURN`,
+  `SET`, `SHARED`, `SINGLE`, `THROW`, `TIMES`, `TO`,
   `TRANSFORM`, `TYPE`, `UNION`, `USING`.
 - Statement-start disambiguation stays the same: if a statement starts with a
   keyword like `OUTPUT`, it is parsed as that statement. To start a statement
