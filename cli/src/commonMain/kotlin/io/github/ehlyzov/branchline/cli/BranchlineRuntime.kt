@@ -12,6 +12,9 @@ import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
 import io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES
+import io.github.ehlyzov.branchline.contract.ContractEnforcer
+import io.github.ehlyzov.branchline.contract.ContractValidationMode
+import io.github.ehlyzov.branchline.contract.ContractViolation
 import io.github.ehlyzov.branchline.contract.TransformContract
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
 import io.github.ehlyzov.branchline.std.SharedResourceHandle
@@ -84,6 +87,21 @@ public class BranchlineProgram(
         return exec.run(env, stringifyKeys = true)
     }
 
+    fun executeWithContracts(
+        transform: TransformDecl,
+        input: Map<String, Any?>,
+        mode: ContractValidationMode,
+    ): ContractExecutionResult {
+        if (mode == ContractValidationMode.OFF) {
+            return ContractExecutionResult(execute(transform, input), emptyList())
+        }
+        val contract = contractForTransform(transform)
+        val inputViolations = ContractEnforcer.enforceInput(mode, contract.input, input)
+        val output = execute(transform, input)
+        val outputViolations = ContractEnforcer.enforceOutput(mode, contract.output, output)
+        return ContractExecutionResult(output, inputViolations + outputViolations)
+    }
+
     fun compileBytecode(transform: TransformDecl): Bytecode {
         val ir = compileIr(transform)
         val compiler = _root_ide_package_.io.github.ehlyzov.branchline.vm.Compiler(funcs, hostFns)
@@ -100,6 +118,24 @@ public class BranchlineProgram(
             funcs = funcs,
             precompiled = bytecode,
         )
+    }
+
+    fun executeVmWithContracts(
+        transform: TransformDecl,
+        input: Map<String, Any?>,
+        vmExec: VMExec,
+        mode: ContractValidationMode,
+    ): ContractExecutionResult {
+        if (mode == ContractValidationMode.OFF) {
+            val env = buildEnv(transform, input)
+            return ContractExecutionResult(vmExec.run(env, stringifyKeys = true), emptyList())
+        }
+        val contract = contractForTransform(transform)
+        val inputViolations = ContractEnforcer.enforceInput(mode, contract.input, input)
+        val env = buildEnv(transform, input)
+        val output = vmExec.run(env, stringifyKeys = true)
+        val outputViolations = ContractEnforcer.enforceOutput(mode, contract.output, output)
+        return ContractExecutionResult(output, inputViolations + outputViolations)
     }
 
     fun renderTransforms(): List<String> = transforms.map { it.name ?: "<anonymous>" }
@@ -170,6 +206,11 @@ public class BranchlineProgram(
         return merged.values.toList()
     }
 }
+
+public data class ContractExecutionResult(
+    val output: Any?,
+    val violations: List<ContractViolation>,
+)
 
 @Serializable
 public data class CompiledArtifact(

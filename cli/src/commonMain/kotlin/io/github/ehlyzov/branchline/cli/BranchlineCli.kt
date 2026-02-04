@@ -14,6 +14,9 @@ import io.github.ehlyzov.branchline.TypeRef
 import io.github.ehlyzov.branchline.UnionTypeRef
 import io.github.ehlyzov.branchline.contract.AccessPath
 import io.github.ehlyzov.branchline.contract.AccessSegment
+import io.github.ehlyzov.branchline.contract.ContractJsonRenderer
+import io.github.ehlyzov.branchline.contract.ContractValidationMode
+import io.github.ehlyzov.branchline.contract.ContractViolation
 import io.github.ehlyzov.branchline.contract.DynamicAccess
 import io.github.ehlyzov.branchline.contract.DynamicField
 import io.github.ehlyzov.branchline.contract.FieldConstraint
@@ -23,6 +26,8 @@ import io.github.ehlyzov.branchline.contract.SchemaRequirement
 import io.github.ehlyzov.branchline.contract.TransformContract
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
 import io.github.ehlyzov.branchline.contract.ValueShape
+import io.github.ehlyzov.branchline.contract.formatContractViolation
+import io.github.ehlyzov.branchline.contract.renderValueShapeLabel
 import io.github.ehlyzov.branchline.debug.CollectingTracer
 import io.github.ehlyzov.branchline.debug.TraceOptions
 import io.github.ehlyzov.branchline.debug.TraceReport
@@ -33,6 +38,8 @@ import io.github.ehlyzov.branchline.std.StdLib
 import io.github.ehlyzov.branchline.vm.BytecodeIO
 
 public enum class PlatformKind { JVM, JS }
+
+public enum class ContractFormat { TEXT, JSON }
 
 public enum class InputFormat { JSON, XML;
     companion object {
@@ -61,6 +68,7 @@ public data class RunOptions(
     val jobs: Int,
     val summaryTransform: String?,
     val traceFormat: TraceFormat?,
+    val contractsMode: ContractValidationMode,
 )
 
 public data class CompileOptions(
@@ -87,12 +95,15 @@ public data class ExecOptions(
     val jobs: Int,
     val summaryTransform: String?,
     val traceFormat: TraceFormat?,
+    val contractsMode: ContractValidationMode,
 )
 
 public data class InspectOptions(
     val scriptPath: String,
     val showContracts: Boolean,
     val transformName: String?,
+    val contractsFormat: ContractFormat,
+    val contractsDebug: Boolean,
 )
 
 public data class SchemaOptions(
@@ -194,6 +205,7 @@ public object BranchlineCli {
                   [--shared-file <resource>=<path>] [--shared-dir <resource>=<dir>] [--shared-glob <resource>=<glob>]
                   [--shared-format json|xml|text] [--shared-key relative|basename|custom]
                   [--jobs <n>] [--summary-transform <name>] [--trace] [--trace-format text|json]
+                  [--contracts off|warn|strict]
               blc <script.bl> [--output <artifact.blc>] [--transform <name>] [--output-format json|json-compact]
               blvm <artifact.blc> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact]
                   [--output-path <path>] [--output-raw] [--output-file <path>] [--output-lines <path>] [--write-output]
@@ -201,7 +213,8 @@ public object BranchlineCli {
                   [--shared-file <resource>=<path>] [--shared-dir <resource>=<dir>] [--shared-glob <resource>=<glob>]
                   [--shared-format json|xml|text] [--shared-key relative|basename|custom]
                   [--jobs <n>] [--summary-transform <name>] [--trace] [--trace-format text|json]
-              bl inspect <script.bl> --contracts [--transform <name>]
+                  [--contracts off|warn|strict]
+              bl inspect <script.bl> --contracts [--transform <name>] [--contracts-json] [--contracts-debug]
               bl schema <script.bl> <TYPE_NAME> [--nullable] [--output <schema.json>]
               bl schema <script.bl> --all [--nullable] [--output <schema.json>]
               bl schema --import <schema.json> --name <TYPE_NAME> [--output <types.bl>]
@@ -238,7 +251,10 @@ public object BranchlineCli {
               --trace             Emit a trace summary to stderr after execution.
               --trace-format FMT  Trace output format ('text' or 'json').
               --error-format FMT  Error output format ('text' or 'json').
+              --contracts MODE    (run/exec) validate contracts: off (default), warn, strict.
               --contracts         (inspect) print explicit vs inferred contracts with mismatch warnings.
+              --contracts-json    (inspect) emit contract JSON instead of the text report.
+              --contracts-debug   (inspect) include source spans in contract JSON output.
               --all               (schema) emit a ${'$'}defs block with all TYPE declarations.
               --nullable          (schema) use 'nullable: true' instead of 'type: [\"null\", ...]'.
               --import PATH       (schema) read a JSON Schema document and emit TYPE declarations.
@@ -269,16 +285,35 @@ public object BranchlineCli {
             val input = loadInput(options.inputPath, options.inputFormat)
             val sharedSeed = seedSharedStore(options.sharedOptions, runtime.sharedDecls(), store)
             val summaryTransform = options.summaryTransform?.let { runtime.selectTransform(it) }
+            val contractsMode = options.contractsMode
             val result = runWithFanout(
                 jobs = options.jobs,
                 sharedSeed = sharedSeed,
                 baseInput = input,
                 summaryTransform = summaryTransform,
-                runTransform = { data -> runtime.execute(transform, data) },
-                runSummary = { data ->
-                    summaryTransform?.let { runtime.execute(it, data) }
+                runTransform = { data ->
+                    val execResult = runtime.executeWithContracts(transform, data, contractsMode)
+                    if (contractsMode == ContractValidationMode.WARN) {
+                        emitContractWarnings(execResult.violations, transform.name)
+                    }
+                    execResult.output
                 },
-            ) ?: runtime.execute(transform, input)
+                runSummary = { data ->
+                    summaryTransform?.let {
+                        val execResult = runtime.executeWithContracts(it, data, contractsMode)
+                        if (contractsMode == ContractValidationMode.WARN) {
+                            emitContractWarnings(execResult.violations, it.name)
+                        }
+                        execResult.output
+                    }
+                },
+            ) ?: run {
+                val execResult = runtime.executeWithContracts(transform, input, contractsMode)
+                if (contractsMode == ContractValidationMode.WARN) {
+                    emitContractWarnings(execResult.violations, transform.name)
+                }
+                execResult.output
+            }
             emitOutput(
                 result = result,
                 format = options.outputFormat,
@@ -330,21 +365,34 @@ public object BranchlineCli {
             val input = loadInput(options.inputPath, options.inputFormat)
             val sharedSeed = seedSharedStore(options.sharedOptions, runtime.sharedDecls(), store)
             val summaryTransform = options.summaryTransform?.let { runtime.selectTransform(it) }
+            val contractsMode = options.contractsMode
             val result = runWithFanout(
                 jobs = options.jobs,
                 sharedSeed = sharedSeed,
                 baseInput = input,
                 summaryTransform = summaryTransform,
                 runTransform = { data ->
-                    val env = runtime.buildEnv(transform, data)
-                    vmExec.run(env, stringifyKeys = true)
+                    val execResult = runtime.executeVmWithContracts(transform, data, vmExec, contractsMode)
+                    if (contractsMode == ContractValidationMode.WARN) {
+                        emitContractWarnings(execResult.violations, transform.name)
+                    }
+                    execResult.output
                 },
                 runSummary = { data ->
-                    summaryTransform?.let { runtime.execute(it, data) }
+                    summaryTransform?.let {
+                        val execResult = runtime.executeWithContracts(it, data, contractsMode)
+                        if (contractsMode == ContractValidationMode.WARN) {
+                            emitContractWarnings(execResult.violations, it.name)
+                        }
+                        execResult.output
+                    }
                 },
             ) ?: run {
-                val env = runtime.buildEnv(transform, input)
-                vmExec.run(env, stringifyKeys = true)
+                val execResult = runtime.executeVmWithContracts(transform, input, vmExec, contractsMode)
+                if (contractsMode == ContractValidationMode.WARN) {
+                    emitContractWarnings(execResult.violations, transform.name)
+                }
+                execResult.output
             }
             emitOutput(
                 result = result,
@@ -382,7 +430,11 @@ public object BranchlineCli {
             hostFns.keys
         )
         val selected = selectTransforms(transforms, options.transformName)
-        val report = renderContractInspection(selected, contractBuilder, analyzer.warnings)
+        val report = if (options.contractsFormat == ContractFormat.JSON) {
+            renderContractJson(selected, contractBuilder, options.contractsDebug)
+        } else {
+            renderContractInspection(selected, contractBuilder, analyzer.warnings)
+        }
         println(report)
         return ExitCode.SUCCESS.code
     }
@@ -535,10 +587,23 @@ public object BranchlineCli {
         var jobs = 0
         var summaryTransform: String? = null
         var traceFormat: TraceFormat? = null
+        var contractsMode = ContractValidationMode.OFF
         var idx = startIndex
         while (idx < args.size) {
             val token = args[idx]
             when {
+                token.startsWith("--contracts=") -> {
+                    contractsMode = parseContractMode(token.substringAfter("="))
+                    idx += 1
+                }
+                token == "--contracts" && idx + 1 < args.size && !args[idx + 1].startsWith("--") -> {
+                    contractsMode = parseContractMode(args[idx + 1])
+                    idx += 2
+                }
+                token == "--contracts" -> {
+                    contractsMode = ContractValidationMode.WARN
+                    idx += 1
+                }
                 token == "--input" && idx + 1 < args.size -> {
                     input = args[idx + 1]
                     idx += 2
@@ -706,6 +771,7 @@ public object BranchlineCli {
             jobs = jobs,
             summaryTransform = summaryTransform,
             traceFormat = traceFormat,
+            contractsMode = contractsMode,
         )
     }
 
@@ -761,10 +827,23 @@ public object BranchlineCli {
         var jobs = 0
         var summaryTransform: String? = null
         var traceFormat: TraceFormat? = null
+        var contractsMode = ContractValidationMode.OFF
         var idx = startIndex
         while (idx < args.size) {
             val token = args[idx]
             when {
+                token.startsWith("--contracts=") -> {
+                    contractsMode = parseContractMode(token.substringAfter("="))
+                    idx += 1
+                }
+                token == "--contracts" && idx + 1 < args.size && !args[idx + 1].startsWith("--") -> {
+                    contractsMode = parseContractMode(args[idx + 1])
+                    idx += 2
+                }
+                token == "--contracts" -> {
+                    contractsMode = ContractValidationMode.WARN
+                    idx += 1
+                }
                 token == "--input" && idx + 1 < args.size -> {
                     input = args[idx + 1]
                     idx += 2
@@ -932,6 +1011,7 @@ public object BranchlineCli {
             jobs = jobs,
             summaryTransform = summaryTransform,
             traceFormat = traceFormat,
+            contractsMode = contractsMode,
         )
     }
 
@@ -939,11 +1019,23 @@ public object BranchlineCli {
         var script: String? = null
         var showContracts = false
         var transform: String? = null
+        var contractsFormat = ContractFormat.TEXT
+        var contractsDebug = false
         var idx = startIndex
         while (idx < args.size) {
             val token = args[idx]
             when {
                 token == "--contracts" -> {
+                    showContracts = true
+                    idx += 1
+                }
+                token == "--contracts-json" -> {
+                    contractsFormat = ContractFormat.JSON
+                    showContracts = true
+                    idx += 1
+                }
+                token == "--contracts-debug" -> {
+                    contractsDebug = true
                     showContracts = true
                     idx += 1
                 }
@@ -964,6 +1056,8 @@ public object BranchlineCli {
             scriptPath = script,
             showContracts = showContracts,
             transformName = transform,
+            contractsFormat = contractsFormat,
+            contractsDebug = contractsDebug,
         )
     }
 
@@ -1380,6 +1474,14 @@ private fun parseJobs(raw: String): Int {
     return value
 }
 
+private fun parseContractMode(raw: String): ContractValidationMode {
+    return try {
+        ContractValidationMode.parse(raw)
+    } catch (ex: IllegalArgumentException) {
+        throw CliException(ex.message ?: "Invalid contract mode", kind = CliErrorKind.USAGE)
+    }
+}
+
 internal fun readTextFileOrThrow(path: String): String {
     return try {
         readTextFile(path)
@@ -1427,6 +1529,25 @@ private fun renderContractInspection(
     }
     sections += renderContractWarnings(warnings)
     return sections.joinToString("\n\n").trim()
+}
+
+private fun renderContractJson(
+    transforms: List<TransformDecl>,
+    contractBuilder: TransformContractBuilder,
+    includeSpans: Boolean,
+): String {
+    val entries = transforms.map { transform ->
+        val contract = contractBuilder.build(transform)
+        val name = transform.name ?: "<anonymous>"
+        mapOf(
+            "name" to name,
+            "source" to contract.source.name.lowercase(),
+            "input" to ContractJsonRenderer.inputElement(contract, includeSpans),
+            "output" to ContractJsonRenderer.outputElement(contract, includeSpans),
+        )
+    }
+    val payload = if (entries.size == 1) entries.first() else mapOf("transforms" to entries)
+    return formatJson(payload, pretty = true)
 }
 
 private fun renderTransformContractBlock(
@@ -1532,14 +1653,8 @@ private fun renderDynamicFieldLines(fields: List<DynamicField>): List<String> {
 }
 
 private fun renderValueShape(shape: ValueShape): String = when (shape) {
-    ValueShape.Unknown -> "unknown"
-    ValueShape.Null -> "null"
-    ValueShape.BooleanShape -> "boolean"
-    ValueShape.NumberShape -> "number"
-    ValueShape.TextShape -> "text"
-    is ValueShape.ArrayShape -> "array<${renderValueShape(shape.element)}>"
     is ValueShape.ObjectShape -> renderObjectShape(shape.schema, shape.closed)
-    is ValueShape.Union -> shape.options.joinToString(" | ") { option -> renderValueShape(option) }
+    else -> renderValueShapeLabel(shape)
 }
 
 private fun renderObjectShape(schema: SchemaGuarantee, closed: Boolean): String {
@@ -1597,6 +1712,15 @@ private fun renderContractWarnings(warnings: List<SemanticWarning>): String {
         lines += "  - [${token.line}:${token.column}] ${warning.message}"
     }
     return lines.joinToString("\n")
+}
+
+private fun emitContractWarnings(violations: List<ContractViolation>, transformName: String?) {
+    if (violations.isEmpty()) return
+    val header = transformName?.let { "Contract warnings for '$it':" } ?: "Contract warnings:"
+    System.err.println(header)
+    violations.forEach { violation ->
+        System.err.println("  - ${formatContractViolation(violation)}")
+    }
 }
 
 private fun indentLines(lines: List<String>, indent: String): List<String> =

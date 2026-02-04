@@ -4,7 +4,7 @@ depends_on: []
 blocks: []
 supersedes: ['planning/current-research-tasks']
 superseded_by: []
-last_updated: 2026-02-01
+last_updated: 2026-02-03
 changelog:
   - date: 2026-02-01
     change: "Created development knowledge base index."
@@ -14,6 +14,8 @@ changelog:
     change: "Moved Transform Options to implemented."
   - date: 2026-02-01
     change: "Added implicit transform CLI proposal and moved Numeric Refactor to implemented."
+  - date: 2026-02-03
+    change: "Added Transform Contracts next-phase implementation."
 ---
 # Development Knowledge Base Index
 
@@ -51,6 +53,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [CASE/WHEN](language/case-when.md) -- guard-only CASE expression implemented.
 - [Input Aliases](language/input-aliases.md) -- `input` default with `row` compatibility alias.
 - [Transform Contracts](language/transform-contracts.md) -- signatures and contract inference.
+- [Transform Contracts Next Phase](language/transform-contracts-next.md) -- runtime validation and contract JSON export.
 - [Transform Options](language/transform-options.md) -- per-transform OPTIONS blocks.
 
 ### Deprecated
