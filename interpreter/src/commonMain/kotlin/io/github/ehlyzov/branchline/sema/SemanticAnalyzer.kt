@@ -514,6 +514,7 @@ class SemanticAnalyzer(
         val inputType = currentInputContract ?: return
         val baseIdent = expr.base as? IdentifierExpr ?: return
         if (!isInputAlias(baseIdent.name)) return
+        val accessPath = renderAccessPath(expr)
 
         var currentType = inputType
         for (seg in expr.segs) {
@@ -525,7 +526,7 @@ class SemanticAnalyzer(
                         return
                     }
                     reportContractMismatch(
-                        "Input contract does not allow access via ${renderKey(key)}",
+                        "Input contract does not allow access via ${renderKey(key)} at $accessPath",
                         signature.tokenSpan.start,
                     )
                     return
@@ -533,7 +534,7 @@ class SemanticAnalyzer(
 
                 is EnumTypeRef -> {
                     reportContractMismatch(
-                        "Input contract does not allow access via ${renderKey(key)}",
+                        "Input contract does not allow access via ${renderKey(key)} at $accessPath",
                         signature.tokenSpan.start,
                     )
                     return
@@ -542,7 +543,7 @@ class SemanticAnalyzer(
                 is RecordTypeRef -> {
                     if (key !is ObjKey.Name) {
                         reportContractMismatch(
-                            "Input contract expects object fields, got index access ${renderKey(key)}",
+                            "Input contract expects object fields, got index access ${renderKey(key)} at $accessPath",
                             signature.tokenSpan.start,
                         )
                         return
@@ -550,7 +551,7 @@ class SemanticAnalyzer(
                     val field = resolved.fields.firstOrNull { it.name == key.v }
                     if (field == null) {
                         reportContractMismatch(
-                            "Input contract does not declare field '${key.v}'",
+                            "Input contract does not declare field '${key.v}' at $accessPath",
                             signature.tokenSpan.start,
                         )
                         return
@@ -561,7 +562,7 @@ class SemanticAnalyzer(
                 is ArrayTypeRef -> {
                     if (key is ObjKey.Name) {
                         reportContractMismatch(
-                            "Input contract expects list access, got field '${key.v}'",
+                            "Input contract expects list access, got field '${key.v}' at $accessPath",
                             signature.tokenSpan.start,
                         )
                         return
@@ -580,22 +581,22 @@ class SemanticAnalyzer(
         val outputType = currentOutputContract ?: return
         val resolved = resolveTypeRef(outputType)
         when (resolved) {
-            is RecordTypeRef -> validateOutputObject(expr, resolved, signature.tokenSpan.end)
-            is ArrayTypeRef -> validateOutputArray(expr, resolved, signature.tokenSpan.end)
+            is RecordTypeRef -> validateOutputObject(expr, resolved, signature.tokenSpan.end, "output")
+            is ArrayTypeRef -> validateOutputArray(expr, resolved, signature.tokenSpan.end, "output")
             else -> Unit
         }
     }
 
-    private fun validateOutputObject(expr: Expr, typeRef: RecordTypeRef, token: Token) {
+    private fun validateOutputObject(expr: Expr, typeRef: RecordTypeRef, token: Token, path: String) {
         val obj = when (expr) {
             is ObjectExpr -> expr
             is TryCatchExpr -> {
-                validateOutputObject(expr.tryExpr, typeRef, token)
-                validateOutputObject(expr.fallbackExpr, typeRef, token)
+                validateOutputObject(expr.tryExpr, typeRef, token, path)
+                validateOutputObject(expr.fallbackExpr, typeRef, token, path)
                 return
             }
             else -> {
-                reportContractMismatch("Output contract expects an object", token)
+                reportContractMismatch("Output contract expects an object at $path", token)
                 return
             }
         }
@@ -610,7 +611,7 @@ class SemanticAnalyzer(
         typeRef.fields.filter { !it.optional }.forEach { field ->
             if (field.name !in literalFields) {
                 reportContractMismatch(
-                    "Output contract is missing required field '${field.name}'",
+                    "Output contract is missing required field '${field.name}' at ${appendPath(path, field.name)}",
                     token,
                 )
             }
@@ -618,7 +619,7 @@ class SemanticAnalyzer(
 
         literalFields.filter { it !in declaredFields }.forEach { extra ->
             reportContractMismatch(
-                "Output contract does not declare field '$extra'",
+                "Output contract does not declare field '$extra' at ${appendPath(path, extra)}",
                 token,
             )
         }
@@ -629,37 +630,37 @@ class SemanticAnalyzer(
             val fieldType = declaredFields[name]?.type ?: return@forEach
             val resolvedFieldType = resolveTypeRef(fieldType)
             when (resolvedFieldType) {
-                is RecordTypeRef -> validateOutputObject(literal.value, resolvedFieldType, token)
-                is ArrayTypeRef -> validateOutputArray(literal.value, resolvedFieldType, token)
+                is RecordTypeRef -> validateOutputObject(literal.value, resolvedFieldType, token, appendPath(path, name))
+                is ArrayTypeRef -> validateOutputArray(literal.value, resolvedFieldType, token, appendPath(path, name))
                 else -> Unit
             }
         }
     }
 
-    private fun validateOutputArray(expr: Expr, typeRef: ArrayTypeRef, token: Token) {
+    private fun validateOutputArray(expr: Expr, typeRef: ArrayTypeRef, token: Token, path: String) {
         when (expr) {
             is ArrayExpr -> {
                 val elementType = resolveTypeRef(typeRef.elementType)
                 if (elementType is RecordTypeRef) {
                     expr.elements.forEach { element ->
-                        validateOutputObject(element, elementType, token)
+                        validateOutputObject(element, elementType, token, appendArrayPath(path))
                     }
                 }
             }
             is TryCatchExpr -> {
-                validateOutputArray(expr.tryExpr, typeRef, token)
-                validateOutputArray(expr.fallbackExpr, typeRef, token)
+                validateOutputArray(expr.tryExpr, typeRef, token, path)
+                validateOutputArray(expr.fallbackExpr, typeRef, token, path)
             }
             is ArrayCompExpr -> {
                 val elementType = resolveTypeRef(typeRef.elementType)
                 if (elementType is RecordTypeRef && expr.mapExpr !is ObjectExpr) {
                     reportContractMismatch(
-                        "Output contract expects object elements in list output",
+                        "Output contract expects object elements in list output at $path",
                         token,
                     )
                 }
             }
-            else -> reportContractMismatch("Output contract expects a list", token)
+            else -> reportContractMismatch("Output contract expects a list at $path", token)
         }
     }
 
@@ -673,6 +674,32 @@ class SemanticAnalyzer(
     private fun renderKey(key: ObjKey): String = when (key) {
         is ObjKey.Name -> "'${key.v}'"
         is ObjKey.Index -> "index"
+    }
+
+    private fun renderAccessPath(expr: AccessExpr): String {
+        val base = (expr.base as? IdentifierExpr)?.name ?: "input"
+        if (expr.segs.isEmpty()) return base
+        val builder = StringBuilder(base)
+        expr.segs.forEach { seg ->
+            when (seg) {
+                is AccessSeg.Static -> when (val key = seg.key) {
+                    is ObjKey.Name -> builder.append('.').append(key.v)
+                    is ObjKey.Index -> builder.append('[').append(renderIndexKey(key)).append(']')
+                }
+                is AccessSeg.Dynamic -> builder.append("[*]")
+            }
+        }
+        return builder.toString()
+    }
+
+    private fun appendPath(base: String, segment: String): String = "$base.$segment"
+
+    private fun appendArrayPath(base: String): String = "$base[]"
+
+    private fun renderIndexKey(key: ObjKey.Index): String = when (key) {
+        is I32 -> key.v.toString()
+        is I64 -> key.v.toString()
+        is IBig -> key.v.toString()
     }
 
     private fun isInputAlias(name: String): Boolean =

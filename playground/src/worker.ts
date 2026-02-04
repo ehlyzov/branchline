@@ -1,4 +1,5 @@
 type InputFormat = 'json' | 'xml';
+type ContractMode = 'off' | 'warn' | 'strict';
 
 type SharedStorageSpec = {
   name: string;
@@ -11,6 +12,8 @@ type WorkerRequest = {
   trace: boolean;
   inputFormat: InputFormat;
   includeContracts: boolean;
+  contractsMode: ContractMode;
+  contractsDebug: boolean;
   shared: SharedStorageSpec[];
 };
 
@@ -25,6 +28,7 @@ type WorkerResponse = {
   inputContractJson: string | null;
   outputContractJson: string | null;
   contractSource: string | null;
+  contractWarnings: string | null;
 };
 
 import kotlinStdlibUrl from '../../interpreter/build/dist/js/productionLibrary/kotlin-kotlin-stdlib.js?url';
@@ -42,6 +46,15 @@ type PlaygroundFacade = {
     inputJson: string,
     enableTracing: boolean,
     includeContracts: boolean,
+    sharedJsonConfig: string | null
+  ): WorkerResponse;
+  runWithContracts?(
+    program: string,
+    inputJson: string,
+    enableTracing: boolean,
+    includeContracts: boolean,
+    contractsMode: ContractMode,
+    contractsDebug: boolean,
     sharedJsonConfig: string | null
   ): WorkerResponse;
 };
@@ -118,16 +131,18 @@ function loadFacade(): Promise<PlaygroundFacade> {
 }
 
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
-  const { code, input, trace, inputFormat, includeContracts, shared } = event.data;
+  const { code, input, trace, inputFormat, includeContracts, contractsMode, contractsDebug, shared } = event.data;
   const sharedOffset = shared.length ? shared.length + 1 : 0;
   const wrapperAdjustment = computeWrapperAdjustment(code, sharedOffset);
   try {
     const runner = await loadFacade();
     const payload = prepareInput(input, inputFormat);
     const sharedJson = shared.length ? JSON.stringify(shared) : null;
-    const result = runner.runWithShared
-      ? runner.runWithShared(code, payload, trace, includeContracts, sharedJson)
-      : runner.run(code, payload, trace, includeContracts);
+    const result = runner.runWithContracts
+      ? runner.runWithContracts(code, payload, trace, includeContracts, contractsMode, contractsDebug, sharedJson)
+      : runner.runWithShared
+        ? runner.runWithShared(code, payload, trace, includeContracts, sharedJson)
+        : runner.run(code, payload, trace, includeContracts);
     const adjusted = adjustResultForWrapper(result, wrapperAdjustment);
     self.postMessage(adjusted satisfies WorkerResponse);
   } catch (error) {
@@ -142,7 +157,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
       explainHuman: null,
       inputContractJson: null,
       outputContractJson: null,
-      contractSource: null
+      contractSource: null,
+      contractWarnings: null
     };
     self.postMessage(fallback);
   }
