@@ -28,6 +28,7 @@ const PLAYGROUND_HOSTED_URL = 'https://ehlyzov.github.io/branchline-public/playg
 
 type InputFormat = 'json' | 'xml';
 type ContractMode = 'off' | 'warn' | 'strict';
+type OutputFormat = 'json' | 'json-compact' | 'json-canonical';
 
 type RawExample = {
   title: string;
@@ -35,6 +36,7 @@ type RawExample = {
   program: string | string[];
   input: unknown;
   inputFormat?: InputFormat;
+  outputFormat?: OutputFormat;
   trace?: boolean;
   showContracts?: boolean;
   shared?: SharedStorageSpec[];
@@ -51,6 +53,7 @@ type PlaygroundExample = {
   program: string;
   input: string;
   inputFormat: InputFormat;
+  outputFormat: OutputFormat;
   enableTracing: boolean;
   enableContracts: boolean;
   shared: SharedStorageSpec[];
@@ -69,6 +72,7 @@ function normalizeExample(id: string, raw: RawExample): PlaygroundExample {
   const program = Array.isArray(raw.program) ? raw.program.join('\n') : raw.program ?? DEFAULT_PROGRAM;
   let input = '';
   const inputFormat = raw.inputFormat ?? 'json';
+  const outputFormat = raw.outputFormat ?? 'json';
 
   if (typeof raw.input === 'string') {
     input = raw.input;
@@ -83,6 +87,7 @@ function normalizeExample(id: string, raw: RawExample): PlaygroundExample {
     program,
     input: input || DEFAULT_INPUT,
     inputFormat,
+    outputFormat,
     enableTracing: Boolean(raw.trace),
     enableContracts: Boolean(raw.showContracts),
     shared: raw.shared ?? []
@@ -146,6 +151,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   const inputEditorRef = React.useRef<monaco.editor.IStandaloneCodeEditor>();
   const workerRef = React.useRef<Worker>();
   const [inputFormat, setInputFormat] = React.useState<InputFormat>('json');
+  const [outputFormat, setOutputFormat] = React.useState<OutputFormat>('json');
 
   const [isRunning, setIsRunning] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -209,12 +215,13 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
       input,
       trace: tracingRef.current,
       inputFormat,
+      outputFormat,
       includeContracts: isContractsEnabled,
       contractsMode,
       contractsDebug,
       shared: selectedExample?.shared ?? []
     });
-  }, [contractsDebug, contractsMode, inputFormat, isContractsEnabled, selectedExample]);
+  }, [contractsDebug, contractsMode, inputFormat, isContractsEnabled, outputFormat, selectedExample]);
 
   const resetExample = React.useCallback(() => {
     if (!selectedExample) {
@@ -223,6 +230,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     const program = selectedExample.program ?? DEFAULT_PROGRAM;
     const input = selectedExample.input ?? DEFAULT_INPUT;
     const format = selectedExample.inputFormat ?? 'json';
+    const outputFmt = selectedExample.outputFormat ?? 'json';
 
     if (programEditorRef.current) {
       programEditorRef.current.setValue(program);
@@ -233,6 +241,9 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
 
     if (inputFormat !== format) {
       setInputFormat(format);
+    }
+    if (outputFormat !== outputFmt) {
+      setOutputFormat(outputFmt);
     }
 
     setError(null);
@@ -251,7 +262,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     setIsContractsEnabled(selectedExample.enableContracts);
     setContractsMode('off');
     setContractsDebug(false);
-  }, [inputFormat, selectedExample]);
+  }, [inputFormat, outputFormat, selectedExample]);
 
   React.useEffect(() => {
     ensureBranchlineLanguage();
@@ -461,6 +472,14 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
             <select value={inputFormat} onChange={(event) => setInputFormat(event.target.value as InputFormat)}>
               <option value="json">JSON</option>
               <option value="xml">XML</option>
+            </select>
+          </label>
+          <label className="playground-select">
+            <span>Output format</span>
+            <select value={outputFormat} onChange={(event) => setOutputFormat(event.target.value as OutputFormat)}>
+              <option value="json">JSON (pretty)</option>
+              <option value="json-compact">JSON (compact)</option>
+              <option value="json-canonical">JSON (canonical)</option>
             </select>
           </label>
           <label className="playground-toggle">

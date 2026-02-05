@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Implemented
 depends_on: []
 blocks: []
 supersedes: []
@@ -8,20 +8,21 @@ last_updated: 2026-02-05
 changelog:
   - date: 2026-02-05
     change: "Proposed canonical JSON output mode aligned with I/O contract research."
+  - date: 2026-02-05
+    change: "Implemented json-canonical output across CLI/playground with deterministic ordering tests."
 ---
 # JSON Canonicalization Mode
 
 ## Status (as of 2026-02-05)
-- Stage: proposal.
+- Stage: implemented.
 - Scope: JSON output ordering, numeric formatting, and escaping rules.
 
 ## Summary
 Current JSON output is pretty or compact but not canonical. This proposal defines a deterministic JSON canonicalization mode for Branchline output that matches the I/O contract research, enabling stable hashing, signatures, and reproducible outputs across platforms.
 
 ## Current Behavior
-- JSON output uses `formatJson` in `cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/JsonInterop.kt` with Kotlinx serialization.
-- Key ordering depends on map insertion order; no canonical sort.
-- Numeric formatting is delegated to Kotlinx and JVM/JS defaults.
+- `json` and `json-compact` output still use `formatJson` with Kotlinx serialization.
+- `json-canonical` output mode enforces deterministic key ordering and numeric normalization.
 
 ## Goals
 - Deterministic JSON output across JVM, JS, and CLI.

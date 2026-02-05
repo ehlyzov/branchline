@@ -22,6 +22,10 @@ changelog:
     change: "Removed runtime/tree-structures-ru.md (superseded by runtime/tree-structures.md)."
   - date: 2026-02-05
     change: "Moved Duplicate JSON Key Policy to implemented."
+  - date: 2026-02-05
+    change: "Moved JSON Canonicalization Mode to implemented."
+  - date: 2026-02-05
+    change: "Moved Large Number Handling Contract to in progress."
 ---
 # Development Knowledge Base Index
 
@@ -38,8 +42,6 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Internal CBOR Representation](runtime/cbor-internal-representation.md) -- lossless Branchline-to-Branchline wire format.
 - [CBOR Determinism Rules](runtime/cbor-determinism.md) -- deterministic encoding constraints for internal CBOR.
 - [I/O Contract Gap Analysis](language/io-contracts-gap-analysis.md) -- parser + I/O contract comparison and enrichment targets.
-- [JSON Canonicalization Mode](language/json-canonicalization.md) -- deterministic JSON ordering + numeric formatting.
-- [Large Number Handling Contract](language/large-number-contract.md) -- BigInt/BigDecimal input and output policy.
 - [JSON Binary Policy](language/json-binary-policy.md) -- base64 rules for binary data in JSON.
 - [Set Serialization Semantics](language/set-serialization.md) -- set type behavior and deterministic ordering.
 - [XML Mapping Contract](language/xml-mapping-contract.md) -- unified XML-to-Branchline mapping rules.
@@ -60,6 +62,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Conformance Suite](quality/conformance-suite.md) -- parity coverage expansion.
 - [JSONata Benchmarking](perf/jsonata-benchmarking.md) -- case matrix + validation.
 - [Interpreter Performance Tasks](perf/interpreter-performance-tasks.md) -- perf task backlog.
+- [Large Number Handling Contract](language/large-number-contract.md) -- BigInt/BigDecimal input and output policy.
 
 ### Implemented
 - [CLI Rollout](tooling/cli-rollout.md) -- JVM/JS CLI shipped.
@@ -75,6 +78,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Transform Contracts Next Phase](language/transform-contracts-next.md) -- runtime validation and contract JSON export.
 - [Transform Options](language/transform-options.md) -- per-transform OPTIONS blocks.
 - [Duplicate JSON Key Policy](language/json-duplicate-keys.md) -- error/last/first handling.
+- [JSON Canonicalization Mode](language/json-canonicalization.md) -- deterministic JSON ordering + numeric formatting.
 
 ### Deprecated
 - None.

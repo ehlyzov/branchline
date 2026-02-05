@@ -21,6 +21,9 @@ Use this section as the formal reference for Branchline syntax and semantics.
 ## Input Policies
 - JSON object keys must be unique; duplicates are rejected in CLI and playground input parsing.
 
+## Output Policies
+- JSON output can be emitted in canonical form (`json-canonical`) with deterministic key ordering and normalized numeric formatting.
+
 ## Standard Library
 - [Core](std-core.md)
 - [Arrays](std-arrays.md)

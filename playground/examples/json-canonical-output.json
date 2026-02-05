@@ -1,0 +1,18 @@
+{
+  "title": "Canonical JSON Output",
+  "description": "Deterministic key ordering and normalized number rendering using json-canonical output.",
+  "outputFormat": "json-canonical",
+  "program": [
+    "TRANSFORM Canonical {",
+    "    OUTPUT {",
+    "        zebra: 10000000,",
+    "        apple: 1.2300,",
+    "        Alpha: 3,",
+    "        nested: { b: 2, a: 1 },",
+    "        tiny: 0.0000001,",
+    "        micro: 0.000001",
+    "    };",
+    "}"
+  ],
+  "input": {}
+}

@@ -23,6 +23,10 @@ changelog:
     change: "Defined milestone plan and agent instructions for I/O contract proposals."
   - date: 2026-02-05
     change: "Completed milestone 1 with duplicate-key rejection and conformance coverage."
+  - date: 2026-02-05
+    change: "Completed milestone 2 with canonical JSON output and conformance coverage."
+  - date: 2026-02-05
+    change: "Started milestone 3 for large-number handling."
 ---
 # I/O Contracts Milestone Plan
 
@@ -66,6 +70,7 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 2: JSON Canonical Output
 **Proposal:** `development/language/json-canonicalization.md`
+**Status:** Completed (2026-02-05)
 
 **Scope**
 - Deterministic JSON output formatting (key ordering, numeric normalization).
@@ -87,6 +92,7 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 3: Large Numbers (BigInt/BigDecimal)
 **Proposal:** `development/language/large-number-contract.md`
+**Status:** In Progress (2026-02-05)
 
 **Scope**
 - Safe parsing of large integers/decimals and JSON emission rules.

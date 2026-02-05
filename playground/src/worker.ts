@@ -1,5 +1,6 @@
 type InputFormat = 'json' | 'xml';
 type ContractMode = 'off' | 'warn' | 'strict';
+type OutputFormat = 'json' | 'json-compact' | 'json-canonical';
 
 type SharedStorageSpec = {
   name: string;
@@ -11,6 +12,7 @@ type WorkerRequest = {
   input: string;
   trace: boolean;
   inputFormat: InputFormat;
+  outputFormat: OutputFormat;
   includeContracts: boolean;
   contractsMode: ContractMode;
   contractsDebug: boolean;
@@ -55,7 +57,8 @@ type PlaygroundFacade = {
     includeContracts: boolean,
     contractsMode: ContractMode,
     contractsDebug: boolean,
-    sharedJsonConfig: string | null
+    sharedJsonConfig: string | null,
+    outputFormat: OutputFormat
   ): WorkerResponse;
 };
 
@@ -131,7 +134,17 @@ function loadFacade(): Promise<PlaygroundFacade> {
 }
 
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
-  const { code, input, trace, inputFormat, includeContracts, contractsMode, contractsDebug, shared } = event.data;
+  const {
+    code,
+    input,
+    trace,
+    inputFormat,
+    outputFormat = 'json',
+    includeContracts,
+    contractsMode,
+    contractsDebug,
+    shared
+  } = event.data;
   const sharedOffset = shared.length ? shared.length + 1 : 0;
   const wrapperAdjustment = computeWrapperAdjustment(code, sharedOffset);
   try {
@@ -139,7 +152,7 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     const payload = prepareInput(input, inputFormat);
     const sharedJson = shared.length ? JSON.stringify(shared) : null;
     const result = runner.runWithContracts
-      ? runner.runWithContracts(code, payload, trace, includeContracts, contractsMode, contractsDebug, sharedJson)
+      ? runner.runWithContracts(code, payload, trace, includeContracts, contractsMode, contractsDebug, sharedJson, outputFormat)
       : runner.runWithShared
         ? runner.runWithShared(code, payload, trace, includeContracts, sharedJson)
         : runner.run(code, payload, trace, includeContracts);
