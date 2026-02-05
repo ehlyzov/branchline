@@ -31,6 +31,8 @@ changelog:
     change: "Completed milestone 3 with large-number parsing/output and json-numbers modes."
   - date: 2026-02-05
     change: "Completed milestone 4 with numeric JSON key conversion."
+  - date: 2026-02-05
+    change: "Completed milestone 5 with JSON binary policy."
 ---
 # I/O Contracts Milestone Plan
 
@@ -140,6 +142,7 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 5: JSON Binary Policy
 **Proposal:** `development/language/json-binary-policy.md`
+**Status:** Completed (2026-02-05)
 
 **Scope**
 - Define and implement base64 encoding for bytes.

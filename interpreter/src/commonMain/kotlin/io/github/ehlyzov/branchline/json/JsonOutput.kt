@@ -7,6 +7,7 @@ import io.github.ehlyzov.branchline.I64
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
 import io.github.ehlyzov.branchline.runtime.bignum.toPlainString
+import io.github.ehlyzov.branchline.runtime.base64Encode
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -39,6 +40,7 @@ public fun toJsonElement(
     is JsonElement -> value
     is String -> JsonPrimitive(value)
     is Boolean -> JsonPrimitive(value)
+    is ByteArray -> JsonPrimitive(base64Encode(value))
     is BLBigInt -> jsonPrimitiveForBigInt(value, numberMode)
     is BLBigDec -> jsonPrimitiveForBigDec(value, numberMode)
     is IBig -> jsonPrimitiveForBigInt(value.v, numberMode)

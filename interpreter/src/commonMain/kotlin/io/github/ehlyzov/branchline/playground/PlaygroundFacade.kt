@@ -11,6 +11,7 @@ import io.github.ehlyzov.branchline.ParseException
 import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
+import io.github.ehlyzov.branchline.contract.ContractCoercion
 import io.github.ehlyzov.branchline.contract.ContractEnforcer
 import io.github.ehlyzov.branchline.contract.ContractJsonRenderer
 import io.github.ehlyzov.branchline.contract.ContractValidationMode
@@ -164,17 +165,10 @@ object PlaygroundFacade {
 
             val contractMode = parseContractMode(contractsMode)
             val msg = parseInput(inputJson)
-            val env = HashMap<String, Any?>().apply {
-                this[INPUT_VAR] = msg
-                putAll(msg)
-            }
             val sharedSnapshot = SharedStoreProvider.store?.snapshot().orEmpty()
             if (sharedSpecs.isNotEmpty()) {
                 for (spec in sharedSpecs) {
                     val seed = sharedSnapshot[spec.name] ?: emptyMap()
-                    if (!env.containsKey(spec.name)) {
-                        env[spec.name] = LinkedHashMap(seed)
-                    }
                 }
             }
             val contract = if (includeContracts || contractMode != ContractValidationMode.OFF) {
@@ -183,8 +177,25 @@ object PlaygroundFacade {
             } else {
                 null
             }
+            val inputValue = if (contract != null && contractMode != ContractValidationMode.OFF) {
+                ContractCoercion.coerceInputBytes(contract.input, msg)
+            } else {
+                msg
+            }
+            val env = HashMap<String, Any?>().apply {
+                this[INPUT_VAR] = inputValue
+                putAll(inputValue)
+            }
+            if (sharedSpecs.isNotEmpty()) {
+                for (spec in sharedSpecs) {
+                    val seed = sharedSnapshot[spec.name] ?: emptyMap()
+                    if (!env.containsKey(spec.name)) {
+                        env[spec.name] = LinkedHashMap(seed)
+                    }
+                }
+            }
             val inputViolations = if (contract != null && contractMode != ContractValidationMode.OFF) {
-                ContractEnforcer.enforceInput(contractMode, contract.input, msg)
+                ContractEnforcer.enforceInput(contractMode, contract.input, inputValue)
             } else {
                 emptyList()
             }

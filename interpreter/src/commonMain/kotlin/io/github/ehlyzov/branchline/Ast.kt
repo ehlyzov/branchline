@@ -103,6 +103,7 @@ public sealed interface TypeRef : Ast {
 
 public enum class PrimitiveType {
     TEXT,
+    BYTES,
     NUMBER,
     BOOLEAN,
     NULL,
