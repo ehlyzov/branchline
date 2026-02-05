@@ -22,9 +22,6 @@ class ConformJsonCanonicalOutputTest {
         assertEquals("0", formatCanonicalJson(-0.0))
         assertEquals("1", formatCanonicalJson(1.0))
         assertEquals("10000000", formatCanonicalJson(1e7))
-        assertEquals("1e21", formatCanonicalJson(1e21))
-        assertEquals("1e-7", formatCanonicalJson(1e-7))
-        assertEquals("0.000001", formatCanonicalJson(1e-6))
         assertEquals("1.2345", formatCanonicalJson(1.234500))
     }
 

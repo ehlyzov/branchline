@@ -62,7 +62,6 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Conformance Suite](quality/conformance-suite.md) -- parity coverage expansion.
 - [JSONata Benchmarking](perf/jsonata-benchmarking.md) -- case matrix + validation.
 - [Interpreter Performance Tasks](perf/interpreter-performance-tasks.md) -- perf task backlog.
-- [Large Number Handling Contract](language/large-number-contract.md) -- BigInt/BigDecimal input and output policy.
 
 ### Implemented
 - [CLI Rollout](tooling/cli-rollout.md) -- JVM/JS CLI shipped.
@@ -79,6 +78,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Transform Options](language/transform-options.md) -- per-transform OPTIONS blocks.
 - [Duplicate JSON Key Policy](language/json-duplicate-keys.md) -- error/last/first handling.
 - [JSON Canonicalization Mode](language/json-canonicalization.md) -- deterministic JSON ordering + numeric formatting.
+- [Large Number Handling Contract](language/large-number-contract.md) -- BigInt/BigDecimal input and output policy.
 
 ### Deprecated
 - None.

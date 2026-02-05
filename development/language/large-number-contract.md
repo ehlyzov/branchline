@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: []
 blocks: []
 supersedes: []
@@ -10,20 +10,22 @@ changelog:
     change: "Proposed large-number parsing and serialization rules (I-JSON aligned)."
   - date: 2026-02-05
     change: "Started milestone 3 implementation work."
+  - date: 2026-02-05
+    change: "Implemented JSON large-number parsing/output with json-numbers modes and conformance coverage."
 ---
 # Large Number Handling Contract
 
 ## Status (as of 2026-02-05)
-- Stage: in progress.
+- Stage: implemented.
 - Scope: JSON parsing and output of large integers and high-precision decimals.
 
 ## Summary
 The current JSON pipeline uses `Long` and `Double` only, which can lose precision. This proposal defines a safe, explicit contract for BigInt and BigDecimal handling aligned with I-JSON recommendations and the extended numeric model described in the research.
 
 ## Current Behavior
-- JSON parsing uses `longOrNull` then `doubleOrNull` in `cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/JsonInterop.kt`.
-- Any `Number` is serialized as `Double` in `toJsonElement`, which can truncate large integers.
-- No explicit I-JSON safety checks or warnings.
+- JSON parsing promotes large integers to `BigInt` and high-precision decimals to `BigDec` in safe mode.
+- JSON output emits `BigInt` and `BigDec` as strings by default to avoid precision loss.
+- `--json-numbers strict` rejects values outside the safe JSON numeric range.
 
 ## Goals
 - Preserve large integer precision on input.
@@ -50,7 +52,10 @@ The current JSON pipeline uses `Long` and `Double` only, which can lose precisio
 
 ## CLI and API Surface
 - Add `--json-numbers strict|safe|extended`.
-- Add warnings when `BigInt` or `BigDecimal` is emitted as a string.
+
+## Implementation Notes
+- JSON parsing now promotes large integers to `BigInt` and high-precision decimals to `BigDec`.
+- JSON output defaults to safe mode: BigInt/BigDec emit as strings, and strict/extended modes are available.
 
 ## Docs, Tests, Playground
 - Docs: update `docs/language/numeric.md` and `docs/language/index.md` with BigInt/BigDecimal JSON rules.

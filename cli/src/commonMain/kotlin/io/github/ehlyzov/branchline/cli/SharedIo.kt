@@ -2,6 +2,7 @@ package io.github.ehlyzov.branchline.cli
 
 import io.github.ehlyzov.branchline.SharedDecl
 import io.github.ehlyzov.branchline.SharedKind
+import io.github.ehlyzov.branchline.json.JsonNumberMode
 import io.github.ehlyzov.branchline.json.JsonInputException
 import io.github.ehlyzov.branchline.std.DEFAULT_SHARED_KEY
 import io.github.ehlyzov.branchline.std.SharedResourceKind
@@ -61,6 +62,7 @@ fun seedSharedStore(
     options: SharedOptions,
     sharedDecls: List<SharedDecl>,
     store: SharedStore,
+    jsonNumberMode: JsonNumberMode,
 ): SharedSeedResult {
     if (options.inputs.isEmpty()) return SharedSeedResult(emptyList())
     val sync = store as? SharedStoreSync ?: throw CliException(
@@ -84,7 +86,7 @@ fun seedSharedStore(
         }
         for (path in files) {
             val key = deriveSharedKey(spec, path, options.keyMode)
-            val value = parseSharedValue(path, options.format)
+            val value = parseSharedValue(path, options.format, jsonNumberMode)
             when (kind) {
                 SharedResourceKind.SINGLE -> {
                     val ok = sync.setOnceSync(spec.resource, key, value)
@@ -109,12 +111,12 @@ private fun resolveSharedPaths(spec: SharedInputSpec): List<String> = when (spec
     SharedInputKind.GLOB -> expandGlob(spec.path)
 }
 
-private fun parseSharedValue(path: String, format: SharedInputFormat): Any? {
+private fun parseSharedValue(path: String, format: SharedInputFormat, jsonNumberMode: JsonNumberMode): Any? {
     val text = readTextFileOrThrow(path)
     return try {
         when (format) {
             SharedInputFormat.TEXT -> text
-            SharedInputFormat.JSON -> parseJsonValue(text)
+            SharedInputFormat.JSON -> parseJsonValue(text, jsonNumberMode)
             SharedInputFormat.XML -> parseXmlInput(text)
         }
     } catch (ex: JsonInputException) {

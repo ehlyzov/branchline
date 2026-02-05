@@ -22,5 +22,6 @@ tar -xzf branchline-cli-js-<tag>.tgz
 ## Common flags
 - `--input` path to input data
 - `--input-format` json | xml
+- `--json-numbers` strict | safe | extended
 - `--output-format` json | json-compact | json-canonical
 - `--trace` enable tracing output

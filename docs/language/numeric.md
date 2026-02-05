@@ -82,3 +82,14 @@ This same `BD`/`F` mixing rule applies to comparisons and equality.
   precision and to avoid float rounding surprises.
 
 Try it in the playground: [Numeric precision example](../playground.md?example=stdlib-numeric-precision).
+
+## JSON input/output rules
+
+Branchline treats JSON numeric interoperability separately from in-language arithmetic:
+
+- **Safe mode (default)** preserves precision by parsing large integers as `BigInt` and high-precision decimals as `BigDec`.
+  When emitting JSON, `BigInt` and `BigDec` are encoded as JSON strings to avoid silent precision loss.
+- **Strict mode** rejects numbers outside the safe JSON numeric range.
+- **Extended mode** emits large numbers as numeric literals for systems that can handle them.
+
+Control the behavior with `--json-numbers strict|safe|extended` in the CLI (safe is the default).
