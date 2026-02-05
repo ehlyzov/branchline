@@ -20,6 +20,8 @@ changelog:
     change: "Added I/O contract proposal set and CBOR determinism docs."
   - date: 2026-02-05
     change: "Removed runtime/tree-structures-ru.md (superseded by runtime/tree-structures.md)."
+  - date: 2026-02-05
+    change: "Moved Duplicate JSON Key Policy to implemented."
 ---
 # Development Knowledge Base Index
 
@@ -42,7 +44,6 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Set Serialization Semantics](language/set-serialization.md) -- set type behavior and deterministic ordering.
 - [XML Mapping Contract](language/xml-mapping-contract.md) -- unified XML-to-Branchline mapping rules.
 - [XML Namespace Handling](language/xml-namespaces.md) -- @xmlns capture and prefix validation.
-- [Duplicate JSON Key Policy](language/json-duplicate-keys.md) -- error/last/first handling.
 - [Numeric JSON Key Interpretation](language/json-numeric-keys.md) -- schema-driven key coercion rules.
 - [XML Output Ordering](language/xml-output-ordering.md) -- deterministic attribute and sibling ordering.
 - [Conversion Loss Audit](docs/conversion-loss-audit.md) -- catalog of lossy conversions and warnings.
@@ -73,6 +74,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Transform Contracts](language/transform-contracts.md) -- signatures and contract inference.
 - [Transform Contracts Next Phase](language/transform-contracts-next.md) -- runtime validation and contract JSON export.
 - [Transform Options](language/transform-options.md) -- per-transform OPTIONS blocks.
+- [Duplicate JSON Key Policy](language/json-duplicate-keys.md) -- error/last/first handling.
 
 ### Deprecated
 - None.

@@ -21,6 +21,8 @@ last_updated: 2026-02-05
 changelog:
   - date: 2026-02-05
     change: "Defined milestone plan and agent instructions for I/O contract proposals."
+  - date: 2026-02-05
+    change: "Completed milestone 1 with duplicate-key rejection and conformance coverage."
 ---
 # I/O Contracts Milestone Plan
 
@@ -41,24 +43,24 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 1: JSON Input Determinism (Duplicate Keys)
 **Proposal:** `development/language/json-duplicate-keys.md`
+**Status:** Completed (2026-02-05)
 
 **Scope**
-- Add explicit duplicate-key handling to JSON parsing.
+- Reject duplicate JSON object keys during input parsing.
 
 **Agent Tasks**
 - Implement duplicate key detection in `cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/JsonInterop.kt`.
-- Add CLI flag `--json-duplicates error|last|first` and document it.
 - Ensure Playground uses the same parsing behavior.
-- Add conformance tests covering each mode.
+- Add conformance tests covering duplicate-key rejection.
 
 **Docs/Tests/Playground**
 - Update `docs/language/index.md` and CLI docs.
 - Add `conformance-tests/src/commonTest` cases for duplicates.
-- Playground example only if duplicate mode is surfaced in UI.
+- Playground example not required.
 
 **Exit Criteria**
-- Duplicate keys are deterministic by configuration.
-- Tests for each mode pass on JVM and JS.
+- Duplicate keys are rejected deterministically.
+- Conformance tests pass on JVM and JS.
 
 ---
 

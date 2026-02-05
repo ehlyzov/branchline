@@ -2,6 +2,7 @@ package io.github.ehlyzov.branchline.cli
 
 import io.github.ehlyzov.branchline.SharedDecl
 import io.github.ehlyzov.branchline.SharedKind
+import io.github.ehlyzov.branchline.json.JsonInputException
 import io.github.ehlyzov.branchline.std.DEFAULT_SHARED_KEY
 import io.github.ehlyzov.branchline.std.SharedResourceKind
 import io.github.ehlyzov.branchline.std.SharedStore
@@ -110,10 +111,17 @@ private fun resolveSharedPaths(spec: SharedInputSpec): List<String> = when (spec
 
 private fun parseSharedValue(path: String, format: SharedInputFormat): Any? {
     val text = readTextFileOrThrow(path)
-    return when (format) {
-        SharedInputFormat.TEXT -> text
-        SharedInputFormat.JSON -> parseJsonValue(text)
-        SharedInputFormat.XML -> parseXmlInput(text)
+    return try {
+        when (format) {
+            SharedInputFormat.TEXT -> text
+            SharedInputFormat.JSON -> parseJsonValue(text)
+            SharedInputFormat.XML -> parseXmlInput(text)
+        }
+    } catch (ex: JsonInputException) {
+        throw CliException(
+            "Invalid JSON in shared input '$path': ${ex.message ?: "Invalid JSON"}",
+            kind = CliErrorKind.INPUT,
+        )
     }
 }
 

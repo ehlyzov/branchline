@@ -32,6 +32,7 @@ import io.github.ehlyzov.branchline.debug.CollectingTracer
 import io.github.ehlyzov.branchline.debug.TraceOptions
 import io.github.ehlyzov.branchline.debug.TraceReport
 import io.github.ehlyzov.branchline.ir.RuntimeErrorWithContext
+import io.github.ehlyzov.branchline.json.JsonInputException
 import io.github.ehlyzov.branchline.schema.NullabilityStyle
 import io.github.ehlyzov.branchline.sema.SemanticWarning
 import io.github.ehlyzov.branchline.std.StdLib
@@ -1189,6 +1190,8 @@ private fun loadInput(path: String?, format: InputFormat): Map<String, Any?> {
             InputFormat.JSON -> parseJsonInput(text)
             InputFormat.XML -> parseXmlInput(text)
         }
+    } catch (ex: JsonInputException) {
+        throw CliException(ex.message ?: "Invalid JSON input", kind = CliErrorKind.INPUT)
     } catch (ex: CliException) {
         throw ex
     } catch (ex: Exception) {
@@ -1482,6 +1485,7 @@ private fun parseContractMode(raw: String): ContractValidationMode {
     }
 }
 
+
 internal fun readTextFileOrThrow(path: String): String {
     return try {
         readTextFile(path)
@@ -1717,9 +1721,9 @@ private fun renderContractWarnings(warnings: List<SemanticWarning>): String {
 private fun emitContractWarnings(violations: List<ContractViolation>, transformName: String?) {
     if (violations.isEmpty()) return
     val header = transformName?.let { "Contract warnings for '$it':" } ?: "Contract warnings:"
-    System.err.println(header)
+    printError(header)
     violations.forEach { violation ->
-        System.err.println("  - ${formatContractViolation(violation)}")
+        printError("  - ${formatContractViolation(violation)}")
     }
 }
 

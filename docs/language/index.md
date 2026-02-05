@@ -18,6 +18,9 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - [Numeric Semantics](numeric.md)
 - [Grammar](grammar.md)
 
+## Input Policies
+- JSON object keys must be unique; duplicates are rejected in CLI and playground input parsing.
+
 ## Standard Library
 - [Core](std-core.md)
 - [Arrays](std-arrays.md)
