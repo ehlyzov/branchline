@@ -33,6 +33,8 @@ changelog:
     change: "Completed milestone 4 with numeric JSON key conversion."
   - date: 2026-02-05
     change: "Completed milestone 5 with JSON binary policy."
+  - date: 2026-02-05
+    change: "Completed milestone 6 with set serialization."
 ---
 # I/O Contracts Milestone Plan
 
@@ -164,6 +166,7 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 6: Set Serialization
 **Proposal:** `development/language/set-serialization.md`
+**Status:** Completed (2026-02-05)
 
 **Scope**
 - Add set semantics and deterministic serialization.

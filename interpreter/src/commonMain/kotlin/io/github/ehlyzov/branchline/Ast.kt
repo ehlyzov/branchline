@@ -121,6 +121,11 @@ public data class ArrayTypeRef(
     override val token: Token,
 ) : TypeRef
 
+public data class SetTypeRef(
+    val elementType: TypeRef,
+    override val token: Token,
+) : TypeRef
+
 public data class RecordFieldType(
     val name: String,
     val type: TypeRef,

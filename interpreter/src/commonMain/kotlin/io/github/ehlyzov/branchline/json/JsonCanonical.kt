@@ -50,6 +50,7 @@ private fun appendCanonicalJson(
         is IBig -> appendCanonicalBigInt(builder, value.v, numberMode)
         is Dec -> appendCanonicalBigDec(builder, value.v, numberMode)
         is Number -> appendCanonicalNumberValue(builder, value, numberMode)
+        is Set<*> -> appendCanonicalArray(builder, sortSetItems(value, numberMode).iterator(), numberMode)
         is Map<*, *> -> appendCanonicalObject(builder, value, numberMode)
         is Iterable<*> -> appendCanonicalArray(builder, value.iterator(), numberMode)
         is Array<*> -> appendCanonicalArray(builder, value.iterator(), numberMode)

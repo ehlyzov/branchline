@@ -29,6 +29,7 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - JSON output can be emitted in canonical form (`json-canonical`) with deterministic key ordering and normalized numeric formatting.
 - Safe JSON output encodes BigInt/BigDec as strings; use `--json-numbers extended` to emit numeric literals.
 - JSON output encodes bytes as base64 strings using the standard alphabet with `=` padding and no line breaks.
+- Sets serialize as JSON arrays with deterministic ordering (null, boolean, number, string, array, object).
 
 ## Standard Library
 - [Core](std-core.md)
