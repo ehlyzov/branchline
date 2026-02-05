@@ -346,7 +346,7 @@ $indented
     }
 
     private fun parseInput(inputJson: String): Map<String, Any?> {
-        return parseJsonObjectInput(inputJson, JsonParseOptions(JsonNumberMode.SAFE))
+        return parseJsonObjectInput(inputJson, JsonParseOptions(numberMode = JsonNumberMode.SAFE))
     }
 }
 

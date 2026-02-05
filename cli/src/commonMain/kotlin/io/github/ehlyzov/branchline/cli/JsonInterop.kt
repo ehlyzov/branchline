@@ -2,6 +2,7 @@ package io.github.ehlyzov.branchline.cli
 
 import io.github.ehlyzov.branchline.json.JsonNumberMode
 import io.github.ehlyzov.branchline.json.JsonParseOptions
+import io.github.ehlyzov.branchline.json.JsonKeyMode
 import io.github.ehlyzov.branchline.json.formatJsonValue as formatJsonValueInternal
 import io.github.ehlyzov.branchline.json.parseJsonObjectInput as parseJsonObjectInputInternal
 import io.github.ehlyzov.branchline.json.parseJsonValue as parseJsonValueInternal
@@ -16,12 +17,20 @@ import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.longOrNull
 import kotlin.collections.iterator
 
-fun parseJsonInput(text: String, numberMode: JsonNumberMode = JsonNumberMode.SAFE): Map<String, Any?> {
-    return parseJsonObjectInputInternal(text, JsonParseOptions(numberMode))
+fun parseJsonInput(
+    text: String,
+    numberMode: JsonNumberMode = JsonNumberMode.SAFE,
+    keyMode: JsonKeyMode = JsonKeyMode.STRING,
+): Map<String, Any?> {
+    return parseJsonObjectInputInternal(text, JsonParseOptions(numberMode = numberMode, keyMode = keyMode))
 }
 
-fun parseJsonValue(text: String, numberMode: JsonNumberMode = JsonNumberMode.SAFE): Any? {
-    return parseJsonValueInternal(text, JsonParseOptions(numberMode))
+fun parseJsonValue(
+    text: String,
+    numberMode: JsonNumberMode = JsonNumberMode.SAFE,
+    keyMode: JsonKeyMode = JsonKeyMode.STRING,
+): Any? {
+    return parseJsonValueInternal(text, JsonParseOptions(numberMode = numberMode, keyMode = keyMode))
 }
 
 fun formatJson(value: Any?, pretty: Boolean = true, numberMode: JsonNumberMode = JsonNumberMode.SAFE): String {

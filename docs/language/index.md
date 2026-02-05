@@ -22,6 +22,7 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - JSON object keys must be unique; duplicates are rejected in CLI and playground input parsing.
 - JSON number parsing defaults to safe mode: large integers become BigInt and high-precision decimals become BigDec.
 - Use `--json-numbers strict` to reject values outside the safe JSON numeric range.
+- JSON numeric key conversion is opt-in via `--json-key-mode numeric`; it converts non-negative integer keys without leading zeros (except `0`) for nested objects (top-level input keys remain strings).
 
 ## Output Policies
 - JSON output can be emitted in canonical form (`json-canonical`) with deterministic key ordering and normalized numeric formatting.

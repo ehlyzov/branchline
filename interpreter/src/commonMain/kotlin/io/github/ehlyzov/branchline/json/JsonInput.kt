@@ -5,7 +5,8 @@ public class JsonInputException(message: String) : IllegalArgumentException(mess
 public fun parseJsonValue(text: String, options: JsonParseOptions = JsonParseOptions()): Any? {
     if (text.isBlank()) return null
     val parser = JsonInputParser(text, options)
-    return parser.parseRootValue()
+    val value = parser.parseRootValue()
+    return if (options.keyMode == JsonKeyMode.NUMERIC) convertNumericKeys(value) else value
 }
 
 public fun parseJsonObjectInput(text: String, options: JsonParseOptions = JsonParseOptions()): Map<String, Any?> {
@@ -20,7 +21,8 @@ public fun parseJsonObjectInput(text: String, options: JsonParseOptions = JsonPa
         if (key !is String) {
             throw JsonInputException("Input JSON keys must be strings")
         }
-        result[key] = entry
+        val parsedValue = if (options.keyMode == JsonKeyMode.NUMERIC) convertNumericKeys(entry) else entry
+        result[key] = parsedValue
     }
     return result
 }
@@ -355,4 +357,35 @@ private fun hexDigitValue(ch: Char): Int = when (ch) {
     in 'a'..'f' -> ch.code - 'a'.code + 10
     in 'A'..'F' -> ch.code - 'A'.code + 10
     else -> -1
+}
+
+private fun convertNumericKeys(value: Any?): Any? = when (value) {
+    is Map<*, *> -> {
+        val out = LinkedHashMap<Any, Any?>(value.size)
+        for ((rawKey, rawValue) in value) {
+            val key = if (rawKey is String) parseNumericKey(rawKey) else rawKey ?: "null"
+            out[key] = convertNumericKeys(rawValue)
+        }
+        out
+    }
+    is Iterable<*> -> value.map { convertNumericKeys(it) }
+    is Array<*> -> value.map { convertNumericKeys(it) }
+    else -> value
+}
+
+private fun parseNumericKey(key: String): Any {
+    if (!isNumericKeyCandidate(key)) return key
+    key.toIntOrNull()?.let { return it }
+    key.toLongOrNull()?.let { return it }
+    return io.github.ehlyzov.branchline.runtime.bignum.blBigIntParse(key)
+}
+
+private fun isNumericKeyCandidate(key: String): Boolean {
+    if (key.isEmpty()) return false
+    if (key == "0") return true
+    if (key[0] == '0') return false
+    for (ch in key) {
+        if (ch !in '0'..'9') return false
+    }
+    return true
 }

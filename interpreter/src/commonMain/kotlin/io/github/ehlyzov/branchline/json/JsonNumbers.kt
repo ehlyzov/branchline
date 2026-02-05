@@ -18,8 +18,22 @@ public enum class JsonNumberMode(val id: String) {
     }
 }
 
+public enum class JsonKeyMode(val id: String) {
+    STRING("string"),
+    NUMERIC("numeric");
+
+    public companion object {
+        public fun parse(value: String): JsonKeyMode = when (value.lowercase()) {
+            "string" -> STRING
+            "numeric" -> NUMERIC
+            else -> throw IllegalArgumentException("Unknown JSON key mode '$value'")
+        }
+    }
+}
+
 public data class JsonParseOptions(
     val numberMode: JsonNumberMode = JsonNumberMode.SAFE,
+    val keyMode: JsonKeyMode = JsonKeyMode.STRING,
 )
 
 public data class JsonOutputOptions(
