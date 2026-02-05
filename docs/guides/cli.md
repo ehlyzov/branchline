@@ -25,3 +25,5 @@ tar -xzf branchline-cli-js-<tag>.tgz
 - `--json-numbers` strict | safe | extended
 - `--output-format` json | json-compact | json-canonical
 - `--trace` enable tracing output
+
+Note: The Node CLI uses JavaScript `Number` formatting. For very large or very small floating-point values, the rendered JSON text (including `json-canonical`) can differ slightly from the JVM output due to IEEE-754 rounding and JS stringification. Use `--json-numbers safe` when you need to preserve exact decimal text as strings.

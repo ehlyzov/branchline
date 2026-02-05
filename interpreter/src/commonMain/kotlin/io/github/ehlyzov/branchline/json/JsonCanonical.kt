@@ -137,7 +137,7 @@ private fun appendCanonicalNumber(builder: StringBuilder, value: Double) {
         builder.append('0')
         return
     }
-    val raw = value.toString()
+    val raw = platformDoubleToString(value)
     builder.append(normalizeNumberString(raw))
 }
 
