@@ -2,6 +2,7 @@ package io.github.ehlyzov.branchline.cli
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.ParseException
 import io.github.ehlyzov.branchline.Parser
@@ -225,9 +226,20 @@ public object ArtifactCodec {
     private val prettyJson = Json { prettyPrint = true }
     private val compactJson = Json
 
+    fun encode(artifact: CompiledArtifact, format: OutputFormat): String = when (format) {
+        OutputFormat.JSON -> encode(artifact, pretty = true)
+        OutputFormat.JSON_COMPACT -> encode(artifact, pretty = false)
+        OutputFormat.JSON_CANONICAL -> encodeCanonical(artifact)
+    }
+
     fun encode(artifact: CompiledArtifact, pretty: Boolean = true): String {
         val serializer = if (pretty) prettyJson else compactJson
         return serializer.encodeToString(CompiledArtifact.serializer(), artifact)
+    }
+
+    fun encodeCanonical(artifact: CompiledArtifact): String {
+        val element = compactJson.encodeToJsonElement(CompiledArtifact.serializer(), artifact)
+        return io.github.ehlyzov.branchline.json.formatCanonicalJson(element)
     }
 
     fun decode(raw: String): CompiledArtifact =

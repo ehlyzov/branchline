@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: In Progress
 depends_on: []
 blocks: []
 supersedes: []
@@ -8,11 +8,13 @@ last_updated: 2026-02-05
 changelog:
   - date: 2026-02-05
     change: "Proposed large-number parsing and serialization rules (I-JSON aligned)."
+  - date: 2026-02-05
+    change: "Started milestone 3 implementation work."
 ---
 # Large Number Handling Contract
 
 ## Status (as of 2026-02-05)
-- Stage: proposal.
+- Stage: in progress.
 - Scope: JSON parsing and output of large integers and high-precision decimals.
 
 ## Summary

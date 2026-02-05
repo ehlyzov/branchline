@@ -32,6 +32,7 @@ import io.github.ehlyzov.branchline.ir.ToIR
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
 import io.github.ehlyzov.branchline.json.parseJsonObjectInput
+import io.github.ehlyzov.branchline.json.formatCanonicalJson
 import io.github.ehlyzov.branchline.sema.SemanticAnalyzer
 import io.github.ehlyzov.branchline.sema.TypeResolver
 import io.github.ehlyzov.branchline.std.StdLib
@@ -53,6 +54,7 @@ import kotlin.collections.iterator
 object PlaygroundFacade {
     private const val INPUT_VAR = DEFAULT_INPUT_ALIAS
     private val prettyJson = Json { prettyPrint = true }
+    private val compactJson = Json
     private val sharedJson = Json { ignoreUnknownKeys = true }
 
     private val debugHostFns: Map<String, (List<Any?>) -> Any?> = mapOf(
@@ -76,7 +78,7 @@ object PlaygroundFacade {
         enableTracing: Boolean = false,
         includeContracts: Boolean = false,
     ): PlaygroundResult {
-        return runWithContracts(program, inputJson, enableTracing, includeContracts, "off", false, null)
+        return runWithContracts(program, inputJson, enableTracing, includeContracts, "off", false, null, "json")
     }
 
     fun runWithShared(
@@ -86,7 +88,7 @@ object PlaygroundFacade {
         includeContracts: Boolean = false,
         sharedJsonConfig: String? = null,
     ): PlaygroundResult {
-        return runWithContracts(program, inputJson, enableTracing, includeContracts, "off", false, sharedJsonConfig)
+        return runWithContracts(program, inputJson, enableTracing, includeContracts, "off", false, sharedJsonConfig, "json")
     }
 
     public fun runWithContracts(
@@ -97,6 +99,7 @@ object PlaygroundFacade {
         contractsMode: String,
         includeContractSpans: Boolean,
         sharedJsonConfig: String? = null,
+        outputFormat: String,
     ): PlaygroundResult {
         val tracer = if (enableTracing) {
             CollectingTracer(
@@ -214,7 +217,11 @@ object PlaygroundFacade {
                 }
             }
             val jsonElement = toJsonElement(result)
-            val output = prettyJson.encodeToString(jsonElement)
+            val output = when (parseOutputFormat(outputFormat)) {
+                PlaygroundOutputFormat.JSON -> prettyJson.encodeToString(jsonElement)
+                PlaygroundOutputFormat.JSON_COMPACT -> compactJson.encodeToString(jsonElement)
+                PlaygroundOutputFormat.JSON_CANONICAL -> formatCanonicalJson(result)
+            }
             val explanationMap = tracer?.let { Debug.explainOutput(result) }
             val explainJson = explanationMap?.let { prettyJson.encodeToString(toJsonElement(it)) }
             val explainHuman = tracer?.let { TraceReport.from(it) }?.let(::renderTraceSummary)
@@ -438,6 +445,18 @@ private fun parseContractMode(raw: String): ContractValidationMode {
     } catch (_: IllegalArgumentException) {
         ContractValidationMode.OFF
     }
+}
+
+private enum class PlaygroundOutputFormat {
+    JSON,
+    JSON_COMPACT,
+    JSON_CANONICAL,
+}
+
+private fun parseOutputFormat(raw: String): PlaygroundOutputFormat = when (raw.lowercase()) {
+    "json-compact", "json_compact" -> PlaygroundOutputFormat.JSON_COMPACT
+    "json-canonical", "json_canonical" -> PlaygroundOutputFormat.JSON_CANONICAL
+    else -> PlaygroundOutputFormat.JSON
 }
 
 private fun renderContractWarnings(

@@ -200,15 +200,15 @@ public object BranchlineCli {
             Branchline CLI$defaultHint
             
             Usage:
-              bl [run] <script.bl> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact]
+              bl [run] <script.bl> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact|json-canonical]
                   [--output-path <path>] [--output-raw] [--output-file <path>] [--output-lines <path>] [--write-output]
                   [--write-output-dir <dir>] [--write-output-file <name>=<path>]
                   [--shared-file <resource>=<path>] [--shared-dir <resource>=<dir>] [--shared-glob <resource>=<glob>]
                   [--shared-format json|xml|text] [--shared-key relative|basename|custom]
                   [--jobs <n>] [--summary-transform <name>] [--trace] [--trace-format text|json]
                   [--contracts off|warn|strict]
-              blc <script.bl> [--output <artifact.blc>] [--transform <name>] [--output-format json|json-compact]
-              blvm <artifact.blc> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact]
+              blc <script.bl> [--output <artifact.blc>] [--transform <name>] [--output-format json|json-compact|json-canonical]
+              blvm <artifact.blc> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact|json-canonical]
                   [--output-path <path>] [--output-raw] [--output-file <path>] [--output-lines <path>] [--write-output]
                   [--write-output-dir <dir>] [--write-output-file <name>=<path>]
                   [--shared-file <resource>=<path>] [--shared-dir <resource>=<dir>] [--shared-glob <resource>=<glob>]
@@ -234,7 +234,7 @@ public object BranchlineCli {
               --input-format FMT  'json' (default) or 'xml'.
               --transform NAME    Choose a TRANSFORM block by name; defaults to the first transform in the script.
               --output PATH       (compile) write the compiled artifact to PATH. Prints to stdout when omitted.
-              --output-format FMT Format for CLI JSON output ('json' or 'json-compact').
+              --output-format FMT Format for CLI JSON output ('json', 'json-compact', or 'json-canonical').
               --output-path PATH Select a field from the JSON output (e.g., 'summary.status' or 'files[0].name').
               --output-raw      Print selected output without JSON encoding (useful for plain strings).
               --output-file PATH Write the selected output to a file (directory defaults to output.json).
@@ -344,7 +344,7 @@ public object BranchlineCli {
             bytecode = BytecodeIO.serializeBytecode(bytecode),
             contract = contract,
         )
-        val payload = ArtifactCodec.encode(artifact, pretty = options.outputFormat.pretty)
+        val payload = ArtifactCodec.encode(artifact, options.outputFormat)
         if (options.outputPath != null) {
             writeTextFileOrThrow(options.outputPath, payload)
         } else {
@@ -1279,13 +1279,13 @@ private fun emitOutput(
         writeOutputFiles(result, writeOutputDir, writeOutputMap)
     }
     val selected = if (outputPath == null) result else selectOutputByPath(result, outputPath)
-    val output = formatOutputValue(selected, format.pretty, outputRaw)
+    val output = formatOutputValue(selected, format, outputRaw)
     println(output)
     if (outputFile != null) {
         writeOutputFile(selected, format, outputRaw, outputFile)
     }
     if (outputLines != null) {
-        writeOutputLines(selected, outputRaw, outputLines)
+        writeOutputLines(selected, format, outputRaw, outputLines)
     }
 }
 
@@ -1315,14 +1315,15 @@ private fun writeOutputFiles(
 
 private fun writeOutputFile(value: Any?, format: OutputFormat, outputRaw: Boolean, path: String) {
     val target = resolveOutputTarget(path, defaultName = "output.json")
-    val payload = formatOutputValue(value, format.pretty, outputRaw)
+    val payload = formatOutputValue(value, format, outputRaw)
     writeTextFileOrThrow(target, payload + "\n")
 }
 
-private fun writeOutputLines(value: Any?, outputRaw: Boolean, path: String) {
+private fun writeOutputLines(value: Any?, format: OutputFormat, outputRaw: Boolean, path: String) {
     val target = resolveOutputTarget(path, defaultName = "output.jsonl")
     val items = if (value is List<*>) value else listOf(value)
-    val lines = items.joinToString("\n") { formatOutputValue(it, pretty = false, raw = outputRaw) }
+    val lineFormat = if (format == OutputFormat.JSON_CANONICAL) format else OutputFormat.JSON_COMPACT
+    val lines = items.joinToString("\n") { formatOutputValue(it, lineFormat, outputRaw) }
     val content = if (lines.isBlank()) "" else lines + "\n"
     writeTextFileOrThrow(target, content)
 }
