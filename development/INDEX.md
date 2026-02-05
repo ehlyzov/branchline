@@ -26,6 +26,8 @@ changelog:
     change: "Moved JSON Canonicalization Mode to implemented."
   - date: 2026-02-05
     change: "Moved Large Number Handling Contract to in progress."
+  - date: 2026-02-05
+    change: "Moved Numeric JSON Key Interpretation to implemented."
 ---
 # Development Knowledge Base Index
 
@@ -46,7 +48,6 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Set Serialization Semantics](language/set-serialization.md) -- set type behavior and deterministic ordering.
 - [XML Mapping Contract](language/xml-mapping-contract.md) -- unified XML-to-Branchline mapping rules.
 - [XML Namespace Handling](language/xml-namespaces.md) -- @xmlns capture and prefix validation.
-- [Numeric JSON Key Interpretation](language/json-numeric-keys.md) -- schema-driven key coercion rules.
 - [XML Output Ordering](language/xml-output-ordering.md) -- deterministic attribute and sibling ordering.
 - [Conversion Loss Audit](docs/conversion-loss-audit.md) -- catalog of lossy conversions and warnings.
 - [Benchmarks Docs Fix Plan](docs/benchmarks-docs-fix-plan.md) -- MkDocs/benchmarks patch plan.
@@ -79,6 +80,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Duplicate JSON Key Policy](language/json-duplicate-keys.md) -- error/last/first handling.
 - [JSON Canonicalization Mode](language/json-canonicalization.md) -- deterministic JSON ordering + numeric formatting.
 - [Large Number Handling Contract](language/large-number-contract.md) -- BigInt/BigDecimal input and output policy.
+- [Numeric JSON Key Interpretation](language/json-numeric-keys.md) -- opt-in numeric key conversion for JSON objects.
 
 ### Deprecated
 - None.

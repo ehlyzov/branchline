@@ -29,6 +29,8 @@ changelog:
     change: "Started milestone 3 for large-number handling."
   - date: 2026-02-05
     change: "Completed milestone 3 with large-number parsing/output and json-numbers modes."
+  - date: 2026-02-05
+    change: "Completed milestone 4 with numeric JSON key conversion."
 ---
 # I/O Contracts Milestone Plan
 
@@ -116,6 +118,7 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 4: Numeric Key Interpretation
 **Proposal:** `development/language/json-numeric-keys.md`
+**Status:** Completed (2026-02-05)
 
 **Scope**
 - Schema-driven or opt-in numeric key conversion.

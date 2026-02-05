@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Implemented
 depends_on: []
 blocks: []
 supersedes: []
@@ -8,34 +8,35 @@ last_updated: 2026-02-05
 changelog:
   - date: 2026-02-05
     change: "Proposed numeric key interpretation rules for JSON objects."
+  - date: 2026-02-05
+    change: "Implemented numeric key conversion with opt-in CLI support and conformance tests."
 ---
 # Numeric JSON Key Interpretation
 
 ## Status (as of 2026-02-05)
-- Stage: proposal.
-- Scope: how JSON object keys map to string vs numeric keys in the internal model.
+- Stage: implemented.
+- Scope: opt-in numeric key conversion for JSON object keys.
 
 ## Summary
-The extended data model allows integer map keys. JSON object keys are always strings, so this proposal defines how and when numeric-looking keys can be interpreted as integers.
+The extended data model allows integer map keys. JSON object keys are always strings, so numeric-looking keys can be converted into integers when explicitly enabled.
 
-## Current Behavior
-- JSON keys are always strings in `cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/JsonInterop.kt`.
-- Map keys are stringified on output.
+## Behavior (Implemented)
+- Default: JSON keys remain strings.
+- `--json-key-mode numeric` converts keys matching `^(0|[1-9]\d*)$` to integers.
+- Top-level input keys remain strings; nested object keys are converted.
+- JSON output always stringifies map keys.
 
-## Proposed Rules
-- Default: keep all JSON keys as strings.
-- Schema-driven conversion: if a contract specifies a numeric-keyed map, convert keys that match `^-?\d+$` into integers.
-- Optional CLI override: `--json-key-mode string|numeric` where `numeric` converts only keys that are pure integers without leading zeros (except `0`).
+## Rules (Implemented)
+- Only non-negative integers are eligible for conversion.
+- Leading zeros disable conversion (except `0`).
 
 ## Contract and Schema
-- Add `map<key:number, value:T>` or a similar construct to express numeric keys.
-- JSON schema export should map numeric keys via `propertyNames` with a numeric regex when possible.
+- Schema-driven numeric-key conversion is not implemented yet.
 
 ## Docs, Tests, Playground
-- Docs: update `docs/language/index.md` with numeric key coercion rules and schema guidance.
-- Tests: add conformance tests in `conformance-tests/src/commonTest` for schema-driven key conversion.
-- Playground: add a `playground/examples/` case only if numeric key conversion is user-visible.
+- Docs: updated `docs/language/index.md` and CLI docs with numeric key coercion rules.
+- Tests: added conformance coverage for numeric key conversion.
+- Playground: no UI exposure yet.
 
 ## Open Questions
-- Whether to allow negative keys.
-- Whether to treat `"007"` as a numeric key or a string key even in numeric mode.
+- None at this time.
