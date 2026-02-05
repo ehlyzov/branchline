@@ -4,7 +4,7 @@ depends_on: []
 blocks: []
 supersedes: ['planning/current-research-tasks']
 superseded_by: []
-last_updated: 2026-02-03
+last_updated: 2026-02-05
 changelog:
   - date: 2026-02-01
     change: "Created development knowledge base index."
@@ -16,6 +16,8 @@ changelog:
     change: "Added implicit transform CLI proposal and moved Numeric Refactor to implemented."
   - date: 2026-02-03
     change: "Added Transform Contracts next-phase implementation."
+  - date: 2026-02-05
+    change: "Added I/O contract proposal set and CBOR determinism docs."
 ---
 # Development Knowledge Base Index
 
@@ -29,8 +31,22 @@ This index is the canonical entry point for the /development knowledge base. All
 - [LLM Pipelines](ai/llm-pipelines.md) -- pipeline runtime spec.
 - [Planitforme Integration](ai/planitforme-integration.md) -- migration sketches; depends on LLM Pipelines.
 - [Tree Structures](runtime/tree-structures.md) -- arena/array tree structure recommendations.
+- [Internal CBOR Representation](runtime/cbor-internal-representation.md) -- lossless Branchline-to-Branchline wire format.
+- [CBOR Determinism Rules](runtime/cbor-determinism.md) -- deterministic encoding constraints for internal CBOR.
+- [I/O Contract Gap Analysis](language/io-contracts-gap-analysis.md) -- parser + I/O contract comparison and enrichment targets.
+- [JSON Canonicalization Mode](language/json-canonicalization.md) -- deterministic JSON ordering + numeric formatting.
+- [Large Number Handling Contract](language/large-number-contract.md) -- BigInt/BigDecimal input and output policy.
+- [JSON Binary Policy](language/json-binary-policy.md) -- base64 rules for binary data in JSON.
+- [Set Serialization Semantics](language/set-serialization.md) -- set type behavior and deterministic ordering.
+- [XML Mapping Contract](language/xml-mapping-contract.md) -- unified XML-to-Branchline mapping rules.
+- [XML Namespace Handling](language/xml-namespaces.md) -- @xmlns capture and prefix validation.
+- [Duplicate JSON Key Policy](language/json-duplicate-keys.md) -- error/last/first handling.
+- [Numeric JSON Key Interpretation](language/json-numeric-keys.md) -- schema-driven key coercion rules.
+- [XML Output Ordering](language/xml-output-ordering.md) -- deterministic attribute and sibling ordering.
+- [Conversion Loss Audit](docs/conversion-loss-audit.md) -- catalog of lossy conversions and warnings.
 - [Benchmarks Docs Fix Plan](docs/benchmarks-docs-fix-plan.md) -- MkDocs/benchmarks patch plan.
 - [Docs + Playground Plan](docs/docs-playground-plan.md) -- docs plan; depends on Docs Refresh.
+- [I/O Contracts Milestone Plan](planning/io-contracts-milestone-plan.md) -- implementation order and agent instructions.
 
 ### In Progress
 - [Docs Refresh](docs/docs-refresh.md) -- draft content and structure.
