@@ -1,5 +1,7 @@
 package io.github.ehlyzov.branchline.cli
 
+import io.github.ehlyzov.branchline.json.parseJsonObjectInput as parseJsonObjectInputInternal
+import io.github.ehlyzov.branchline.json.parseJsonValue as parseJsonValueInternal
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -15,21 +17,11 @@ private val prettyJson = Json { prettyPrint = true }
 private val compactJson = Json
 
 fun parseJsonInput(text: String): Map<String, Any?> {
-    if (text.isBlank()) return emptyMap()
-    val parsed = parseJsonValue(text)
-    require(parsed is Map<*, *>) { "Input JSON must be an object" }
-    val result = LinkedHashMap<String, Any?>(parsed.size)
-    for ((key, value) in parsed) {
-        require(key is String) { "Input JSON keys must be strings" }
-        result[key] = value
-    }
-    return result
+    return parseJsonObjectInputInternal(text)
 }
 
 fun parseJsonValue(text: String): Any? {
-    if (text.isBlank()) return null
-    val element = compactJson.parseToJsonElement(text)
-    return fromJsonElement(element)
+    return parseJsonValueInternal(text)
 }
 
 fun formatJson(value: Any?, pretty: Boolean = true): String {

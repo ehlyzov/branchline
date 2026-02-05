@@ -6,9 +6,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.doubleOrNull
-import kotlinx.serialization.json.longOrNull
 import io.github.ehlyzov.branchline.runtime.bignum.toDouble
 import io.github.ehlyzov.branchline.debug.Debug
 import io.github.ehlyzov.branchline.debug.CollectingTracer
@@ -34,6 +31,7 @@ import io.github.ehlyzov.branchline.ir.Exec
 import io.github.ehlyzov.branchline.ir.ToIR
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
+import io.github.ehlyzov.branchline.json.parseJsonObjectInput
 import io.github.ehlyzov.branchline.sema.SemanticAnalyzer
 import io.github.ehlyzov.branchline.sema.TypeResolver
 import io.github.ehlyzov.branchline.std.StdLib
@@ -55,7 +53,6 @@ import kotlin.collections.iterator
 object PlaygroundFacade {
     private const val INPUT_VAR = DEFAULT_INPUT_ALIAS
     private val prettyJson = Json { prettyPrint = true }
-    private val compactJson = Json
     private val sharedJson = Json { ignoreUnknownKeys = true }
 
     private val debugHostFns: Map<String, (List<Any?>) -> Any?> = mapOf(
@@ -354,38 +351,7 @@ $indented
     }
 
     private fun parseInput(inputJson: String): Map<String, Any?> {
-        if (inputJson.isBlank()) return emptyMap()
-        val element = compactJson.parseToJsonElement(inputJson)
-        val parsed = fromJsonElement(element)
-        if (parsed !is Map<*, *>) {
-            error("Input JSON must be an object at the top level.")
-        }
-        val out = LinkedHashMap<String, Any?>(parsed.size)
-        for ((k, v) in parsed) {
-            require(k is String) { "Input JSON keys must be strings." }
-            out[k] = v
-        }
-        return out
-    }
-
-    private fun fromJsonElement(element: JsonElement): Any? = when (element) {
-        is JsonNull -> null
-        is JsonPrimitive -> fromPrimitive(element)
-        is JsonObject -> LinkedHashMap<String, Any?>().apply {
-            for ((k, v) in element) {
-                this[k] = fromJsonElement(v)
-            }
-        }
-        is JsonArray -> ArrayList<Any?>(element.size).apply {
-            element.forEach { add(fromJsonElement(it)) }
-        }
-    }
-
-    private fun fromPrimitive(primitive: JsonPrimitive): Any? {
-        primitive.booleanOrNull?.let { return it }
-        primitive.longOrNull?.let { return it }
-        primitive.doubleOrNull?.let { return it }
-        return primitive.content
+        return parseJsonObjectInput(inputJson)
     }
 
     private fun toJsonElement(value: Any?): JsonElement = when (value) {
