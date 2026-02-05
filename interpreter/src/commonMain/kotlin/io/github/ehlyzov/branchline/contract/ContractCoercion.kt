@@ -1,5 +1,7 @@
 package io.github.ehlyzov.branchline.contract
 
+import io.github.ehlyzov.branchline.json.JsonNumberMode
+import io.github.ehlyzov.branchline.json.formatCanonicalJson
 import io.github.ehlyzov.branchline.runtime.base64Decode
 
 public object ContractCoercion {
@@ -45,6 +47,7 @@ public object ContractCoercion {
     private fun coerceValue(value: Any?, shape: ValueShape): Any? = when (shape) {
         ValueShape.Bytes -> coerceBytes(value)
         is ValueShape.ArrayShape -> coerceArray(value, shape.element)
+        is ValueShape.SetShape -> coerceSet(value, shape.element)
         is ValueShape.ObjectShape -> coerceObject(value, shape)
         is ValueShape.Union -> coerceUnion(value, shape)
         else -> value
@@ -75,6 +78,32 @@ public object ContractCoercion {
             out.add(coerced)
         }
         return if (changed) out else value
+    }
+
+    private fun coerceSet(value: Any?, element: ValueShape): Any? {
+        val iterable = when (value) {
+            is Set<*> -> value
+            is Iterable<*> -> value
+            is Array<*> -> value.asIterable()
+            else -> return value
+        }
+        val out = LinkedHashSet<Any?>()
+        val seen = LinkedHashSet<String>()
+        var changed = value !is Set<*>
+        for (item in iterable) {
+            val coerced = coerceValue(item, element)
+            val key = formatCanonicalJson(coerced, JsonNumberMode.SAFE)
+            if (!seen.add(key)) {
+                changed = true
+                continue
+            }
+            if (!changed && coerced !== item) {
+                changed = true
+            }
+            out.add(coerced)
+        }
+        if (!changed && value is Set<*> && out.size == value.size) return value
+        return out
     }
 
     private fun coerceObject(value: Any?, shape: ValueShape.ObjectShape): Any? {

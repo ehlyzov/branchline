@@ -59,6 +59,7 @@ import io.github.ehlyzov.branchline.PrimitiveTypeRef
 import io.github.ehlyzov.branchline.ArrayTypeRef
 import io.github.ehlyzov.branchline.RecordFieldType
 import io.github.ehlyzov.branchline.RecordTypeRef
+import io.github.ehlyzov.branchline.SetTypeRef
 import io.github.ehlyzov.branchline.UnionTypeRef
 import io.github.ehlyzov.branchline.EnumTypeRef
 import io.github.ehlyzov.branchline.NamedTypeRef
@@ -445,6 +446,10 @@ class SemanticAnalyzer(
             elementType = resolveTypeRef(typeRef.elementType, resolving),
             token = typeRef.token,
         )
+        is SetTypeRef -> SetTypeRef(
+            elementType = resolveTypeRef(typeRef.elementType, resolving),
+            token = typeRef.token,
+        )
         is RecordTypeRef -> {
             val resolvedFields = typeRef.fields.map { field ->
                 RecordFieldType(
@@ -570,6 +575,13 @@ class SemanticAnalyzer(
                     }
                     resolved.elementType
                 }
+                is SetTypeRef -> {
+                    reportContractMismatch(
+                        "Input contract expects set access; index access is not supported at $accessPath",
+                        signature.tokenSpan.start,
+                    )
+                    return
+                }
 
                 is UnionTypeRef -> return
                 is NamedTypeRef -> return
@@ -584,6 +596,7 @@ class SemanticAnalyzer(
         when (resolved) {
             is RecordTypeRef -> validateOutputObject(expr, resolved, signature.tokenSpan.end, "output")
             is ArrayTypeRef -> validateOutputArray(expr, resolved, signature.tokenSpan.end, "output")
+            is SetTypeRef -> validateOutputSet(expr, resolved, signature.tokenSpan.end, "output")
             else -> Unit
         }
     }
@@ -633,15 +646,30 @@ class SemanticAnalyzer(
             when (resolvedFieldType) {
                 is RecordTypeRef -> validateOutputObject(literal.value, resolvedFieldType, token, appendPath(path, name))
                 is ArrayTypeRef -> validateOutputArray(literal.value, resolvedFieldType, token, appendPath(path, name))
+                is SetTypeRef -> validateOutputSet(literal.value, resolvedFieldType, token, appendPath(path, name))
                 else -> Unit
             }
         }
     }
 
     private fun validateOutputArray(expr: Expr, typeRef: ArrayTypeRef, token: Token, path: String) {
+        validateOutputCollection(expr, typeRef.elementType, token, path, "list")
+    }
+
+    private fun validateOutputSet(expr: Expr, typeRef: SetTypeRef, token: Token, path: String) {
+        validateOutputCollection(expr, typeRef.elementType, token, path, "set")
+    }
+
+    private fun validateOutputCollection(
+        expr: Expr,
+        elementTypeRef: TypeRef,
+        token: Token,
+        path: String,
+        label: String,
+    ) {
         when (expr) {
             is ArrayExpr -> {
-                val elementType = resolveTypeRef(typeRef.elementType)
+                val elementType = resolveTypeRef(elementTypeRef)
                 if (elementType is RecordTypeRef) {
                     expr.elements.forEach { element ->
                         validateOutputObject(element, elementType, token, appendArrayPath(path))
@@ -649,19 +677,19 @@ class SemanticAnalyzer(
                 }
             }
             is TryCatchExpr -> {
-                validateOutputArray(expr.tryExpr, typeRef, token, path)
-                validateOutputArray(expr.fallbackExpr, typeRef, token, path)
+                validateOutputCollection(expr.tryExpr, elementTypeRef, token, path, label)
+                validateOutputCollection(expr.fallbackExpr, elementTypeRef, token, path, label)
             }
             is ArrayCompExpr -> {
-                val elementType = resolveTypeRef(typeRef.elementType)
+                val elementType = resolveTypeRef(elementTypeRef)
                 if (elementType is RecordTypeRef && expr.mapExpr !is ObjectExpr) {
                     reportContractMismatch(
-                        "Output contract expects object elements in list output at $path",
+                        "Output contract expects object elements in $label output at $path",
                         token,
                     )
                 }
             }
-            else -> reportContractMismatch("Output contract expects a list at $path", token)
+            else -> reportContractMismatch("Output contract expects a $label at $path", token)
         }
     }
 

@@ -12,6 +12,7 @@ import io.github.ehlyzov.branchline.PrimitiveType
 import io.github.ehlyzov.branchline.PrimitiveTypeRef
 import io.github.ehlyzov.branchline.RecordFieldType
 import io.github.ehlyzov.branchline.RecordTypeRef
+import io.github.ehlyzov.branchline.SetTypeRef
 import io.github.ehlyzov.branchline.Token
 import io.github.ehlyzov.branchline.TokenType
 import io.github.ehlyzov.branchline.TypeDecl
@@ -94,6 +95,13 @@ private fun encodeTypeRefInternal(
     is ArrayTypeRef -> JsonObject(
         mapOf(
             "type" to JsonPrimitive("array"),
+            "items" to encodeTypeRefInternal(typeRef.elementType, options, typeDecls),
+        ),
+    )
+    is SetTypeRef -> JsonObject(
+        mapOf(
+            "type" to JsonPrimitive("array"),
+            "uniqueItems" to JsonPrimitive(true),
             "items" to encodeTypeRefInternal(typeRef.elementType, options, typeDecls),
         ),
     )
@@ -328,7 +336,13 @@ private fun decodeObject(schema: JsonObject, options: JsonSchemaOptions, token: 
 
 private fun decodeArray(schema: JsonObject, options: JsonSchemaOptions, token: Token): TypeRef {
     val items = schema["items"] ?: JsonObject(emptyMap())
-    return ArrayTypeRef(decodeTypeRefInternal(items, options, token), token)
+    val uniqueItems = (schema["uniqueItems"] as? JsonPrimitive)?.booleanOrNull == true
+    val elementType = decodeTypeRefInternal(items, options, token)
+    return if (uniqueItems) {
+        SetTypeRef(elementType, token)
+    } else {
+        ArrayTypeRef(elementType, token)
+    }
 }
 
 private fun applyNullable(typeRef: TypeRef, token: Token): TypeRef {

@@ -63,6 +63,7 @@ Type definitions describe enums, unions, list types, placeholders, and record sc
 ```
 TYPE User = { id: string, name: string, email?: string }
 TYPE Tags = [string]
+TYPE UniqueTags = set<string>
 TYPE Status = enum { Active, Suspended, Deleted }
 TYPE Flexible = _?
 ```

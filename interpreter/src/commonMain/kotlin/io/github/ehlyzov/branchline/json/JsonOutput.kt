@@ -54,6 +54,7 @@ public fun toJsonElement(
     is Float -> jsonPrimitiveForDouble(value.toDouble())
     is Double -> jsonPrimitiveForDouble(value)
     is Number -> jsonPrimitiveForDouble(value.toDouble())
+    is Set<*> -> JsonArray(sortSetItems(value, numberMode).map { toJsonElement(it, numberMode) })
     is Map<*, *> -> {
         val content = LinkedHashMap<String, JsonElement>(value.size)
         for ((k, v) in value) {

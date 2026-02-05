@@ -269,6 +269,7 @@ public class ContractValidator {
                 violations += typeMismatch(path, expected, value)
             }
             is ValueShape.ArrayShape -> validateArray(expected, value, path, violations)
+            is ValueShape.SetShape -> validateSet(expected, value, path, violations)
             is ValueShape.ObjectShape -> validateObject(expected, value, path, violations)
             is ValueShape.Union -> validateUnion(expected, value, path, violations)
         }
@@ -281,7 +282,7 @@ public class ContractValidator {
         violations: MutableList<ContractViolation>,
     ) {
         val iterable = when (value) {
-            is Iterable<*> -> value
+            is Iterable<*> -> if (value is Set<*>) null else value
             is Array<*> -> value.asIterable()
             else -> null
         }
@@ -292,6 +293,25 @@ public class ContractValidator {
         if (expected.element == ValueShape.Unknown) return
         var index = 0
         for (item in iterable) {
+            validateValueShape(expected.element, item, appendIndex(path, index), violations)
+            index += 1
+        }
+    }
+
+    private fun validateSet(
+        expected: ValueShape.SetShape,
+        value: Any?,
+        path: List<PathSegment>,
+        violations: MutableList<ContractViolation>,
+    ) {
+        val set = value as? Set<*>
+        if (set == null) {
+            violations += typeMismatch(path, expected, value)
+            return
+        }
+        if (expected.element == ValueShape.Unknown) return
+        var index = 0
+        for (item in set) {
             validateValueShape(expected.element, item, appendIndex(path, index), violations)
             index += 1
         }
@@ -332,7 +352,8 @@ public class ContractValidator {
         ValueShape.NumberShape -> isNumberValue(value)
         ValueShape.Bytes -> value is ByteArray
         ValueShape.TextShape -> value is String
-        is ValueShape.ArrayShape -> value is Iterable<*> || value is Array<*>
+        is ValueShape.ArrayShape -> (value is Iterable<*> && value !is Set<*>) || value is Array<*>
+        is ValueShape.SetShape -> value is Set<*>
         is ValueShape.ObjectShape -> value is Map<*, *>
         is ValueShape.Union -> expected.options.any { option -> matchesShape(option, value) }
     }
@@ -368,6 +389,7 @@ public class ContractValidator {
         is IBig -> ValueShape.NumberShape
         is Dec -> ValueShape.NumberShape
         is ByteArray -> ValueShape.Bytes
+        is Set<*> -> ValueShape.SetShape(ValueShape.Unknown)
         is Map<*, *> -> ValueShape.ObjectShape(
             schema = SchemaGuarantee(
                 fields = LinkedHashMap(),
@@ -446,6 +468,7 @@ public fun renderValueShapeLabel(shape: ValueShape): String = when (shape) {
     ValueShape.Bytes -> "bytes"
     ValueShape.TextShape -> "text"
     is ValueShape.ArrayShape -> "array<${renderValueShapeLabel(shape.element)}>"
+    is ValueShape.SetShape -> "set<${renderValueShapeLabel(shape.element)}>"
     is ValueShape.ObjectShape -> "object"
     is ValueShape.Union -> shape.options.joinToString(" | ") { option -> renderValueShapeLabel(option) }
 }

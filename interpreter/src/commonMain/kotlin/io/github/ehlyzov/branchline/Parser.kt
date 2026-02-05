@@ -400,6 +400,10 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         }
         match(TokenType.LEFT_BRACE) -> parseRecordType(previous())
         match(TokenType.LEFT_BRACKET) -> parseListType(previous())
+        check(TokenType.SET) && checkNext(TokenType.LT) -> {
+            advance()
+            parseSetType(previous())
+        }
         matchName() -> parseSimpleType(previous())
         else -> error(peek(), "Expect type")
     }
@@ -445,6 +449,13 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         val elementType = parseTypeExpr()
         consume(TokenType.RIGHT_BRACKET, "Expect ']' after list type")
         return ArrayTypeRef(elementType, start)
+    }
+
+    private fun parseSetType(start: Token): TypeRef {
+        consume(TokenType.LT, "Expect '<' after set")
+        val elementType = parseTypeExpr()
+        consume(TokenType.GT, "Expect '>' after set type")
+        return SetTypeRef(elementType, start)
     }
 
     private fun parseSimpleType(typeTok: Token): TypeRef {

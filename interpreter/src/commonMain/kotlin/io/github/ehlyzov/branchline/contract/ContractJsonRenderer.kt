@@ -106,6 +106,12 @@ public object ContractJsonRenderer {
                 "element" to encodeValueShape(shape.element, includeSpans),
             )
         )
+        is ValueShape.SetShape -> JsonObject(
+            mapOf(
+                "type" to JsonPrimitive("set"),
+                "element" to encodeValueShape(shape.element, includeSpans),
+            )
+        )
         is ValueShape.ObjectShape -> JsonObject(
             mapOf(
                 "type" to JsonPrimitive("object"),
