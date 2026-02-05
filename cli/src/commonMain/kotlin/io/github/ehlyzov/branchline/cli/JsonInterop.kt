@@ -1,8 +1,11 @@
 package io.github.ehlyzov.branchline.cli
 
+import io.github.ehlyzov.branchline.json.JsonNumberMode
+import io.github.ehlyzov.branchline.json.JsonParseOptions
+import io.github.ehlyzov.branchline.json.formatJsonValue as formatJsonValueInternal
 import io.github.ehlyzov.branchline.json.parseJsonObjectInput as parseJsonObjectInputInternal
 import io.github.ehlyzov.branchline.json.parseJsonValue as parseJsonValueInternal
-import kotlinx.serialization.json.Json
+import io.github.ehlyzov.branchline.json.toJsonElement as toJsonElementInternal
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -13,21 +16,16 @@ import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.longOrNull
 import kotlin.collections.iterator
 
-private val prettyJson = Json { prettyPrint = true }
-private val compactJson = Json
-
-fun parseJsonInput(text: String): Map<String, Any?> {
-    return parseJsonObjectInputInternal(text)
+fun parseJsonInput(text: String, numberMode: JsonNumberMode = JsonNumberMode.SAFE): Map<String, Any?> {
+    return parseJsonObjectInputInternal(text, JsonParseOptions(numberMode))
 }
 
-fun parseJsonValue(text: String): Any? {
-    return parseJsonValueInternal(text)
+fun parseJsonValue(text: String, numberMode: JsonNumberMode = JsonNumberMode.SAFE): Any? {
+    return parseJsonValueInternal(text, JsonParseOptions(numberMode))
 }
 
-fun formatJson(value: Any?, pretty: Boolean = true): String {
-    val element = toJsonElement(value)
-    val serializer = if (pretty) prettyJson else compactJson
-    return serializer.encodeToString(element)
+fun formatJson(value: Any?, pretty: Boolean = true, numberMode: JsonNumberMode = JsonNumberMode.SAFE): String {
+    return formatJsonValueInternal(value, pretty = pretty, numberMode = numberMode)
 }
 
 @Suppress("CyclomaticComplexMethod")
@@ -47,24 +45,6 @@ fun fromJsonElement(element: JsonElement): Any? = when (element) {
 }
 
 @Suppress("CyclomaticComplexMethod")
-fun toJsonElement(value: Any?): JsonElement = when (value) {
-    null -> JsonNull
-    is JsonElement -> value
-    is String -> JsonPrimitive(value)
-    is Boolean -> JsonPrimitive(value)
-    is Int -> JsonPrimitive(value)
-    is Long -> JsonPrimitive(value)
-    is Float -> JsonPrimitive(value)
-    is Double -> JsonPrimitive(value)
-    is Number -> JsonPrimitive(value.toDouble())
-    is Map<*, *> -> {
-        val content = LinkedHashMap<String, JsonElement>(value.size)
-        for ((k, v) in value) {
-            content[k.toString()] = toJsonElement(v)
-        }
-        JsonObject(content)
-    }
-    is Iterable<*> -> JsonArray(value.map { toJsonElement(it) })
-    is Array<*> -> JsonArray(value.map { toJsonElement(it) })
-    else -> JsonPrimitive(value.toString())
+fun toJsonElement(value: Any?, numberMode: JsonNumberMode = JsonNumberMode.SAFE): JsonElement {
+    return toJsonElementInternal(value, numberMode)
 }

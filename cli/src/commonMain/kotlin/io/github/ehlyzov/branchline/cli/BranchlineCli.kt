@@ -33,6 +33,7 @@ import io.github.ehlyzov.branchline.debug.TraceOptions
 import io.github.ehlyzov.branchline.debug.TraceReport
 import io.github.ehlyzov.branchline.ir.RuntimeErrorWithContext
 import io.github.ehlyzov.branchline.json.JsonInputException
+import io.github.ehlyzov.branchline.json.JsonNumberMode
 import io.github.ehlyzov.branchline.schema.NullabilityStyle
 import io.github.ehlyzov.branchline.sema.SemanticWarning
 import io.github.ehlyzov.branchline.std.StdLib
@@ -56,6 +57,7 @@ public data class RunOptions(
     val scriptPath: String,
     val inputPath: String?,
     val inputFormat: InputFormat,
+    val jsonNumberMode: JsonNumberMode,
     val transformName: String?,
     val outputFormat: OutputFormat,
     val outputPath: String?,
@@ -83,6 +85,7 @@ public data class ExecOptions(
     val artifactPath: String,
     val inputPath: String?,
     val inputFormat: InputFormat,
+    val jsonNumberMode: JsonNumberMode,
     val transformOverride: String?,
     val outputFormat: OutputFormat,
     val outputPath: String?,
@@ -200,7 +203,8 @@ public object BranchlineCli {
             Branchline CLI$defaultHint
             
             Usage:
-              bl [run] <script.bl> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact|json-canonical]
+              bl [run] <script.bl> [--input <path>|-] [--input-format json|xml] [--json-numbers strict|safe|extended]
+                  [--transform <name>] [--output-format json|json-compact|json-canonical]
                   [--output-path <path>] [--output-raw] [--output-file <path>] [--output-lines <path>] [--write-output]
                   [--write-output-dir <dir>] [--write-output-file <name>=<path>]
                   [--shared-file <resource>=<path>] [--shared-dir <resource>=<dir>] [--shared-glob <resource>=<glob>]
@@ -208,7 +212,8 @@ public object BranchlineCli {
                   [--jobs <n>] [--summary-transform <name>] [--trace] [--trace-format text|json]
                   [--contracts off|warn|strict]
               blc <script.bl> [--output <artifact.blc>] [--transform <name>] [--output-format json|json-compact|json-canonical]
-              blvm <artifact.blc> [--input <path>|-] [--input-format json|xml] [--transform <name>] [--output-format json|json-compact|json-canonical]
+              blvm <artifact.blc> [--input <path>|-] [--input-format json|xml] [--json-numbers strict|safe|extended]
+                  [--transform <name>] [--output-format json|json-compact|json-canonical]
                   [--output-path <path>] [--output-raw] [--output-file <path>] [--output-lines <path>] [--write-output]
                   [--write-output-dir <dir>] [--write-output-file <name>=<path>]
                   [--shared-file <resource>=<path>] [--shared-dir <resource>=<dir>] [--shared-glob <resource>=<glob>]
@@ -232,6 +237,7 @@ public object BranchlineCli {
             Options:
               --input PATH        Read JSON/XML input from PATH; use '-' to read from stdin.
               --input-format FMT  'json' (default) or 'xml'.
+              --json-numbers MODE JSON number handling: strict, safe (default), or extended.
               --transform NAME    Choose a TRANSFORM block by name; defaults to the first transform in the script.
               --output PATH       (compile) write the compiled artifact to PATH. Prints to stdout when omitted.
               --output-format FMT Format for CLI JSON output ('json', 'json-compact', or 'json-canonical').
@@ -283,8 +289,8 @@ public object BranchlineCli {
             val source = readTextFileOrThrow(options.scriptPath)
             val runtime = BranchlineProgram(source, traceSession?.tracer)
             val transform = runtime.selectTransform(options.transformName)
-            val input = loadInput(options.inputPath, options.inputFormat)
-            val sharedSeed = seedSharedStore(options.sharedOptions, runtime.sharedDecls(), store)
+            val input = loadInput(options.inputPath, options.inputFormat, options.jsonNumberMode)
+            val sharedSeed = seedSharedStore(options.sharedOptions, runtime.sharedDecls(), store, options.jsonNumberMode)
             val summaryTransform = options.summaryTransform?.let { runtime.selectTransform(it) }
             val contractsMode = options.contractsMode
             val result = runWithFanout(
@@ -325,6 +331,7 @@ public object BranchlineCli {
                 writeOutput = options.writeOutput,
                 writeOutputDir = options.writeOutputDir,
                 writeOutputMap = options.writeOutputFiles,
+                jsonNumberMode = options.jsonNumberMode,
             )
             traceSession?.emit()
             ExitCode.SUCCESS.code
@@ -363,8 +370,8 @@ public object BranchlineCli {
             val transform = runtime.selectTransform(transformName)
             val bytecode = BytecodeIO.deserializeBytecode(artifact.bytecode)
             val vmExec = runtime.prepareVmExec(transform, bytecode)
-            val input = loadInput(options.inputPath, options.inputFormat)
-            val sharedSeed = seedSharedStore(options.sharedOptions, runtime.sharedDecls(), store)
+            val input = loadInput(options.inputPath, options.inputFormat, options.jsonNumberMode)
+            val sharedSeed = seedSharedStore(options.sharedOptions, runtime.sharedDecls(), store, options.jsonNumberMode)
             val summaryTransform = options.summaryTransform?.let { runtime.selectTransform(it) }
             val contractsMode = options.contractsMode
             val result = runWithFanout(
@@ -405,6 +412,7 @@ public object BranchlineCli {
                 writeOutput = options.writeOutput,
                 writeOutputDir = options.writeOutputDir,
                 writeOutputMap = options.writeOutputFiles,
+                jsonNumberMode = options.jsonNumberMode,
             )
             traceSession?.emit()
             ExitCode.SUCCESS.code
@@ -574,6 +582,7 @@ public object BranchlineCli {
         var input: String? = null
         var transform: String? = null
         var format = InputFormat.JSON
+        var jsonNumberMode = JsonNumberMode.SAFE
         var outputFormat = OutputFormat.JSON
         var outputPath: String? = null
         var outputRaw = false
@@ -611,6 +620,14 @@ public object BranchlineCli {
                 }
                 token == "--input-format" && idx + 1 < args.size -> {
                     format = InputFormat.parse(args[idx + 1])
+                    idx += 2
+                }
+                token.startsWith("--json-numbers=") -> {
+                    jsonNumberMode = parseJsonNumberMode(token.substringAfter("="))
+                    idx += 1
+                }
+                token == "--json-numbers" && idx + 1 < args.size -> {
+                    jsonNumberMode = parseJsonNumberMode(args[idx + 1])
                     idx += 2
                 }
                 token == "--transform" && idx + 1 < args.size -> {
@@ -727,6 +744,10 @@ public object BranchlineCli {
                     "--shared-key requires a value",
                     kind = CliErrorKind.USAGE,
                 )
+                token == "--json-numbers" -> throw CliException(
+                    "--json-numbers requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
                 token == "--jobs" -> throw CliException(
                     "--jobs requires a value",
                     kind = CliErrorKind.USAGE,
@@ -759,6 +780,7 @@ public object BranchlineCli {
             scriptPath = script,
             inputPath = input,
             inputFormat = format,
+            jsonNumberMode = jsonNumberMode,
             transformName = transform,
             outputFormat = outputFormat,
             outputPath = outputPath,
@@ -813,6 +835,7 @@ public object BranchlineCli {
         var artifact: String? = null
         var input: String? = null
         var format = InputFormat.JSON
+        var jsonNumberMode = JsonNumberMode.SAFE
         var transform: String? = null
         var outputFormat = OutputFormat.JSON
         var outputPath: String? = null
@@ -851,6 +874,14 @@ public object BranchlineCli {
                 }
                 token == "--input-format" && idx + 1 < args.size -> {
                     format = InputFormat.parse(args[idx + 1])
+                    idx += 2
+                }
+                token.startsWith("--json-numbers=") -> {
+                    jsonNumberMode = parseJsonNumberMode(token.substringAfter("="))
+                    idx += 1
+                }
+                token == "--json-numbers" && idx + 1 < args.size -> {
+                    jsonNumberMode = parseJsonNumberMode(args[idx + 1])
                     idx += 2
                 }
                 token == "--transform" && idx + 1 < args.size -> {
@@ -967,6 +998,10 @@ public object BranchlineCli {
                     "--shared-key requires a value",
                     kind = CliErrorKind.USAGE,
                 )
+                token == "--json-numbers" -> throw CliException(
+                    "--json-numbers requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
                 token == "--jobs" -> throw CliException(
                     "--jobs requires a value",
                     kind = CliErrorKind.USAGE,
@@ -999,6 +1034,7 @@ public object BranchlineCli {
             artifactPath = artifact,
             inputPath = input,
             inputFormat = format,
+            jsonNumberMode = jsonNumberMode,
             transformOverride = transform,
             outputFormat = outputFormat,
             outputPath = outputPath,
@@ -1178,7 +1214,11 @@ public object BranchlineCli {
     }
 }
 
-private fun loadInput(path: String?, format: InputFormat): Map<String, Any?> {
+private fun loadInput(
+    path: String?,
+    format: InputFormat,
+    jsonNumberMode: JsonNumberMode,
+): Map<String, Any?> {
     val text = when {
         path == null -> ""
         path == "-" -> readStdinOrThrow()
@@ -1187,7 +1227,7 @@ private fun loadInput(path: String?, format: InputFormat): Map<String, Any?> {
     if (text.isBlank()) return emptyMap()
     return try {
         when (format) {
-            InputFormat.JSON -> parseJsonInput(text)
+            InputFormat.JSON -> parseJsonInput(text, jsonNumberMode)
             InputFormat.XML -> parseXmlInput(text)
         }
     } catch (ex: JsonInputException) {
@@ -1274,18 +1314,19 @@ private fun emitOutput(
     writeOutput: Boolean,
     writeOutputDir: String?,
     writeOutputMap: Map<String, String>,
+    jsonNumberMode: JsonNumberMode,
 ) {
     if (writeOutput) {
         writeOutputFiles(result, writeOutputDir, writeOutputMap)
     }
     val selected = if (outputPath == null) result else selectOutputByPath(result, outputPath)
-    val output = formatOutputValue(selected, format, outputRaw)
+    val output = formatOutputValue(selected, format, outputRaw, jsonNumberMode)
     println(output)
     if (outputFile != null) {
-        writeOutputFile(selected, format, outputRaw, outputFile)
+        writeOutputFile(selected, format, outputRaw, outputFile, jsonNumberMode)
     }
     if (outputLines != null) {
-        writeOutputLines(selected, format, outputRaw, outputLines)
+        writeOutputLines(selected, format, outputRaw, outputLines, jsonNumberMode)
     }
 }
 
@@ -1313,17 +1354,29 @@ private fun writeOutputFiles(
     }
 }
 
-private fun writeOutputFile(value: Any?, format: OutputFormat, outputRaw: Boolean, path: String) {
+private fun writeOutputFile(
+    value: Any?,
+    format: OutputFormat,
+    outputRaw: Boolean,
+    path: String,
+    jsonNumberMode: JsonNumberMode,
+) {
     val target = resolveOutputTarget(path, defaultName = "output.json")
-    val payload = formatOutputValue(value, format, outputRaw)
+    val payload = formatOutputValue(value, format, outputRaw, jsonNumberMode)
     writeTextFileOrThrow(target, payload + "\n")
 }
 
-private fun writeOutputLines(value: Any?, format: OutputFormat, outputRaw: Boolean, path: String) {
+private fun writeOutputLines(
+    value: Any?,
+    format: OutputFormat,
+    outputRaw: Boolean,
+    path: String,
+    jsonNumberMode: JsonNumberMode,
+) {
     val target = resolveOutputTarget(path, defaultName = "output.jsonl")
     val items = if (value is List<*>) value else listOf(value)
     val lineFormat = if (format == OutputFormat.JSON_CANONICAL) format else OutputFormat.JSON_COMPACT
-    val lines = items.joinToString("\n") { formatOutputValue(it, lineFormat, outputRaw) }
+    val lines = items.joinToString("\n") { formatOutputValue(it, lineFormat, outputRaw, jsonNumberMode) }
     val content = if (lines.isBlank()) "" else lines + "\n"
     writeTextFileOrThrow(target, content)
 }
@@ -1483,6 +1536,14 @@ private fun parseContractMode(raw: String): ContractValidationMode {
         ContractValidationMode.parse(raw)
     } catch (ex: IllegalArgumentException) {
         throw CliException(ex.message ?: "Invalid contract mode", kind = CliErrorKind.USAGE)
+    }
+}
+
+private fun parseJsonNumberMode(raw: String): JsonNumberMode {
+    return try {
+        JsonNumberMode.parse(raw)
+    } catch (ex: IllegalArgumentException) {
+        throw CliException(ex.message ?: "Invalid json-numbers mode", kind = CliErrorKind.USAGE)
     }
 }
 

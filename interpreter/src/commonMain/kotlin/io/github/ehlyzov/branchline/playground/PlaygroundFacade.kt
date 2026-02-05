@@ -1,21 +1,11 @@
 package playground
 
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import io.github.ehlyzov.branchline.runtime.bignum.toDouble
 import io.github.ehlyzov.branchline.debug.Debug
 import io.github.ehlyzov.branchline.debug.CollectingTracer
 import io.github.ehlyzov.branchline.debug.TraceOptions
 import io.github.ehlyzov.branchline.debug.TraceReport
-import io.github.ehlyzov.branchline.Dec
 import io.github.ehlyzov.branchline.FuncDecl
-import io.github.ehlyzov.branchline.IBig
-import io.github.ehlyzov.branchline.I32
-import io.github.ehlyzov.branchline.I64
 import io.github.ehlyzov.branchline.Lexer
 import io.github.ehlyzov.branchline.ParseException
 import io.github.ehlyzov.branchline.Parser
@@ -29,8 +19,9 @@ import io.github.ehlyzov.branchline.contract.TransformContractBuilder
 import io.github.ehlyzov.branchline.contract.formatContractViolation
 import io.github.ehlyzov.branchline.ir.Exec
 import io.github.ehlyzov.branchline.ir.ToIR
-import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
-import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
+import io.github.ehlyzov.branchline.json.JsonNumberMode
+import io.github.ehlyzov.branchline.json.JsonParseOptions
+import io.github.ehlyzov.branchline.json.formatJsonValue
 import io.github.ehlyzov.branchline.json.parseJsonObjectInput
 import io.github.ehlyzov.branchline.json.formatCanonicalJson
 import io.github.ehlyzov.branchline.sema.SemanticAnalyzer
@@ -40,21 +31,17 @@ import io.github.ehlyzov.branchline.std.SharedResourceKind
 import io.github.ehlyzov.branchline.std.SharedStoreProvider
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlin.collections.buildMap
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.sema.SemanticException
-import kotlin.collections.iterator
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 object PlaygroundFacade {
     private const val INPUT_VAR = DEFAULT_INPUT_ALIAS
-    private val prettyJson = Json { prettyPrint = true }
-    private val compactJson = Json
     private val sharedJson = Json { ignoreUnknownKeys = true }
 
     private val debugHostFns: Map<String, (List<Any?>) -> Any?> = mapOf(
@@ -216,14 +203,15 @@ object PlaygroundFacade {
                     }
                 }
             }
-            val jsonElement = toJsonElement(result)
             val output = when (parseOutputFormat(outputFormat)) {
-                PlaygroundOutputFormat.JSON -> prettyJson.encodeToString(jsonElement)
-                PlaygroundOutputFormat.JSON_COMPACT -> compactJson.encodeToString(jsonElement)
-                PlaygroundOutputFormat.JSON_CANONICAL -> formatCanonicalJson(result)
+                PlaygroundOutputFormat.JSON -> formatJsonValue(result, pretty = true, numberMode = JsonNumberMode.SAFE)
+                PlaygroundOutputFormat.JSON_COMPACT -> formatJsonValue(result, pretty = false, numberMode = JsonNumberMode.SAFE)
+                PlaygroundOutputFormat.JSON_CANONICAL -> formatCanonicalJson(result, JsonNumberMode.SAFE)
             }
             val explanationMap = tracer?.let { Debug.explainOutput(result) }
-            val explainJson = explanationMap?.let { prettyJson.encodeToString(toJsonElement(it)) }
+            val explainJson = explanationMap?.let {
+                formatJsonValue(it, pretty = true, numberMode = JsonNumberMode.SAFE)
+            }
             val explainHuman = tracer?.let { TraceReport.from(it) }?.let(::renderTraceSummary)
             val inputContractJson = contract?.takeIf { includeContracts }?.let { built ->
                 ContractJsonRenderer.renderSchemaRequirement(built.input, includeContractSpans, pretty = true)
@@ -358,36 +346,7 @@ $indented
     }
 
     private fun parseInput(inputJson: String): Map<String, Any?> {
-        return parseJsonObjectInput(inputJson)
-    }
-
-    private fun toJsonElement(value: Any?): JsonElement = when (value) {
-        null -> JsonNull
-        is JsonElement -> value
-        is String -> JsonPrimitive(value)
-        is Boolean -> JsonPrimitive(value)
-        is Byte -> JsonPrimitive(value)
-        is Short -> JsonPrimitive(value)
-        is Int -> JsonPrimitive(value)
-        is Long -> JsonPrimitive(value)
-        is Float -> JsonPrimitive(value)
-        is Double -> JsonPrimitive(value)
-        is BLBigInt -> JsonPrimitive(value.toString())
-        is BLBigDec -> JsonPrimitive(value.toDouble())
-        is I32 -> JsonPrimitive(value.v)
-        is I64 -> JsonPrimitive(value.v)
-        is IBig -> JsonPrimitive(value.v.toString())
-        is Dec -> JsonPrimitive(value.v.toDouble())
-        is Map<*, *> -> JsonObject(buildMap {
-            value.entries.forEach { (k, v) ->
-                val key = k?.toString() ?: "null"
-                put(key, toJsonElement(v))
-            }
-        })
-        is Iterable<*> -> JsonArray(value.map { toJsonElement(it) })
-        is Array<*> -> JsonArray(value.map { toJsonElement(it) })
-        is Sequence<*> -> JsonArray(value.map { toJsonElement(it) }.toList())
-        else -> JsonPrimitive(value.toString())
+        return parseJsonObjectInput(inputJson, JsonParseOptions(JsonNumberMode.SAFE))
     }
 }
 

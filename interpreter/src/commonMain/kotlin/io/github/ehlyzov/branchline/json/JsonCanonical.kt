@@ -6,7 +6,9 @@ import io.github.ehlyzov.branchline.I64
 import io.github.ehlyzov.branchline.IBig
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
-import io.github.ehlyzov.branchline.runtime.bignum.toDouble
+import io.github.ehlyzov.branchline.runtime.bignum.blBigDecParse
+import io.github.ehlyzov.branchline.runtime.bignum.blBigIntParse
+import io.github.ehlyzov.branchline.runtime.bignum.toPlainString
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -18,57 +20,69 @@ import kotlinx.serialization.json.longOrNull
 
 public class JsonCanonicalException(message: String) : IllegalArgumentException(message)
 
-public fun formatCanonicalJson(value: Any?): String {
+public fun formatCanonicalJson(
+    value: Any?,
+    numberMode: JsonNumberMode = JsonNumberMode.SAFE,
+): String {
     val builder = StringBuilder()
-    appendCanonicalJson(builder, value)
+    appendCanonicalJson(builder, value, numberMode)
     return builder.toString()
 }
 
 @Suppress("CyclomaticComplexMethod")
-private fun appendCanonicalJson(builder: StringBuilder, value: Any?) {
+private fun appendCanonicalJson(
+    builder: StringBuilder,
+    value: Any?,
+    numberMode: JsonNumberMode,
+) {
     when (value) {
         null -> builder.append("null")
-        is JsonElement -> appendCanonicalJsonElement(builder, value)
+        is JsonElement -> appendCanonicalJsonElement(builder, value, numberMode)
         is String -> appendJsonString(builder, value)
         is Boolean -> builder.append(if (value) "true" else "false")
-        is Byte -> appendCanonicalNumber(builder, value.toDouble())
-        is Short -> appendCanonicalNumber(builder, value.toDouble())
-        is Int -> appendCanonicalNumber(builder, value.toDouble())
-        is Long -> builder.append(value.toString())
-        is Float -> appendCanonicalNumber(builder, value.toDouble())
-        is Double -> appendCanonicalNumber(builder, value)
-        is BLBigInt -> builder.append(value.toString())
-        is BLBigDec -> appendCanonicalNumber(builder, value.toDouble())
-        is I32 -> builder.append(value.v.toString())
-        is I64 -> builder.append(value.v.toString())
-        is IBig -> builder.append(value.v.toString())
-        is Dec -> appendCanonicalNumber(builder, value.v.toDouble())
-        is Number -> appendCanonicalNumber(builder, value.toDouble())
-        is Map<*, *> -> appendCanonicalObject(builder, value)
-        is Iterable<*> -> appendCanonicalArray(builder, value.iterator())
-        is Array<*> -> appendCanonicalArray(builder, value.iterator())
-        is Sequence<*> -> appendCanonicalArray(builder, value.iterator())
+        is Long -> appendCanonicalInteger(builder, value, numberMode)
+        is BLBigInt -> appendCanonicalBigInt(builder, value, numberMode)
+        is BLBigDec -> appendCanonicalBigDec(builder, value, numberMode)
+        is I32 -> appendCanonicalInteger(builder, value.v.toLong(), numberMode)
+        is I64 -> appendCanonicalInteger(builder, value.v, numberMode)
+        is IBig -> appendCanonicalBigInt(builder, value.v, numberMode)
+        is Dec -> appendCanonicalBigDec(builder, value.v, numberMode)
+        is Number -> appendCanonicalNumberValue(builder, value, numberMode)
+        is Map<*, *> -> appendCanonicalObject(builder, value, numberMode)
+        is Iterable<*> -> appendCanonicalArray(builder, value.iterator(), numberMode)
+        is Array<*> -> appendCanonicalArray(builder, value.iterator(), numberMode)
+        is Sequence<*> -> appendCanonicalArray(builder, value.iterator(), numberMode)
         else -> appendJsonString(builder, value.toString())
     }
 }
 
 @Suppress("CyclomaticComplexMethod")
-private fun appendCanonicalJsonElement(builder: StringBuilder, element: JsonElement) {
+private fun appendCanonicalJsonElement(
+    builder: StringBuilder,
+    element: JsonElement,
+    numberMode: JsonNumberMode,
+) {
     when (element) {
         is JsonNull -> builder.append("null")
         is JsonPrimitive -> when {
             element.isString -> appendJsonString(builder, element.content)
             element.booleanOrNull != null -> builder.append(if (element.booleanOrNull == true) "true" else "false")
-            element.longOrNull != null -> builder.append(element.longOrNull.toString())
-            element.doubleOrNull != null -> appendCanonicalNumber(builder, element.doubleOrNull!!)
-            else -> appendJsonString(builder, element.content)
+            element.longOrNull != null -> appendCanonicalInteger(builder, element.longOrNull!!, numberMode)
+            else -> {
+                val doubleValue = element.doubleOrNull
+                if (doubleValue != null && doubleValue.isFinite()) {
+                    appendCanonicalNumber(builder, doubleValue)
+                } else {
+                    appendCanonicalPrimitiveLiteral(builder, element, numberMode)
+                }
+            }
         }
-        is JsonArray -> appendCanonicalArray(builder, element.iterator())
-        is JsonObject -> appendCanonicalObject(builder, element)
+        is JsonArray -> appendCanonicalArray(builder, element.iterator(), numberMode)
+        is JsonObject -> appendCanonicalObject(builder, element, numberMode)
     }
 }
 
-private fun appendCanonicalObject(builder: StringBuilder, value: Map<*, *>) {
+private fun appendCanonicalObject(builder: StringBuilder, value: Map<*, *>, numberMode: JsonNumberMode) {
     val entries = value.entries.map { entry ->
         (entry.key?.toString() ?: "null") to entry.value
     }.sortedBy { it.first }
@@ -78,17 +92,17 @@ private fun appendCanonicalObject(builder: StringBuilder, value: Map<*, *>) {
         if (index > 0) builder.append(',')
         appendJsonString(builder, key)
         builder.append(':')
-        appendCanonicalJson(builder, entryValue)
+        appendCanonicalJson(builder, entryValue, numberMode)
     }
     builder.append('}')
 }
 
-private fun appendCanonicalArray(builder: StringBuilder, iterator: Iterator<*>) {
+private fun appendCanonicalArray(builder: StringBuilder, iterator: Iterator<*>, numberMode: JsonNumberMode) {
     builder.append('[')
     var first = true
     for (item in iterator) {
         if (!first) builder.append(',')
-        appendCanonicalJson(builder, item)
+        appendCanonicalJson(builder, item, numberMode)
         first = false
     }
     builder.append(']')
@@ -126,6 +140,99 @@ private fun appendCanonicalNumber(builder: StringBuilder, value: Double) {
     val raw = value.toString()
     builder.append(normalizeNumberString(raw))
 }
+
+private fun appendCanonicalNumberValue(builder: StringBuilder, value: Number, numberMode: JsonNumberMode) {
+    val doubleValue = value.toDouble()
+    if (!doubleValue.isFinite()) {
+        throw JsonCanonicalException("Canonical JSON cannot encode NaN or Infinity")
+    }
+    val isWhole = doubleValue % 1.0 == 0.0
+    if (isWhole &&
+        doubleValue >= Long.MIN_VALUE.toDouble() &&
+        doubleValue <= Long.MAX_VALUE.toDouble()
+    ) {
+        appendCanonicalInteger(builder, doubleValue.toLong(), numberMode)
+    } else {
+        appendCanonicalNumber(builder, doubleValue)
+    }
+}
+
+private fun appendCanonicalNumberString(builder: StringBuilder, raw: String) {
+    builder.append(normalizeNumberString(raw))
+}
+
+private fun appendCanonicalInteger(builder: StringBuilder, value: Long, numberMode: JsonNumberMode) {
+    when (numberMode) {
+        JsonNumberMode.STRICT -> {
+            if (!isJsonSafeInteger(value)) {
+                throw JsonCanonicalException("Integer output outside safe JSON range")
+            }
+            builder.append(value.toString())
+        }
+        JsonNumberMode.SAFE -> {
+            if (isJsonSafeInteger(value)) {
+                builder.append(value.toString())
+            } else {
+                appendJsonString(builder, value.toString())
+            }
+        }
+        JsonNumberMode.EXTENDED -> builder.append(value.toString())
+    }
+}
+
+private fun appendCanonicalBigInt(builder: StringBuilder, value: BLBigInt, numberMode: JsonNumberMode) {
+    when (numberMode) {
+        JsonNumberMode.STRICT -> throw JsonCanonicalException("BigInt output requires json-numbers safe or extended")
+        JsonNumberMode.SAFE -> appendJsonString(builder, value.toString())
+        JsonNumberMode.EXTENDED -> builder.append(value.toString())
+    }
+}
+
+private fun appendCanonicalBigDec(builder: StringBuilder, value: BLBigDec, numberMode: JsonNumberMode) {
+    val rendered = value.toPlainString()
+    when (numberMode) {
+        JsonNumberMode.STRICT -> throw JsonCanonicalException("BigDecimal output requires json-numbers safe or extended")
+        JsonNumberMode.SAFE -> appendJsonString(builder, rendered)
+        JsonNumberMode.EXTENDED -> appendCanonicalNumberString(builder, rendered)
+    }
+}
+
+private fun appendCanonicalPrimitiveLiteral(
+    builder: StringBuilder,
+    element: JsonPrimitive,
+    numberMode: JsonNumberMode,
+) {
+    val content = element.content
+    val parsed = tryParseUnquotedNumber(content)
+    if (parsed == null) {
+        appendJsonString(builder, content)
+        return
+    }
+    when (parsed) {
+        is ParsedNumber.ParsedInt -> appendCanonicalBigInt(builder, parsed.value, numberMode)
+        is ParsedNumber.ParsedDec -> appendCanonicalBigDec(builder, parsed.value, numberMode)
+    }
+}
+
+private sealed interface ParsedNumber {
+    data class ParsedInt(val value: BLBigInt) : ParsedNumber
+    data class ParsedDec(val value: BLBigDec) : ParsedNumber
+}
+
+private fun tryParseUnquotedNumber(value: String): ParsedNumber? {
+    return try {
+        if (looksDecimal(value)) {
+            ParsedNumber.ParsedDec(blBigDecParse(value))
+        } else {
+            ParsedNumber.ParsedInt(blBigIntParse(value))
+        }
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun looksDecimal(value: String): Boolean =
+    value.indexOfAny(charArrayOf('.', 'e', 'E')) >= 0
 
 private fun normalizeNumberString(raw: String): String {
     var text = raw.replace("+", "")

@@ -20,9 +20,12 @@ Use this section as the formal reference for Branchline syntax and semantics.
 
 ## Input Policies
 - JSON object keys must be unique; duplicates are rejected in CLI and playground input parsing.
+- JSON number parsing defaults to safe mode: large integers become BigInt and high-precision decimals become BigDec.
+- Use `--json-numbers strict` to reject values outside the safe JSON numeric range.
 
 ## Output Policies
 - JSON output can be emitted in canonical form (`json-canonical`) with deterministic key ordering and normalized numeric formatting.
+- Safe JSON output encodes BigInt/BigDec as strings; use `--json-numbers extended` to emit numeric literals.
 
 ## Standard Library
 - [Core](std-core.md)

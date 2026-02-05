@@ -2,15 +2,15 @@ package io.github.ehlyzov.branchline.json
 
 public class JsonInputException(message: String) : IllegalArgumentException(message)
 
-public fun parseJsonValue(text: String): Any? {
+public fun parseJsonValue(text: String, options: JsonParseOptions = JsonParseOptions()): Any? {
     if (text.isBlank()) return null
-    val parser = JsonInputParser(text)
+    val parser = JsonInputParser(text, options)
     return parser.parseRootValue()
 }
 
-public fun parseJsonObjectInput(text: String): Map<String, Any?> {
+public fun parseJsonObjectInput(text: String, options: JsonParseOptions = JsonParseOptions()): Map<String, Any?> {
     if (text.isBlank()) return emptyMap()
-    val parser = JsonInputParser(text)
+    val parser = JsonInputParser(text, options)
     val value = parser.parseRootValue()
     if (value !is Map<*, *>) {
         throw JsonInputException("Input JSON must be an object")
@@ -25,9 +25,14 @@ public fun parseJsonObjectInput(text: String): Map<String, Any?> {
     return result
 }
 
-private class JsonInputParser(private val text: String) {
+private class JsonInputParser(
+    private val text: String,
+    private val options: JsonParseOptions,
+) {
     private val length = text.length
     private var index = 0
+
+    private val numberMode = options.numberMode
 
     fun parseRootValue(): Any? {
         skipWhitespace()
@@ -206,7 +211,7 @@ private class JsonInputParser(private val text: String) {
         return value
     }
 
-    private fun readNumber(): Number {
+    private fun readNumber(): Any {
         val start = index
         if (peekChar() == '-') {
             index += 1
@@ -250,15 +255,55 @@ private class JsonInputParser(private val text: String) {
             }
         }
         val token = text.substring(start, index)
-        return try {
-            if (!hasFraction && !hasExponent) {
-                token.toLongOrNull() ?: token.toDouble()
-            } else {
-                token.toDouble()
-            }
-        } catch (ex: NumberFormatException) {
-            throw JsonInputException("Invalid number '$token'")
+        return if (!hasFraction && !hasExponent) {
+            parseIntegerToken(token)
+        } else {
+            parseDecimalToken(token)
         }
+    }
+
+    private fun parseIntegerToken(token: String): Any {
+        val parsed = token.toLongOrNull()
+        if (parsed == null) {
+            if (numberMode == JsonNumberMode.STRICT) {
+                throw JsonInputException("Integer outside supported range '$token'")
+            }
+            return io.github.ehlyzov.branchline.runtime.bignum.blBigIntParse(token)
+        }
+        if (!isJsonSafeInteger(parsed)) {
+            if (numberMode == JsonNumberMode.STRICT) {
+                throw JsonInputException("Integer outside safe JSON range '$token'")
+            }
+            return io.github.ehlyzov.branchline.runtime.bignum.blBigIntOfLong(parsed)
+        }
+        return parsed
+    }
+
+    private fun parseDecimalToken(token: String): Any {
+        val requiresBigDec = requiresBigDec(token)
+        if (requiresBigDec) {
+            if (numberMode == JsonNumberMode.STRICT) {
+                throw JsonInputException("Decimal outside safe JSON precision '$token'")
+            }
+            return io.github.ehlyzov.branchline.runtime.bignum.blBigDecParse(token)
+        }
+        val value = token.toDoubleOrNull() ?: throw JsonInputException("Invalid number '$token'")
+        if (!value.isFinite()) {
+            if (numberMode == JsonNumberMode.STRICT) {
+                throw JsonInputException("Decimal outside safe JSON range '$token'")
+            }
+            return io.github.ehlyzov.branchline.runtime.bignum.blBigDecParse(token)
+        }
+        return value
+    }
+
+    private fun requiresBigDec(token: String): Boolean {
+        val trimmed = token.trimStart('+', '-')
+        val expIndex = trimmed.indexOfAny(charArrayOf('e', 'E'))
+        val mantissa = if (expIndex >= 0) trimmed.substring(0, expIndex) else trimmed
+        val digits = mantissa.replace(".", "").trimStart('0')
+        val significant = if (digits.isEmpty()) 0 else digits.length
+        return significant > 15
     }
 
     private fun readLiteral(literal: String) {
