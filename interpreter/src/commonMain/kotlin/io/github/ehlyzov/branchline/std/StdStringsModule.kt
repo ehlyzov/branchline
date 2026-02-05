@@ -11,6 +11,8 @@ import io.github.ehlyzov.branchline.runtime.bignum.toBLBigInt
 import io.github.ehlyzov.branchline.runtime.bignum.toInt
 import io.github.ehlyzov.branchline.runtime.bignum.toLong
 import io.github.ehlyzov.branchline.runtime.bignum.toPlainString
+import io.github.ehlyzov.branchline.runtime.base64Decode
+import io.github.ehlyzov.branchline.runtime.base64Encode
 
 class StdStringsModule : StdModule {
     override fun register(r: StdRegistry) {
@@ -32,6 +34,8 @@ class StdStringsModule : StdModule {
         r.fn("SUBSTRING_BEFORE", ::fnSUBSTRING_BEFORE)
         r.fn("SUBSTRING_AFTER", ::fnSUBSTRING_AFTER)
         r.fn("PAD", ::fnPAD)
+        r.fn("BASE64_ENCODE", ::fnBASE64_ENCODE)
+        r.fn("BASE64_DECODE", ::fnBASE64_DECODE)
     }
 }
 
@@ -159,6 +163,18 @@ private fun fnPAD(args: List<Any?>): Any {
         while (length < padNeeded) append(padChars)
     }.substring(0, padNeeded)
     return if (width > 0) s + repeated else repeated + s
+}
+
+private fun fnBASE64_ENCODE(args: List<Any?>): Any {
+    require(args.size == 1) { "BASE64_ENCODE(bytes)" }
+    val bytes = args[0] as? ByteArray ?: error("BASE64_ENCODE: arg must be bytes")
+    return base64Encode(bytes)
+}
+
+private fun fnBASE64_DECODE(args: List<Any?>): Any {
+    require(args.size == 1) { "BASE64_DECODE(text)" }
+    val text = args[0] as? String ?: error("BASE64_DECODE: arg must be string")
+    return base64Decode(text)
 }
 
 private fun fnSPLIT(args: List<Any?>): Any {

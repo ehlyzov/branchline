@@ -88,6 +88,7 @@ fun formatOutputValue(
         is String -> value
         is Boolean -> value.toString()
         is Number -> value.toString()
+        is ByteArray -> io.github.ehlyzov.branchline.runtime.base64Encode(value)
         else -> formatOutputJson(value, format, jsonNumberMode)
     }
 }

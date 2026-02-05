@@ -131,6 +131,7 @@ public class TransformContractBuilder(
     private fun shapeFromTypeRef(typeRef: TypeRef): ValueShape = when (val resolved = typeResolver.resolve(typeRef)) {
         is PrimitiveTypeRef -> when (resolved.kind) {
             PrimitiveType.TEXT -> ValueShape.TextShape
+            PrimitiveType.BYTES -> ValueShape.Bytes
             PrimitiveType.NUMBER -> ValueShape.NumberShape
             PrimitiveType.BOOLEAN -> ValueShape.BooleanShape
             PrimitiveType.NULL -> ValueShape.Null

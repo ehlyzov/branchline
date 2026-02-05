@@ -28,6 +28,8 @@ changelog:
     change: "Moved Large Number Handling Contract to in progress."
   - date: 2026-02-05
     change: "Moved Numeric JSON Key Interpretation to implemented."
+  - date: 2026-02-05
+    change: "Moved JSON Binary Policy to implemented."
 ---
 # Development Knowledge Base Index
 
@@ -44,7 +46,6 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Internal CBOR Representation](runtime/cbor-internal-representation.md) -- lossless Branchline-to-Branchline wire format.
 - [CBOR Determinism Rules](runtime/cbor-determinism.md) -- deterministic encoding constraints for internal CBOR.
 - [I/O Contract Gap Analysis](language/io-contracts-gap-analysis.md) -- parser + I/O contract comparison and enrichment targets.
-- [JSON Binary Policy](language/json-binary-policy.md) -- base64 rules for binary data in JSON.
 - [Set Serialization Semantics](language/set-serialization.md) -- set type behavior and deterministic ordering.
 - [XML Mapping Contract](language/xml-mapping-contract.md) -- unified XML-to-Branchline mapping rules.
 - [XML Namespace Handling](language/xml-namespaces.md) -- @xmlns capture and prefix validation.
@@ -81,6 +82,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [JSON Canonicalization Mode](language/json-canonicalization.md) -- deterministic JSON ordering + numeric formatting.
 - [Large Number Handling Contract](language/large-number-contract.md) -- BigInt/BigDecimal input and output policy.
 - [Numeric JSON Key Interpretation](language/json-numeric-keys.md) -- opt-in numeric key conversion for JSON objects.
+- [JSON Binary Policy](language/json-binary-policy.md) -- base64 rules for binary data in JSON.
 
 ### Deprecated
 - None.

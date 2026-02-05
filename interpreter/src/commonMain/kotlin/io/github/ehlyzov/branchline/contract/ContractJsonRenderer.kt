@@ -98,6 +98,7 @@ public object ContractJsonRenderer {
         ValueShape.Null -> JsonObject(mapOf("type" to JsonPrimitive("null")))
         ValueShape.BooleanShape -> JsonObject(mapOf("type" to JsonPrimitive("boolean")))
         ValueShape.NumberShape -> JsonObject(mapOf("type" to JsonPrimitive("number")))
+        ValueShape.Bytes -> JsonObject(mapOf("type" to JsonPrimitive("bytes")))
         ValueShape.TextShape -> JsonObject(mapOf("type" to JsonPrimitive("text")))
         is ValueShape.ArrayShape -> JsonObject(
             mapOf(

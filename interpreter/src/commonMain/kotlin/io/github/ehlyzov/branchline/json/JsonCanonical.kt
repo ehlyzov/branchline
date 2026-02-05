@@ -9,6 +9,7 @@ import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
 import io.github.ehlyzov.branchline.runtime.bignum.blBigDecParse
 import io.github.ehlyzov.branchline.runtime.bignum.blBigIntParse
 import io.github.ehlyzov.branchline.runtime.bignum.toPlainString
+import io.github.ehlyzov.branchline.runtime.base64Encode
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -40,6 +41,7 @@ private fun appendCanonicalJson(
         is JsonElement -> appendCanonicalJsonElement(builder, value, numberMode)
         is String -> appendJsonString(builder, value)
         is Boolean -> builder.append(if (value) "true" else "false")
+        is ByteArray -> appendJsonString(builder, base64Encode(value))
         is Long -> appendCanonicalInteger(builder, value, numberMode)
         is BLBigInt -> appendCanonicalBigInt(builder, value, numberMode)
         is BLBigDec -> appendCanonicalBigDec(builder, value, numberMode)

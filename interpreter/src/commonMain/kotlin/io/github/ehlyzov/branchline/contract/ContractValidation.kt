@@ -262,6 +262,9 @@ public class ContractValidator {
             ValueShape.NumberShape -> if (!isNumberValue(value)) {
                 violations += typeMismatch(path, expected, value)
             }
+            ValueShape.Bytes -> if (value !is ByteArray) {
+                violations += typeMismatch(path, expected, value)
+            }
             ValueShape.TextShape -> if (value !is String) {
                 violations += typeMismatch(path, expected, value)
             }
@@ -327,6 +330,7 @@ public class ContractValidator {
         ValueShape.Null -> value == null
         ValueShape.BooleanShape -> value is Boolean
         ValueShape.NumberShape -> isNumberValue(value)
+        ValueShape.Bytes -> value is ByteArray
         ValueShape.TextShape -> value is String
         is ValueShape.ArrayShape -> value is Iterable<*> || value is Array<*>
         is ValueShape.ObjectShape -> value is Map<*, *>
@@ -363,6 +367,7 @@ public class ContractValidator {
         is I64 -> ValueShape.NumberShape
         is IBig -> ValueShape.NumberShape
         is Dec -> ValueShape.NumberShape
+        is ByteArray -> ValueShape.Bytes
         is Map<*, *> -> ValueShape.ObjectShape(
             schema = SchemaGuarantee(
                 fields = LinkedHashMap(),
@@ -438,6 +443,7 @@ public fun renderValueShapeLabel(shape: ValueShape): String = when (shape) {
     ValueShape.Null -> "null"
     ValueShape.BooleanShape -> "boolean"
     ValueShape.NumberShape -> "number"
+    ValueShape.Bytes -> "bytes"
     ValueShape.TextShape -> "text"
     is ValueShape.ArrayShape -> "array<${renderValueShapeLabel(shape.element)}>"
     is ValueShape.ObjectShape -> "object"

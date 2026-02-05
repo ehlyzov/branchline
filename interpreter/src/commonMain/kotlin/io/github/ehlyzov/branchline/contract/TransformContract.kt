@@ -106,6 +106,9 @@ public sealed interface ValueShape {
     public data object NumberShape : ValueShape
 
     @Serializable
+    public data object Bytes : ValueShape
+
+    @Serializable
     public data object TextShape : ValueShape
 
     @Serializable

@@ -68,7 +68,7 @@ recordType       ::= "{" recordField ("," recordField)* "}"                  ;
 recordField      ::= name ["?"] ":" typeExpr                                 ;
 listType         ::= "[" typeExpr "]"                                        ;
 placeholderType  ::= "_" ["?"]                                               ;
-simpleType       ::= **string** | **number** | **boolean** | **null**
+simpleType       ::= **string** | **bytes** | **number** | **boolean** | **null**
                    | name                                                    ;
 
 #---------------------------------------------------------------------------

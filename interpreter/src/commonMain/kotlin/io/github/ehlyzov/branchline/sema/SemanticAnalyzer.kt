@@ -501,6 +501,7 @@ class SemanticAnalyzer(
         val normalized = name.lowercase()
         return when (normalized) {
             "string", "text" -> PrimitiveTypeRef(PrimitiveType.TEXT, token)
+            "bytes" -> PrimitiveTypeRef(PrimitiveType.BYTES, token)
             "number" -> PrimitiveTypeRef(PrimitiveType.NUMBER, token)
             "boolean" -> PrimitiveTypeRef(PrimitiveType.BOOLEAN, token)
             "null" -> PrimitiveTypeRef(PrimitiveType.NULL, token)

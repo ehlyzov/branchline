@@ -460,6 +460,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
 
             else -> when (normalized) {
                 "string", "text" -> PrimitiveTypeRef(PrimitiveType.TEXT, typeTok)
+                "bytes" -> PrimitiveTypeRef(PrimitiveType.BYTES, typeTok)
                 "number" -> PrimitiveTypeRef(PrimitiveType.NUMBER, typeTok)
                 "boolean" -> PrimitiveTypeRef(PrimitiveType.BOOLEAN, typeTok)
                 "null" -> PrimitiveTypeRef(PrimitiveType.NULL, typeTok)

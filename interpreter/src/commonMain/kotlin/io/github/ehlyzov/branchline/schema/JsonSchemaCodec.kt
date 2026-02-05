@@ -142,6 +142,12 @@ private fun encodeUnion(
 
 private fun encodePrimitive(typeRef: PrimitiveTypeRef, options: JsonSchemaOptions): JsonObject = when (typeRef.kind) {
     PrimitiveType.TEXT -> JsonObject(mapOf("type" to JsonPrimitive("string")))
+    PrimitiveType.BYTES -> JsonObject(
+        mapOf(
+            "type" to JsonPrimitive("string"),
+            "contentEncoding" to JsonPrimitive("base64"),
+        ),
+    )
     PrimitiveType.NUMBER -> JsonObject(mapOf("type" to JsonPrimitive("number")))
     PrimitiveType.BOOLEAN -> JsonObject(mapOf("type" to JsonPrimitive("boolean")))
     PrimitiveType.NULL -> JsonObject(mapOf("type" to JsonPrimitive("null")))
@@ -204,6 +210,14 @@ private fun encodeTypeName(name: String, typeDecls: Map<String, TypeDecl>): Json
     if (primitive != null) {
         if (primitive == "any") {
             return JsonObject(emptyMap())
+        }
+        if (primitive == "bytes") {
+            return JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive("string"),
+                    "contentEncoding" to JsonPrimitive("base64"),
+                ),
+            )
         }
         return JsonObject(mapOf("type" to JsonPrimitive(primitive)))
     }
@@ -270,7 +284,15 @@ private fun decodeTypeString(
     options: JsonSchemaOptions,
     token: Token,
 ): TypeRef = when (typeName) {
-    "string" -> PrimitiveTypeRef(PrimitiveType.TEXT, token)
+    "string" -> {
+        val contentEncoding = (schema["contentEncoding"] as? JsonPrimitive)?.content
+        if (contentEncoding == "base64") {
+            PrimitiveTypeRef(PrimitiveType.BYTES, token)
+        } else {
+            PrimitiveTypeRef(PrimitiveType.TEXT, token)
+        }
+    }
+    "bytes" -> PrimitiveTypeRef(PrimitiveType.BYTES, token)
     "number" -> PrimitiveTypeRef(PrimitiveType.NUMBER, token)
     "boolean" -> PrimitiveTypeRef(PrimitiveType.BOOLEAN, token)
     "null" -> PrimitiveTypeRef(PrimitiveType.NULL, token)
@@ -330,6 +352,7 @@ private fun primitiveTypeNameForSchema(typeRef: TypeRef): String? = when (typeRe
 
 private fun primitiveTypeNameForSchema(kind: PrimitiveType): String? = when (kind) {
     PrimitiveType.TEXT -> "string"
+    PrimitiveType.BYTES -> null
     PrimitiveType.NUMBER -> "number"
     PrimitiveType.BOOLEAN -> "boolean"
     PrimitiveType.NULL -> "null"
@@ -339,6 +362,7 @@ private fun primitiveTypeNameForSchema(kind: PrimitiveType): String? = when (kin
 
 private fun primitiveTypeName(kind: PrimitiveType): String = when (kind) {
     PrimitiveType.TEXT -> "string"
+    PrimitiveType.BYTES -> "bytes"
     PrimitiveType.NUMBER -> "number"
     PrimitiveType.BOOLEAN -> "boolean"
     PrimitiveType.NULL -> "null"
@@ -348,6 +372,7 @@ private fun primitiveTypeName(kind: PrimitiveType): String = when (kind) {
 
 private fun primitiveTypeName(name: String): String? = when (name.lowercase()) {
     "string", "text" -> "string"
+    "bytes" -> "bytes"
     "number" -> "number"
     "boolean" -> "boolean"
     "null" -> "null"

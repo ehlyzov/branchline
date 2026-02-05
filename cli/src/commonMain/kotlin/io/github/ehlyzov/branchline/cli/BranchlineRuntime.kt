@@ -13,6 +13,7 @@ import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
 import io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES
+import io.github.ehlyzov.branchline.contract.ContractCoercion
 import io.github.ehlyzov.branchline.contract.ContractEnforcer
 import io.github.ehlyzov.branchline.contract.ContractValidationMode
 import io.github.ehlyzov.branchline.contract.ContractViolation
@@ -97,8 +98,9 @@ public class BranchlineProgram(
             return ContractExecutionResult(execute(transform, input), emptyList())
         }
         val contract = contractForTransform(transform)
-        val inputViolations = ContractEnforcer.enforceInput(mode, contract.input, input)
-        val output = execute(transform, input)
+        val coercedInput = ContractCoercion.coerceInputBytes(contract.input, input)
+        val inputViolations = ContractEnforcer.enforceInput(mode, contract.input, coercedInput)
+        val output = execute(transform, coercedInput)
         val outputViolations = ContractEnforcer.enforceOutput(mode, contract.output, output)
         return ContractExecutionResult(output, inputViolations + outputViolations)
     }
@@ -132,8 +134,9 @@ public class BranchlineProgram(
             return ContractExecutionResult(vmExec.run(env, stringifyKeys = true), emptyList())
         }
         val contract = contractForTransform(transform)
-        val inputViolations = ContractEnforcer.enforceInput(mode, contract.input, input)
-        val env = buildEnv(transform, input)
+        val coercedInput = ContractCoercion.coerceInputBytes(contract.input, input)
+        val inputViolations = ContractEnforcer.enforceInput(mode, contract.input, coercedInput)
+        val env = buildEnv(transform, coercedInput)
         val output = vmExec.run(env, stringifyKeys = true)
         val outputViolations = ContractEnforcer.enforceOutput(mode, contract.output, output)
         return ContractExecutionResult(output, inputViolations + outputViolations)
