@@ -18,6 +18,8 @@ changelog:
     change: "Added Transform Contracts next-phase implementation."
   - date: 2026-02-05
     change: "Added I/O contract proposal set and CBOR determinism docs."
+  - date: 2026-02-05
+    change: "Removed runtime/tree-structures-ru.md (superseded by runtime/tree-structures.md)."
 ---
 # Development Knowledge Base Index
 
@@ -77,7 +79,7 @@ This index is the canonical entry point for the /development knowledge base. All
 
 ### Superseded (with replacements)
 - [MCP Module (Superseded)](ai/mcp-module-superseded.md) -> superseded by [LLM Pipelines](ai/llm-pipelines.md).
-- [Tree Structures (RU)](runtime/tree-structures-ru.md) -> superseded by [Tree Structures](runtime/tree-structures.md).
+- Tree Structures (RU) (removed 2026-02-05) -> superseded by [Tree Structures](runtime/tree-structures.md).
 - [Current Research Tasks](planning/current-research-tasks.md) -> superseded by this index.
 
 ## Areas
