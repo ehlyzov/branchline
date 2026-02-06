@@ -12,6 +12,7 @@ import java.util.concurrent.Executors
 import java.util.stream.Collectors
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Element
+import org.w3c.dom.Node
 import org.xml.sax.InputSource
 
 public actual fun readTextFile(path: String): String =
@@ -67,48 +68,35 @@ public actual fun parseXmlInput(text: String): Map<String, Any?> {
     val factory = DocumentBuilderFactory.newInstance().apply {
         isNamespaceAware = false
         isIgnoringComments = true
-        isCoalescing = true
+        isCoalescing = false
     }
     val builder = factory.newDocumentBuilder()
     val document = builder.parse(InputSource(StringReader(text)))
     val root = document.documentElement ?: return emptyMap()
-    return mapOf(root.tagName to elementToValue(root))
+    return mapXmlInput(domElementToXmlNode(root))
 }
 
-private fun elementToValue(element: Element): Any? {
-    val attributes = element.attributes
-    val childNodes = element.childNodes
-    val values = LinkedHashMap<String, Any?>()
-
-    for (i in 0 until attributes.length) {
-        val attr = attributes.item(i)
-        values["@${attr.nodeName}"] = attr.nodeValue
+private fun domElementToXmlNode(element: Element): XmlElementNode {
+    val attributes = LinkedHashMap<String, String>()
+    val attrs = element.attributes
+    for (i in 0 until attrs.length) {
+        val attr = attrs.item(i)
+        attributes[attr.nodeName] = attr.nodeValue
     }
-
-    var hasElementChildren = false
-    for (i in 0 until childNodes.length) {
-        val node = childNodes.item(i)
-        if (node is Element) {
-            hasElementChildren = true
-            val value = elementToValue(node)
-            val existing = values[node.tagName]
-            values[node.tagName] = when (existing) {
-                null -> value
-                is List<*> -> existing.toMutableList().apply { add(value) }
-                else -> mutableListOf(existing, value)
-            }
+    val children = ArrayList<XmlNodeChild>()
+    val nodes = element.childNodes
+    for (i in 0 until nodes.length) {
+        val node = nodes.item(i)
+        when (node.nodeType) {
+            Node.ELEMENT_NODE -> children += XmlNodeChild.Element(domElementToXmlNode(node as Element))
+            Node.TEXT_NODE, Node.CDATA_SECTION_NODE -> children += XmlNodeChild.Text(node.nodeValue ?: "")
         }
     }
-
-    val textContent = element.textContent?.trim().orEmpty()
-    val hasText = textContent.isNotEmpty()
-
-    return when {
-        !hasElementChildren && values.isEmpty() && hasText -> textContent
-        values.isEmpty() -> emptyMap<String, Any?>()
-        hasText -> values + ("#text" to textContent)
-        else -> values
-    }
+    return XmlElementNode(
+        name = element.tagName,
+        attributes = attributes,
+        children = children,
+    )
 }
 
 public actual fun getEnv(name: String): String? = System.getenv(name)

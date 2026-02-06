@@ -1,5 +1,5 @@
 ---
-status: Proposed
+status: Implemented
 depends_on: []
 blocks: []
 supersedes: []
@@ -8,26 +8,27 @@ last_updated: 2026-02-05
 changelog:
   - date: 2026-02-05
     change: "Proposed unified XML mapping rules across JVM/JS parsers."
+  - date: 2026-02-05
+    change: "Implemented unified XML mapping across JVM/JS with mixed-content normalization."
 ---
 # XML Mapping Contract
 
 ## Status (as of 2026-02-05)
-- Stage: proposal.
+- Stage: implemented.
 - Scope: XML input mapping into Branchline data model and round-trip expectations.
 
 ## Summary
 XML parsing behavior differs between JVM and JS platforms today. This proposal defines a unified XML-to-Branchline mapping aligned with the extended type system.
 
 ## Current Behavior
-- JVM uses DOM with `isNamespaceAware=false` and `textContent.trim()` in `cli/src/jvmMain/kotlin/io/github/ehlyzov/branchline/cli/JvmPlatform.kt`.
-- JS uses `fast-xml-parser` with `@` attributes and `#text` nodes in `cli/src/jsMain/kotlin/io/github/ehlyzov/branchline/cli/JsPlatform.kt`.
-- Mixed content order is not preserved on JVM, and text nodes are trimmed.
+- JVM and JS now use one normalized mapping contract for XML input.
+- Mixed content text segments are preserved as `$1`, `$2`, ... in document order.
 
 ## Goals
 - A single mapping for XML input across platforms.
 - Deterministic and round-trip-safe representation.
 
-## Proposed Mapping
+## Implemented Mapping
 - Elements map to objects keyed by element name.
 - Attributes map to `@attrName` keys.
 - Text content maps to `$` for pure text nodes, and `$1`, `$2`, ... for mixed content segments.
@@ -35,13 +36,13 @@ XML parsing behavior differs between JVM and JS platforms today. This proposal d
 - Empty elements map to `""` when no attributes or children are present.
 
 ## Compatibility Strategy
-- Accept `#text` as an alias for `$` during input to preserve existing JS behavior.
-- Provide a migration flag to emit `$` only.
+- Mapping emits `$` / `$n` keys directly on both JVM and JS.
+- `#text` is accepted as a compatibility alias for `$` on pure text nodes.
 
 ## Docs, Tests, Playground
 - Docs: update `docs/language/index.md` with the XML mapping rules and reserved keys.
-- Tests: add conformance tests in `conformance-tests/src/commonTest` that compare JVM and JS XML parsing results.
-- Playground: add a `playground/examples/` case demonstrating attributes and mixed content XML.
+- Tests: conformance coverage added in `conformance-tests/src/commonTest` to compare JVM and JS XML parsing results.
+- Playground: example added demonstrating the mapped structure for attributes and mixed content.
 
 ## Open Questions
 - Whether to always emit `$` even for pure text nodes to avoid schema ambiguity.

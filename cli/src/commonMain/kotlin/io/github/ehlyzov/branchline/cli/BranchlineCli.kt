@@ -7,6 +7,7 @@ import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.PrimitiveType
 import io.github.ehlyzov.branchline.PrimitiveTypeRef
 import io.github.ehlyzov.branchline.RecordTypeRef
+import io.github.ehlyzov.branchline.SetTypeRef
 import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.TransformSignature
 import io.github.ehlyzov.branchline.TypeDecl
@@ -1813,6 +1814,7 @@ private fun renderTypeRef(typeRef: TypeRef): String = when (typeRef) {
     is PrimitiveTypeRef -> renderPrimitiveType(typeRef.kind)
     is EnumTypeRef -> "enum{${typeRef.values.joinToString(", ")}}"
     is ArrayTypeRef -> "array<${renderTypeRef(typeRef.elementType)}>"
+    is SetTypeRef -> "set<${renderTypeRef(typeRef.elementType)}>"
     is RecordTypeRef -> {
         val fields = typeRef.fields.joinToString(", ") { field ->
             val optional = if (field.optional) "?" else ""
@@ -1826,6 +1828,7 @@ private fun renderTypeRef(typeRef: TypeRef): String = when (typeRef) {
 
 private fun renderPrimitiveType(kind: PrimitiveType): String = when (kind) {
     PrimitiveType.TEXT -> "text"
+    PrimitiveType.BYTES -> "bytes"
     PrimitiveType.NUMBER -> "number"
     PrimitiveType.BOOLEAN -> "boolean"
     PrimitiveType.NULL -> "null"

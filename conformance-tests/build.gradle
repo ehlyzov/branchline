@@ -27,6 +27,7 @@ kotlin {
             dependencies {
                 implementation kotlin("test")
                 implementation project(":interpreter")
+                implementation project(":cli")
             }
         }
         jvmTest {
