@@ -41,6 +41,8 @@ changelog:
     change: "Completed milestone 8 with XML namespace capture on JVM/JS and @xmlns normalization."
   - date: 2026-02-06
     change: "Documented output-side namespace prefix validation as deferred until XML output mode is implemented."
+  - date: 2026-02-06
+    change: "Completed milestone 9 with deterministic XML output ordering and @order support."
 ---
 # I/O Contracts Milestone Plan
 
@@ -237,13 +239,14 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 9: XML Output Ordering
 **Proposal:** `development/language/xml-output-ordering.md`
+**Status:** Completed (2026-02-06)
 
 **Scope**
 - Deterministic attribute and sibling ordering rules.
 
 **Agent Tasks**
 - Implement deterministic ordering in XML output adapter.
-- Add explicit ordering mechanism (`@order` or equivalent) if approved.
+- Add explicit ordering mechanism (`@order`).
 
 **Docs/Tests/Playground**
 - Update `docs/language/index.md`.

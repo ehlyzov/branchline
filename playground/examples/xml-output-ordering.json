@@ -1,0 +1,20 @@
+{
+  "title": "XML output ordering shape",
+  "description": "Builds an XML-shaped object using @order and @xmlns for deterministic XML serialization.",
+  "program": [
+    "OUTPUT {",
+    "    invoice: {",
+    "        \"@xmlns\": { x: \"urn:line-items\" },",
+    "        \"@id\": \"INV-7\",",
+    "        \"@order\": [\"total\", \"x:item\"],",
+    "        customer: { \"$\": \"Ada\" },",
+    "        \"x:item\": [",
+    "            { \"@sku\": \"A\", \"$\": \"2\" },",
+    "            { \"@sku\": \"B\", \"$\": \"1\" }",
+    "        ],",
+    "        total: { \"$\": \"3\" }",
+    "    }",
+    "}"
+  ],
+  "input": {}
+}

@@ -36,6 +36,8 @@ changelog:
     change: "Moved XML Mapping Contract to implemented."
   - date: 2026-02-06
     change: "Moved XML Namespace Handling to implemented."
+  - date: 2026-02-06
+    change: "Moved XML Output Ordering to implemented."
 ---
 # Development Knowledge Base Index
 
@@ -52,7 +54,6 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Internal CBOR Representation](runtime/cbor-internal-representation.md) -- lossless Branchline-to-Branchline wire format.
 - [CBOR Determinism Rules](runtime/cbor-determinism.md) -- deterministic encoding constraints for internal CBOR.
 - [I/O Contract Gap Analysis](language/io-contracts-gap-analysis.md) -- parser + I/O contract comparison and enrichment targets.
-- [XML Output Ordering](language/xml-output-ordering.md) -- deterministic attribute and sibling ordering.
 - [Conversion Loss Audit](docs/conversion-loss-audit.md) -- catalog of lossy conversions and warnings.
 - [Benchmarks Docs Fix Plan](docs/benchmarks-docs-fix-plan.md) -- MkDocs/benchmarks patch plan.
 - [Docs + Playground Plan](docs/docs-playground-plan.md) -- docs plan; depends on Docs Refresh.
@@ -89,6 +90,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Set Serialization Semantics](language/set-serialization.md) -- set type behavior and deterministic ordering.
 - [XML Mapping Contract](language/xml-mapping-contract.md) -- unified XML-to-Branchline mapping rules.
 - [XML Namespace Handling](language/xml-namespaces.md) -- @xmlns namespace capture and prefix-preserving XML input mapping.
+- [XML Output Ordering](language/xml-output-ordering.md) -- deterministic XML serialization rules and `@order` override.
 
 ### Deprecated
 - None.
