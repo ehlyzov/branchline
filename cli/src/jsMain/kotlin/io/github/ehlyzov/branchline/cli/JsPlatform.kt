@@ -8,7 +8,7 @@ import kotlin.js.json
 
 private val fs: dynamic = js("require('fs')")
 private val pathModule: dynamic = js("require('path')")
-private fun newXmlParser(): dynamic = js("(function(){var parserModule=require('fast-xml-parser');return new parserModule.XMLParser({ignoreAttributes:false,attributeNamePrefix:'@',textNodeName:'#text',trimValues:true,parseTagValue:false,parseAttributeValue:false});})()")
+private fun newXmlParser(): dynamic = js("(function(){var parserModule=require('fast-xml-parser');return new parserModule.XMLParser({preserveOrder:true,ignoreAttributes:false,attributeNamePrefix:'@',textNodeName:'#text',trimValues:true,parseTagValue:false,parseAttributeValue:false,ignoreDeclaration:true});})()")
 
 public actual fun readTextFile(path: String): String =
     fs.readFileSync(path, "utf8") as String
@@ -40,12 +40,8 @@ public actual fun printTrace(message: String) {
 public actual fun parseXmlInput(text: String): Map<String, Any?> {
     if (text.trim().isEmpty()) return emptyMap()
     val parsed = newXmlParser().parse(text)
-    val converted = dynamicToKotlin(parsed)
-    if (converted is Map<*, *>) {
-        @Suppress("UNCHECKED_CAST")
-        return converted as Map<String, Any?>
-    }
-    return emptyMap()
+    val root = parseOrderedXmlRoot(parsed) ?: return emptyMap()
+    return mapXmlInput(root)
 }
 
 public actual fun getEnv(name: String): String? {
@@ -97,29 +93,80 @@ public actual fun fileName(path: String): String = pathModule.basename(path) as 
 public actual fun <T, R> parallelMap(limit: Int, items: List<T>, block: (T) -> R): List<R> =
     items.map(block)
 
-private fun dynamicToKotlin(value: dynamic): Any? {
+private fun parseOrderedXmlRoot(value: dynamic): XmlElementNode? {
+    val entries = asDynamicArray(value) ?: return null
+    for (entry in entries) {
+        val element = parseOrderedXmlEntry(entry)
+        if (element != null) {
+            return element
+        }
+    }
+    return null
+}
+
+private fun parseOrderedXmlEntry(entry: dynamic): XmlElementNode? {
+    if (entry == null || jsTypeOf(entry) == "undefined") return null
+    val keys = dynamicKeys(entry)
+    var elementName: String? = null
+    for (key in keys) {
+        if (key == ":@" || key == "#text") continue
+        elementName = key
+        break
+    }
+    if (elementName == null) return null
+    val attributes = parseOrderedXmlAttributes(entry[":@"])
+    val children = parseOrderedXmlChildren(entry[elementName])
+    return XmlElementNode(
+        name = elementName,
+        attributes = attributes,
+        children = children,
+    )
+}
+
+private fun parseOrderedXmlChildren(value: dynamic): List<XmlNodeChild> {
+    val entries = asDynamicArray(value) ?: return emptyList()
+    val children = ArrayList<XmlNodeChild>(entries.size)
+    for (entry in entries) {
+        if (entry == null || jsTypeOf(entry) == "undefined") continue
+        val text = dynamicString(entry["#text"])
+        if (text != null) {
+            children += XmlNodeChild.Text(text)
+            continue
+        }
+        val element = parseOrderedXmlEntry(entry)
+        if (element != null) {
+            children += XmlNodeChild.Element(element)
+        }
+    }
+    return children
+}
+
+private fun parseOrderedXmlAttributes(value: dynamic): LinkedHashMap<String, String> {
+    val attributes = LinkedHashMap<String, String>()
+    if (value == null || jsTypeOf(value) == "undefined") return attributes
+    val keys = dynamicKeys(value)
+    for (key in keys) {
+        val attrName = if (key.startsWith("@")) key.substring(1) else key
+        attributes[attrName] = dynamicString(value[key]).orEmpty()
+    }
+    return attributes
+}
+
+private fun asDynamicArray(value: dynamic): Array<dynamic>? {
     if (value == null || jsTypeOf(value) == "undefined") return null
-    if (js("Array.isArray")(value) as Boolean) {
-        val size = (value.length as Int?) ?: 0
-        val list = ArrayList<Any?>(size)
-        var index = 0
-        while (index < size) {
-            list.add(dynamicToKotlin(value[index]))
-            index += 1
-        }
-        return list
+    return if (js("Array.isArray")(value) as Boolean) {
+        value as Array<dynamic>
+    } else {
+        null
     }
-    return when (jsTypeOf(value)) {
-        "string" -> value as String
-        "number", "boolean" -> value.toString()
-        "object" -> {
-            val result = LinkedHashMap<String, Any?>()
-            val keys = js("Object.keys")(value) as Array<String>
-            for (key in keys) {
-                result[key] = dynamicToKotlin(value[key])
-            }
-            result
-        }
-        else -> value.toString()
-    }
+}
+
+private fun dynamicKeys(value: dynamic): Array<String> {
+    if (value == null || jsTypeOf(value) == "undefined") return emptyArray()
+    return js("Object.keys")(value) as Array<String>
+}
+
+private fun dynamicString(value: dynamic): String? {
+    if (value == null || jsTypeOf(value) == "undefined") return null
+    return value.toString()
 }

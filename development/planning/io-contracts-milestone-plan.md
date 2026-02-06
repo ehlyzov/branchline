@@ -35,6 +35,8 @@ changelog:
     change: "Completed milestone 5 with JSON binary policy."
   - date: 2026-02-05
     change: "Completed milestone 6 with set serialization."
+  - date: 2026-02-05
+    change: "Completed milestone 7 with XML mapping unification."
 ---
 # I/O Contracts Milestone Plan
 
@@ -187,6 +189,7 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 7: XML Mapping Unification
 **Proposal:** `development/language/xml-mapping-contract.md`
+**Status:** Completed (2026-02-05)
 
 **Scope**
 - Align JVM/JS XML parsing to a single mapping.

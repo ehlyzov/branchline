@@ -24,6 +24,12 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - Use `--json-numbers strict` to reject values outside the safe JSON numeric range.
 - JSON numeric key conversion is opt-in via `--json-key-mode numeric`; it converts non-negative integer keys without leading zeros (except `0`) for nested objects (top-level input keys remain strings).
 - JSON bytes are accepted only when contracts declare `bytes`; they must be base64 strings using the standard alphabet with `=` padding and no line breaks.
+- XML input maps attributes to `@name` keys.
+- XML pure text content maps to `$`; mixed content text segments map to `$1`, `$2`, ...
+- XML repeated sibling elements map to arrays.
+- XML empty elements with no attributes or children map to `""`.
+- XML reserves `@*`, `$`, and `$n` keys for attributes and text segments.
+- XML also provides `#text` as a compatibility alias for `$` on pure text nodes.
 
 ## Output Policies
 - JSON output can be emitted in canonical form (`json-canonical`) with deterministic key ordering and normalized numeric formatting.
