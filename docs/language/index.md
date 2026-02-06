@@ -38,7 +38,12 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - Safe JSON output encodes BigInt/BigDec as strings; use `--json-numbers extended` to emit numeric literals.
 - JSON output encodes bytes as base64 strings using the standard alphabet with `=` padding and no line breaks.
 - Sets serialize as JSON arrays with deterministic ordering (null, boolean, number, string, array, object).
-- XML output mode is not yet available in the CLI; namespace prefix validation will be enforced when XML output is introduced.
+- XML output is available via `--output-format xml|xml-compact`.
+- XML output sorts attributes lexicographically by name.
+- XML output preserves array order for repeated sibling elements of the same name.
+- XML output sorts sibling element names lexicographically unless `@order` is provided.
+- XML output accepts `@order` as an explicit sibling name order list, then appends remaining siblings lexicographically.
+- XML output validates prefixed element and attribute names against in-scope `@xmlns` declarations in strict mode.
 
 ## Standard Library
 - [Core](std-core.md)

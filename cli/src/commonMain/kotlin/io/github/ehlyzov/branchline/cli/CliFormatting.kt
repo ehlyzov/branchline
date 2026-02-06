@@ -3,13 +3,17 @@ package io.github.ehlyzov.branchline.cli
 public enum class OutputFormat(val id: String, val pretty: Boolean) {
     JSON("json", true),
     JSON_COMPACT("json-compact", false),
-    JSON_CANONICAL("json-canonical", false);
+    JSON_CANONICAL("json-canonical", false),
+    XML("xml", true),
+    XML_COMPACT("xml-compact", false);
 
     companion object {
         fun parse(value: String): OutputFormat = when (value.lowercase()) {
             "json" -> JSON
             "json-compact", "json_compact" -> JSON_COMPACT
             "json-canonical", "json_canonical" -> JSON_CANONICAL
+            "xml" -> XML
+            "xml-compact", "xml_compact" -> XML_COMPACT
             else -> throw CliException("Unknown output format '$value'", kind = CliErrorKind.USAGE)
         }
     }

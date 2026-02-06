@@ -233,6 +233,10 @@ public object ArtifactCodec {
         OutputFormat.JSON -> encode(artifact, pretty = true)
         OutputFormat.JSON_COMPACT -> encode(artifact, pretty = false)
         OutputFormat.JSON_CANONICAL -> encodeCanonical(artifact)
+        OutputFormat.XML, OutputFormat.XML_COMPACT -> throw CliException(
+            "XML output format is not supported for compiled artifacts",
+            kind = CliErrorKind.USAGE,
+        )
     }
 
     fun encode(artifact: CompiledArtifact, pretty: Boolean = true): String {

@@ -99,5 +99,6 @@ private fun formatOutputJson(
     jsonNumberMode: io.github.ehlyzov.branchline.json.JsonNumberMode,
 ): String = when (format) {
     OutputFormat.JSON_CANONICAL -> io.github.ehlyzov.branchline.json.formatCanonicalJson(value, jsonNumberMode)
-    else -> formatJson(value, pretty = format.pretty, numberMode = jsonNumberMode)
+    OutputFormat.JSON, OutputFormat.JSON_COMPACT -> formatJson(value, pretty = format.pretty, numberMode = jsonNumberMode)
+    OutputFormat.XML, OutputFormat.XML_COMPACT -> formatXmlOutput(value, pretty = format.pretty)
 }
