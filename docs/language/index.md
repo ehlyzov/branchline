@@ -30,12 +30,15 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - XML empty elements with no attributes or children map to `""`.
 - XML reserves `@*`, `$`, and `$n` keys for attributes and text segments.
 - XML also provides `#text` as a compatibility alias for `$` on pure text nodes.
+- XML namespace declarations are normalized into `@xmlns`, where default namespace is `@xmlns.$` and prefixed declarations use `@xmlns.<prefix>`.
+- XML element and attribute names preserve prefixes (for example `x:item` and `@x:id`).
 
 ## Output Policies
 - JSON output can be emitted in canonical form (`json-canonical`) with deterministic key ordering and normalized numeric formatting.
 - Safe JSON output encodes BigInt/BigDec as strings; use `--json-numbers extended` to emit numeric literals.
 - JSON output encodes bytes as base64 strings using the standard alphabet with `=` padding and no line breaks.
 - Sets serialize as JSON arrays with deterministic ordering (null, boolean, number, string, array, object).
+- XML output mode is not yet available in the CLI; namespace prefix validation will be enforced when XML output is introduced.
 
 ## Standard Library
 - [Core](std-core.md)

@@ -1,45 +1,50 @@
 ---
-status: Proposed
+status: Implemented
 depends_on: []
 blocks: []
 supersedes: []
 superseded_by: []
-last_updated: 2026-02-05
+last_updated: 2026-02-06
 changelog:
   - date: 2026-02-05
     change: "Proposed XML namespace capture and serialization rules."
+  - date: 2026-02-06
+    change: "Implemented namespace-aware XML input mapping on JVM/JS with @xmlns normalization and conformance tests."
+  - date: 2026-02-06
+    change: "Documented XML output prefix validation as deferred until XML output mode is implemented."
 ---
 # XML Namespace Handling
 
-## Status (as of 2026-02-05)
-- Stage: proposal.
-- Scope: namespace capture in XML input and declaration on XML output.
+## Status (as of 2026-02-06)
+- Stage: implemented for XML input namespace capture.
+- Scope: `@xmlns` capture in XML input; XML output declaration/validation rules documented for future output mode.
 
 ## Summary
-Branchline currently ignores XML namespaces. This proposal introduces a consistent representation using `@xmlns` so that prefix-to-URI mappings can round-trip.
+Branchline captures XML namespaces using `@xmlns` so prefix-to-URI mappings can round-trip through XML input parsing on JVM and JS.
 
-## Current Behavior
-- JVM XML parsing uses `isNamespaceAware=false`.
-- JS parser does not treat `xmlns` specially.
+## Implemented Behavior
+- JVM XML parsing enables `isNamespaceAware=true`.
+- JVM and JS parsers normalize namespace declarations into `@xmlns`.
+- Default namespace is stored at `@xmlns.$`.
+- Prefixed declarations are stored at `@xmlns.<prefix>`.
+- Prefixed element and attribute names are preserved (for example `x:Item`, `@x:id`).
 
-## Proposed Rules
+## Output Rules (Planned)
 - Namespace declarations are stored under `@xmlns` as a map.
-- Default namespace uses key `$` in the `@xmlns` map.
-- Element and attribute names include prefixes (for example `x:Item`).
-- On output, all prefixes used in element or attribute names must be declared in an in-scope `@xmlns`.
+- On XML output, all prefixes used in element or attribute names must be declared in an in-scope `@xmlns`.
 
-## Error Handling
+## Error Handling (Planned for XML Output)
 - If a prefixed name is used without a matching `@xmlns` declaration, output should error in strict mode.
 - In non-strict mode, output may emit undeclared prefixes with a warning.
 
 ## Implementation Notes
-- JVM parsing must enable `isNamespaceAware=true` and capture namespace URIs and prefixes.
-- JS parsing should keep `xmlns` attributes and normalize them into `@xmlns`.
+- XML output mode is not currently available in the CLI, so output-side prefix validation is deferred.
+- Namespace capture behavior is covered by `conformance-tests/src/commonTest`.
 
 ## Docs, Tests, Playground
-- Docs: update `docs/language/index.md` with `@xmlns` handling and prefix rules.
-- Tests: add conformance tests in `conformance-tests/src/commonTest` for namespace capture and output.
-- Playground: add a `playground/examples/` case only after namespace parsing is implemented.
+- Docs: `docs/language/index.md` now documents `@xmlns` handling and prefix preservation.
+- Tests: conformance tests cover namespace capture and scoping.
+- Playground: namespace mapping example added.
 
 ## Open Questions
-- Whether to always lift `xmlns` attributes into `@xmlns`, or to keep them as raw attributes when in a non-namespace mode.
+- Whether XML output should default to strict undeclared-prefix validation or require an explicit strict mode flag.

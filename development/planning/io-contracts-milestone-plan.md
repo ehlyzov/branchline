@@ -17,7 +17,7 @@ depends_on: [
 blocks: []
 supersedes: []
 superseded_by: []
-last_updated: 2026-02-05
+last_updated: 2026-02-06
 changelog:
   - date: 2026-02-05
     change: "Defined milestone plan and agent instructions for I/O contract proposals."
@@ -37,6 +37,10 @@ changelog:
     change: "Completed milestone 6 with set serialization."
   - date: 2026-02-05
     change: "Completed milestone 7 with XML mapping unification."
+  - date: 2026-02-06
+    change: "Completed milestone 8 with XML namespace capture on JVM/JS and @xmlns normalization."
+  - date: 2026-02-06
+    change: "Documented output-side namespace prefix validation as deferred until XML output mode is implemented."
 ---
 # I/O Contracts Milestone Plan
 
@@ -211,6 +215,7 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 8: XML Namespace Handling
 **Proposal:** `development/language/xml-namespaces.md`
+**Status:** Completed (2026-02-06)
 
 **Scope**
 - Capture `@xmlns` data and preserve prefixes.
@@ -218,7 +223,7 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 **Agent Tasks**
 - Enable namespace-aware parsing on JVM.
 - Normalize namespace declarations into `@xmlns`.
-- Validate prefixed names on output.
+- Validate prefixed names on output (deferred until XML output adapter work in Milestone 9).
 
 **Docs/Tests/Playground**
 - Update `docs/language/index.md`.

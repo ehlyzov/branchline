@@ -66,7 +66,7 @@ public actual fun printTrace(message: String) {
 public actual fun parseXmlInput(text: String): Map<String, Any?> {
     if (text.isBlank()) return emptyMap()
     val factory = DocumentBuilderFactory.newInstance().apply {
-        isNamespaceAware = false
+        isNamespaceAware = true
         isIgnoringComments = true
         isCoalescing = false
     }
@@ -78,10 +78,16 @@ public actual fun parseXmlInput(text: String): Map<String, Any?> {
 
 private fun domElementToXmlNode(element: Element): XmlElementNode {
     val attributes = LinkedHashMap<String, String>()
+    val namespaces = LinkedHashMap<String, String>()
     val attrs = element.attributes
     for (i in 0 until attrs.length) {
         val attr = attrs.item(i)
-        attributes[attr.nodeName] = attr.nodeValue
+        if (isNamespaceDeclaration(attr)) {
+            val nsKey = namespaceKey(attr)
+            namespaces[nsKey] = attr.nodeValue
+        } else {
+            attributes[attr.nodeName] = attr.nodeValue
+        }
     }
     val children = ArrayList<XmlNodeChild>()
     val nodes = element.childNodes
@@ -95,9 +101,26 @@ private fun domElementToXmlNode(element: Element): XmlElementNode {
     return XmlElementNode(
         name = element.tagName,
         attributes = attributes,
+        namespaces = namespaces,
         children = children,
     )
 }
+
+private fun isNamespaceDeclaration(node: Node): Boolean =
+    node.namespaceURI == XMLNS_URI || node.nodeName == "xmlns" || node.nodeName.startsWith("xmlns:")
+
+private fun namespaceKey(node: Node): String {
+    if (node.prefix == "xmlns") {
+        val local = node.localName
+        if (!local.isNullOrBlank() && local != "xmlns") return local
+    }
+    val name = node.nodeName
+    if (name == "xmlns") return "$"
+    if (name.startsWith("xmlns:")) return name.substringAfter("xmlns:")
+    return "$"
+}
+
+private const val XMLNS_URI = "http://www.w3.org/2000/xmlns/"
 
 public actual fun getEnv(name: String): String? = System.getenv(name)
 
