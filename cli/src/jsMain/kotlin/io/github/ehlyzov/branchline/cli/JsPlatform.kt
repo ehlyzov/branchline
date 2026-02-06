@@ -114,11 +114,12 @@ private fun parseOrderedXmlEntry(entry: dynamic): XmlElementNode? {
         break
     }
     if (elementName == null) return null
-    val attributes = parseOrderedXmlAttributes(entry[":@"])
+    val parsedAttributes = parseOrderedXmlAttributes(entry[":@"])
     val children = parseOrderedXmlChildren(entry[elementName])
     return XmlElementNode(
         name = elementName,
-        attributes = attributes,
+        attributes = parsedAttributes.attributes,
+        namespaces = parsedAttributes.namespaces,
         children = children,
     )
 }
@@ -141,16 +142,35 @@ private fun parseOrderedXmlChildren(value: dynamic): List<XmlNodeChild> {
     return children
 }
 
-private fun parseOrderedXmlAttributes(value: dynamic): LinkedHashMap<String, String> {
+private fun parseOrderedXmlAttributes(value: dynamic): ParsedXmlAttributes {
     val attributes = LinkedHashMap<String, String>()
-    if (value == null || jsTypeOf(value) == "undefined") return attributes
+    val namespaces = LinkedHashMap<String, String>()
+    if (value == null || jsTypeOf(value) == "undefined") {
+        return ParsedXmlAttributes(
+            attributes = attributes,
+            namespaces = namespaces,
+        )
+    }
     val keys = dynamicKeys(value)
     for (key in keys) {
         val attrName = if (key.startsWith("@")) key.substring(1) else key
-        attributes[attrName] = dynamicString(value[key]).orEmpty()
+        val attrValue = dynamicString(value[key]).orEmpty()
+        when {
+            attrName == "xmlns" -> namespaces["$"] = attrValue
+            attrName.startsWith("xmlns:") -> namespaces[attrName.substringAfter("xmlns:")] = attrValue
+            else -> attributes[attrName] = attrValue
+        }
     }
-    return attributes
+    return ParsedXmlAttributes(
+        attributes = attributes,
+        namespaces = namespaces,
+    )
 }
+
+private data class ParsedXmlAttributes(
+    val attributes: LinkedHashMap<String, String>,
+    val namespaces: LinkedHashMap<String, String>,
+)
 
 private fun asDynamicArray(value: dynamic): Array<dynamic>? {
     if (value == null || jsTypeOf(value) == "undefined") return null

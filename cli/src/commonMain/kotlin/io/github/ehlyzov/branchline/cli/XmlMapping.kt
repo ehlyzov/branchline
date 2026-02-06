@@ -3,6 +3,7 @@ package io.github.ehlyzov.branchline.cli
 internal data class XmlElementNode(
     val name: String,
     val attributes: LinkedHashMap<String, String>,
+    val namespaces: LinkedHashMap<String, String>,
     val children: List<XmlNodeChild>,
 )
 
@@ -18,6 +19,9 @@ internal fun mapXmlInput(root: XmlElementNode): Map<String, Any?> {
 
 private fun mapXmlElement(node: XmlElementNode): Any? {
     val result = LinkedHashMap<String, Any?>()
+    if (node.namespaces.isNotEmpty()) {
+        result["@xmlns"] = LinkedHashMap(node.namespaces)
+    }
     for ((name, value) in node.attributes) {
         result["@$name"] = value
     }

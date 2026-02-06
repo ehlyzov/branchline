@@ -4,7 +4,7 @@ depends_on: []
 blocks: []
 supersedes: ['planning/current-research-tasks']
 superseded_by: []
-last_updated: 2026-02-05
+last_updated: 2026-02-06
 changelog:
   - date: 2026-02-01
     change: "Created development knowledge base index."
@@ -34,6 +34,8 @@ changelog:
     change: "Moved Set Serialization Semantics to implemented."
   - date: 2026-02-05
     change: "Moved XML Mapping Contract to implemented."
+  - date: 2026-02-06
+    change: "Moved XML Namespace Handling to implemented."
 ---
 # Development Knowledge Base Index
 
@@ -50,7 +52,6 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Internal CBOR Representation](runtime/cbor-internal-representation.md) -- lossless Branchline-to-Branchline wire format.
 - [CBOR Determinism Rules](runtime/cbor-determinism.md) -- deterministic encoding constraints for internal CBOR.
 - [I/O Contract Gap Analysis](language/io-contracts-gap-analysis.md) -- parser + I/O contract comparison and enrichment targets.
-- [XML Namespace Handling](language/xml-namespaces.md) -- @xmlns capture and prefix validation.
 - [XML Output Ordering](language/xml-output-ordering.md) -- deterministic attribute and sibling ordering.
 - [Conversion Loss Audit](docs/conversion-loss-audit.md) -- catalog of lossy conversions and warnings.
 - [Benchmarks Docs Fix Plan](docs/benchmarks-docs-fix-plan.md) -- MkDocs/benchmarks patch plan.
@@ -87,6 +88,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [JSON Binary Policy](language/json-binary-policy.md) -- base64 rules for binary data in JSON.
 - [Set Serialization Semantics](language/set-serialization.md) -- set type behavior and deterministic ordering.
 - [XML Mapping Contract](language/xml-mapping-contract.md) -- unified XML-to-Branchline mapping rules.
+- [XML Namespace Handling](language/xml-namespaces.md) -- @xmlns namespace capture and prefix-preserving XML input mapping.
 
 ### Deprecated
 - None.

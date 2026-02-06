@@ -1,0 +1,36 @@
+{
+  "title": "XML mapping: namespaces",
+  "description": "Shows @xmlns namespace declarations and prefixed element/attribute keys in mapped XML input.",
+  "program": [
+    "LET doc = input.doc;",
+    "LET ns = doc[\"@xmlns\"];",
+    "LET item = doc[\"x:item\"];",
+    "LET child = item[\"y:child\"];",
+    "OUTPUT {",
+    "    defaultNs: ns[\"$\"],",
+    "    xNs: ns[\"x\"],",
+    "    childNs: item[\"@xmlns\"][\"y\"],",
+    "    itemId: item[\"@x:id\"],",
+    "    childLabel: child[\"@y:label\"],",
+    "    childText: child[\"$\"]",
+    "}"
+  ],
+  "input": {
+    "doc": {
+      "@xmlns": {
+        "$": "urn:default",
+        "x": "urn:items"
+      },
+      "x:item": {
+        "@xmlns": {
+          "y": "urn:child"
+        },
+        "@x:id": "7",
+        "y:child": {
+          "@y:label": "leaf",
+          "$": "value"
+        }
+      }
+    }
+  }
+}

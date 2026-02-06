@@ -46,4 +46,30 @@ class ConformXmlMappingTest {
         val row = parsed["row"] as Map<*, *>
         assertEquals("text", row["$"])
     }
+
+    @Test
+    fun xml_mapping_captures_default_and_prefixed_namespaces() {
+        val xml = """<root xmlns="urn:default" xmlns:x="urn:items"><x:item x:id="7">value</x:item></root>"""
+        val parsed = parseXmlInput(xml)
+        val root = parsed["root"] as Map<*, *>
+        val namespaces = root["@xmlns"] as Map<*, *>
+        val item = root["x:item"] as Map<*, *>
+        assertEquals("urn:default", namespaces["$"])
+        assertEquals("urn:items", namespaces["x"])
+        assertEquals("7", item["@x:id"])
+        assertEquals("value", item["$"])
+    }
+
+    @Test
+    fun xml_mapping_keeps_child_namespace_declarations_local() {
+        val xml = """<root xmlns:x="urn:root"><x:item xmlns:y="urn:child" y:id="9"/></root>"""
+        val parsed = parseXmlInput(xml)
+        val root = parsed["root"] as Map<*, *>
+        val rootNamespaces = root["@xmlns"] as Map<*, *>
+        val item = root["x:item"] as Map<*, *>
+        val childNamespaces = item["@xmlns"] as Map<*, *>
+        assertEquals("urn:root", rootNamespaces["x"])
+        assertEquals("urn:child", childNamespaces["y"])
+        assertEquals("9", item["@y:id"])
+    }
 }
