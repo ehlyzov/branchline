@@ -16,6 +16,7 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - [Statements](statements.md)
 - [Expressions](expressions.md)
 - [Numeric Semantics](numeric.md)
+- [I/O Contracts Audit](io-contracts.md)
 - [Grammar](grammar.md)
 
 ## Input Policies
@@ -44,6 +45,13 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - XML output sorts sibling element names lexicographically unless `@order` is provided.
 - XML output accepts `@order` as an explicit sibling name order list, then appends remaining siblings lexicographically.
 - XML output validates prefixed element and attribute names against in-scope `@xmlns` declarations in strict mode.
+- CLI emits conversion-loss warnings to stderr when known lossy JSON/XML conversions occur.
+
+## Internal Interchange
+- Branchline runtime now provides internal CBOR encode/decode helpers for lossless Branchline-to-Branchline interchange.
+- CBOR map keys are restricted to text or integer keys; other key types are rejected.
+- Extended types are preserved with tags: BigInt (`2`/`3`), BigDecimal (`4`), and Set (`267`).
+- CBOR byte strings are used for binary values, so internal interchange does not require base64.
 
 ## Standard Library
 - [Core](std-core.md)

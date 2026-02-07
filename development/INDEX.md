@@ -4,7 +4,7 @@ depends_on: []
 blocks: []
 supersedes: ['planning/current-research-tasks']
 superseded_by: []
-last_updated: 2026-02-06
+last_updated: 2026-02-07
 changelog:
   - date: 2026-02-01
     change: "Created development knowledge base index."
@@ -38,6 +38,10 @@ changelog:
     change: "Moved XML Namespace Handling to implemented."
   - date: 2026-02-06
     change: "Moved XML Output Ordering to implemented."
+  - date: 2026-02-07
+    change: "Moved Conversion Loss Audit to implemented."
+  - date: 2026-02-07
+    change: "Moved Internal CBOR Representation to implemented."
 ---
 # Development Knowledge Base Index
 
@@ -51,10 +55,8 @@ This index is the canonical entry point for the /development knowledge base. All
 - [LLM Pipelines](ai/llm-pipelines.md) -- pipeline runtime spec.
 - [Planitforme Integration](ai/planitforme-integration.md) -- migration sketches; depends on LLM Pipelines.
 - [Tree Structures](runtime/tree-structures.md) -- arena/array tree structure recommendations.
-- [Internal CBOR Representation](runtime/cbor-internal-representation.md) -- lossless Branchline-to-Branchline wire format.
 - [CBOR Determinism Rules](runtime/cbor-determinism.md) -- deterministic encoding constraints for internal CBOR.
 - [I/O Contract Gap Analysis](language/io-contracts-gap-analysis.md) -- parser + I/O contract comparison and enrichment targets.
-- [Conversion Loss Audit](docs/conversion-loss-audit.md) -- catalog of lossy conversions and warnings.
 - [Benchmarks Docs Fix Plan](docs/benchmarks-docs-fix-plan.md) -- MkDocs/benchmarks patch plan.
 - [Docs + Playground Plan](docs/docs-playground-plan.md) -- docs plan; depends on Docs Refresh.
 - [I/O Contracts Milestone Plan](planning/io-contracts-milestone-plan.md) -- implementation order and agent instructions.
@@ -91,6 +93,8 @@ This index is the canonical entry point for the /development knowledge base. All
 - [XML Mapping Contract](language/xml-mapping-contract.md) -- unified XML-to-Branchline mapping rules.
 - [XML Namespace Handling](language/xml-namespaces.md) -- @xmlns namespace capture and prefix-preserving XML input mapping.
 - [XML Output Ordering](language/xml-output-ordering.md) -- deterministic XML serialization rules and `@order` override.
+- [Conversion Loss Audit](docs/conversion-loss-audit.md) -- documented loss points and CLI warning policy for JSON/XML conversions.
+- [Internal CBOR Representation](runtime/cbor-internal-representation.md) -- lossless Branchline-to-Branchline wire format with extended type tags and key policy enforcement.
 
 ### Deprecated
 - None.

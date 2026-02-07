@@ -17,7 +17,7 @@ depends_on: [
 blocks: []
 supersedes: []
 superseded_by: []
-last_updated: 2026-02-06
+last_updated: 2026-02-07
 changelog:
   - date: 2026-02-05
     change: "Defined milestone plan and agent instructions for I/O contract proposals."
@@ -43,6 +43,10 @@ changelog:
     change: "Documented output-side namespace prefix validation as deferred until XML output mode is implemented."
   - date: 2026-02-06
     change: "Completed milestone 9 with deterministic XML output ordering and @order support."
+  - date: 2026-02-07
+    change: "Completed milestone 10 with conversion-loss audit docs, CLI warnings, and conformance coverage."
+  - date: 2026-02-07
+    change: "Completed milestone 11 with internal CBOR encode/decode, extended-type tags, and cross-platform tests."
 ---
 # I/O Contracts Milestone Plan
 
@@ -260,6 +264,7 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 10: Conversion Loss Audit
 **Proposal:** `development/docs/conversion-loss-audit.md`
+**Status:** Completed (2026-02-07)
 
 **Scope**
 - Document known lossy conversions and warnings.
@@ -281,6 +286,7 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 11: Internal CBOR Representation
 **Proposal:** `development/runtime/cbor-internal-representation.md`
+**Status:** Completed (2026-02-07)
 
 **Scope**
 - Implement CBOR encoding/decoding for internal interchange.

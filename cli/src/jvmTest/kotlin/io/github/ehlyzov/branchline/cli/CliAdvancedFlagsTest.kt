@@ -280,6 +280,38 @@ public class CliAdvancedFlagsTest {
         val output = parseJsonInput(result.stdout)
         assertEquals("error", output["status"])
     }
+
+    @Test
+    public fun xml_input_conversion_warnings_are_printed_to_stderr() {
+        val script = """
+            TRANSFORM Main {
+                OUTPUT input;
+            }
+        """.trimIndent()
+        val scriptPath = writeTempFile("branchline", ".bl", script)
+        val xmlPath = writeTempFile(
+            "branchline",
+            ".xml",
+            """<row><!--note--><?audit test?>pre<item>A</item>post</row>""",
+        )
+
+        val result = runCli(
+            args = listOf(
+                scriptPath.toString(),
+                "--input",
+                xmlPath.toString(),
+                "--input-format",
+                "xml",
+                "--output-format",
+                "json-compact",
+            ),
+        )
+
+        assertSuccess(result)
+        assertTrue(result.stderr.contains("Conversion warning: $WARN_XML_COMMENTS_DROPPED"))
+        assertTrue(result.stderr.contains("Conversion warning: $WARN_XML_PROCESSING_INSTRUCTIONS_DROPPED"))
+        assertTrue(result.stderr.contains("Conversion warning: $WARN_XML_MIXED_CONTENT_ORDER_INPUT"))
+    }
 }
 
 private data class CliRunResult(
