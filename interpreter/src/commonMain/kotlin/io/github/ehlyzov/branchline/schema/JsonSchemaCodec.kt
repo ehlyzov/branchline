@@ -12,6 +12,7 @@ import io.github.ehlyzov.branchline.PrimitiveType
 import io.github.ehlyzov.branchline.PrimitiveTypeRef
 import io.github.ehlyzov.branchline.RecordFieldType
 import io.github.ehlyzov.branchline.RecordTypeRef
+import io.github.ehlyzov.branchline.SetTypeRef
 import io.github.ehlyzov.branchline.Token
 import io.github.ehlyzov.branchline.TokenType
 import io.github.ehlyzov.branchline.TypeDecl
@@ -97,6 +98,13 @@ private fun encodeTypeRefInternal(
             "items" to encodeTypeRefInternal(typeRef.elementType, options, typeDecls),
         ),
     )
+    is SetTypeRef -> JsonObject(
+        mapOf(
+            "type" to JsonPrimitive("array"),
+            "uniqueItems" to JsonPrimitive(true),
+            "items" to encodeTypeRefInternal(typeRef.elementType, options, typeDecls),
+        ),
+    )
     is RecordTypeRef -> {
         val properties = LinkedHashMap<String, JsonElement>(typeRef.fields.size)
         val required = mutableListOf<JsonPrimitive>()
@@ -142,6 +150,12 @@ private fun encodeUnion(
 
 private fun encodePrimitive(typeRef: PrimitiveTypeRef, options: JsonSchemaOptions): JsonObject = when (typeRef.kind) {
     PrimitiveType.TEXT -> JsonObject(mapOf("type" to JsonPrimitive("string")))
+    PrimitiveType.BYTES -> JsonObject(
+        mapOf(
+            "type" to JsonPrimitive("string"),
+            "contentEncoding" to JsonPrimitive("base64"),
+        ),
+    )
     PrimitiveType.NUMBER -> JsonObject(mapOf("type" to JsonPrimitive("number")))
     PrimitiveType.BOOLEAN -> JsonObject(mapOf("type" to JsonPrimitive("boolean")))
     PrimitiveType.NULL -> JsonObject(mapOf("type" to JsonPrimitive("null")))
@@ -204,6 +218,14 @@ private fun encodeTypeName(name: String, typeDecls: Map<String, TypeDecl>): Json
     if (primitive != null) {
         if (primitive == "any") {
             return JsonObject(emptyMap())
+        }
+        if (primitive == "bytes") {
+            return JsonObject(
+                mapOf(
+                    "type" to JsonPrimitive("string"),
+                    "contentEncoding" to JsonPrimitive("base64"),
+                ),
+            )
         }
         return JsonObject(mapOf("type" to JsonPrimitive(primitive)))
     }
@@ -270,7 +292,15 @@ private fun decodeTypeString(
     options: JsonSchemaOptions,
     token: Token,
 ): TypeRef = when (typeName) {
-    "string" -> PrimitiveTypeRef(PrimitiveType.TEXT, token)
+    "string" -> {
+        val contentEncoding = (schema["contentEncoding"] as? JsonPrimitive)?.content
+        if (contentEncoding == "base64") {
+            PrimitiveTypeRef(PrimitiveType.BYTES, token)
+        } else {
+            PrimitiveTypeRef(PrimitiveType.TEXT, token)
+        }
+    }
+    "bytes" -> PrimitiveTypeRef(PrimitiveType.BYTES, token)
     "number" -> PrimitiveTypeRef(PrimitiveType.NUMBER, token)
     "boolean" -> PrimitiveTypeRef(PrimitiveType.BOOLEAN, token)
     "null" -> PrimitiveTypeRef(PrimitiveType.NULL, token)
@@ -306,7 +336,13 @@ private fun decodeObject(schema: JsonObject, options: JsonSchemaOptions, token: 
 
 private fun decodeArray(schema: JsonObject, options: JsonSchemaOptions, token: Token): TypeRef {
     val items = schema["items"] ?: JsonObject(emptyMap())
-    return ArrayTypeRef(decodeTypeRefInternal(items, options, token), token)
+    val uniqueItems = (schema["uniqueItems"] as? JsonPrimitive)?.booleanOrNull == true
+    val elementType = decodeTypeRefInternal(items, options, token)
+    return if (uniqueItems) {
+        SetTypeRef(elementType, token)
+    } else {
+        ArrayTypeRef(elementType, token)
+    }
 }
 
 private fun applyNullable(typeRef: TypeRef, token: Token): TypeRef {
@@ -330,6 +366,7 @@ private fun primitiveTypeNameForSchema(typeRef: TypeRef): String? = when (typeRe
 
 private fun primitiveTypeNameForSchema(kind: PrimitiveType): String? = when (kind) {
     PrimitiveType.TEXT -> "string"
+    PrimitiveType.BYTES -> null
     PrimitiveType.NUMBER -> "number"
     PrimitiveType.BOOLEAN -> "boolean"
     PrimitiveType.NULL -> "null"
@@ -339,6 +376,7 @@ private fun primitiveTypeNameForSchema(kind: PrimitiveType): String? = when (kin
 
 private fun primitiveTypeName(kind: PrimitiveType): String = when (kind) {
     PrimitiveType.TEXT -> "string"
+    PrimitiveType.BYTES -> "bytes"
     PrimitiveType.NUMBER -> "number"
     PrimitiveType.BOOLEAN -> "boolean"
     PrimitiveType.NULL -> "null"
@@ -348,6 +386,7 @@ private fun primitiveTypeName(kind: PrimitiveType): String = when (kind) {
 
 private fun primitiveTypeName(name: String): String? = when (name.lowercase()) {
     "string", "text" -> "string"
+    "bytes" -> "bytes"
     "number" -> "number"
     "boolean" -> "boolean"
     "null" -> "null"

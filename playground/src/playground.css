@@ -319,6 +319,24 @@
   line-height: 1.5;
 }
 
+.panel-warning {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  background-color: rgba(254, 243, 199, 0.6);
+  color: #92400e;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.panel-output--warning {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  background-color: transparent;
+  color: inherit;
+  padding: 0;
+}
+
 @media (max-width: 1180px) {
   .branchline-playground {
     padding: 24px;

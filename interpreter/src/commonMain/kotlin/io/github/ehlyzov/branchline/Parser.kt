@@ -400,6 +400,10 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         }
         match(TokenType.LEFT_BRACE) -> parseRecordType(previous())
         match(TokenType.LEFT_BRACKET) -> parseListType(previous())
+        check(TokenType.SET) && checkNext(TokenType.LT) -> {
+            advance()
+            parseSetType(previous())
+        }
         matchName() -> parseSimpleType(previous())
         else -> error(peek(), "Expect type")
     }
@@ -447,6 +451,13 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         return ArrayTypeRef(elementType, start)
     }
 
+    private fun parseSetType(start: Token): TypeRef {
+        consume(TokenType.LT, "Expect '<' after set")
+        val elementType = parseTypeExpr()
+        consume(TokenType.GT, "Expect '>' after set type")
+        return SetTypeRef(elementType, start)
+    }
+
     private fun parseSimpleType(typeTok: Token): TypeRef {
         val normalized = typeTok.lexeme.lowercase()
         return when (typeTok.lexeme) {
@@ -460,6 +471,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
 
             else -> when (normalized) {
                 "string", "text" -> PrimitiveTypeRef(PrimitiveType.TEXT, typeTok)
+                "bytes" -> PrimitiveTypeRef(PrimitiveType.BYTES, typeTok)
                 "number" -> PrimitiveTypeRef(PrimitiveType.NUMBER, typeTok)
                 "boolean" -> PrimitiveTypeRef(PrimitiveType.BOOLEAN, typeTok)
                 "null" -> PrimitiveTypeRef(PrimitiveType.NULL, typeTok)

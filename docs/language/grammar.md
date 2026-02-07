@@ -72,7 +72,7 @@ funcBody         ::= "=" expression | block                                  ;
 
 typeDecl         ::= **TYPE** name "=" typeExpr **;**                        ;
 typeExpr         ::= typeTerm ( "|" typeTerm )*                              ;
-typeTerm         ::= enumType | recordType | listType
+typeTerm         ::= enumType | recordType | listType | setType
                    | placeholderType | simpleType                            ;
 enumType         ::= **enum** "{" enumVal ("," enumVal)* "}"                 ;
 # "enum" is treated as a type literal only when followed by "{"
@@ -80,8 +80,9 @@ enumVal          ::= name                                                    ;
 recordType       ::= "{" recordField ("," recordField)* "}"                  ;
 recordField      ::= name ["?"] ":" typeExpr                                 ;
 listType         ::= "[" typeExpr "]"                                        ;
+setType          ::= **set** "<" typeExpr ">"                                ;
 placeholderType  ::= "_" ["?"]                                               ;
-simpleType       ::= **string** | **number** | **boolean** | **null**
+simpleType       ::= **string** | **bytes** | **number** | **boolean** | **null**
                    | name                                                    ;
 
 #---------------------------------------------------------------------------

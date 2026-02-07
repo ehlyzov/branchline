@@ -103,6 +103,7 @@ public sealed interface TypeRef : Ast {
 
 public enum class PrimitiveType {
     TEXT,
+    BYTES,
     NUMBER,
     BOOLEAN,
     NULL,
@@ -116,6 +117,11 @@ public data class PrimitiveTypeRef(
 ) : TypeRef
 
 public data class ArrayTypeRef(
+    val elementType: TypeRef,
+    override val token: Token,
+) : TypeRef
+
+public data class SetTypeRef(
     val elementType: TypeRef,
     override val token: Token,
 ) : TypeRef

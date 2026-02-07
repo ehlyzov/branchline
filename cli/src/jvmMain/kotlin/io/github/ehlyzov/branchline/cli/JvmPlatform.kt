@@ -12,6 +12,7 @@ import java.util.concurrent.Executors
 import java.util.stream.Collectors
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Element
+import org.w3c.dom.Node
 import org.xml.sax.InputSource
 
 public actual fun readTextFile(path: String): String =
@@ -65,51 +66,61 @@ public actual fun printTrace(message: String) {
 public actual fun parseXmlInput(text: String): Map<String, Any?> {
     if (text.isBlank()) return emptyMap()
     val factory = DocumentBuilderFactory.newInstance().apply {
-        isNamespaceAware = false
+        isNamespaceAware = true
         isIgnoringComments = true
-        isCoalescing = true
+        isCoalescing = false
     }
     val builder = factory.newDocumentBuilder()
     val document = builder.parse(InputSource(StringReader(text)))
     val root = document.documentElement ?: return emptyMap()
-    return mapOf(root.tagName to elementToValue(root))
+    return mapXmlInput(domElementToXmlNode(root))
 }
 
-private fun elementToValue(element: Element): Any? {
-    val attributes = element.attributes
-    val childNodes = element.childNodes
-    val values = LinkedHashMap<String, Any?>()
-
-    for (i in 0 until attributes.length) {
-        val attr = attributes.item(i)
-        values["@${attr.nodeName}"] = attr.nodeValue
-    }
-
-    var hasElementChildren = false
-    for (i in 0 until childNodes.length) {
-        val node = childNodes.item(i)
-        if (node is Element) {
-            hasElementChildren = true
-            val value = elementToValue(node)
-            val existing = values[node.tagName]
-            values[node.tagName] = when (existing) {
-                null -> value
-                is List<*> -> existing.toMutableList().apply { add(value) }
-                else -> mutableListOf(existing, value)
-            }
+private fun domElementToXmlNode(element: Element): XmlElementNode {
+    val attributes = LinkedHashMap<String, String>()
+    val namespaces = LinkedHashMap<String, String>()
+    val attrs = element.attributes
+    for (i in 0 until attrs.length) {
+        val attr = attrs.item(i)
+        if (isNamespaceDeclaration(attr)) {
+            val nsKey = namespaceKey(attr)
+            namespaces[nsKey] = attr.nodeValue
+        } else {
+            attributes[attr.nodeName] = attr.nodeValue
         }
     }
-
-    val textContent = element.textContent?.trim().orEmpty()
-    val hasText = textContent.isNotEmpty()
-
-    return when {
-        !hasElementChildren && values.isEmpty() && hasText -> textContent
-        values.isEmpty() -> emptyMap<String, Any?>()
-        hasText -> values + ("#text" to textContent)
-        else -> values
+    val children = ArrayList<XmlNodeChild>()
+    val nodes = element.childNodes
+    for (i in 0 until nodes.length) {
+        val node = nodes.item(i)
+        when (node.nodeType) {
+            Node.ELEMENT_NODE -> children += XmlNodeChild.Element(domElementToXmlNode(node as Element))
+            Node.TEXT_NODE, Node.CDATA_SECTION_NODE -> children += XmlNodeChild.Text(node.nodeValue ?: "")
+        }
     }
+    return XmlElementNode(
+        name = element.tagName,
+        attributes = attributes,
+        namespaces = namespaces,
+        children = children,
+    )
 }
+
+private fun isNamespaceDeclaration(node: Node): Boolean =
+    node.namespaceURI == XMLNS_URI || node.nodeName == "xmlns" || node.nodeName.startsWith("xmlns:")
+
+private fun namespaceKey(node: Node): String {
+    if (node.prefix == "xmlns") {
+        val local = node.localName
+        if (!local.isNullOrBlank() && local != "xmlns") return local
+    }
+    val name = node.nodeName
+    if (name == "xmlns") return "$"
+    if (name.startsWith("xmlns:")) return name.substringAfter("xmlns:")
+    return "$"
+}
+
+private const val XMLNS_URI = "http://www.w3.org/2000/xmlns/"
 
 public actual fun getEnv(name: String): String? = System.getenv(name)
 

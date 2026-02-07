@@ -12,6 +12,7 @@ import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.PrimitiveType
 import io.github.ehlyzov.branchline.PrimitiveTypeRef
 import io.github.ehlyzov.branchline.RecordTypeRef
+import io.github.ehlyzov.branchline.SetTypeRef
 import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.TypeRef
 import io.github.ehlyzov.branchline.UnionTypeRef
@@ -282,6 +283,7 @@ private fun isSubtype(subType: TypeRef, superType: TypeRef): Boolean {
     }
     return when (superType) {
         is ArrayTypeRef -> subType is ArrayTypeRef && isSubtype(subType.elementType, superType.elementType)
+        is SetTypeRef -> subType is SetTypeRef && isSubtype(subType.elementType, superType.elementType)
         is RecordTypeRef -> subType is RecordTypeRef && isRecordSubtype(subType, superType)
         else -> false
     }
@@ -318,6 +320,7 @@ private fun typeSignature(typeRef: TypeRef): String = when (typeRef) {
     is PrimitiveTypeRef -> renderPrimitive(typeRef.kind)
     is EnumTypeRef -> "enum{${typeRef.values.sorted().joinToString(",")}}"
     is ArrayTypeRef -> "array<${typeSignature(typeRef.elementType)}>"
+    is SetTypeRef -> "set<${typeSignature(typeRef.elementType)}>"
     is RecordTypeRef -> {
         val fields = typeRef.fields.sortedBy { it.name }.joinToString(",") { field ->
             val optional = if (field.optional) "?" else ""
@@ -334,6 +337,7 @@ private fun renderTypeRef(typeRef: TypeRef): String = when (typeRef) {
     is PrimitiveTypeRef -> renderPrimitive(typeRef.kind)
     is EnumTypeRef -> "enum{${typeRef.values.joinToString(", ")}}"
     is ArrayTypeRef -> "array<${renderTypeRef(typeRef.elementType)}>"
+    is SetTypeRef -> "set<${renderTypeRef(typeRef.elementType)}>"
     is RecordTypeRef -> {
         val fields = typeRef.fields.joinToString(", ") { field ->
             val optional = if (field.optional) "?" else ""
@@ -347,6 +351,7 @@ private fun renderTypeRef(typeRef: TypeRef): String = when (typeRef) {
 
 private fun renderPrimitive(kind: PrimitiveType): String = when (kind) {
     PrimitiveType.TEXT -> "text"
+    PrimitiveType.BYTES -> "bytes"
     PrimitiveType.NUMBER -> "number"
     PrimitiveType.BOOLEAN -> "boolean"
     PrimitiveType.NULL -> "null"

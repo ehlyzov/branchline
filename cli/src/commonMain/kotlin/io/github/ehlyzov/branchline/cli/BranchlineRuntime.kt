@@ -2,6 +2,7 @@ package io.github.ehlyzov.branchline.cli
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.ParseException
 import io.github.ehlyzov.branchline.Parser
@@ -12,6 +13,10 @@ import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
 import io.github.ehlyzov.branchline.COMPAT_INPUT_ALIASES
+import io.github.ehlyzov.branchline.contract.ContractCoercion
+import io.github.ehlyzov.branchline.contract.ContractEnforcer
+import io.github.ehlyzov.branchline.contract.ContractValidationMode
+import io.github.ehlyzov.branchline.contract.ContractViolation
 import io.github.ehlyzov.branchline.contract.TransformContract
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
 import io.github.ehlyzov.branchline.std.SharedResourceHandle
@@ -84,6 +89,22 @@ public class BranchlineProgram(
         return exec.run(env, stringifyKeys = true)
     }
 
+    fun executeWithContracts(
+        transform: TransformDecl,
+        input: Map<String, Any?>,
+        mode: ContractValidationMode,
+    ): ContractExecutionResult {
+        if (mode == ContractValidationMode.OFF) {
+            return ContractExecutionResult(execute(transform, input), emptyList())
+        }
+        val contract = contractForTransform(transform)
+        val coercedInput = ContractCoercion.coerceInputBytes(contract.input, input)
+        val inputViolations = ContractEnforcer.enforceInput(mode, contract.input, coercedInput)
+        val output = execute(transform, coercedInput)
+        val outputViolations = ContractEnforcer.enforceOutput(mode, contract.output, output)
+        return ContractExecutionResult(output, inputViolations + outputViolations)
+    }
+
     fun compileBytecode(transform: TransformDecl): Bytecode {
         val ir = compileIr(transform)
         val compiler = _root_ide_package_.io.github.ehlyzov.branchline.vm.Compiler(funcs, hostFns)
@@ -100,6 +121,25 @@ public class BranchlineProgram(
             funcs = funcs,
             precompiled = bytecode,
         )
+    }
+
+    fun executeVmWithContracts(
+        transform: TransformDecl,
+        input: Map<String, Any?>,
+        vmExec: VMExec,
+        mode: ContractValidationMode,
+    ): ContractExecutionResult {
+        if (mode == ContractValidationMode.OFF) {
+            val env = buildEnv(transform, input)
+            return ContractExecutionResult(vmExec.run(env, stringifyKeys = true), emptyList())
+        }
+        val contract = contractForTransform(transform)
+        val coercedInput = ContractCoercion.coerceInputBytes(contract.input, input)
+        val inputViolations = ContractEnforcer.enforceInput(mode, contract.input, coercedInput)
+        val env = buildEnv(transform, coercedInput)
+        val output = vmExec.run(env, stringifyKeys = true)
+        val outputViolations = ContractEnforcer.enforceOutput(mode, contract.output, output)
+        return ContractExecutionResult(output, inputViolations + outputViolations)
     }
 
     fun renderTransforms(): List<String> = transforms.map { it.name ?: "<anonymous>" }
@@ -171,6 +211,11 @@ public class BranchlineProgram(
     }
 }
 
+public data class ContractExecutionResult(
+    val output: Any?,
+    val violations: List<ContractViolation>,
+)
+
 @Serializable
 public data class CompiledArtifact(
     val version: Int = 1,
@@ -184,9 +229,24 @@ public object ArtifactCodec {
     private val prettyJson = Json { prettyPrint = true }
     private val compactJson = Json
 
+    fun encode(artifact: CompiledArtifact, format: OutputFormat): String = when (format) {
+        OutputFormat.JSON -> encode(artifact, pretty = true)
+        OutputFormat.JSON_COMPACT -> encode(artifact, pretty = false)
+        OutputFormat.JSON_CANONICAL -> encodeCanonical(artifact)
+        OutputFormat.XML, OutputFormat.XML_COMPACT -> throw CliException(
+            "XML output format is not supported for compiled artifacts",
+            kind = CliErrorKind.USAGE,
+        )
+    }
+
     fun encode(artifact: CompiledArtifact, pretty: Boolean = true): String {
         val serializer = if (pretty) prettyJson else compactJson
         return serializer.encodeToString(CompiledArtifact.serializer(), artifact)
+    }
+
+    fun encodeCanonical(artifact: CompiledArtifact): String {
+        val element = compactJson.encodeToJsonElement(CompiledArtifact.serializer(), artifact)
+        return io.github.ehlyzov.branchline.json.formatCanonicalJson(element)
     }
 
     fun decode(raw: String): CompiledArtifact =

@@ -1,0 +1,15 @@
+{
+  "title": "Large JSON Numbers",
+  "description": "Large integers and high-precision decimals are preserved and emitted as JSON strings in safe mode.",
+  "outputFormat": "json",
+  "program": [
+    "TRANSFORM LargeNumbers {",
+    "    OUTPUT input;",
+    "}"
+  ],
+  "input": {
+    "small": 42,
+    "big": 9007199254740993,
+    "precise": 0.1234567890123456789
+  }
+}

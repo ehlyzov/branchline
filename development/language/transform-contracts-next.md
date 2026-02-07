@@ -1,13 +1,15 @@
 ---
-status: Proposed
+status: Implemented
 depends_on: ['language/transform-contracts']
 blocks: []
 supersedes: []
 superseded_by: []
-last_updated: 2026-02-01
+last_updated: 2026-02-03
 changelog:
   - date: 2026-02-01
     change: "Initial proposal for next-phase transform contract work (runtime enforcement, precedence, diagnostics)."
+  - date: 2026-02-03
+    change: "Implemented runtime validation modes, contract JSON rendering, and tooling toggles."
 ---
 # Transform Contracts — Next Phase Proposal
 

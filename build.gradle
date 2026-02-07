@@ -6,6 +6,9 @@ plugins {
     id 'jacoco'
 }
 
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.jvm.toolchain.JavaToolchainService
+
 def npmCommand = org.gradle.internal.os.OperatingSystem.current().isWindows() ? 'npm.cmd' : 'npm'
 def npxCommand = org.gradle.internal.os.OperatingSystem.current().isWindows() ? 'npx.cmd' : 'npx'
 
@@ -32,6 +35,22 @@ subprojects {
 
     dependencies {
         detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:1.23.6"
+    }
+
+    def toolchainService = extensions.findByType(JavaToolchainService)
+    def detektJavaLauncher = toolchainService?.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    tasks.withType(io.gitlab.arturbosch.detekt.Detekt).configureEach { task ->
+        task.jvmTarget = "21"
+        if (detektJavaLauncher != null) {
+            if (task.metaClass.hasProperty(task, "javaLauncher")) {
+                task.javaLauncher.set(detektJavaLauncher)
+            }
+            if (task.metaClass.hasProperty(task, "jdkHome")) {
+                task.jdkHome = detektJavaLauncher.get().metadata.installationPath.asFile
+            }
+        }
     }
 
     // Note: KMP modules have target-specific test tasks (e.g., jvmTest).

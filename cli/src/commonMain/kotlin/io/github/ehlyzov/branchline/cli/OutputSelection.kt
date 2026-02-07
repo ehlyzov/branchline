@@ -76,13 +76,29 @@ fun selectOutputByPath(value: Any?, path: String): Any? {
     return current
 }
 
-fun formatOutputValue(value: Any?, pretty: Boolean, raw: Boolean): String {
-    if (!raw) return formatJson(value, pretty = pretty)
+fun formatOutputValue(
+    value: Any?,
+    format: OutputFormat,
+    raw: Boolean,
+    jsonNumberMode: io.github.ehlyzov.branchline.json.JsonNumberMode,
+): String {
+    if (!raw) return formatOutputJson(value, format, jsonNumberMode)
     return when (value) {
         null -> ""
         is String -> value
         is Boolean -> value.toString()
         is Number -> value.toString()
-        else -> formatJson(value, pretty = pretty)
+        is ByteArray -> io.github.ehlyzov.branchline.runtime.base64Encode(value)
+        else -> formatOutputJson(value, format, jsonNumberMode)
     }
+}
+
+private fun formatOutputJson(
+    value: Any?,
+    format: OutputFormat,
+    jsonNumberMode: io.github.ehlyzov.branchline.json.JsonNumberMode,
+): String = when (format) {
+    OutputFormat.JSON_CANONICAL -> io.github.ehlyzov.branchline.json.formatCanonicalJson(value, jsonNumberMode)
+    OutputFormat.JSON, OutputFormat.JSON_COMPACT -> formatJson(value, pretty = format.pretty, numberMode = jsonNumberMode)
+    OutputFormat.XML, OutputFormat.XML_COMPACT -> formatXmlOutput(value, pretty = format.pretty)
 }
