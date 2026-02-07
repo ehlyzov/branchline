@@ -14,7 +14,7 @@ public fun parseJsonObjectInput(text: String, options: JsonParseOptions = JsonPa
     val parser = JsonInputParser(text, options)
     val value = parser.parseRootValue()
     if (value !is Map<*, *>) {
-        throw JsonInputException("Input JSON must be an object")
+        throw JsonInputException("Input JSON must be an object at the top level.")
     }
     val result = LinkedHashMap<String, Any?>(value.size)
     for ((key, entry) in value) {
