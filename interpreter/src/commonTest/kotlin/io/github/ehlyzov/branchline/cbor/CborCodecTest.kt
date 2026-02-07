@@ -10,6 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class CborCodecTest {
@@ -93,5 +94,51 @@ class CborCodecTest {
         assertFailsWith<CborCodecException> {
             decodeCborValue(invalid)
         }
+    }
+
+    @Test
+    fun deterministicEncodingStabilizesMapOrdering() {
+        val first = linkedMapOf<Any, Any?>(
+            "b" to 2L,
+            "a" to 1L,
+            10 to "ten",
+            2 to "two",
+        )
+        val second = linkedMapOf<Any, Any?>(
+            2 to "two",
+            10 to "ten",
+            "a" to 1L,
+            "b" to 2L,
+        )
+
+        val firstFast = encodeCborValue(first)
+        val secondFast = encodeCborValue(second)
+        assertNotEquals(firstFast.toList(), secondFast.toList())
+
+        val deterministic = CborEncodeOptions(deterministic = true)
+        val firstDeterministic = encodeCborValue(first, deterministic)
+        val secondDeterministic = encodeCborValue(second, deterministic)
+        assertContentEquals(firstDeterministic, secondDeterministic)
+    }
+
+    @Test
+    fun deterministicEncodingStabilizesSetOrdering() {
+        val first = linkedSetOf<Any?>(
+            "z",
+            2L,
+            listOf(1L, "a"),
+            mapOf("k" to 1L),
+        )
+        val second = linkedSetOf<Any?>(
+            mapOf("k" to 1L),
+            listOf(1L, "a"),
+            2L,
+            "z",
+        )
+
+        val deterministic = CborEncodeOptions(deterministic = true)
+        val firstDeterministic = encodeCborValue(first, deterministic)
+        val secondDeterministic = encodeCborValue(second, deterministic)
+        assertContentEquals(firstDeterministic, secondDeterministic)
     }
 }

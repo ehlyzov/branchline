@@ -23,7 +23,14 @@ import kotlin.math.pow
 
 public class CborCodecException(message: String) : IllegalArgumentException(message)
 
-public fun encodeCborValue(value: Any?): ByteArray = CborEncoder().encode(value)
+public data class CborEncodeOptions(
+    val deterministic: Boolean = false,
+)
+
+public fun encodeCborValue(
+    value: Any?,
+    options: CborEncodeOptions = CborEncodeOptions(),
+): ByteArray = CborEncoder(options).encode(value)
 
 public fun decodeCborValue(bytes: ByteArray): Any? = CborDecoder(bytes).decode()
 
@@ -63,8 +70,11 @@ private const val TWO_POW_40: Double = 1099511627776.0
 private const val TWO_POW_48: Double = 281474976710656.0
 private const val TWO_POW_52: Double = 4503599627370496.0
 private const val TWO_POW_NEG_1022: Double = 2.2250738585072014e-308
+private val DETERMINISTIC_CBOR_OPTIONS: CborEncodeOptions = CborEncodeOptions(deterministic = true)
 
-private class CborEncoder {
+private class CborEncoder(
+    private val options: CborEncodeOptions = CborEncodeOptions(),
+) {
     private val out: ArrayList<Byte> = ArrayList()
 
     fun encode(value: Any?): ByteArray {
@@ -144,46 +154,91 @@ private class CborEncoder {
 
     private fun writeSet(values: Set<*>) {
         writeTag(TAG_BRANCHLINE_SET)
-        writeTypeAndArgument(MAJOR_ARRAY, values.size.toULong())
-        for (value in values) {
+        val items = if (options.deterministic) {
+            values.map { element ->
+                DeterministicValue(element, deterministicBytesForValue(element))
+            }.sortedWith { left, right ->
+                compareDeterministicBytes(left.bytes, right.bytes)
+            }.map { it.value }
+        } else {
+            values.toList()
+        }
+
+        writeTypeAndArgument(MAJOR_ARRAY, items.size.toULong())
+        for (value in items) {
             writeValue(value)
         }
     }
 
     private fun writeMap(values: Map<*, *>) {
-        writeTypeAndArgument(MAJOR_MAP, values.size.toULong())
-        for ((rawKey, mapValue) in values) {
-            writeMapKey(rawKey)
-            writeValue(mapValue)
+        val entries = values.entries.map { entry ->
+            val normalizedKey = normalizeMapKey(entry.key)
+            if (options.deterministic) {
+                DeterministicMapEntry(
+                    key = normalizedKey,
+                    value = entry.value,
+                    keyBytes = deterministicBytesForValue(normalizedKey),
+                )
+            } else {
+                DeterministicMapEntry(
+                    key = normalizedKey,
+                    value = entry.value,
+                    keyBytes = null,
+                )
+            }
+        }
+
+        val orderedEntries = if (options.deterministic) {
+            entries.sortedWith { left, right ->
+                compareDeterministicBytes(left.keyBytes!!, right.keyBytes!!)
+            }
+        } else {
+            entries
+        }
+
+        writeTypeAndArgument(MAJOR_MAP, orderedEntries.size.toULong())
+        for (entry in orderedEntries) {
+            writeNormalizedMapKey(entry.key)
+            writeValue(entry.value)
         }
     }
 
-    private fun writeMapKey(value: Any?) {
+    private fun normalizeMapKey(value: Any?): Any = when (value) {
+        is String -> value
+        is I32 -> value.v.toLong()
+        is I64 -> value.v
+        is IBig -> value.v
+        is Byte -> value.toLong()
+        is Short -> value.toLong()
+        is Int -> value.toLong()
+        is Long -> value
+        is UByte -> value.toLong()
+        is UShort -> value.toLong()
+        is UInt -> value.toLong()
+        is ULong -> {
+            if (value <= LONG_MAX_UNSIGNED) {
+                value.toLong()
+            } else {
+                blBigIntParse(value.toString())
+            }
+        }
+        is BLBigInt -> value
+        else -> throw CborCodecException(
+            "CBOR map key must be text or integer, got ${value?.let { it::class.simpleName } ?: "null"}",
+        )
+    }
+
+    private fun writeNormalizedMapKey(value: Any) {
         when (value) {
             is String -> writeText(value)
-            is I32 -> writeSigned(value.v.toLong())
-            is I64 -> writeSigned(value.v)
-            is IBig -> writeBigInt(value.v)
-            is Byte -> writeSigned(value.toLong())
-            is Short -> writeSigned(value.toLong())
-            is Int -> writeSigned(value.toLong())
             is Long -> writeSigned(value)
-            is UByte -> writeUnsigned(value.toLong().toULong())
-            is UShort -> writeUnsigned(value.toLong().toULong())
-            is UInt -> writeUnsigned(value.toLong().toULong())
-            is ULong -> {
-                if (value <= LONG_MAX_UNSIGNED) {
-                    writeUnsigned(value)
-                } else {
-                    writeBigInt(blBigIntParse(value.toString()))
-                }
-            }
             is BLBigInt -> writeBigInt(value)
-            else -> throw CborCodecException(
-                "CBOR map key must be text or integer, got ${value?.let { it::class.simpleName } ?: "null"}",
-            )
+            else -> throw CborCodecException("CBOR map key normalization produced unsupported type")
         }
     }
+
+    private fun deterministicBytesForValue(value: Any?): ByteArray =
+        CborEncoder(DETERMINISTIC_CBOR_OPTIONS).encode(value)
 
     private fun writeBigInt(value: BLBigInt) {
         if (value.signum() >= 0) {
@@ -310,6 +365,29 @@ private class CborEncoder {
     private fun writeByte(value: Int) {
         out.add((value and 0xFF).toByte())
     }
+}
+
+private data class DeterministicValue(
+    val value: Any?,
+    val bytes: ByteArray,
+)
+
+private data class DeterministicMapEntry(
+    val key: Any,
+    val value: Any?,
+    val keyBytes: ByteArray?,
+)
+
+private fun compareDeterministicBytes(left: ByteArray, right: ByteArray): Int {
+    val lengthComparison = left.size.compareTo(right.size)
+    if (lengthComparison != 0) return lengthComparison
+
+    for (index in left.indices) {
+        val a = left[index].toInt() and 0xFF
+        val b = right[index].toInt() and 0xFF
+        if (a != b) return a.compareTo(b)
+    }
+    return 0
 }
 
 private class CborDecoder(

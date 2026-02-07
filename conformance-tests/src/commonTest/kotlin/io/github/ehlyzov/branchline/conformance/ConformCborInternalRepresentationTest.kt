@@ -1,6 +1,7 @@
 package io.github.ehlyzov.branchline.conformance
 
 import io.github.ehlyzov.branchline.cbor.CborCodecException
+import io.github.ehlyzov.branchline.cbor.CborEncodeOptions
 import io.github.ehlyzov.branchline.cbor.decodeCborValue
 import io.github.ehlyzov.branchline.cbor.encodeCborValue
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
@@ -11,6 +12,7 @@ import io.github.ehlyzov.branchline.runtime.bignum.compareTo
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class ConformCborInternalRepresentationTest {
@@ -51,6 +53,31 @@ class ConformCborInternalRepresentationTest {
         assertFailsWith<CborCodecException> {
             encodeCborValue(mapOf(false to "x"))
         }
+    }
+
+    @Test
+    fun deterministicCborOutputIsByteStable() {
+        val first = linkedMapOf<Any, Any?>(
+            "z" to 1L,
+            "a" to 2L,
+            3 to "three",
+        )
+        val second = linkedMapOf<Any, Any?>(
+            3 to "three",
+            "a" to 2L,
+            "z" to 1L,
+        )
+
+        assertNotEquals(
+            encodeCborValue(first).toHexString(),
+            encodeCborValue(second).toHexString(),
+        )
+
+        val deterministic = CborEncodeOptions(deterministic = true)
+        assertEquals(
+            encodeCborValue(first, deterministic).toHexString(),
+            encodeCborValue(second, deterministic).toHexString(),
+        )
     }
 }
 

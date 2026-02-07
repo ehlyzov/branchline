@@ -116,6 +116,24 @@ esac
 
 CLASSPATH="\\\"\\\""
 
+# Prefer Java 21 when available. This keeps Detekt/Kotlin CLI tasks stable on hosts
+# where the default JVM is newer than the currently supported runtime.
+if [ -z "$BRANCHLINE_SKIP_JAVA21" ] ; then
+    if [ "$darwin" = "true" ] && [ -x /usr/libexec/java_home ] ; then
+        java21_home=$(/usr/libexec/java_home -v 21 2>/dev/null)
+        if [ -n "$java21_home" ] ; then
+            JAVA_HOME=$java21_home
+            export JAVA_HOME
+        fi
+    elif [ -n "$JAVA_HOME_21_X64" ] ; then
+        JAVA_HOME=$JAVA_HOME_21_X64
+        export JAVA_HOME
+    elif [ -n "$JAVA21_HOME" ] ; then
+        JAVA_HOME=$JAVA21_HOME
+        export JAVA_HOME
+    fi
+fi
+
 
 # Determine the Java command to use to start the JVM.
 if [ -n "$JAVA_HOME" ] ; then
