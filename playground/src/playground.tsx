@@ -24,7 +24,7 @@ const DEFAULT_INPUT = `{
   }
 }`;
 
-const PLAYGROUND_HOSTED_URL = 'https://ehlyzov.github.io/branchline-public/playground/';
+const PLAYGROUND_HOSTED_URL = 'https://ehlyzov.github.io/branchline-public/playground/demo.html';
 
 type InputFormat = 'json' | 'xml';
 type ContractMode = 'off' | 'warn' | 'strict';
