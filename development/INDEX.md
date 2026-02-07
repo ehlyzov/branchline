@@ -42,6 +42,8 @@ changelog:
     change: "Moved Conversion Loss Audit to implemented."
   - date: 2026-02-07
     change: "Moved Internal CBOR Representation to implemented."
+  - date: 2026-02-07
+    change: "Moved CBOR Determinism Rules to implemented."
 ---
 # Development Knowledge Base Index
 
@@ -55,7 +57,6 @@ This index is the canonical entry point for the /development knowledge base. All
 - [LLM Pipelines](ai/llm-pipelines.md) -- pipeline runtime spec.
 - [Planitforme Integration](ai/planitforme-integration.md) -- migration sketches; depends on LLM Pipelines.
 - [Tree Structures](runtime/tree-structures.md) -- arena/array tree structure recommendations.
-- [CBOR Determinism Rules](runtime/cbor-determinism.md) -- deterministic encoding constraints for internal CBOR.
 - [I/O Contract Gap Analysis](language/io-contracts-gap-analysis.md) -- parser + I/O contract comparison and enrichment targets.
 - [Benchmarks Docs Fix Plan](docs/benchmarks-docs-fix-plan.md) -- MkDocs/benchmarks patch plan.
 - [Docs + Playground Plan](docs/docs-playground-plan.md) -- docs plan; depends on Docs Refresh.
@@ -95,6 +96,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [XML Output Ordering](language/xml-output-ordering.md) -- deterministic XML serialization rules and `@order` override.
 - [Conversion Loss Audit](docs/conversion-loss-audit.md) -- documented loss points and CLI warning policy for JSON/XML conversions.
 - [Internal CBOR Representation](runtime/cbor-internal-representation.md) -- lossless Branchline-to-Branchline wire format with extended type tags and key policy enforcement.
+- [CBOR Determinism Rules](runtime/cbor-determinism.md) -- deterministic CBOR encode option with canonical map/set ordering and byte-stable output.
 
 ### Deprecated
 - None.

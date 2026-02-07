@@ -52,6 +52,7 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - CBOR map keys are restricted to text or integer keys; other key types are rejected.
 - Extended types are preserved with tags: BigInt (`2`/`3`), BigDecimal (`4`), and Set (`267`).
 - CBOR byte strings are used for binary values, so internal interchange does not require base64.
+- Deterministic CBOR is available via `CborEncodeOptions(deterministic = true)` and applies canonical ordering for map keys and set elements.
 
 ## Standard Library
 - [Core](std-core.md)

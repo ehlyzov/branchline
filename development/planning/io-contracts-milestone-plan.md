@@ -47,6 +47,8 @@ changelog:
     change: "Completed milestone 10 with conversion-loss audit docs, CLI warnings, and conformance coverage."
   - date: 2026-02-07
     change: "Completed milestone 11 with internal CBOR encode/decode, extended-type tags, and cross-platform tests."
+  - date: 2026-02-07
+    change: "Completed milestone 12 with deterministic CBOR encode option and canonical byte-stability tests."
 ---
 # I/O Contracts Milestone Plan
 
@@ -308,6 +310,7 @@ Provide a staged implementation plan for the new I/O contract proposals, with ex
 
 ### Milestone 12: CBOR Determinism Rules
 **Proposal:** `development/runtime/cbor-determinism.md`
+**Status:** Completed (2026-02-07)
 
 **Scope**
 - Deterministic CBOR encoding mode.

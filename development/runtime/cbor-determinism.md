@@ -1,27 +1,26 @@
 ---
-status: Proposed
+status: Implemented
 depends_on: ['runtime/cbor-internal-representation']
 blocks: []
 supersedes: []
 superseded_by: []
-last_updated: 2026-02-05
+last_updated: 2026-02-07
 changelog:
+  - date: 2026-02-07
+    change: "Implemented deterministic CBOR encoding option with canonical map/set ordering and byte-stability tests."
   - date: 2026-02-05
     change: "Proposed deterministic CBOR encoding rules for Branchline interchange."
 ---
 # CBOR Determinism Rules
 
-## Status (as of 2026-02-05)
-- Stage: proposal.
+## Status (as of 2026-02-07)
+- Stage: implemented.
 - Scope: deterministic encoding constraints for internal CBOR output.
 
 ## Summary
 Branchline-to-Branchline exchange benefits from a stable CBOR byte sequence for hashing, signatures, and caching. This proposal formalizes when deterministic CBOR encoding is required and how it is applied.
 
-## Current Behavior
-- CBOR interchange is implemented with type-fidelity guarantees; deterministic ordering/shortest-form guarantees are still pending.
-
-## Proposed Rules
+## Implemented Rules
 - Deterministic mode uses RFC 8949 Section 4.2 encoding.
 - Use shortest-length integer encodings.
 - Use definite-length arrays and maps.
