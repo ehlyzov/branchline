@@ -38,6 +38,11 @@ Literals include numbers, strings, booleans, and null.
 ## Union {#union}
 `UNION` creates union type expressions.
 
+## Set Types {#set-types}
+Use `set<T>` inside type expressions to describe unordered, unique collections.
+
+Sets serialize to JSON arrays with deterministic ordering: null, boolean, number, string, array, object. Arrays and objects are ordered by their canonical JSON encoding. XML output emits repeated elements in the same deterministic order.
+
 ## Example
 ```branchline
 LET status = CASE {

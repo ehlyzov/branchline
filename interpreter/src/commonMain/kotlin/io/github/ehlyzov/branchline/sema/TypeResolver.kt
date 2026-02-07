@@ -7,6 +7,7 @@ import io.github.ehlyzov.branchline.PrimitiveType
 import io.github.ehlyzov.branchline.PrimitiveTypeRef
 import io.github.ehlyzov.branchline.RecordFieldType
 import io.github.ehlyzov.branchline.RecordTypeRef
+import io.github.ehlyzov.branchline.SetTypeRef
 import io.github.ehlyzov.branchline.Token
 import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.TypeKind
@@ -26,6 +27,10 @@ public class TypeResolver(
         is PrimitiveTypeRef -> typeRef
         is EnumTypeRef -> typeRef
         is ArrayTypeRef -> ArrayTypeRef(
+            elementType = resolveTypeRef(typeRef.elementType, resolving),
+            token = typeRef.token,
+        )
+        is SetTypeRef -> SetTypeRef(
             elementType = resolveTypeRef(typeRef.elementType, resolving),
             token = typeRef.token,
         )
@@ -80,6 +85,7 @@ public class TypeResolver(
         val normalized = name.lowercase()
         return when (normalized) {
             "string", "text" -> PrimitiveTypeRef(PrimitiveType.TEXT, token)
+            "bytes" -> PrimitiveTypeRef(PrimitiveType.BYTES, token)
             "number" -> PrimitiveTypeRef(PrimitiveType.NUMBER, token)
             "boolean" -> PrimitiveTypeRef(PrimitiveType.BOOLEAN, token)
             "null" -> PrimitiveTypeRef(PrimitiveType.NULL, token)

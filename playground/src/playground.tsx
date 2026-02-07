@@ -27,6 +27,8 @@ const DEFAULT_INPUT = `{
 const PLAYGROUND_HOSTED_URL = 'https://ehlyzov.github.io/branchline-public/playground/';
 
 type InputFormat = 'json' | 'xml';
+type ContractMode = 'off' | 'warn' | 'strict';
+type OutputFormat = 'json' | 'json-compact' | 'json-canonical';
 
 type RawExample = {
   title: string;
@@ -34,6 +36,7 @@ type RawExample = {
   program: string | string[];
   input: unknown;
   inputFormat?: InputFormat;
+  outputFormat?: OutputFormat;
   trace?: boolean;
   showContracts?: boolean;
   shared?: SharedStorageSpec[];
@@ -50,6 +53,7 @@ type PlaygroundExample = {
   program: string;
   input: string;
   inputFormat: InputFormat;
+  outputFormat: OutputFormat;
   enableTracing: boolean;
   enableContracts: boolean;
   shared: SharedStorageSpec[];
@@ -68,6 +72,7 @@ function normalizeExample(id: string, raw: RawExample): PlaygroundExample {
   const program = Array.isArray(raw.program) ? raw.program.join('\n') : raw.program ?? DEFAULT_PROGRAM;
   let input = '';
   const inputFormat = raw.inputFormat ?? 'json';
+  const outputFormat = raw.outputFormat ?? 'json';
 
   if (typeof raw.input === 'string') {
     input = raw.input;
@@ -82,6 +87,7 @@ function normalizeExample(id: string, raw: RawExample): PlaygroundExample {
     program,
     input: input || DEFAULT_INPUT,
     inputFormat,
+    outputFormat,
     enableTracing: Boolean(raw.trace),
     enableContracts: Boolean(raw.showContracts),
     shared: raw.shared ?? []
@@ -99,6 +105,7 @@ type WorkerResult = {
   inputContractJson: string | null;
   outputContractJson: string | null;
   contractSource: string | null;
+  contractWarnings: string | null;
 };
 
 type BranchlinePlaygroundProps = {
@@ -144,6 +151,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   const inputEditorRef = React.useRef<monaco.editor.IStandaloneCodeEditor>();
   const workerRef = React.useRef<Worker>();
   const [inputFormat, setInputFormat] = React.useState<InputFormat>('json');
+  const [outputFormat, setOutputFormat] = React.useState<OutputFormat>('json');
 
   const [isRunning, setIsRunning] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -152,9 +160,12 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   const [traceJson, setTraceJson] = React.useState<string | null>(null);
   const [isTracingEnabled, setIsTracingEnabled] = React.useState(false);
   const [isContractsEnabled, setIsContractsEnabled] = React.useState(false);
+  const [contractsMode, setContractsMode] = React.useState<ContractMode>('off');
+  const [contractsDebug, setContractsDebug] = React.useState(false);
   const [inputContract, setInputContract] = React.useState<string | null>(null);
   const [outputContract, setOutputContract] = React.useState<string | null>(null);
   const [contractSource, setContractSource] = React.useState<string | null>(null);
+  const [contractWarnings, setContractWarnings] = React.useState<string | null>(null);
   const tracingRef = React.useRef(isTracingEnabled);
   const examples = React.useMemo(() => {
     const items: PlaygroundExample[] = Object.entries(exampleModules).map(([path, module]) => {
@@ -198,15 +209,19 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     setInputContract(null);
     setOutputContract(null);
     setContractSource(null);
+    setContractWarnings(null);
     workerRef.current?.postMessage({
       code: program,
       input,
       trace: tracingRef.current,
       inputFormat,
+      outputFormat,
       includeContracts: isContractsEnabled,
+      contractsMode,
+      contractsDebug,
       shared: selectedExample?.shared ?? []
     });
-  }, [inputFormat, isContractsEnabled, selectedExample]);
+  }, [contractsDebug, contractsMode, inputFormat, isContractsEnabled, outputFormat, selectedExample]);
 
   const resetExample = React.useCallback(() => {
     if (!selectedExample) {
@@ -215,6 +230,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     const program = selectedExample.program ?? DEFAULT_PROGRAM;
     const input = selectedExample.input ?? DEFAULT_INPUT;
     const format = selectedExample.inputFormat ?? 'json';
+    const outputFmt = selectedExample.outputFormat ?? 'json';
 
     if (programEditorRef.current) {
       programEditorRef.current.setValue(program);
@@ -226,6 +242,9 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     if (inputFormat !== format) {
       setInputFormat(format);
     }
+    if (outputFormat !== outputFmt) {
+      setOutputFormat(outputFmt);
+    }
 
     setError(null);
     setOutput('');
@@ -234,13 +253,16 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     setInputContract(null);
     setOutputContract(null);
     setContractSource(null);
+    setContractWarnings(null);
     if (outputRef.current) {
       outputRef.current.textContent = '';
     }
 
     setIsTracingEnabled(selectedExample.enableTracing);
     setIsContractsEnabled(selectedExample.enableContracts);
-  }, [inputFormat, selectedExample]);
+    setContractsMode('off');
+    setContractsDebug(false);
+  }, [inputFormat, outputFormat, selectedExample]);
 
   React.useEffect(() => {
     ensureBranchlineLanguage();
@@ -301,6 +323,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         setInputContract(result.inputContractJson ?? null);
         setOutputContract(result.outputContractJson ?? null);
         setContractSource(result.contractSource ?? null);
+        setContractWarnings(result.contractWarnings ?? null);
         if (outputRef.current) {
           outputRef.current.textContent = result.outputJson ?? 'null';
         }
@@ -318,6 +341,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         setInputContract(null);
         setOutputContract(null);
         setContractSource(null);
+        setContractWarnings(null);
         if (outputRef.current) {
           outputRef.current.textContent = '';
         }
@@ -364,8 +388,16 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
       setInputContract(null);
       setOutputContract(null);
       setContractSource(null);
+      setContractWarnings(null);
+      setContractsDebug(false);
     }
   }, [isContractsEnabled]);
+
+  React.useEffect(() => {
+    if (contractsMode === 'off') {
+      setContractWarnings(null);
+    }
+  }, [contractsMode]);
 
   const hasTrace = Boolean(traceHuman || traceJson);
 
@@ -442,6 +474,14 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
               <option value="xml">XML</option>
             </select>
           </label>
+          <label className="playground-select">
+            <span>Output format</span>
+            <select value={outputFormat} onChange={(event) => setOutputFormat(event.target.value as OutputFormat)}>
+              <option value="json">JSON (pretty)</option>
+              <option value="json-compact">JSON (compact)</option>
+              <option value="json-canonical">JSON (canonical)</option>
+            </select>
+          </label>
           <label className="playground-toggle">
             <input
               type="checkbox"
@@ -458,6 +498,24 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
             />
             <span>Show input/output contracts</span>
           </label>
+          <label className="playground-select">
+            <span>Contract checks</span>
+            <select value={contractsMode} onChange={(event) => setContractsMode(event.target.value as ContractMode)}>
+              <option value="off">Off</option>
+              <option value="warn">Warn</option>
+              <option value="strict">Strict</option>
+            </select>
+          </label>
+          {isContractsEnabled ? (
+            <label className="playground-toggle">
+              <input
+                type="checkbox"
+                checked={contractsDebug}
+                onChange={(event) => setContractsDebug(event.target.checked)}
+              />
+              <span>Contract debug (include spans)</span>
+            </label>
+          ) : null}
           <button className="playground-button playground-button--ghost" onClick={resetExample}>
             Reset example
           </button>
@@ -523,6 +581,12 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
             <div className="panel-error">{error}</div>
           ) : (
             <>
+              {contractWarnings ? (
+                <div className="panel-warning">
+                  <div className="panel-subheader">Contract warnings</div>
+                  <pre className="panel-output panel-output--warning">{contractWarnings}</pre>
+                </div>
+              ) : null}
               <div className={`results-grid${hasTrace ? ' results-grid--with-trace' : ''}`}>
                 <div className="results-pane">
                   <div className="panel-subheader">Program output</div>

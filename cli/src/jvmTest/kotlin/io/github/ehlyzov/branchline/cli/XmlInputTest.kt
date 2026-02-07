@@ -15,8 +15,9 @@ class XmlInputTest {
         """.trimIndent()
         val parsed = parseXmlInput(xml)
         val row = parsed["row"] as Map<*, *>
-        assertEquals("XML", row["name"])
-        assertEquals("3", row["count"])
+        val name = row["name"] as Map<*, *>
+        val count = row["count"] as Map<*, *>
+        assertEquals("XML", name["$"])
+        assertEquals("3", count["$"])
     }
 }
-

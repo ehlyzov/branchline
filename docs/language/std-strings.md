@@ -12,6 +12,8 @@ Text processing helpers.
 - `BOOLEAN(x)` → truthiness: `false` for `null`, empty string, or zero; `true` otherwise.
 - `INT(x)` → strict integer conversion for numbers/booleans/strings; errors on fractional values; returns `null` for `null`; large values may return BigInt.
 - `PARSE_INT(x[, default])` → tolerant integer parsing for strings; uses digits only and returns `default` (or `0`) on `null`/no digits.
+- `BASE64_ENCODE(bytes)` → base64 string using the standard alphabet with `=` padding.
+- `BASE64_DECODE(text)` → bytes decoded from base64 text; errors on invalid input.
 
 ## Text operations
 - `SUBSTRING(str, start[, len])` → substring with safe bounds; errors if start > length.
@@ -32,3 +34,4 @@ Text processing helpers.
 - [stdlib-strings-casts](../playground.md?example=stdlib-strings-casts)
 - [stdlib-strings-text](../playground.md?example=stdlib-strings-text)
 - [stdlib-strings-format](../playground.md?example=stdlib-strings-format)
+- [stdlib-strings-base64](../playground.md?example=stdlib-strings-base64)

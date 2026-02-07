@@ -106,10 +106,16 @@ public sealed interface ValueShape {
     public data object NumberShape : ValueShape
 
     @Serializable
+    public data object Bytes : ValueShape
+
+    @Serializable
     public data object TextShape : ValueShape
 
     @Serializable
     public data class ArrayShape(val element: ValueShape) : ValueShape
+
+    @Serializable
+    public data class SetShape(val element: ValueShape) : ValueShape
 
     @Serializable
     public data class ObjectShape(val schema: SchemaGuarantee, val closed: Boolean) : ValueShape

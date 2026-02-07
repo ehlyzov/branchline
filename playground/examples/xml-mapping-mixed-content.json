@@ -1,0 +1,32 @@
+{
+  "title": "XML mapping: mixed content",
+  "description": "Demonstrates the normalized XML shape using @attributes, $, and $n text segments.",
+  "program": [
+    "LET row = input.row;",
+    "OUTPUT {",
+    "    id: row[\"@id\"],",
+    "    title: row.title[\"$\"],",
+    "    intro: row[\"$1\"],",
+    "    outro: row[\"$2\"],",
+    "    tags: MAP(row.tag, (t) -> t[\"$\"])",
+    "}"
+  ],
+  "input": {
+    "row": {
+      "@id": "42",
+      "$1": "hello",
+      "title": {
+        "$": "Example"
+      },
+      "tag": [
+        {
+          "$": "alpha"
+        },
+        {
+          "$": "beta"
+        }
+      ],
+      "$2": "bye"
+    }
+  }
+}

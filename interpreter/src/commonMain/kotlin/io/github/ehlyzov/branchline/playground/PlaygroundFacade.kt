@@ -1,34 +1,30 @@
 package playground
 
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.doubleOrNull
-import kotlinx.serialization.json.longOrNull
-import io.github.ehlyzov.branchline.runtime.bignum.toDouble
 import io.github.ehlyzov.branchline.debug.Debug
 import io.github.ehlyzov.branchline.debug.CollectingTracer
 import io.github.ehlyzov.branchline.debug.TraceOptions
 import io.github.ehlyzov.branchline.debug.TraceReport
-import io.github.ehlyzov.branchline.Dec
 import io.github.ehlyzov.branchline.FuncDecl
-import io.github.ehlyzov.branchline.IBig
-import io.github.ehlyzov.branchline.I32
-import io.github.ehlyzov.branchline.I64
 import io.github.ehlyzov.branchline.Lexer
 import io.github.ehlyzov.branchline.ParseException
 import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
+import io.github.ehlyzov.branchline.contract.ContractCoercion
+import io.github.ehlyzov.branchline.contract.ContractEnforcer
+import io.github.ehlyzov.branchline.contract.ContractJsonRenderer
+import io.github.ehlyzov.branchline.contract.ContractValidationMode
+import io.github.ehlyzov.branchline.contract.ContractViolation
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
+import io.github.ehlyzov.branchline.contract.formatContractViolation
 import io.github.ehlyzov.branchline.ir.Exec
 import io.github.ehlyzov.branchline.ir.ToIR
-import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
-import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
+import io.github.ehlyzov.branchline.json.JsonNumberMode
+import io.github.ehlyzov.branchline.json.JsonParseOptions
+import io.github.ehlyzov.branchline.json.formatJsonValue
+import io.github.ehlyzov.branchline.json.parseJsonObjectInput
+import io.github.ehlyzov.branchline.json.formatCanonicalJson
 import io.github.ehlyzov.branchline.sema.SemanticAnalyzer
 import io.github.ehlyzov.branchline.sema.TypeResolver
 import io.github.ehlyzov.branchline.std.StdLib
@@ -36,21 +32,17 @@ import io.github.ehlyzov.branchline.std.SharedResourceKind
 import io.github.ehlyzov.branchline.std.SharedStoreProvider
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlin.collections.buildMap
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import io.github.ehlyzov.branchline.TypeDecl
 import io.github.ehlyzov.branchline.sema.SemanticException
-import kotlin.collections.iterator
 
 @OptIn(ExperimentalJsExport::class)
 @JsExport
 object PlaygroundFacade {
     private const val INPUT_VAR = DEFAULT_INPUT_ALIAS
-    private val prettyJson = Json { prettyPrint = true }
-    private val compactJson = Json
     private val sharedJson = Json { ignoreUnknownKeys = true }
 
     private val debugHostFns: Map<String, (List<Any?>) -> Any?> = mapOf(
@@ -74,7 +66,7 @@ object PlaygroundFacade {
         enableTracing: Boolean = false,
         includeContracts: Boolean = false,
     ): PlaygroundResult {
-        return runWithShared(program, inputJson, enableTracing, includeContracts, null)
+        return runWithContracts(program, inputJson, enableTracing, includeContracts, "off", false, null, "json")
     }
 
     fun runWithShared(
@@ -83,6 +75,19 @@ object PlaygroundFacade {
         enableTracing: Boolean = false,
         includeContracts: Boolean = false,
         sharedJsonConfig: String? = null,
+    ): PlaygroundResult {
+        return runWithContracts(program, inputJson, enableTracing, includeContracts, "off", false, sharedJsonConfig, "json")
+    }
+
+    public fun runWithContracts(
+        program: String,
+        inputJson: String,
+        enableTracing: Boolean,
+        includeContracts: Boolean,
+        contractsMode: String,
+        includeContractSpans: Boolean,
+        sharedJsonConfig: String? = null,
+        outputFormat: String,
     ): PlaygroundResult {
         val tracer = if (enableTracing) {
             CollectingTracer(
@@ -111,6 +116,7 @@ object PlaygroundFacade {
                     inputContractJson = null,
                     outputContractJson = null,
                     contractSource = null,
+                    contractWarnings = null,
                 )
                 for (spec in sharedSpecs) {
                     if (!store.hasResource(spec.name)) {
@@ -136,6 +142,7 @@ object PlaygroundFacade {
                     inputContractJson = null,
                     outputContractJson = null,
                     contractSource = null,
+                    contractWarnings = null,
                 )
 
             val hostFns = playgroundHostFns
@@ -156,12 +163,29 @@ object PlaygroundFacade {
                 sharedStore = SharedStoreProvider.store,
             )
 
+            val contractMode = parseContractMode(contractsMode)
             val msg = parseInput(inputJson)
-            val env = HashMap<String, Any?>().apply {
-                this[INPUT_VAR] = msg
-                putAll(msg)
-            }
             val sharedSnapshot = SharedStoreProvider.store?.snapshot().orEmpty()
+            if (sharedSpecs.isNotEmpty()) {
+                for (spec in sharedSpecs) {
+                    val seed = sharedSnapshot[spec.name] ?: emptyMap()
+                }
+            }
+            val contract = if (includeContracts || contractMode != ContractValidationMode.OFF) {
+                val typeResolver = TypeResolver(typeDecls)
+                TransformContractBuilder(typeResolver, hostFns.keys).build(transform)
+            } else {
+                null
+            }
+            val inputValue = if (contract != null && contractMode != ContractValidationMode.OFF) {
+                ContractCoercion.coerceInputBytes(contract.input, msg)
+            } else {
+                msg
+            }
+            val env = HashMap<String, Any?>().apply {
+                this[INPUT_VAR] = inputValue
+                putAll(inputValue)
+            }
             if (sharedSpecs.isNotEmpty()) {
                 for (spec in sharedSpecs) {
                     val seed = sharedSnapshot[spec.name] ?: emptyMap()
@@ -170,7 +194,17 @@ object PlaygroundFacade {
                     }
                 }
             }
+            val inputViolations = if (contract != null && contractMode != ContractValidationMode.OFF) {
+                ContractEnforcer.enforceInput(contractMode, contract.input, inputValue)
+            } else {
+                emptyList()
+            }
             val result = exec.run(env, stringifyKeys = true)
+            val outputViolations = if (contract != null && contractMode != ContractValidationMode.OFF) {
+                ContractEnforcer.enforceOutput(contractMode, contract.output, result)
+            } else {
+                emptyList()
+            }
             if (sharedSpecs.isNotEmpty()) {
                 val store = SharedStoreProvider.store
                 if (store != null) {
@@ -180,20 +214,24 @@ object PlaygroundFacade {
                     }
                 }
             }
-            val jsonElement = toJsonElement(result)
-            val output = prettyJson.encodeToString(jsonElement)
-            val explanationMap = tracer?.let { Debug.explainOutput(result) }
-            val explainJson = explanationMap?.let { prettyJson.encodeToString(toJsonElement(it)) }
-            val explainHuman = tracer?.let { TraceReport.from(it) }?.let(::renderTraceSummary)
-            val contract = if (includeContracts) {
-                val typeResolver = TypeResolver(typeDecls)
-                TransformContractBuilder(typeResolver, hostFns.keys).build(transform)
-            } else {
-                null
+            val output = when (parseOutputFormat(outputFormat)) {
+                PlaygroundOutputFormat.JSON -> formatJsonValue(result, pretty = true, numberMode = JsonNumberMode.SAFE)
+                PlaygroundOutputFormat.JSON_COMPACT -> formatJsonValue(result, pretty = false, numberMode = JsonNumberMode.SAFE)
+                PlaygroundOutputFormat.JSON_CANONICAL -> formatCanonicalJson(result, JsonNumberMode.SAFE)
             }
-            val inputContractJson = contract?.let { prettyJson.encodeToString(it.input) }
-            val outputContractJson = contract?.let { prettyJson.encodeToString(it.output) }
+            val explanationMap = tracer?.let { Debug.explainOutput(result) }
+            val explainJson = explanationMap?.let {
+                formatJsonValue(it, pretty = true, numberMode = JsonNumberMode.SAFE)
+            }
+            val explainHuman = tracer?.let { TraceReport.from(it) }?.let(::renderTraceSummary)
+            val inputContractJson = contract?.takeIf { includeContracts }?.let { built ->
+                ContractJsonRenderer.renderSchemaRequirement(built.input, includeContractSpans, pretty = true)
+            }
+            val outputContractJson = contract?.takeIf { includeContracts }?.let { built ->
+                ContractJsonRenderer.renderSchemaGuarantee(built.output, includeContractSpans, pretty = true)
+            }
             val contractSource = contract?.source?.name?.lowercase()
+            val contractWarnings = renderContractWarnings(inputViolations + outputViolations, contractMode)
 
             PlaygroundResult(
                 success = true,
@@ -206,6 +244,7 @@ object PlaygroundFacade {
                 inputContractJson = inputContractJson,
                 outputContractJson = outputContractJson,
                 contractSource = contractSource,
+                contractWarnings = contractWarnings,
             )
         } catch (ex: ParseException) {
             PlaygroundResult(
@@ -219,6 +258,7 @@ object PlaygroundFacade {
                 inputContractJson = null,
                 outputContractJson = null,
                 contractSource = null,
+                contractWarnings = null,
             )
         } catch (ex: SemanticException) {
             PlaygroundResult(
@@ -232,6 +272,7 @@ object PlaygroundFacade {
                 inputContractJson = null,
                 outputContractJson = null,
                 contractSource = null,
+                contractWarnings = null,
             )
         } catch (ex: Throwable) {
             PlaygroundResult(
@@ -245,6 +286,7 @@ object PlaygroundFacade {
                 inputContractJson = null,
                 outputContractJson = null,
                 contractSource = null,
+                contractWarnings = null,
             )
         } finally {
             Debug.tracer = priorTracer
@@ -315,67 +357,7 @@ $indented
     }
 
     private fun parseInput(inputJson: String): Map<String, Any?> {
-        if (inputJson.isBlank()) return emptyMap()
-        val element = compactJson.parseToJsonElement(inputJson)
-        val parsed = fromJsonElement(element)
-        if (parsed !is Map<*, *>) {
-            error("Input JSON must be an object at the top level.")
-        }
-        val out = LinkedHashMap<String, Any?>(parsed.size)
-        for ((k, v) in parsed) {
-            require(k is String) { "Input JSON keys must be strings." }
-            out[k] = v
-        }
-        return out
-    }
-
-    private fun fromJsonElement(element: JsonElement): Any? = when (element) {
-        is JsonNull -> null
-        is JsonPrimitive -> fromPrimitive(element)
-        is JsonObject -> LinkedHashMap<String, Any?>().apply {
-            for ((k, v) in element) {
-                this[k] = fromJsonElement(v)
-            }
-        }
-        is JsonArray -> ArrayList<Any?>(element.size).apply {
-            element.forEach { add(fromJsonElement(it)) }
-        }
-    }
-
-    private fun fromPrimitive(primitive: JsonPrimitive): Any? {
-        primitive.booleanOrNull?.let { return it }
-        primitive.longOrNull?.let { return it }
-        primitive.doubleOrNull?.let { return it }
-        return primitive.content
-    }
-
-    private fun toJsonElement(value: Any?): JsonElement = when (value) {
-        null -> JsonNull
-        is JsonElement -> value
-        is String -> JsonPrimitive(value)
-        is Boolean -> JsonPrimitive(value)
-        is Byte -> JsonPrimitive(value)
-        is Short -> JsonPrimitive(value)
-        is Int -> JsonPrimitive(value)
-        is Long -> JsonPrimitive(value)
-        is Float -> JsonPrimitive(value)
-        is Double -> JsonPrimitive(value)
-        is BLBigInt -> JsonPrimitive(value.toString())
-        is BLBigDec -> JsonPrimitive(value.toDouble())
-        is I32 -> JsonPrimitive(value.v)
-        is I64 -> JsonPrimitive(value.v)
-        is IBig -> JsonPrimitive(value.v.toString())
-        is Dec -> JsonPrimitive(value.v.toDouble())
-        is Map<*, *> -> JsonObject(buildMap {
-            value.entries.forEach { (k, v) ->
-                val key = k?.toString() ?: "null"
-                put(key, toJsonElement(v))
-            }
-        })
-        is Iterable<*> -> JsonArray(value.map { toJsonElement(it) })
-        is Array<*> -> JsonArray(value.map { toJsonElement(it) })
-        is Sequence<*> -> JsonArray(value.map { toJsonElement(it) }.toList())
-        else -> JsonPrimitive(value.toString())
+        return parseJsonObjectInput(inputJson, JsonParseOptions(numberMode = JsonNumberMode.SAFE))
     }
 }
 
@@ -392,6 +374,7 @@ public data class PlaygroundResult(
     val inputContractJson: String?,
     val outputContractJson: String?,
     val contractSource: String?,
+    val contractWarnings: String?,
 )
 
 @Serializable
@@ -424,4 +407,32 @@ private fun renderTraceSummary(report: TraceReport.TraceReportData): String? {
 
     val summary = sections.joinToString("\n\n").trim()
     return summary.ifEmpty { null }
+}
+
+private fun parseContractMode(raw: String): ContractValidationMode {
+    return try {
+        ContractValidationMode.parse(raw)
+    } catch (_: IllegalArgumentException) {
+        ContractValidationMode.OFF
+    }
+}
+
+private enum class PlaygroundOutputFormat {
+    JSON,
+    JSON_COMPACT,
+    JSON_CANONICAL,
+}
+
+private fun parseOutputFormat(raw: String): PlaygroundOutputFormat = when (raw.lowercase()) {
+    "json-compact", "json_compact" -> PlaygroundOutputFormat.JSON_COMPACT
+    "json-canonical", "json_canonical" -> PlaygroundOutputFormat.JSON_CANONICAL
+    else -> PlaygroundOutputFormat.JSON
+}
+
+private fun renderContractWarnings(
+    violations: List<ContractViolation>,
+    mode: ContractValidationMode,
+): String? {
+    if (mode != ContractValidationMode.WARN || violations.isEmpty()) return null
+    return violations.joinToString("\n") { violation -> formatContractViolation(violation) }
 }

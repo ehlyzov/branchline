@@ -6,6 +6,7 @@ import io.github.ehlyzov.branchline.NamedTypeRef
 import io.github.ehlyzov.branchline.PrimitiveType
 import io.github.ehlyzov.branchline.PrimitiveTypeRef
 import io.github.ehlyzov.branchline.RecordTypeRef
+import io.github.ehlyzov.branchline.SetTypeRef
 import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.TransformSignature
 import io.github.ehlyzov.branchline.TypeRef
@@ -131,6 +132,7 @@ public class TransformContractBuilder(
     private fun shapeFromTypeRef(typeRef: TypeRef): ValueShape = when (val resolved = typeResolver.resolve(typeRef)) {
         is PrimitiveTypeRef -> when (resolved.kind) {
             PrimitiveType.TEXT -> ValueShape.TextShape
+            PrimitiveType.BYTES -> ValueShape.Bytes
             PrimitiveType.NUMBER -> ValueShape.NumberShape
             PrimitiveType.BOOLEAN -> ValueShape.BooleanShape
             PrimitiveType.NULL -> ValueShape.Null
@@ -139,6 +141,7 @@ public class TransformContractBuilder(
         }
         is EnumTypeRef -> ValueShape.TextShape
         is ArrayTypeRef -> ValueShape.ArrayShape(shapeFromTypeRef(resolved.elementType))
+        is SetTypeRef -> ValueShape.SetShape(shapeFromTypeRef(resolved.elementType))
         is RecordTypeRef -> ValueShape.ObjectShape(
             schema = SchemaGuarantee(
                 fields = outputFieldsFromRecord(resolved),
