@@ -1,18 +1,20 @@
 ---
-status: Proposed
+status: Implemented
 depends_on: []
 blocks: []
 supersedes: []
 superseded_by: []
-last_updated: 2026-02-05
+last_updated: 2026-02-07
 changelog:
+  - date: 2026-02-07
+    change: "Implemented common CBOR encode/decode with BigInt/BigDec/Set tags, map key policy enforcement, and JVM/JS parity tests."
   - date: 2026-02-05
     change: "Drafted internal CBOR representation proposal based on data model and I/O contract research."
 ---
 # Internal CBOR Data Representation
 
-## Status (as of 2026-02-05)
-- Stage: proposal.
+## Status (as of 2026-02-07)
+- Stage: implemented.
 - Scope: internal Branchline-to-Branchline representation and in-process serialization.
 - Source: derived from the data model, I/O contract, and canonicalization rules.
 

@@ -296,12 +296,14 @@ public object BranchlineCli {
             val source = readTextFileOrThrow(options.scriptPath)
             val runtime = BranchlineProgram(source, traceSession?.tracer)
             val transform = runtime.selectTransform(options.transformName)
-            val input = loadInput(
+            val loadedInput = loadInput(
                 options.inputPath,
                 options.inputFormat,
                 options.jsonNumberMode,
                 options.jsonKeyMode,
             )
+            emitConversionWarnings(loadedInput.warnings)
+            val input = loadedInput.value
             val sharedSeed = seedSharedStore(
                 options.sharedOptions,
                 runtime.sharedDecls(),
@@ -388,12 +390,14 @@ public object BranchlineCli {
             val transform = runtime.selectTransform(transformName)
             val bytecode = BytecodeIO.deserializeBytecode(artifact.bytecode)
             val vmExec = runtime.prepareVmExec(transform, bytecode)
-            val input = loadInput(
+            val loadedInput = loadInput(
                 options.inputPath,
                 options.inputFormat,
                 options.jsonNumberMode,
                 options.jsonKeyMode,
             )
+            emitConversionWarnings(loadedInput.warnings)
+            val input = loadedInput.value
             val sharedSeed = seedSharedStore(
                 options.sharedOptions,
                 runtime.sharedDecls(),
@@ -1271,23 +1275,42 @@ public object BranchlineCli {
     }
 }
 
+private data class LoadedInput(
+    val value: Map<String, Any?>,
+    val warnings: List<String>,
+)
+
 private fun loadInput(
     path: String?,
     format: InputFormat,
     jsonNumberMode: JsonNumberMode,
     jsonKeyMode: JsonKeyMode,
-): Map<String, Any?> {
+): LoadedInput {
     val text = when {
         path == null -> ""
         path == "-" -> readStdinOrThrow()
         else -> readTextFileOrThrow(path)
     }
-    if (text.isBlank()) return emptyMap()
+    if (text.isBlank()) {
+        return LoadedInput(
+            value = emptyMap(),
+            warnings = emptyList(),
+        )
+    }
     return try {
-        when (format) {
+        val value = when (format) {
             InputFormat.JSON -> parseJsonInput(text, jsonNumberMode, jsonKeyMode)
             InputFormat.XML -> parseXmlInput(text)
         }
+        val warnings = collectInputConversionWarnings(
+            rawText = text,
+            format = format,
+            parsed = value,
+        )
+        LoadedInput(
+            value = value,
+            warnings = warnings,
+        )
     } catch (ex: JsonInputException) {
         throw CliException(ex.message ?: "Invalid JSON input", kind = CliErrorKind.INPUT)
     } catch (ex: CliException) {
@@ -1378,6 +1401,7 @@ private fun emitOutput(
         writeOutputFiles(result, writeOutputDir, writeOutputMap)
     }
     val selected = if (outputPath == null) result else selectOutputByPath(result, outputPath)
+    emitConversionWarnings(collectOutputConversionWarnings(selected, format, jsonNumberMode))
     val output = formatOutputValue(selected, format, outputRaw, jsonNumberMode)
     println(output)
     if (outputFile != null) {
@@ -1385,6 +1409,12 @@ private fun emitOutput(
     }
     if (outputLines != null) {
         writeOutputLines(selected, format, outputRaw, outputLines, jsonNumberMode)
+    }
+}
+
+private fun emitConversionWarnings(warnings: List<String>) {
+    for (warning in warnings) {
+        printError("Conversion warning: $warning")
     }
 }
 

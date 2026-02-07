@@ -19,7 +19,7 @@ changelog:
 Branchline-to-Branchline exchange benefits from a stable CBOR byte sequence for hashing, signatures, and caching. This proposal formalizes when deterministic CBOR encoding is required and how it is applied.
 
 ## Current Behavior
-- CBOR interchange is not yet implemented; see `development/runtime/cbor-internal-representation.md` for mapping.
+- CBOR interchange is implemented with type-fidelity guarantees; deterministic ordering/shortest-form guarantees are still pending.
 
 ## Proposed Rules
 - Deterministic mode uses RFC 8949 Section 4.2 encoding.
