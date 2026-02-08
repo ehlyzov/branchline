@@ -223,7 +223,6 @@ public class TransformContractV2Synthesizer(
             shape = value.shape,
             required = true,
             origin = OriginKind.OUTPUT,
-            evidence = value.evidence,
         )
         outputRoot = if (outputRoot == null) node else mergeGuaranteeNodes(outputRoot!!, node)
     }
@@ -1041,7 +1040,7 @@ public class TransformContractV2Synthesizer(
             evidence = emptyList(),
         )
         for (record in inputPathRecords.values) {
-            addRequirementPath(root, record.path, record.shape, record.evidence)
+            addRequirementPath(root, record.path, record.shape)
         }
         val optionalTopLevel = topLevelOptionalFromAnyOf(requirementExprs)
         if (optionalTopLevel.isNotEmpty()) {
@@ -1084,7 +1083,6 @@ public class TransformContractV2Synthesizer(
         root: RequirementNodeV2,
         path: AccessPath,
         shape: ValueShape,
-        evidence: List<InferenceEvidenceV2>,
     ) {
         if (path.segments.isEmpty()) return
         var cursor = root
@@ -1110,12 +1108,12 @@ public class TransformContractV2Synthesizer(
                     shape = defaultShape,
                     open = true,
                     children = linkedMapOf(),
-                    evidence = if (isLeaf) evidence else emptyList(),
+                    evidence = emptyList(),
                 )
             } else {
                 existing.copy(
                     shape = mergeValueShape(existing.shape, defaultShape),
-                    evidence = if (isLeaf) (existing.evidence + evidence).distinct() else existing.evidence,
+                    evidence = emptyList(),
                 )
             }
             cursor.children[name] = next
@@ -1140,7 +1138,6 @@ public class TransformContractV2Synthesizer(
         shape: ValueShape,
         required: Boolean,
         origin: OriginKind,
-        evidence: List<InferenceEvidenceV2>,
     ): GuaranteeNodeV2 {
         if (shape is ValueShape.ObjectShape) {
             val children = LinkedHashMap<String, GuaranteeNodeV2>()
@@ -1149,7 +1146,6 @@ public class TransformContractV2Synthesizer(
                     shape = field.shape,
                     required = field.required,
                     origin = field.origin,
-                    evidence = evidence,
                 )
             }
             return GuaranteeNodeV2(
@@ -1158,7 +1154,7 @@ public class TransformContractV2Synthesizer(
                 open = !shape.closed,
                 origin = origin,
                 children = children,
-                evidence = evidence,
+                evidence = emptyList(),
             )
         }
         return GuaranteeNodeV2(
@@ -1167,7 +1163,7 @@ public class TransformContractV2Synthesizer(
             open = true,
             origin = origin,
             children = linkedMapOf(),
-            evidence = evidence,
+            evidence = emptyList(),
         )
     }
 
@@ -1189,7 +1185,7 @@ public class TransformContractV2Synthesizer(
             open = left.open || right.open,
             origin = if (left.origin == right.origin) left.origin else OriginKind.MERGED,
             children = mergedChildren,
-            evidence = (left.evidence + right.evidence).distinct(),
+            evidence = emptyList(),
         )
     }
 
@@ -1214,7 +1210,7 @@ public class TransformContractV2Synthesizer(
     private fun mergeAbstractValues(left: AbstractValue, right: AbstractValue): AbstractValue = AbstractValue(
         shape = mergeValueShape(left.shape, right.shape),
         provenance = left.provenance + right.provenance,
-        evidence = (left.evidence + right.evidence).distinct(),
+        evidence = emptyList(),
     )
 
     private fun mergeValueShape(left: ValueShape, right: ValueShape): ValueShape {
@@ -1280,16 +1276,14 @@ public class TransformContractV2Synthesizer(
         }
     }
 
-    private fun recordInputPath(path: AccessPath, shape: ValueShape, token: Token, ruleId: String) {
+    private fun recordInputPath(path: AccessPath, shape: ValueShape, _token: Token, _ruleId: String) {
         val key = opaqueKey(path)
         val existing = inputPathRecords[key]
-        val nextEvidence = evidence(token, ruleId)
         if (existing == null) {
-            inputPathRecords[key] = InputPathRecord(path, shape, mutableListOf(nextEvidence))
+            inputPathRecords[key] = InputPathRecord(path, shape)
             return
         }
         existing.shape = mergeValueShape(existing.shape, shape)
-        existing.evidence += nextEvidence
     }
 
     private fun enforceProvenanceShape(
@@ -1572,7 +1566,6 @@ public class TransformContractV2Synthesizer(
     private data class InputPathRecord(
         val path: AccessPath,
         var shape: ValueShape,
-        val evidence: MutableList<InferenceEvidenceV2>,
     )
 
     private data class ResolvedLocalTarget(
