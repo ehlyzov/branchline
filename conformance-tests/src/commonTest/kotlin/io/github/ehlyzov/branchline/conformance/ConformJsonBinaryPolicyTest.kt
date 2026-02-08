@@ -55,6 +55,7 @@ class ConformJsonBinaryPolicyTest {
             ),
             open = true,
             dynamicAccess = emptyList(),
+            requiredAnyOf = emptyList(),
         )
         val input = mapOf("payload" to "AQID")
         val output = ContractCoercion.coerceInputBytes(requirement, input)

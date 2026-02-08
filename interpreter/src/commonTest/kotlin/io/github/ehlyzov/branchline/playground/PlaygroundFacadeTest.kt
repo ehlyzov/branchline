@@ -1,6 +1,7 @@
 package io.github.ehlyzov.branchline.playground
 
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import playground.PlaygroundFacade
 import kotlin.test.Test
@@ -147,6 +148,27 @@ public class PlaygroundFacadeTest {
         val outputFields = outputContract["fields"]?.jsonObject
         assertTrue(inputFields?.containsKey("name") == true)
         assertTrue(outputFields?.containsKey("greeting") == true)
+    }
+
+    @Test
+    public fun contractsRenderCoalesceFallbackGroups() {
+        val program = """
+            LET root = input.testsuites ?? input.testsuite ?? {};
+            OUTPUT { status: root["@name"] ?? "missing" }
+        """.trimIndent()
+        val result = PlaygroundFacade.run(
+            program,
+            "{}",
+            includeContracts = true
+        )
+
+        assertTrue(result.success)
+        val inputContract = Json.parseToJsonElement(result.inputContractJson ?: error("missing input contract")).jsonObject
+        val requiredAnyOf = inputContract["requiredAnyOf"]?.jsonArray
+        assertNotNull(requiredAnyOf)
+        assertEquals(1, requiredAnyOf.size)
+        val group = requiredAnyOf[0].jsonArray
+        assertEquals(2, group.size)
     }
 
     @Test

@@ -21,6 +21,7 @@ public data class SchemaRequirement(
     val fields: LinkedHashMap<String, FieldConstraint>,
     val open: Boolean,
     val dynamicAccess: List<DynamicAccess>,
+    val requiredAnyOf: List<RequiredAnyOfGroup>,
 )
 
 @Serializable
@@ -58,6 +59,11 @@ public data class DynamicAccess(
     val path: AccessPath,
     val valueShape: ValueShape?,
     val reason: DynamicReason,
+)
+
+@Serializable
+public data class RequiredAnyOfGroup(
+    val alternatives: List<AccessPath>,
 )
 
 @Serializable

@@ -56,6 +56,7 @@ public object ContractJsonRenderer {
             "fields" to JsonObject(fields),
             "open" to JsonPrimitive(requirement.open),
             "dynamicAccess" to encodeDynamicAccess(requirement.dynamicAccess),
+            "requiredAnyOf" to encodeRequiredAnyOf(requirement.requiredAnyOf),
         )
         return JsonObject(payload)
     }
@@ -129,6 +130,13 @@ public object ContractJsonRenderer {
 
     private fun encodeDynamicAccess(items: List<DynamicAccess>): JsonElement =
         JsonArray(items.map { item -> encodeDynamicItem(item.path, item.valueShape, item.reason) })
+
+    private fun encodeRequiredAnyOf(groups: List<RequiredAnyOfGroup>): JsonElement =
+        JsonArray(
+            groups.map { group ->
+                JsonArray(group.alternatives.map { path -> encodeAccessPath(path) })
+            }
+        )
 
     private fun encodeDynamicFields(items: List<DynamicField>): JsonElement =
         JsonArray(items.map { item -> encodeDynamicItem(item.path, item.valueShape, item.reason) })

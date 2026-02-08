@@ -11,6 +11,11 @@ Expressions compute values and support operators, function calls, and data const
 - Use `??` to provide fallbacks for missing or null fields.
 - Lambdas `(x) -> expr` feed higher-order stdlib functions (`MAP`, `FILTER`, `REDUCE`).
 
+## Coalesce contracts
+- Inferred input contracts treat `??` as a fallback chain.
+- Example: `input.testsuites ?? input.testsuite` emits a one-of contract group (`requiredAnyOf`) instead of requiring both fields unconditionally.
+- In warn/strict contract modes, at least one fallback path in each group must be present with a non-null value.
+
 ## Constraints
 - `CASE` requires an `ELSE` branch.
 - `TRY/CATCH` is an expression and can be used in `LET`, `CASE`, or output templates.

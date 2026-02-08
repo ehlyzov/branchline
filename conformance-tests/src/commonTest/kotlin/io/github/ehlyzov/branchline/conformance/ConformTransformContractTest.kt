@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import io.github.ehlyzov.branchline.contract.AccessSegment
 import io.github.ehlyzov.branchline.Lexer
 import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.TransformDecl
@@ -80,6 +81,32 @@ class ConformTransformContractTest {
         """.trimIndent()
         val contract = synthesizeContract(program)
         assertTrue(contract.input.dynamicAccess.isNotEmpty())
+    }
+
+    @Test
+    fun coalesce_fallbacks_emit_required_any_of_group() {
+        val program = """
+            TRANSFORM T {
+                LET root = input.testsuites ?? input.testsuite ?? {};
+                OUTPUT { name: root["@name"] ?? "none" }
+            }
+        """.trimIndent()
+        val contract = synthesizeContract(program)
+
+        val testsuites = contract.input.fields["testsuites"]
+        val testsuite = contract.input.fields["testsuite"]
+        assertNotNull(testsuites)
+        assertNotNull(testsuite)
+        assertEquals(false, testsuites.required)
+        assertEquals(false, testsuite.required)
+        assertEquals(1, contract.input.requiredAnyOf.size)
+
+        val alternatives = contract.input.requiredAnyOf.first().alternatives
+        assertEquals(2, alternatives.size)
+        val first = alternatives[0].segments.singleOrNull() as? AccessSegment.Field
+        val second = alternatives[1].segments.singleOrNull() as? AccessSegment.Field
+        assertEquals("testsuites", first?.name)
+        assertEquals("testsuite", second?.name)
     }
 
     private fun synthesizeContract(program: String) = TransformShapeSynthesizer().synthesize(parseTransform(program))
