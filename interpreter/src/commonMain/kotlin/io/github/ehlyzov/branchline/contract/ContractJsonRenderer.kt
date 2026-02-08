@@ -8,78 +8,15 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 
-public enum class ContractJsonVersion {
-    V1,
-    V2,
-}
-
 public object ContractJsonRenderer {
     private val prettyJson = Json { prettyPrint = true }
     private val compactJson = Json
-
-    public fun renderInput(
-        contract: TransformContract,
-        includeSpans: Boolean,
-        version: ContractJsonVersion = ContractJsonVersion.V2,
-        pretty: Boolean = true,
-    ): String = when (version) {
-        ContractJsonVersion.V1 -> renderSchemaRequirement(contract.input, includeSpans, pretty)
-        ContractJsonVersion.V2 -> renderSchemaRequirementV2(
-            TransformContractV2Adapter.fromV1(contract).input,
-            includeSpans,
-            pretty,
-        )
-    }
-
-    public fun renderOutput(
-        contract: TransformContract,
-        includeSpans: Boolean,
-        version: ContractJsonVersion = ContractJsonVersion.V2,
-        pretty: Boolean = true,
-    ): String = when (version) {
-        ContractJsonVersion.V1 -> renderSchemaGuarantee(contract.output, includeSpans, pretty)
-        ContractJsonVersion.V2 -> renderSchemaGuaranteeV2(
-            TransformContractV2Adapter.fromV1(contract).output,
-            includeSpans,
-            pretty,
-        )
-    }
-
-    public fun inputElement(
-        contract: TransformContract,
-        includeSpans: Boolean,
-        version: ContractJsonVersion = ContractJsonVersion.V2,
-    ): JsonElement = when (version) {
-        ContractJsonVersion.V1 -> encodeRequirement(contract.input, includeSpans)
-        ContractJsonVersion.V2 -> encodeRequirementV2(TransformContractV2Adapter.fromV1(contract).input, includeSpans)
-    }
-
-    public fun outputElement(
-        contract: TransformContract,
-        includeSpans: Boolean,
-        version: ContractJsonVersion = ContractJsonVersion.V2,
-    ): JsonElement = when (version) {
-        ContractJsonVersion.V1 -> encodeGuarantee(contract.output, includeSpans)
-        ContractJsonVersion.V2 -> encodeGuaranteeV2(TransformContractV2Adapter.fromV1(contract).output, includeSpans)
-    }
 
     public fun inputElement(contract: TransformContractV2, includeSpans: Boolean): JsonElement =
         encodeRequirementV2(contract.input, includeSpans)
 
     public fun outputElement(contract: TransformContractV2, includeSpans: Boolean): JsonElement =
         encodeGuaranteeV2(contract.output, includeSpans)
-
-    public fun renderSchemaRequirement(
-        requirement: SchemaRequirement,
-        includeSpans: Boolean,
-        pretty: Boolean = true,
-    ): String = encodeElement(encodeRequirement(requirement, includeSpans), pretty)
-
-    public fun renderSchemaGuarantee(
-        guarantee: SchemaGuarantee,
-        includeSpans: Boolean,
-        pretty: Boolean = true,
-    ): String = encodeElement(encodeGuarantee(guarantee, includeSpans), pretty)
 
     public fun renderSchemaRequirementV2(
         requirement: RequirementSchemaV2,

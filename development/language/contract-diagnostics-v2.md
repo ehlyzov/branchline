@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: ['language/contract-model-v2', 'language/contract-inference-static-analysis']
 blocks: []
 supersedes: []
@@ -12,6 +12,8 @@ changelog:
     change: "Implemented ContractValidatorV2, ContractEnforcerV2, and deterministic diagnostics rendering."
   - date: 2026-02-08
     change: "Wired V2 validation and diagnostics into CLI run/exec and Playground contract warnings."
+  - date: 2026-02-08
+    change: "Marked implemented after M9 removal of public V1 contract output."
 ---
 # Contract Diagnostics V2
 
@@ -49,4 +51,4 @@ Contract diagnostics are upgraded to report deterministic, path-rich mismatches 
 
 ## Compatibility Policy
 - V2 diagnostics are canonical output.
-- Legacy V1 diagnostics are removed once V2 runtime validation is fully wired.
+- Legacy V1 diagnostics are removed from public CLI/Playground contract surfaces.

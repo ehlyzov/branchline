@@ -6,6 +6,15 @@ import io.github.ehlyzov.branchline.runtime.base64Decode
 
 public object ContractCoercion {
     public fun coerceInputBytes(
+        requirement: RequirementSchemaV2,
+        value: Map<String, Any?>,
+    ): Map<String, Any?> {
+        val coerced = coerceObjectFieldsFromRequirementNode(value, requirement.root)
+        @Suppress("UNCHECKED_CAST")
+        return coerced as Map<String, Any?>
+    }
+
+    public fun coerceInputBytes(
         requirement: SchemaRequirement,
         value: Map<String, Any?>,
     ): Map<String, Any?> {
@@ -18,6 +27,26 @@ public object ContractCoercion {
         value: Map<*, *>,
         fields: Map<String, FieldConstraint>,
     ): Map<Any?, Any?> = coerceObjectFields(value) { key -> fields[key]?.shape }
+
+    private fun coerceObjectFieldsFromRequirementNode(
+        value: Map<*, *>,
+        node: RequirementNodeV2,
+    ): Map<Any?, Any?> {
+        var changed = false
+        val out = LinkedHashMap<Any?, Any?>(value.size)
+        for ((rawKey, rawValue) in value) {
+            val keyName = rawKey as? String
+            val child = if (keyName == null) null else node.children[keyName]
+            val coerced = if (child == null) rawValue else coerceValueForRequirementNode(rawValue, child)
+            if (!changed && coerced !== rawValue) {
+                changed = true
+            }
+            out[rawKey] = coerced
+        }
+        if (changed) return out
+        @Suppress("UNCHECKED_CAST")
+        return value as Map<Any?, Any?>
+    }
 
     private fun coerceObjectFieldsFromShapes(
         value: Map<*, *>,
@@ -51,6 +80,16 @@ public object ContractCoercion {
         is ValueShape.ObjectShape -> coerceObject(value, shape)
         is ValueShape.Union -> coerceUnion(value, shape)
         else -> value
+    }
+
+    private fun coerceValueForRequirementNode(
+        value: Any?,
+        node: RequirementNodeV2,
+    ): Any? {
+        val coerced = coerceValue(value, node.shape)
+        if (node.children.isEmpty()) return coerced
+        val obj = coerced as? Map<*, *> ?: return coerced
+        return coerceObjectFieldsFromRequirementNode(obj, node)
     }
 
     private fun coerceBytes(value: Any?): Any? {

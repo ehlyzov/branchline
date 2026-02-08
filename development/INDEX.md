@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Completed Contract Inference V2 M9: removed public V1 contract JSON output, added extension hooks, quality-gate tests, and playground example; moved V2 docs/plans to implemented."
+  - date: 2026-02-08
     change: "Completed Contract Inference V2 M8: CLI/playground/runtime moved to V2 contracts by default, with inspect JSON version switch."
   - date: 2026-02-08
     change: "Completed Contract Inference V2 M7: V2 validator/enforcer and deterministic diagnostics renderer."
@@ -95,11 +97,6 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Conformance Suite](quality/conformance-suite.md) -- parity coverage expansion.
 - [JSONata Benchmarking](perf/jsonata-benchmarking.md) -- case matrix + validation.
 - [Interpreter Performance Tasks](perf/interpreter-performance-tasks.md) -- perf task backlog.
-- [Contract Model V2](language/contract-model-v2.md) -- nested contract graph model and evidence metadata.
-- [Contract Inference Static Analysis (V2)](language/contract-inference-static-analysis.md) -- flow-sensitive inference design with type-eval rules.
-- [Contract Diagnostics V2](language/contract-diagnostics-v2.md) -- deterministic, evidence-aware mismatch reporting.
-- [Contract Inference V2 Milestone Plan](planning/contract-inference-v2-milestone-plan.md) -- implementation sequence and guardrails.
-- [Contract Inference Quality Gates](docs/contract-inference-quality-gates.md) -- precision, parity, and performance gates.
 
 ### Implemented
 - [CLI Rollout](tooling/cli-rollout.md) -- JVM/JS CLI shipped.
@@ -113,6 +110,11 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Input Aliases](language/input-aliases.md) -- `input` default with `row` compatibility alias.
 - [Transform Contracts](language/transform-contracts.md) -- signatures and contract inference.
 - [Transform Contracts Next Phase](language/transform-contracts-next.md) -- runtime validation and contract JSON export.
+- [Contract Model V2](language/contract-model-v2.md) -- nested contract graph model, evidence metadata, and runtime-fit extension points.
+- [Contract Inference Static Analysis (V2)](language/contract-inference-static-analysis.md) -- flow-sensitive inference with binary type-eval extension rules.
+- [Contract Diagnostics V2](language/contract-diagnostics-v2.md) -- deterministic, evidence-aware mismatch reporting for V2 validator/enforcer.
+- [Contract Inference V2 Milestone Plan](planning/contract-inference-v2-milestone-plan.md) -- completed M0-M9 implementation sequence and outcomes.
+- [Contract Inference Quality Gates](docs/contract-inference-quality-gates.md) -- implemented precision/parity/performance gates and metric tests.
 - [Transform Options](language/transform-options.md) -- per-transform OPTIONS blocks.
 - [Duplicate JSON Key Policy](language/json-duplicate-keys.md) -- error/last/first handling.
 - [JSON Canonicalization Mode](language/json-canonicalization.md) -- deterministic JSON ordering + numeric formatting.

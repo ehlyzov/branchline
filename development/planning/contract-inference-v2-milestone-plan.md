@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: [
   'language/contract-model-v2',
   'language/contract-inference-static-analysis',
@@ -28,6 +28,8 @@ changelog:
     change: "Completed M7 with ContractValidatorV2 and deterministic diagnostics model/rendering."
   - date: 2026-02-08
     change: "Completed M8 by wiring CLI/playground contract paths to V2 by default with JSON version switch support."
+  - date: 2026-02-08
+    change: "Completed M9: removed public V1 contract JSON output, added runtime-fit/type-eval extension hooks, quality-gate tests, and new playground example."
 ---
 # Contract Inference V2 Milestone Plan
 
@@ -50,7 +52,7 @@ changelog:
 7. [x] M6: Add static stdlib shape summaries.
 8. [x] M7: Add validator V2 and diagnostics V2.
 9. [x] M8: Wire CLI/playground/runtime to V2 contracts as default.
-10. [ ] M9: Remove V1 public contract output and finalize docs/tests/examples.
+10. [x] M9: Remove V1 public contract output and finalize docs/tests/examples.
 
 ## Guardrails
 - Always update `development/INDEX.md` when milestone status changes.

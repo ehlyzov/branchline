@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: ['language/transform-contracts', 'language/transform-contracts-next']
 blocks: []
 supersedes: []
@@ -10,6 +10,8 @@ changelog:
     change: "Created Contract Model V2 proposal with nested requirements, evidence metadata, and runtime-fit extension points."
   - date: 2026-02-08
     change: "Implemented core Contract V2 data model and migration adapter in interpreter contract package."
+  - date: 2026-02-08
+    change: "Marked implemented after M9: V2-only public contract JSON and runtime-fit/type-eval extension hooks."
 ---
 # Contract Model V2
 
@@ -49,6 +51,9 @@ Contract Model V2 replaces the flat field map model with a nested graph model th
   - returns additive evidence and confidence deltas
   - never upgrades opaque dynamic regions to strict guarantees without explicit policy.
 - Versioned merge policy so static and observed evidence remain attributable.
+- Implemented API anchors:
+  - `interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractFitExtensionsV2.kt`
+  - `TransformContractBuilder.buildV2(..., runtimeExamples = ...)` extension hook.
 
 ## Migration Direction
 - V2 becomes the only public contract format after implementation is complete.

@@ -9,17 +9,15 @@ import kotlinx.serialization.json.jsonObject
 class ContractJsonRendererV2Test {
     @Test
     fun v2_json_is_deterministic_for_same_contract() {
-        val contract = sampleContract()
-        val first = ContractJsonRenderer.renderInput(
-            contract = contract,
+        val contract = TransformContractV2Adapter.fromV1(sampleContract())
+        val first = ContractJsonRenderer.renderSchemaRequirementV2(
+            requirement = contract.input,
             includeSpans = false,
-            version = ContractJsonVersion.V2,
             pretty = true,
         )
-        val second = ContractJsonRenderer.renderInput(
-            contract = contract,
+        val second = ContractJsonRenderer.renderSchemaRequirementV2(
+            requirement = contract.input,
             includeSpans = false,
-            version = ContractJsonVersion.V2,
             pretty = true,
         )
         assertEquals(first, second)
@@ -97,4 +95,3 @@ class ContractJsonRendererV2Test {
         return TransformContract(input = input, output = output, source = ContractSource.INFERRED)
     }
 }
-
