@@ -26,6 +26,8 @@ changelog:
     change: "Completed cleanup precision pass: literal bracket key/index access treated as static, opaque regions restricted to truly dynamic paths, and empty-array append flow stabilized."
   - date: 2026-02-08
     change: "Added lattice follow-up scope: explicit `Never` bottom, `Any` top, and join/union normalization rules for nested collection and object forms."
+  - date: 2026-02-08
+    change: "Aligned flow-sensitive writes and input provenance constraints with top-lattice semantics to preserve conformance precision on SET/GET/cast scenarios."
 ---
 # Contract Inference Static Analysis (V2)
 

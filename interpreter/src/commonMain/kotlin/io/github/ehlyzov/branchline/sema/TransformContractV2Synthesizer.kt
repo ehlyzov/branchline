@@ -1406,7 +1406,13 @@ public class TransformContractV2Synthesizer(
             inputPathRecords[key] = InputPathRecord(path, shape)
             return
         }
-        existing.shape = mergeValueShape(existing.shape, shape)
+        existing.shape = mergeInputPathShape(existing.shape, shape)
+    }
+
+    private fun mergeInputPathShape(existing: ValueShape, next: ValueShape): ValueShape {
+        if (existing == ValueShape.Unknown && next != ValueShape.Unknown) return next
+        if (next == ValueShape.Unknown) return existing
+        return mergeValueShape(existing, next)
     }
 
     private fun enforceProvenanceShape(
@@ -1495,7 +1501,7 @@ public class TransformContractV2Synthesizer(
                 }
                 val fields = LinkedHashMap(shape.schema.fields)
                 val existing = fields[key]
-                val next = writeShapeAtPath(existing?.shape ?: ValueShape.Unknown, tail, valueShape)
+                val next = writeShapeAtPath(existing?.shape ?: ValueShape.Never, tail, valueShape)
                 fields[key] = FieldShape(
                     required = true,
                     shape = next,
@@ -1553,7 +1559,7 @@ public class TransformContractV2Synthesizer(
                 }
                 val fields = LinkedHashMap(shape.schema.fields)
                 val existing = fields[key]
-                val child = ensureObjectPath(existing?.shape ?: ValueShape.Unknown, tail)
+                val child = ensureObjectPath(existing?.shape ?: ValueShape.Never, tail)
                 fields[key] = FieldShape(
                     required = existing?.required ?: true,
                     shape = child,
@@ -1573,7 +1579,7 @@ public class TransformContractV2Synthesizer(
                     is AccessSegment.Index -> head.index
                     AccessSegment.Dynamic -> return shape
                 }
-                val child = ensureObjectPath(ValueShape.Unknown, tail)
+                val child = ensureObjectPath(ValueShape.Never, tail)
                 ValueShape.ObjectShape(
                     schema = SchemaGuarantee(
                         fields = linkedMapOf(
