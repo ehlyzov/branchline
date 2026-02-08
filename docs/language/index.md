@@ -25,6 +25,7 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - Use `--json-numbers strict` to reject values outside the safe JSON numeric range.
 - JSON numeric key conversion is opt-in via `--json-key-mode numeric`; it converts non-negative integer keys without leading zeros (except `0`) for nested objects (top-level input keys remain strings).
 - JSON bytes are accepted only when contracts declare `bytes`; they must be base64 strings using the standard alphabet with `=` padding and no line breaks.
+- Inferred input contracts are coalesce-aware: `a ?? b` fallback reads are emitted as one-of groups (`requiredAnyOf`) instead of forcing both fields as unconditional required inputs.
 - XML input maps attributes to `@name` keys.
 - XML pure text content maps to `$`; mixed content text segments map to `$1`, `$2`, ...
 - XML repeated sibling elements map to arrays.

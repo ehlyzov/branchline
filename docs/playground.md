@@ -27,14 +27,21 @@ Experiment with Branchline directly in your browser—no installs required. Pick
     if (!link || typeof window === 'undefined') {
       return;
     }
-    const params = new URLSearchParams(window.location.search);
-    const example = params.get('example');
-    if (!example) {
-      return;
-    }
-    const target = new URL(link.getAttribute('href') || '../playground/', window.location.href);
-    target.searchParams.set('example', example);
-    link.setAttribute('href', target.toString());
+    const setHref = () => {
+      const target = new URL(link.getAttribute('href') || '../playground/', window.location.href);
+      target.search = '';
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = params.get('example');
+      const selector = document.querySelector('[data-playground-example-select]');
+      const fromPlayground = selector && 'value' in selector ? selector.value : null;
+      const example = fromPlayground || fromUrl;
+      if (example) {
+        target.searchParams.set('example', example);
+      }
+      link.setAttribute('href', target.toString());
+    };
+    setHref();
+    link.addEventListener('click', setHref);
   })();
 </script>
 

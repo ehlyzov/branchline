@@ -38,6 +38,7 @@ public class TransformContractBuilder(
                 fields = linkedMapOf(),
                 open = true,
                 dynamicAccess = emptyList(),
+                requiredAnyOf = emptyList(),
             )
         val outputGuarantee = signature.output?.let { outputFromTypeRef(it) }
             ?: SchemaGuarantee(
@@ -59,6 +60,7 @@ public class TransformContractBuilder(
                 fields = linkedMapOf(),
                 open = true,
                 dynamicAccess = emptyList(),
+                requiredAnyOf = emptyList(),
             )
         }
         val fields = LinkedHashMap<String, FieldConstraint>()
@@ -73,6 +75,7 @@ public class TransformContractBuilder(
             fields = fields,
             open = false,
             dynamicAccess = emptyList(),
+            requiredAnyOf = emptyList(),
         )
     }
 

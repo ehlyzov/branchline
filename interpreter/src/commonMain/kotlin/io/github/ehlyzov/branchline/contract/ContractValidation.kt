@@ -26,6 +26,7 @@ public enum class ContractValidationMode {
 
 public enum class ContractViolationKind {
     MISSING_FIELD,
+    MISSING_ANY_OF_GROUP,
     EXTRA_FIELD,
     TYPE_MISMATCH,
     EXPECTED_OBJECT,
@@ -182,6 +183,17 @@ public class ContractValidator {
                     expected = constraint.shape,
                     actual = null,
                     kind = ContractViolationKind.MISSING_FIELD,
+                )
+            }
+        }
+        for (group in requirement.requiredAnyOf) {
+            if (group.alternatives.isEmpty()) continue
+            if (!isAnyRequiredPathPresent(resolvedFields, group)) {
+                violations += ContractViolation(
+                    path = renderAnyOfGroup(path, group),
+                    expected = null,
+                    actual = null,
+                    kind = ContractViolationKind.MISSING_ANY_OF_GROUP,
                 )
             }
         }
@@ -409,6 +421,73 @@ public class ContractValidator {
     private fun appendIndex(path: List<PathSegment>, index: Int): List<PathSegment> =
         path + PathSegment.Index(index)
 
+    private fun isAnyRequiredPathPresent(
+        input: Map<String?, Any?>,
+        group: RequiredAnyOfGroup,
+    ): Boolean = group.alternatives.any { path ->
+        resolveRequiredPathValue(input, path.segments) != null
+    }
+
+    private fun resolveRequiredPathValue(root: Any?, segments: List<AccessSegment>): Any? {
+        var current: Any? = root
+        for (segment in segments) {
+            current = when (segment) {
+                is AccessSegment.Field -> resolveFieldSegment(current, segment.name)
+                is AccessSegment.Index -> resolveIndexSegment(current, segment.index)
+                AccessSegment.Dynamic -> null
+            } ?: return null
+        }
+        return current
+    }
+
+    private fun resolveFieldSegment(value: Any?, name: String): Any? {
+        val map = value as? Map<*, *> ?: return null
+        return lookupMapValue(map, name)
+    }
+
+    private fun resolveIndexSegment(value: Any?, index: String): Any? {
+        val map = value as? Map<*, *>
+        if (map != null) {
+            return lookupMapValue(map, index)
+        }
+        val parsedIndex = index.toIntOrNull() ?: return null
+        if (parsedIndex < 0) return null
+        return when (value) {
+            is List<*> -> value.getOrNull(parsedIndex)
+            is Array<*> -> value.getOrNull(parsedIndex)
+            else -> null
+        }
+    }
+
+    private fun lookupMapValue(map: Map<*, *>, key: String): Any? {
+        for ((rawKey, rawValue) in map) {
+            if (rawKey?.toString() == key) {
+                return rawValue
+            }
+        }
+        return null
+    }
+
+    private fun renderAnyOfGroup(path: List<PathSegment>, group: RequiredAnyOfGroup): String {
+        val rootPath = renderPath(path)
+        val alternatives = group.alternatives.joinToString(" | ") { alternative ->
+            renderAccessPath(rootPath, alternative)
+        }
+        return "$rootPath one-of ($alternatives)"
+    }
+
+    private fun renderAccessPath(rootPath: String, path: AccessPath): String {
+        val builder = StringBuilder(rootPath)
+        for (segment in path.segments) {
+            when (segment) {
+                is AccessSegment.Field -> builder.append('.').append(segment.name)
+                is AccessSegment.Index -> builder.append('[').append(segment.index).append(']')
+                AccessSegment.Dynamic -> builder.append("[*]")
+            }
+        }
+        return builder.toString()
+    }
+
     private fun renderPath(path: List<PathSegment>): String {
         val builder = StringBuilder()
         path.forEachIndexed { idx, segment ->
@@ -439,6 +518,7 @@ public fun formatContractViolation(violation: ContractViolation): String {
     val actual = violation.actual?.let(::renderValueShapeLabel)
     return when (violation.kind) {
         ContractViolationKind.MISSING_FIELD -> "Missing required field at ${violation.path}"
+        ContractViolationKind.MISSING_ANY_OF_GROUP -> "Missing one-of required path group at ${violation.path}"
         ContractViolationKind.EXTRA_FIELD -> "Field not declared in contract at ${violation.path}"
         ContractViolationKind.EXPECTED_OBJECT -> "Expected object at ${violation.path}, got ${actual ?: "unknown"}"
         ContractViolationKind.OUTPUT_NULL -> "Output is null but contract does not allow null at ${violation.path}"

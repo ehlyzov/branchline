@@ -49,6 +49,7 @@ class ConformJsonSetSerializationTest {
             ),
             open = true,
             dynamicAccess = emptyList(),
+            requiredAnyOf = emptyList(),
         )
         val input = mapOf("tags" to listOf("b", "a", "b"))
         val output = ContractCoercion.coerceInputBytes(requirement, input)

@@ -453,6 +453,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
           <label className="playground-select">
             <span>Example</span>
             <select
+              data-playground-example-select
               value={selectedExampleId}
               onChange={(event) => setSelectedExampleId(event.target.value)}
             >

@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Added and implemented coalesce-aware input contract inference (`requiredAnyOf`) proposal."
+  - date: 2026-02-08
     change: "Updated docs/playground planning records to remove deprecated static-playground references and align GitHub Pages deploy behavior with routed /playground/ access."
   - date: 2026-02-01
     change: "Created development knowledge base index."
@@ -100,6 +102,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [XML Output Ordering](language/xml-output-ordering.md) -- deterministic XML serialization rules and `@order` override.
 - [Conversion Loss Audit](docs/conversion-loss-audit.md) -- documented loss points and CLI warning policy for JSON/XML conversions.
 - [Playground XML I/O Support](docs/playground-xml-io-support.md) -- XML input parity and XML output formats in Playground.
+- [Coalesce-Aware Input Contract Inference](docs/coalesce-aware-input-contract-inference.md) -- `??` fallback inference adds `requiredAnyOf` conditional input requirements.
 - [Internal CBOR Representation](runtime/cbor-internal-representation.md) -- lossless Branchline-to-Branchline wire format with extended type tags and key policy enforcement.
 - [CBOR Determinism Rules](runtime/cbor-determinism.md) -- deterministic CBOR encode option with canonical map/set ordering and byte-stable output.
 

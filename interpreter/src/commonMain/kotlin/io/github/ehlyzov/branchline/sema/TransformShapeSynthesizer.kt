@@ -7,6 +7,7 @@ import io.github.ehlyzov.branchline.AppendToStmt
 import io.github.ehlyzov.branchline.AppendToVarStmt
 import io.github.ehlyzov.branchline.ArrayCompExpr
 import io.github.ehlyzov.branchline.ArrayExpr
+import io.github.ehlyzov.branchline.BinaryExpr
 import io.github.ehlyzov.branchline.BoolExpr
 import io.github.ehlyzov.branchline.CallExpr
 import io.github.ehlyzov.branchline.CaseExpr
@@ -35,6 +36,7 @@ import io.github.ehlyzov.branchline.SetStmt
 import io.github.ehlyzov.branchline.SetVarStmt
 import io.github.ehlyzov.branchline.StringExpr
 import io.github.ehlyzov.branchline.Token
+import io.github.ehlyzov.branchline.TokenType
 import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.TryCatchExpr
 import io.github.ehlyzov.branchline.TryCatchStmt
@@ -50,6 +52,7 @@ import io.github.ehlyzov.branchline.contract.DynamicReason
 import io.github.ehlyzov.branchline.contract.FieldConstraint
 import io.github.ehlyzov.branchline.contract.FieldShape
 import io.github.ehlyzov.branchline.contract.OriginKind
+import io.github.ehlyzov.branchline.contract.RequiredAnyOfGroup
 import io.github.ehlyzov.branchline.contract.SchemaGuarantee
 import io.github.ehlyzov.branchline.contract.SchemaRequirement
 import io.github.ehlyzov.branchline.contract.TransformContract
@@ -68,6 +71,7 @@ public class TransformShapeSynthesizer(
             fields = state.inputFields,
             open = true,
             dynamicAccess = state.dynamicInput,
+            requiredAnyOf = state.requiredAnyOf.distinct(),
         )
         val output = SchemaGuarantee(
             fields = state.outputFields,
@@ -262,7 +266,7 @@ public class TransformShapeSynthesizer(
         is IfElseExpr -> analyzeIfElseExpr(expr)
         is CaseExpr -> analyzeCaseExpr(expr)
         is TryCatchExpr -> analyzeTryCatchExpr(expr)
-        is io.github.ehlyzov.branchline.BinaryExpr -> mergeSequential(analyzeExpr(expr.left), analyzeExpr(expr.right))
+        is BinaryExpr -> analyzeBinaryExpr(expr)
         is io.github.ehlyzov.branchline.SharedStateAwaitExpr -> ShapeState.empty()
         is io.github.ehlyzov.branchline.LambdaExpr -> analyzeLambdaExpr(expr)
     }
@@ -284,6 +288,7 @@ public class TransformShapeSynthesizer(
             outputFields = LinkedHashMap(),
             dynamicInput = emptyList(),
             dynamicOutput = emptyList(),
+            requiredAnyOf = emptyList(),
             outputMayEmitNull = false,
         )
     }
@@ -363,6 +368,22 @@ public class TransformShapeSynthesizer(
         }
     }
 
+    private fun analyzeBinaryExpr(expr: BinaryExpr): ShapeState {
+        if (expr.token.type != TokenType.COALESCE) {
+            return mergeSequential(analyzeExpr(expr.left), analyzeExpr(expr.right))
+        }
+        var merged = mergeBranches(analyzeExpr(expr.left), analyzeExpr(expr.right))
+        val fallbackAlternatives = collectCoalesceAlternatives(expr)
+        if (fallbackAlternatives.size < 2) {
+            return merged
+        }
+        merged = merged.copy(
+            requiredAnyOf = merged.requiredAnyOf + RequiredAnyOfGroup(fallbackAlternatives),
+            inputFields = relaxRequiredInputsForAlternatives(merged.inputFields, fallbackAlternatives),
+        )
+        return merged
+    }
+
     private fun analyzeIfElseExpr(expr: IfElseExpr): ShapeState {
         val conditionState = analyzeExpr(expr.condition)
         val thenState = analyzeExpr(expr.thenBranch)
@@ -396,6 +417,86 @@ public class TransformShapeSynthesizer(
         val state = analyzeExpr(expr)
         scopes.removeLast()
         return state
+    }
+
+    private fun collectCoalesceAlternatives(expr: BinaryExpr): List<AccessPath> {
+        val operands = mutableListOf<Expr>()
+        collectCoalesceOperands(expr, operands)
+        if (operands.size < 2) {
+            return emptyList()
+        }
+        val alternatives = mutableListOf<AccessPath>()
+        for (operand in operands) {
+            val path = staticInputAccessPath(operand) ?: return emptyList()
+            alternatives += path
+        }
+        return alternatives.distinct()
+    }
+
+    private fun collectCoalesceOperands(expr: Expr, out: MutableList<Expr>) {
+        if (expr is BinaryExpr && expr.token.type == TokenType.COALESCE) {
+            collectCoalesceOperands(expr.left, out)
+            collectCoalesceOperands(expr.right, out)
+            return
+        }
+        out += expr
+    }
+
+    private fun staticInputAccessPath(expr: Expr): AccessPath? = when (expr) {
+        is IdentifierExpr -> {
+            if (isInputAlias(expr.name) || isLocal(expr.name) || hostFns.contains(expr.name)) {
+                null
+            } else {
+                AccessPath(listOf(AccessSegment.Field(expr.name)))
+            }
+        }
+        is AccessExpr -> staticInputAccessPath(expr)
+        else -> null
+    }
+
+    private fun staticInputAccessPath(expr: AccessExpr): AccessPath? {
+        val staticSegments = staticAccessSegments(expr.segs) ?: return null
+        val base = expr.base as? IdentifierExpr ?: return null
+        if (isInputAlias(base.name)) {
+            if (staticSegments.isEmpty()) return null
+            return AccessPath(staticSegments)
+        }
+        if (isLocal(base.name) || hostFns.contains(base.name)) {
+            return null
+        }
+        return AccessPath(listOf(AccessSegment.Field(base.name)) + staticSegments)
+    }
+
+    private fun staticAccessSegments(segs: List<AccessSeg>): List<AccessSegment>? {
+        val static = mutableListOf<AccessSegment>()
+        for (seg in segs) {
+            when (seg) {
+                is AccessSeg.Dynamic -> return null
+                is AccessSeg.Static -> static += staticSegment(seg.key)
+            }
+        }
+        return static
+    }
+
+    private fun relaxRequiredInputsForAlternatives(
+        fields: LinkedHashMap<String, FieldConstraint>,
+        alternatives: List<AccessPath>,
+    ): LinkedHashMap<String, FieldConstraint> {
+        if (alternatives.isEmpty()) {
+            return fields
+        }
+        val relaxed = LinkedHashMap<String, FieldConstraint>(fields.size)
+        val namesToRelax = alternatives.mapNotNull { alternative ->
+            (alternative.segments.firstOrNull() as? AccessSegment.Field)?.name
+        }.toSet()
+        for ((name, field) in fields) {
+            if (!namesToRelax.contains(name)) {
+                relaxed[name] = field
+                continue
+            }
+            relaxed[name] = field.copy(required = false)
+        }
+        return relaxed
     }
 
     private fun inputAccessFromSegments(segs: List<AccessSeg>, token: Token): ShapeState {
@@ -432,6 +533,7 @@ public class TransformShapeSynthesizer(
             outputFields = LinkedHashMap(),
             dynamicInput = emptyList(),
             dynamicOutput = emptyList(),
+            requiredAnyOf = emptyList(),
             outputMayEmitNull = false,
         )
     }
@@ -453,6 +555,7 @@ public class TransformShapeSynthesizer(
             outputFields = LinkedHashMap(),
             dynamicInput = listOf(access),
             dynamicOutput = emptyList(),
+            requiredAnyOf = emptyList(),
             outputMayEmitNull = false,
         )
     }
@@ -509,11 +612,13 @@ public class TransformShapeSynthesizer(
         val output = mergeOutputFields(left.outputFields, right.outputFields)
         val dynamicInput = left.dynamicInput + right.dynamicInput
         val dynamicOutput = left.dynamicOutput + right.dynamicOutput
+        val requiredAnyOf = left.requiredAnyOf + right.requiredAnyOf
         return ShapeState(
             inputFields = input,
             outputFields = output,
             dynamicInput = dynamicInput,
             dynamicOutput = dynamicOutput,
+            requiredAnyOf = requiredAnyOf,
             outputMayEmitNull = left.outputMayEmitNull || right.outputMayEmitNull,
         )
     }
@@ -523,11 +628,13 @@ public class TransformShapeSynthesizer(
         val output = mergeOutputFieldsBranch(left.outputFields, right.outputFields)
         val dynamicInput = left.dynamicInput + right.dynamicInput
         val dynamicOutput = left.dynamicOutput + right.dynamicOutput
+        val requiredAnyOf = left.requiredAnyOf + right.requiredAnyOf
         return ShapeState(
             inputFields = input,
             outputFields = output,
             dynamicInput = dynamicInput,
             dynamicOutput = dynamicOutput,
+            requiredAnyOf = requiredAnyOf,
             outputMayEmitNull = left.outputMayEmitNull || right.outputMayEmitNull,
         )
     }
@@ -648,6 +755,7 @@ public class TransformShapeSynthesizer(
         val outputFields: LinkedHashMap<String, FieldShape>,
         val dynamicInput: List<DynamicAccess>,
         val dynamicOutput: List<DynamicField>,
+        val requiredAnyOf: List<RequiredAnyOfGroup>,
         val outputMayEmitNull: Boolean,
     ) {
         companion object {
@@ -656,6 +764,7 @@ public class TransformShapeSynthesizer(
                 outputFields = LinkedHashMap(),
                 dynamicInput = emptyList(),
                 dynamicOutput = emptyList(),
+                requiredAnyOf = emptyList(),
                 outputMayEmitNull = false,
             )
         }
