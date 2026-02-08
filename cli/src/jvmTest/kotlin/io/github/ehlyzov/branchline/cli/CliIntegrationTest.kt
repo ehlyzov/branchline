@@ -165,6 +165,48 @@ public class CliIntegrationTest {
         assertTrue(result.stderr.contains("Unknown option '--contracts-json-version'"))
     }
 
+    @Test
+    fun inspectContractsJsonShowsOriginOnlyInDebugMode() {
+        val script = """
+            TRANSFORM Main {
+                OUTPUT { greeting: "hi " + input.name }
+            }
+        """.trimIndent()
+        val scriptPath = Files.createTempFile("branchline-inspect", ".bl")
+        Files.writeString(scriptPath, script, StandardCharsets.UTF_8)
+
+        val standard = runCli(
+            args = listOf(
+                "inspect",
+                scriptPath.toString(),
+                "--contracts-json",
+            ),
+        )
+        val debug = runCli(
+            args = listOf(
+                "inspect",
+                scriptPath.toString(),
+                "--contracts-json",
+                "--contracts-debug",
+            ),
+        )
+
+        assertEquals(ExitCode.SUCCESS.code, standard.exitCode)
+        assertEquals(ExitCode.SUCCESS.code, debug.exitCode)
+
+        val standardPayload = Json.parseToJsonElement(standard.stdout).jsonObject
+        val debugPayload = Json.parseToJsonElement(debug.stdout).jsonObject
+        val standardOutputRoot = standardPayload["output"]?.jsonObject?.get("root")?.jsonObject
+            ?: error("missing standard output root")
+        val debugOutputRoot = debugPayload["output"]?.jsonObject?.get("root")?.jsonObject
+            ?: error("missing debug output root")
+
+        assertTrue(!standardOutputRoot.containsKey("origin"))
+        assertEquals("OUTPUT", debugOutputRoot["origin"]?.jsonPrimitive?.content)
+        assertTrue(!standardOutputRoot.containsKey("evidence"))
+        assertTrue(!debugOutputRoot.containsKey("evidence"))
+    }
+
     private fun runCli(args: List<String>, defaultCommand: CliCommand? = null): CliRunResult {
         val stdoutStream = ByteArrayOutputStream()
         val stderrStream = ByteArrayOutputStream()

@@ -248,6 +248,48 @@ public class PlaygroundFacadeTest {
     }
 
     @Test
+    public fun playgroundDebugToggleGatesOriginMetadata() {
+        val program = """
+            OUTPUT { greeting: "Hello, " + input.name }
+        """.trimIndent()
+        val input = """
+            {
+              "name": "Ada"
+            }
+        """.trimIndent()
+
+        val standard = PlaygroundFacade.runWithContracts(
+            program = program,
+            inputJson = input,
+            enableTracing = false,
+            includeContracts = true,
+            contractsMode = "off",
+            includeContractSpans = false,
+            sharedJsonConfig = null,
+            outputFormat = "json",
+        )
+        val debug = PlaygroundFacade.runWithContracts(
+            program = program,
+            inputJson = input,
+            enableTracing = false,
+            includeContracts = true,
+            contractsMode = "off",
+            includeContractSpans = true,
+            sharedJsonConfig = null,
+            outputFormat = "json",
+        )
+
+        assertTrue(standard.success)
+        assertTrue(debug.success)
+        val standardOutput = Json.parseToJsonElement(standard.outputContractJson ?: error("missing standard output")).jsonObject
+        val debugOutput = Json.parseToJsonElement(debug.outputContractJson ?: error("missing debug output")).jsonObject
+        val standardRoot = standardOutput["root"]?.jsonObject ?: error("missing standard root")
+        val debugRoot = debugOutput["root"]?.jsonObject ?: error("missing debug root")
+        assertTrue(!standardRoot.containsKey("origin"))
+        assertEquals("OUTPUT", debugRoot["origin"]?.toString()?.trim('"'))
+    }
+
+    @Test
     public fun assertFailureReportsHelpfulError() {
         val program = """
             ASSERT(input.ready, "Not ready for deploy");
