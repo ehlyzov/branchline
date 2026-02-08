@@ -8,6 +8,8 @@ last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
     change: "Created diagnostics V2 proposal with deterministic mismatch categories and evidence-aware messaging."
+  - date: 2026-02-08
+    change: "Implemented ContractValidatorV2, ContractEnforcerV2, and deterministic diagnostics rendering."
 ---
 # Contract Diagnostics V2
 
