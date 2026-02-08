@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Added metadata marker for hybrid seeded inference participation (wildcard-output signatures with declared input seed)."
+  - date: 2026-02-08
     change: "Created Contract Model V2 proposal with nested requirements, evidence metadata, and runtime-fit extension points."
   - date: 2026-02-08
     change: "Implemented core Contract V2 data model and migration adapter in interpreter contract package."
@@ -54,6 +56,11 @@ Contract Model V2 keeps the nested contract graph approach, but the public JSON 
 - `ObservedContractEvidence`/`RuntimeFitEvidenceV2` for sample-derived hints.
 - `ContractFitterV2` merge hook remains available through `TransformContractBuilder.buildV2(..., runtimeExamples = ...)`.
 - Policy remains conservative for opaque regions and contradictions.
+
+## Hybrid Seed Metadata
+- Hybrid contracts keep `source = inferred`.
+- `metadata` includes an inference marker when input-type seed participates in static inference.
+- Marker intent: tooling/debug transparency for wildcard-output routing, without changing surface syntax.
 
 ## Dataflow Type-Eval Extension Points
 - `BinaryTypeEvalRule` registry remains available and enabled for static analysis extensibility.

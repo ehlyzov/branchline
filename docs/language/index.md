@@ -26,6 +26,7 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - JSON numeric key conversion is opt-in via `--json-key-mode numeric`; it converts non-negative integer keys without leading zeros (except `0`) for nested objects (top-level input keys remain strings).
 - JSON bytes are accepted only when contracts declare `bytes`; they must be base64 strings using the standard alphabet with `=` padding and no line breaks.
 - Inferred contracts are flow-sensitive and emitted in V2 nested form (`root.children` + requirement expressions). Coalesce reads (`a ?? b`) emit conditional one-of requirements instead of forcing both fields as unconditional required inputs.
+- Wildcard output signatures (`-> _` / `-> _?`) run in hybrid mode: declared input type seeds static inference and output remains inferred.
 - XML input maps attributes to `@name` keys.
 - XML pure text content maps to `$`; mixed content text segments map to `$1`, `$2`, ...
 - XML repeated sibling elements map to arrays.
