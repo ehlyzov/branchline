@@ -108,6 +108,23 @@ class ConformTransformContractV2Test {
         assertEquals(ValueShape.NumberShape, total.shape)
     }
 
+    @Test
+    fun set_updates_local_object_shape_used_in_output() {
+        val program = """
+            TRANSFORM T {
+                LET summary = {};
+                SET summary.total = NUMBER(input.total ?? 0);
+                OUTPUT { summary: summary }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        val summary = contract.output.root.children["summary"]
+        assertNotNull(summary)
+        val total = summary.children["total"]
+        assertNotNull(total)
+        assertEquals(ValueShape.NumberShape, total.shape)
+    }
+
     private fun synthesizeV2(program: String) =
         TransformContractBuilder(TypeResolver(emptyList())).buildV2(parseTransform(program))
 
