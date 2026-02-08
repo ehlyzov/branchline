@@ -24,11 +24,11 @@ const DEFAULT_INPUT = `{
   }
 }`;
 
-const PLAYGROUND_HOSTED_URL = 'https://ehlyzov.github.io/branchline-public/playground/demo.html';
+const PLAYGROUND_HOSTED_URL = 'https://ehlyzov.github.io/branchline-public/playground/';
 
 type InputFormat = 'json' | 'xml';
 type ContractMode = 'off' | 'warn' | 'strict';
-type OutputFormat = 'json' | 'json-compact' | 'json-canonical';
+type OutputFormat = 'json' | 'json-compact' | 'json-canonical' | 'xml' | 'xml-compact';
 
 type RawExample = {
   title: string;
@@ -239,12 +239,8 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
       inputEditorRef.current.setValue(input);
     }
 
-    if (inputFormat !== format) {
-      setInputFormat(format);
-    }
-    if (outputFormat !== outputFmt) {
-      setOutputFormat(outputFmt);
-    }
+    setInputFormat(format);
+    setOutputFormat(outputFmt);
 
     setError(null);
     setOutput('');
@@ -262,7 +258,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     setIsContractsEnabled(selectedExample.enableContracts);
     setContractsMode('off');
     setContractsDebug(false);
-  }, [inputFormat, outputFormat, selectedExample]);
+  }, [selectedExample]);
 
   React.useEffect(() => {
     ensureBranchlineLanguage();
@@ -480,6 +476,8 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
               <option value="json">JSON (pretty)</option>
               <option value="json-compact">JSON (compact)</option>
               <option value="json-canonical">JSON (canonical)</option>
+              <option value="xml">XML</option>
+              <option value="xml-compact">XML (compact)</option>
             </select>
           </label>
           <label className="playground-toggle">
@@ -591,7 +589,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
                 <div className="results-pane">
                   <div className="panel-subheader">Program output</div>
                   <pre ref={outputRef} className="panel-output">
-                    {output || 'Run the playground to view JSON output.'}
+                    {output || 'Run the playground to view output.'}
                   </pre>
                 </div>
                 {hasTrace ? (

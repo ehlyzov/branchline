@@ -15,7 +15,7 @@ Experiment with Branchline directly in your browser—no installs required. Pick
     <div class="bl-playground" data-default-example="customer-profile" role="region" aria-label="Branchline playground embed"></div>
   </div>
   <div class="playground-embed__actions">
-    <a href="../playground/demo.html" target="_blank" rel="noreferrer" class="md-button md-button--primary" data-playground-open-new-tab>Open in new tab</a>
+    <a href="../playground/" target="_blank" rel="noreferrer" class="md-button md-button--primary" data-playground-open-new-tab>Open in new tab</a>
     <span class="playground-embed__hint">Use <code>?example=&lt;id&gt;</code> in the URL to preload an example (e.g., <code>?example=stdlib-hof-overview</code>).</span>
   </div>
 </div>
@@ -32,7 +32,7 @@ Experiment with Branchline directly in your browser—no installs required. Pick
     if (!example) {
       return;
     }
-    const target = new URL(link.getAttribute('href') || '../playground/demo.html', window.location.href);
+    const target = new URL(link.getAttribute('href') || '../playground/', window.location.href);
     target.searchParams.set('example', example);
     link.setAttribute('href', target.toString());
   })();

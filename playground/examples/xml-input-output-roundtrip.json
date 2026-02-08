@@ -1,0 +1,19 @@
+{
+  "title": "XML input/output roundtrip",
+  "description": "Parses raw XML input into Branchline mapping and emits XML output using namespace-aware ordering.",
+  "program": [
+    "LET invoice = input.invoice;",
+    "OUTPUT {",
+    "    report: {",
+    "        \"@xmlns\": { \"$\": \"urn:report\", x: invoice[\"@xmlns\"][\"x\"] },",
+    "        \"@id\": invoice[\"@id\"],",
+    "        \"@order\": [\"x:item\", \"total\"],",
+    "        \"x:item\": invoice[\"x:item\"],",
+    "        total: { \"$\": \"3\" }",
+    "    }",
+    "}"
+  ],
+  "inputFormat": "xml",
+  "outputFormat": "xml",
+  "input": "<invoice xmlns=\"urn:invoice\" xmlns:x=\"urn:line-items\" id=\"INV-7\"><x:item sku=\"A\">2</x:item><x:item sku=\"B\">1</x:item></invoice>"
+}

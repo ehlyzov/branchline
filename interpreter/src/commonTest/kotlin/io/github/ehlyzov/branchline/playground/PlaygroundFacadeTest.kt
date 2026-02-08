@@ -169,4 +169,55 @@ public class PlaygroundFacadeTest {
         assertNull(result.outputJson)
         assertEquals("Not ready for deploy", result.errorMessage)
     }
+
+    @Test
+    public fun xmlCompactOutputFormatsResult() {
+        val program = """
+            OUTPUT {
+                root: {
+                    item: { "$": "ok" }
+                }
+            }
+        """.trimIndent()
+
+        val result = PlaygroundFacade.runWithContracts(
+            program = program,
+            inputJson = "{}",
+            enableTracing = false,
+            includeContracts = false,
+            contractsMode = "off",
+            includeContractSpans = false,
+            sharedJsonConfig = null,
+            outputFormat = "xml-compact",
+        )
+
+        assertTrue(result.success)
+        assertEquals("<root><item>ok</item></root>", result.outputJson)
+        assertNull(result.errorMessage)
+    }
+
+    @Test
+    public fun xmlOutputRejectsMultipleRootElements() {
+        val program = """
+            OUTPUT {
+                alpha: { "$": "a" },
+                beta: { "$": "b" }
+            }
+        """.trimIndent()
+
+        val result = PlaygroundFacade.runWithContracts(
+            program = program,
+            inputJson = "{}",
+            enableTracing = false,
+            includeContracts = false,
+            contractsMode = "off",
+            includeContractSpans = false,
+            sharedJsonConfig = null,
+            outputFormat = "xml",
+        )
+
+        assertFalse(result.success)
+        assertNull(result.outputJson)
+        assertEquals("XML output expects exactly one root element", result.errorMessage)
+    }
 }

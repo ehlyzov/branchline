@@ -16,6 +16,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
+import io.github.ehlyzov.branchline.cli.parseXmlInput
 import io.github.ehlyzov.branchline.ExecutionEngine
 import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.Lexer
@@ -91,7 +92,8 @@ class PlaygroundExamplesJvmTest {
                     engine = ExecutionEngine.VM,
                 )
 
-                val input = toKotlin(inputElement) as? Map<String, Any?> ?: emptyMap()
+                val inputFormat = example["inputFormat"]?.jsonPrimitive?.content?.lowercase()
+                val input = parseExampleInput(inputElement, inputFormat)
                 val sharedNames = sharedResourceNames(example)
                 val seededInput = LinkedHashMap<String, Any?>(input).apply {
                     for (name in sharedNames) {
@@ -130,6 +132,13 @@ class PlaygroundExamplesJvmTest {
         is JsonObject -> LinkedHashMap<String, Any?>().apply {
             elem.forEach { (k, v) -> this[k] = toKotlin(v) }
         }
+    }
+
+    private fun parseExampleInput(inputElement: JsonElement, inputFormat: String?): Map<String, Any?> {
+        if (inputFormat == "xml") {
+            return parseXmlInput(inputElement.jsonPrimitive.content)
+        }
+        return toKotlin(inputElement) as? Map<String, Any?> ?: emptyMap()
     }
 
     private fun renderSharedDecls(example: JsonObject): String {

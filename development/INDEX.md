@@ -44,6 +44,8 @@ changelog:
     change: "Moved Internal CBOR Representation to implemented."
   - date: 2026-02-07
     change: "Moved CBOR Determinism Rules to implemented."
+  - date: 2026-02-07
+    change: "Added Playground XML I/O Support implementation doc."
 ---
 # Development Knowledge Base Index
 
@@ -95,6 +97,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [XML Namespace Handling](language/xml-namespaces.md) -- @xmlns namespace capture and prefix-preserving XML input mapping.
 - [XML Output Ordering](language/xml-output-ordering.md) -- deterministic XML serialization rules and `@order` override.
 - [Conversion Loss Audit](docs/conversion-loss-audit.md) -- documented loss points and CLI warning policy for JSON/XML conversions.
+- [Playground XML I/O Support](docs/playground-xml-io-support.md) -- XML input parity and XML output formats in Playground.
 - [Internal CBOR Representation](runtime/cbor-internal-representation.md) -- lossless Branchline-to-Branchline wire format with extended type tags and key policy enforcement.
 - [CBOR Determinism Rules](runtime/cbor-determinism.md) -- deterministic CBOR encode option with canonical map/set ordering and byte-stable output.
 

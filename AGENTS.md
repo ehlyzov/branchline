@@ -33,7 +33,7 @@ Language design priorities:
 
 ## Local Playground
 - Build assets: `./gradlew playgroundBuildAssets` (requires Node 18+ on PATH).
-- Serve from repo root: `ln -s docs/assets assets`, then `python3 -m http.server 8000`, and open `http://localhost:8000/playground/demo.html`.
+- Serve from repo root: `ln -s docs/assets assets`, then `python3 -m http.server 8000`, and open `http://localhost:8000/playground/`.
 - Cleanup the symlink when done: `rm assets`.
 
 ## Coding Style & Naming Conventions
