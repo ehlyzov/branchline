@@ -16,6 +16,8 @@ changelog:
     change: "Implemented M4 provenance-based input shape extraction, nested path promotion, and cast/numeric expectation propagation."
   - date: 2026-02-08
     change: "Implemented M5 output guarantee extraction from final abstract variable state with SET/APPEND/MODIFY updates."
+  - date: 2026-02-08
+    change: "Implemented M6 static stdlib summaries (LISTIFY/GET/APPEND/PREPEND and array/core helpers) with provenance-aware shape propagation."
 ---
 # Contract Inference Static Analysis (V2)
 

@@ -22,6 +22,8 @@ changelog:
     change: "Completed M4 with provenance-based nested input requirement extraction and conservative dynamic opaque regions."
   - date: 2026-02-08
     change: "Completed M5 with output guarantee extraction from final abstract values and local object mutation tracking."
+  - date: 2026-02-08
+    change: "Completed M6 with static stdlib summary rules and conformance coverage."
 ---
 # Contract Inference V2 Milestone Plan
 
@@ -41,7 +43,7 @@ changelog:
 4. [x] M3: Add path-sensitive refinement and bounded loop widening.
 5. [x] M4: Add input provenance and nested requirement extraction.
 6. [x] M5: Add output guarantee extraction from final abstract values.
-7. [ ] M6: Add static stdlib shape summaries.
+7. [x] M6: Add static stdlib shape summaries.
 8. [ ] M7: Add validator V2 and diagnostics V2.
 9. [ ] M8: Wire CLI/playground/runtime to V2 contracts as default.
 10. [ ] M9: Remove V1 public contract output and finalize docs/tests/examples.

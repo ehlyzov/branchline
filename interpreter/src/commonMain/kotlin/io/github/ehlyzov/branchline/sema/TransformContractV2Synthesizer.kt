@@ -436,12 +436,152 @@ public class TransformContractV2Synthesizer(
                 enforceProvenanceShape(args.firstOrNull()?.provenance.orEmpty(), ValueShape.TextShape, expr.token, "stdlib-text-arg")
                 AbstractValue(ValueShape.TextShape, evidence = listOf(evidence(expr.token, "stdlib-text")))
             }
+            "IS_OBJECT" -> AbstractValue(
+                shape = ValueShape.BooleanShape,
+                evidence = listOf(evidence(expr.token, "stdlib-is-object")),
+            )
+            "LISTIFY" -> summarizeListify(args, expr.token)
+            "GET" -> summarizeGet(args, expr, expr.token)
+            "APPEND", "PREPEND" -> summarizeAppendLike(args, expr.token, callee.lowercase())
+            "DISTINCT", "SORT", "REVERSE" -> summarizePassThroughArray(args, expr.token, callee.lowercase())
+            "FLATTEN" -> summarizeFlatten(args, expr.token)
+            "RANGE" -> AbstractValue(
+                shape = ValueShape.ArrayShape(ValueShape.NumberShape),
+                evidence = listOf(evidence(expr.token, "stdlib-range")),
+            )
+            "ZIP" -> AbstractValue(
+                shape = ValueShape.ArrayShape(ValueShape.ArrayShape(ValueShape.Unknown)),
+                evidence = listOf(evidence(expr.token, "stdlib-zip")),
+            )
+            "KEYS", "VALUES" -> AbstractValue(
+                shape = ValueShape.ArrayShape(ValueShape.Unknown),
+                evidence = listOf(evidence(expr.token, "stdlib-$callee")),
+            )
+            "ENTRIES" -> AbstractValue(
+                shape = ValueShape.ArrayShape(
+                    ValueShape.ObjectShape(
+                        schema = SchemaGuarantee(
+                            fields = linkedMapOf(
+                                "key" to FieldShape(
+                                    required = true,
+                                    shape = ValueShape.Unknown,
+                                    origin = OriginKind.OUTPUT,
+                                ),
+                                "value" to FieldShape(
+                                    required = true,
+                                    shape = ValueShape.Unknown,
+                                    origin = OriginKind.OUTPUT,
+                                ),
+                            ),
+                            mayEmitNull = false,
+                            dynamicFields = emptyList(),
+                        ),
+                        closed = false,
+                    ),
+                ),
+                evidence = listOf(evidence(expr.token, "stdlib-entries")),
+            )
             else -> AbstractValue(
                 shape = ValueShape.Unknown,
                 provenance = args.flatMap { value -> value.provenance }.toSet(),
                 evidence = listOf(evidence(expr.token, "call-unknown")),
             )
         }
+    }
+
+    private fun summarizeListify(args: List<AbstractValue>, token: Token): AbstractValue {
+        val input = args.firstOrNull() ?: return AbstractValue(ValueShape.ArrayShape(ValueShape.Unknown))
+        val shape = when (val source = input.shape) {
+            is ValueShape.ArrayShape -> ValueShape.ArrayShape(source.element)
+            is ValueShape.ObjectShape -> ValueShape.ArrayShape(source)
+            ValueShape.Null -> ValueShape.ArrayShape(ValueShape.Unknown)
+            is ValueShape.Union -> {
+                val element = source.options.map { option ->
+                    when (option) {
+                        is ValueShape.ArrayShape -> option.element
+                        is ValueShape.ObjectShape -> option
+                        ValueShape.Null -> ValueShape.Unknown
+                        else -> ValueShape.Unknown
+                    }
+                }.reduce(::mergeValueShape)
+                ValueShape.ArrayShape(element)
+            }
+            else -> ValueShape.ArrayShape(ValueShape.Unknown)
+        }
+        return AbstractValue(
+            shape = shape,
+            provenance = input.provenance,
+            evidence = listOf(evidence(token, "stdlib-listify")),
+        )
+    }
+
+    private fun summarizeGet(args: List<AbstractValue>, expr: CallExpr, token: Token): AbstractValue {
+        if (args.isEmpty()) return AbstractValue(ValueShape.Unknown)
+        val objectValue = args[0]
+        val fallbackShape = args.getOrNull(2)?.shape
+        val staticKey = (expr.args.getOrNull(1) as? StringExpr)?.value
+        if (staticKey == null) {
+            return AbstractValue(
+                shape = fallbackShape?.let { mergeValueShape(ValueShape.Unknown, it) } ?: ValueShape.Unknown,
+                provenance = objectValue.provenance,
+                evidence = listOf(evidence(token, "stdlib-get-dynamic")),
+            )
+        }
+        val fromObject = when (val shape = objectValue.shape) {
+            is ValueShape.ObjectShape -> shape.schema.fields[staticKey]?.shape ?: ValueShape.Unknown
+            else -> ValueShape.Unknown
+        }
+        val merged = if (fallbackShape == null) fromObject else mergeValueShape(fromObject, fallbackShape)
+        val provenance = objectValue.provenance.map { path ->
+            AccessPath(path.segments + AccessSegment.Field(staticKey))
+        }.toSet()
+        enforceProvenanceShape(provenance, merged, token, "stdlib-get-static")
+        return AbstractValue(
+            shape = merged,
+            provenance = provenance,
+            evidence = listOf(evidence(token, "stdlib-get")),
+        )
+    }
+
+    private fun summarizeAppendLike(args: List<AbstractValue>, token: Token, rule: String): AbstractValue {
+        val listValue = args.getOrNull(0) ?: return AbstractValue(ValueShape.ArrayShape(ValueShape.Unknown))
+        val item = args.getOrNull(1) ?: AbstractValue(ValueShape.Unknown)
+        val baseElement = listValue.arrayElement()
+        val element = mergeValueShape(baseElement, item.shape)
+        return AbstractValue(
+            shape = ValueShape.ArrayShape(element),
+            provenance = listValue.provenance + item.provenance,
+            evidence = listOf(evidence(token, rule)),
+        )
+    }
+
+    private fun summarizePassThroughArray(args: List<AbstractValue>, token: Token, rule: String): AbstractValue {
+        val input = args.firstOrNull() ?: return AbstractValue(ValueShape.ArrayShape(ValueShape.Unknown))
+        val shape = when (input.shape) {
+            is ValueShape.ArrayShape -> input.shape
+            else -> ValueShape.ArrayShape(ValueShape.Unknown)
+        }
+        return AbstractValue(
+            shape = shape,
+            provenance = input.provenance,
+            evidence = listOf(evidence(token, rule)),
+        )
+    }
+
+    private fun summarizeFlatten(args: List<AbstractValue>, token: Token): AbstractValue {
+        val input = args.firstOrNull() ?: return AbstractValue(ValueShape.ArrayShape(ValueShape.Unknown))
+        val element = when (val shape = input.shape) {
+            is ValueShape.ArrayShape -> when (val nested = shape.element) {
+                is ValueShape.ArrayShape -> nested.element
+                else -> ValueShape.Unknown
+            }
+            else -> ValueShape.Unknown
+        }
+        return AbstractValue(
+            shape = ValueShape.ArrayShape(element),
+            provenance = input.provenance,
+            evidence = listOf(evidence(token, "stdlib-flatten")),
+        )
     }
 
     private fun evalInvoke(expr: InvokeExpr): AbstractValue {
