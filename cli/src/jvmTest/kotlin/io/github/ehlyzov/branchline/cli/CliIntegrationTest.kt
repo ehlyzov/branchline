@@ -8,6 +8,7 @@ import java.nio.file.Path
 import kotlin.io.path.readText
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -115,6 +116,55 @@ public class CliIntegrationTest {
             ExitCode.USAGE.code.toString(),
             error["exitCode"]?.jsonPrimitive?.content,
         )
+    }
+
+    @Test
+    fun inspectContractsJsonDefaultsToV2() {
+        val script = """
+            TRANSFORM Main {
+                OUTPUT { greeting: "hi " + input.name }
+            }
+        """.trimIndent()
+        val scriptPath = Files.createTempFile("branchline-inspect", ".bl")
+        Files.writeString(scriptPath, script, StandardCharsets.UTF_8)
+
+        val result = runCli(
+            args = listOf(
+                "inspect",
+                scriptPath.toString(),
+                "--contracts-json",
+            ),
+        )
+
+        assertEquals(ExitCode.SUCCESS.code, result.exitCode)
+        val payload = Json.parseToJsonElement(result.stdout).jsonObject
+        assertEquals("v2", payload["version"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun inspectContractsJsonSupportsV1Switch() {
+        val script = """
+            TRANSFORM Main {
+                OUTPUT { greeting: "hi " + input.name }
+            }
+        """.trimIndent()
+        val scriptPath = Files.createTempFile("branchline-inspect", ".bl")
+        Files.writeString(scriptPath, script, StandardCharsets.UTF_8)
+
+        val result = runCli(
+            args = listOf(
+                "inspect",
+                scriptPath.toString(),
+                "--contracts-json",
+                "--contracts-json-version",
+                "v1",
+            ),
+        )
+
+        assertEquals(ExitCode.SUCCESS.code, result.exitCode)
+        val payload = Json.parseToJsonElement(result.stdout).jsonObject
+        assertEquals("v1", payload["version"]?.jsonPrimitive?.content)
+        assertTrue(payload["input"]?.jsonObject?.containsKey("fields") == true)
     }
 
     private fun runCli(args: List<String>, defaultCommand: CliCommand? = null): CliRunResult {
