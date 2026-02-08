@@ -92,6 +92,22 @@ class ConformTransformContractV2Test {
         assertTrue(payload.shape is ValueShape.ObjectShape || payload.shape == ValueShape.Unknown)
     }
 
+    @Test
+    fun cast_functions_push_expected_shape_to_input_provenance() {
+        val program = """
+            TRANSFORM T {
+                LET total = NUMBER(input.metrics.total ?? 0);
+                OUTPUT { total: total }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        val metrics = contract.input.root.children["metrics"]
+        assertNotNull(metrics)
+        val total = metrics.children["total"]
+        assertNotNull(total)
+        assertEquals(ValueShape.NumberShape, total.shape)
+    }
+
     private fun synthesizeV2(program: String) =
         TransformContractBuilder(TypeResolver(emptyList())).buildV2(parseTransform(program))
 
