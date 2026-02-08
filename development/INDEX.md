@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Completed Contract Inference V2 M2: flow-sensitive V2 synthesizer core and conformance tests."
+  - date: 2026-02-08
     change: "Completed Contract Inference V2 M1: model classes, adapter, and versioned contract JSON renderer."
   - date: 2026-02-08
     change: "Added Contract Inference V2 proposal set, milestone plan, and quality gates."
