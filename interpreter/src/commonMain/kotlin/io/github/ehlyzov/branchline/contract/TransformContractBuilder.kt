@@ -13,19 +13,26 @@ import io.github.ehlyzov.branchline.TypeRef
 import io.github.ehlyzov.branchline.UnionTypeRef
 import io.github.ehlyzov.branchline.sema.TypeResolver
 import io.github.ehlyzov.branchline.sema.TransformShapeSynthesizer
+import io.github.ehlyzov.branchline.sema.TransformContractV2Synthesizer
 
 public class TransformContractBuilder(
     private val typeResolver: TypeResolver,
     hostFns: Set<String> = emptySet(),
 ) {
     private val synthesizer = TransformShapeSynthesizer(hostFns)
+    private val synthesizerV2 = TransformContractV2Synthesizer(hostFns)
 
     public fun build(transform: TransformDecl): TransformContract {
         return buildExplicitContract(transform) ?: synthesizer.synthesize(transform)
     }
 
-    public fun buildV2(transform: TransformDecl): TransformContractV2 =
-        TransformContractV2Adapter.fromV1(build(transform))
+    public fun buildV2(transform: TransformDecl): TransformContractV2 {
+        val explicit = buildExplicitContract(transform)
+        if (explicit != null) {
+            return TransformContractV2Adapter.fromV1(explicit)
+        }
+        return synthesizerV2.synthesize(transform)
+    }
 
     public fun buildInferredContract(transform: TransformDecl): TransformContract =
         synthesizer.synthesize(transform)

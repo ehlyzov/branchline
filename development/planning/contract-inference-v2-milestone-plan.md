@@ -14,6 +14,8 @@ changelog:
     change: "Created end-to-end milestone plan for Contract Inference V2 implementation."
   - date: 2026-02-08
     change: "Completed M1 with TransformContractV2 model classes, V1<->V2 adapter, and versioned JSON rendering."
+  - date: 2026-02-08
+    change: "Completed M2 with flow-sensitive TransformContractV2Synthesizer and conformance coverage."
 ---
 # Contract Inference V2 Milestone Plan
 
@@ -29,7 +31,7 @@ changelog:
 ## Milestones
 1. [x] M0: Ratify and index V2 proposal set, baseline metrics, quality gates.
 2. [x] M1: Add V2 model + JSON renderer + adapters used for migration only during development.
-3. [ ] M2: Add flow-sensitive abstract environment inference core.
+3. [x] M2: Add flow-sensitive abstract environment inference core.
 4. [ ] M3: Add path-sensitive refinement and bounded loop widening.
 5. [ ] M4: Add input provenance and nested requirement extraction.
 6. [ ] M5: Add output guarantee extraction from final abstract values.
