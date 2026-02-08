@@ -144,10 +144,14 @@ public class PlaygroundFacadeTest {
 
         val inputContract = Json.parseToJsonElement(result.inputContractJson).jsonObject
         val outputContract = Json.parseToJsonElement(result.outputContractJson).jsonObject
-        val inputFields = inputContract["fields"]?.jsonObject
-        val outputFields = outputContract["fields"]?.jsonObject
-        assertTrue(inputFields?.containsKey("name") == true)
-        assertTrue(outputFields?.containsKey("greeting") == true)
+        val inputRoot = inputContract["root"]?.jsonObject
+        val outputRoot = outputContract["root"]?.jsonObject
+        val inputChildren = inputRoot?.get("children")?.jsonObject
+        val outputChildren = outputRoot?.get("children")?.jsonObject
+        assertEquals("v2", inputContract["version"]?.toString()?.trim('"'))
+        assertEquals("v2", outputContract["version"]?.toString()?.trim('"'))
+        assertTrue(inputChildren?.containsKey("name") == true)
+        assertTrue(outputChildren?.containsKey("greeting") == true)
     }
 
     @Test
@@ -164,11 +168,14 @@ public class PlaygroundFacadeTest {
 
         assertTrue(result.success)
         val inputContract = Json.parseToJsonElement(result.inputContractJson ?: error("missing input contract")).jsonObject
-        val requiredAnyOf = inputContract["requiredAnyOf"]?.jsonArray
-        assertNotNull(requiredAnyOf)
-        assertEquals(1, requiredAnyOf.size)
-        val group = requiredAnyOf[0].jsonArray
-        assertEquals(2, group.size)
+        val requirements = inputContract["requirements"]?.jsonArray
+        assertNotNull(requirements)
+        assertEquals(1, requirements.size)
+        val anyOf = requirements[0].jsonObject
+        assertEquals("anyOf", anyOf["kind"]?.toString()?.trim('"'))
+        val children = anyOf["children"]?.jsonArray
+        assertNotNull(children)
+        assertEquals(2, children.size)
     }
 
     @Test

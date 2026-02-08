@@ -10,6 +10,8 @@ changelog:
     change: "Created diagnostics V2 proposal with deterministic mismatch categories and evidence-aware messaging."
   - date: 2026-02-08
     change: "Implemented ContractValidatorV2, ContractEnforcerV2, and deterministic diagnostics rendering."
+  - date: 2026-02-08
+    change: "Wired V2 validation and diagnostics into CLI run/exec and Playground contract warnings."
 ---
 # Contract Diagnostics V2
 

@@ -26,6 +26,8 @@ changelog:
     change: "Completed M6 with static stdlib summary rules and conformance coverage."
   - date: 2026-02-08
     change: "Completed M7 with ContractValidatorV2 and deterministic diagnostics model/rendering."
+  - date: 2026-02-08
+    change: "Completed M8 by wiring CLI/playground contract paths to V2 by default with JSON version switch support."
 ---
 # Contract Inference V2 Milestone Plan
 
@@ -47,7 +49,7 @@ changelog:
 6. [x] M5: Add output guarantee extraction from final abstract values.
 7. [x] M6: Add static stdlib shape summaries.
 8. [x] M7: Add validator V2 and diagnostics V2.
-9. [ ] M8: Wire CLI/playground/runtime to V2 contracts as default.
+9. [x] M8: Wire CLI/playground/runtime to V2 contracts as default.
 10. [ ] M9: Remove V1 public contract output and finalize docs/tests/examples.
 
 ## Guardrails

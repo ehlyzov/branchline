@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Completed Contract Inference V2 M8: CLI/playground/runtime moved to V2 contracts by default, with inspect JSON version switch."
+  - date: 2026-02-08
     change: "Completed Contract Inference V2 M7: V2 validator/enforcer and deterministic diagnostics renderer."
   - date: 2026-02-08
     change: "Completed Contract Inference V2 M6: static stdlib summary rules with provenance-aware shape propagation."
