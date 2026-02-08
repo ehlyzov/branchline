@@ -268,7 +268,7 @@ public object BranchlineCli {
               --contracts MODE    (run/exec) validate contracts: off (default), warn, strict.
               --contracts         (inspect) print explicit vs inferred contracts with mismatch warnings.
               --contracts-json    (inspect) emit contract JSON instead of the text report.
-              --contracts-debug   (inspect) include source spans in contract JSON output.
+              --contracts-debug   (inspect) include debug metadata (origin and spans) in contract JSON output.
               --all               (schema) emit a ${'$'}defs block with all TYPE declarations.
               --nullable          (schema) use 'nullable: true' instead of 'type: [\"null\", ...]'.
               --import PATH       (schema) read a JSON Schema document and emit TYPE declarations.
@@ -1710,7 +1710,7 @@ private fun renderContractInspection(
 private fun renderContractJson(
     transforms: List<TransformDecl>,
     contractBuilder: TransformContractBuilder,
-    includeSpans: Boolean,
+    includeDebugMetadata: Boolean,
 ): String {
     val entries = transforms.map { transform ->
         val name = transform.name ?: "<anonymous>"
@@ -1719,8 +1719,8 @@ private fun renderContractJson(
             "name" to name,
             "source" to contract.source.name.lowercase(),
             "version" to "v2",
-            "input" to ContractJsonRenderer.inputElement(contract, includeSpans),
-            "output" to ContractJsonRenderer.outputElement(contract, includeSpans),
+            "input" to ContractJsonRenderer.inputElement(contract, includeDebugMetadata),
+            "output" to ContractJsonRenderer.outputElement(contract, includeDebugMetadata),
         )
     }
     val payload = if (entries.size == 1) entries.first() else mapOf("transforms" to entries)
