@@ -18,6 +18,8 @@ changelog:
     change: "Completed M2 with flow-sensitive TransformContractV2Synthesizer and conformance coverage."
   - date: 2026-02-08
     change: "Completed M3 with path-sensitive guard refinements (null/object) and bounded merges."
+  - date: 2026-02-08
+    change: "Completed M4 with provenance-based nested input requirement extraction and conservative dynamic opaque regions."
 ---
 # Contract Inference V2 Milestone Plan
 
@@ -35,7 +37,7 @@ changelog:
 2. [x] M1: Add V2 model + JSON renderer + adapters used for migration only during development.
 3. [x] M2: Add flow-sensitive abstract environment inference core.
 4. [x] M3: Add path-sensitive refinement and bounded loop widening.
-5. [ ] M4: Add input provenance and nested requirement extraction.
+5. [x] M4: Add input provenance and nested requirement extraction.
 6. [ ] M5: Add output guarantee extraction from final abstract values.
 7. [ ] M6: Add static stdlib shape summaries.
 8. [ ] M7: Add validator V2 and diagnostics V2.

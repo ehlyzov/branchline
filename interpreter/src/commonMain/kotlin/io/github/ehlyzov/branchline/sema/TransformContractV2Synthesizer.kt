@@ -278,6 +278,9 @@ public class TransformContractV2Synthesizer(
                 evalExpr(seg.keyExpr)
             }
         }
+        if (base != null) {
+            promoteShapeForStaticAccess(base.name, expr.segs)
+        }
         if (dynamic) {
             addInputOpaque(
                 AccessPath(expr.segs.map {
@@ -410,9 +413,18 @@ public class TransformContractV2Synthesizer(
         val args = expr.args.map { arg -> evalExpr(arg) }
         val callee = expr.callee.name.uppercase()
         return when (callee) {
-            "NUMBER" -> AbstractValue(ValueShape.NumberShape, evidence = listOf(evidence(expr.token, "stdlib-number")))
-            "BOOLEAN" -> AbstractValue(ValueShape.BooleanShape, evidence = listOf(evidence(expr.token, "stdlib-boolean")))
-            "TEXT", "STRING" -> AbstractValue(ValueShape.TextShape, evidence = listOf(evidence(expr.token, "stdlib-text")))
+            "NUMBER" -> {
+                enforceProvenanceShape(args.firstOrNull()?.provenance.orEmpty(), ValueShape.NumberShape, expr.token, "stdlib-number-arg")
+                AbstractValue(ValueShape.NumberShape, evidence = listOf(evidence(expr.token, "stdlib-number")))
+            }
+            "BOOLEAN" -> {
+                enforceProvenanceShape(args.firstOrNull()?.provenance.orEmpty(), ValueShape.BooleanShape, expr.token, "stdlib-boolean-arg")
+                AbstractValue(ValueShape.BooleanShape, evidence = listOf(evidence(expr.token, "stdlib-boolean")))
+            }
+            "TEXT", "STRING" -> {
+                enforceProvenanceShape(args.firstOrNull()?.provenance.orEmpty(), ValueShape.TextShape, expr.token, "stdlib-text-arg")
+                AbstractValue(ValueShape.TextShape, evidence = listOf(evidence(expr.token, "stdlib-text")))
+            }
             else -> AbstractValue(
                 shape = ValueShape.Unknown,
                 provenance = args.flatMap { value -> value.provenance }.toSet(),
@@ -456,6 +468,7 @@ public class TransformContractV2Synthesizer(
             TokenType.PERCENT,
         )
         if (expr.token.type in numericOps && (left.shape == ValueShape.NumberShape || right.shape == ValueShape.NumberShape)) {
+            enforceProvenanceShape(left.provenance + right.provenance, ValueShape.NumberShape, expr.token, "numeric-binary-input")
             return AbstractValue(
                 shape = ValueShape.NumberShape,
                 provenance = (left.provenance + right.provenance),
@@ -998,6 +1011,82 @@ public class TransformContractV2Synthesizer(
         }
         existing.shape = mergeValueShape(existing.shape, shape)
         existing.evidence += nextEvidence
+    }
+
+    private fun enforceProvenanceShape(
+        paths: Collection<AccessPath>,
+        shape: ValueShape,
+        token: Token,
+        ruleId: String,
+    ) {
+        for (path in paths) {
+            recordInputPath(path, shape, token, ruleId)
+        }
+    }
+
+    private fun promoteShapeForStaticAccess(baseName: String, segs: List<AccessSeg>) {
+        if (isInputAlias(baseName) || hostFns.contains(baseName)) return
+        if (segs.isEmpty()) return
+        val current = env[baseName] ?: return
+        val staticSegments = mutableListOf<AccessSegment>()
+        for (seg in segs) {
+            val static = seg as? AccessSeg.Static ?: return
+            staticSegments += staticSegment(static.key)
+        }
+        val promoted = ensureObjectPath(current.shape, staticSegments)
+        env[baseName] = current.copy(shape = promoted)
+    }
+
+    private fun ensureObjectPath(shape: ValueShape, path: List<AccessSegment>): ValueShape {
+        if (path.isEmpty()) return shape
+        val head = path.first()
+        val tail = path.drop(1)
+        return when (shape) {
+            is ValueShape.ObjectShape -> {
+                val key = when (head) {
+                    is AccessSegment.Field -> head.name
+                    is AccessSegment.Index -> head.index
+                    AccessSegment.Dynamic -> return shape
+                }
+                val fields = LinkedHashMap(shape.schema.fields)
+                val existing = fields[key]
+                val child = ensureObjectPath(existing?.shape ?: ValueShape.Unknown, tail)
+                fields[key] = FieldShape(
+                    required = existing?.required ?: true,
+                    shape = child,
+                    origin = existing?.origin ?: OriginKind.MERGED,
+                )
+                ValueShape.ObjectShape(
+                    schema = shape.schema.copy(fields = fields),
+                    closed = shape.closed,
+                )
+            }
+            is ValueShape.Union -> ValueShape.Union(shape.options.map { option ->
+                ensureObjectPath(option, path)
+            }.distinct())
+            else -> {
+                val key = when (head) {
+                    is AccessSegment.Field -> head.name
+                    is AccessSegment.Index -> head.index
+                    AccessSegment.Dynamic -> return shape
+                }
+                val child = ensureObjectPath(ValueShape.Unknown, tail)
+                ValueShape.ObjectShape(
+                    schema = SchemaGuarantee(
+                        fields = linkedMapOf(
+                            key to FieldShape(
+                                required = true,
+                                shape = child,
+                                origin = OriginKind.MERGED,
+                            ),
+                        ),
+                        mayEmitNull = false,
+                        dynamicFields = emptyList(),
+                    ),
+                    closed = false,
+                )
+            }
+        }
     }
 
     private fun evidence(token: Token, ruleId: String, confidence: Double = 0.8): InferenceEvidenceV2 =
