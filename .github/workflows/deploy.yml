@@ -190,45 +190,13 @@ jobs:
       - name: Build documentation with MkDocs
         run: mkdocs build --site-dir site
 
-      - name: Prepare deployment directory
-        run: |
-          # Create deployment structure
-          mkdir -p deploy
-          
-          # Copy built documentation site (this includes the playground page)
-          cp -r site/* deploy/
-          
-          # Copy playground assets to assets directory (where demo.html expects them)
-          mkdir -p deploy/assets
-          # The playground build puts assets in docs/assets/, copy them to deploy/assets/
-          if [ -d "docs/assets" ]; then
-            cp -r docs/assets/* deploy/assets/
-            echo "Copied playground assets to deploy/assets/"
-          else
-            echo "No assets directory found"
-          fi
-          
-          # Copy playground directory contents to deploy/playground (overwrite MkDocs placeholder)
-          mkdir -p deploy/playground
-          cp playground/demo.html deploy/playground/
-          cp -r playground/examples deploy/playground/
-          cp -r playground/src deploy/playground/
-          
-          echo "Deployment structure:"
-          echo "Root files:"
-          ls -la deploy/ | head -5
-          echo "Playground files:"
-          ls -la deploy/playground/
-          echo "Assets:"
-          ls deploy/assets/ | head -5
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './deploy'
+          path: './site'
 
   deploy:
     environment:

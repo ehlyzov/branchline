@@ -25,7 +25,7 @@ changelog:
 - `docs/` uses MkDocs Material; top-level pages are sparse (e.g., `docs/index.md` and `docs/playground.md` are short, with no embedded playground).
 - Language reference pages (`docs/language/*.md`) mostly list grammar snippets with little explanation or runnable samples. Standard library pages omit several functions (e.g., APPEND, PREPEND, COLLECT, PUT, DELETE, WALK, AWAIT_SHARED) and lack examples.
 - Guides (`docs/guides/*`) cover only a few topics; no beginner install/first-run flow beyond brief CLI notes in `README.md`.
-- Playground React app lives in `playground/` (`src/playground.tsx`, `worker.ts`, `examples/*.json`) and renders into `.bl-playground`. Built assets sit in `docs/assets/playground.js|css` plus Monaco bundles. The docs page links out to `playground/demo.html` instead of embedding.
+- Playground React app lives in `playground/` (`src/playground.tsx`, `worker.ts`, `examples/*.json`) and renders into `.bl-playground`. Built assets sit in `docs/assets/playground.js|css` plus Monaco bundles. The docs page and open-in-new-tab route both use `/playground/` with query params for example preselection.
 - Existing curated examples (must be preserved): `collection-transforms`, `customer-profile`, `explain-derived-total` (trace), `junit-badge-summary` (XML), `order-shipment`, `pipeline-health-gating` (trace).
 
 ## Objectives (per request)
@@ -63,7 +63,7 @@ changelog:
   - Shared: AWAIT_SHARED (not currently documented).
   - For each function: signature, parameters/returns, type expectations, errors, notes on null/empty handling, performance/edge cases, and an interactive code block that preloads the playground with input+program demonstrating the function.
 - Playground section (embedded):
-  - Replace external link with an inline embed of `.bl-playground` inside the docs page (either via iframe to `playground/demo.html` or by loading `docs/assets/playground.js` directly).
+- Replace external link with an inline embed of `.bl-playground` inside the docs page by loading `docs/assets/playground.js` directly.
   - Keep existing examples and surface them as selectable presets; add anchors/deep links so “Try it” buttons in docs select the relevant example.
   - Add a short UX guide: running code, switching input JSON/XML, enabling tracing, resetting examples, keyboard shortcut.
   - Note client-side execution and bundle location; mention that examples live in `playground/examples/*.json` for contributors.
@@ -77,7 +77,7 @@ changelog:
 - Add coverage examples for every stdlib function; group related functions to reduce clutter while ensuring each one has at least one runnable demonstration.
 - Verify the worker continues to support both JSON and XML inputs; include at least one XML-driven example (retain `junit-badge-summary`).
 - Keep current styling by reusing `docs/assets/playground.css` and the existing React bundle; ensure MkDocs build copies necessary assets or references them relative to `../assets/`.
-- Consider a lightweight fallback link to `playground/demo.html` for environments where the embed cannot run.
+- Use `/playground/` as the fallback/open-in-new-tab route for environments where inline embed cannot run.
 
 ## Implementation steps (after approval)
 1) Keep `development/docs/docs-refresh.md` as the canonical draft containing the new structure above before syncing into `docs/`.
@@ -86,7 +86,7 @@ changelog:
 4) Build a stdlib catalog page (may be consolidated) that programmatically pulls or mirrors the example descriptors so docs stay in sync with `playground/examples`.
 5) Author new guides: `docs/guides/first-steps.md` (first-time use) and `docs/guides/install.md` (detailed install paths), update `mkdocs.yml` navigation accordingly.
 6) Add/augment examples in `playground/examples/*.json` to cover all functions; keep current ones intact and add new IDs for stdlib coverage.
-7) Ensure the playground bundle is rebuilt/copied to `docs/assets/` after example updates; verify `playground/demo.html` remains functional for direct access.
+7) Ensure the playground bundle is rebuilt/copied to `docs/assets/` after example updates; verify `/playground/` route works for direct access and `?example=<id>` preselection.
 8) Validate by running the docs site locally (`mkdocs serve`) to confirm embed works, links resolve, and interactive examples load with correct presets.
 
 ## Validation checklist

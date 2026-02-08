@@ -102,7 +102,7 @@ Use `--input-format xml` if providing XML.
 ---
 
 ## Embedded playground plan
-- The docs page (`docs/playground.md`) will embed the playground inline by loading `docs/assets/playground.js` and mounting into a `.bl-playground` element. Keep `playground/demo.html` as a direct access fallback.
+- The docs page (`docs/playground.md`) embeds the playground inline by loading `docs/assets/playground.js` and mounting into a `.bl-playground` element. Open-in-new-tab targets the routed docs page (`/playground/`) with an `example` query parameter.
 - All existing examples must remain available:
   - `collection-transforms`
   - `customer-profile`
