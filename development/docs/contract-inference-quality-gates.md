@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: ['planning/contract-inference-v2-milestone-plan']
 blocks: []
 supersedes: []
@@ -12,6 +12,8 @@ changelog:
     change: "Implemented CLI JVM quality-gate tests for curated unknown-ratio and junit-badge-summary thresholds."
   - date: 2026-02-08
     change: "Reopened for V2 JSON cleanup gates: structural no-duplication check and debug-metadata visibility policy checks."
+  - date: 2026-02-08
+    change: "Implemented structural/debug gates in CLI quality tests (no duplicate schema keys; origin debug-only assertions)."
 ---
 # Contract Inference Quality Gates
 
@@ -50,7 +52,8 @@ changelog:
 - V2 inference must not increase total CLI inspect time by more than 2.0x on curated examples.
 
 ## Reporting
-- Existing metric runner: `cli/src/jvmTest/kotlin/io/github/ehlyzov/branchline/cli/ContractInferenceQualityGateTest.kt`.
-- Additions required in cleanup phase:
-  - structural JSON assertions
-  - debug visibility assertions
+- Metric + structure/debug runner: `cli/src/jvmTest/kotlin/io/github/ehlyzov/branchline/cli/ContractInferenceQualityGateTest.kt`.
+- Asserts:
+  - unknown/total shape ratio gates
+  - no duplicate `schema` object member source in V2 JSON
+  - `origin` absent in standard JSON and present in debug JSON

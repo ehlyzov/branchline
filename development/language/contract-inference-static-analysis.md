@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: ['language/contract-model-v2']
 blocks: []
 supersedes: []
@@ -22,6 +22,8 @@ changelog:
     change: "Implemented M9 type-eval rule extension API (`BinaryTypeEvalRule`) and runtime-example fitter hook wiring in TransformContractBuilder."
   - date: 2026-02-08
     change: "Reopened for JSON cleanup follow-up: literal bracket key precision, empty-array union cleanup, and static evidence shutdown."
+  - date: 2026-02-08
+    change: "Completed cleanup precision pass: literal bracket key/index access treated as static, opaque regions restricted to truly dynamic paths, and empty-array append flow stabilized."
 ---
 # Contract Inference Static Analysis (V2)
 

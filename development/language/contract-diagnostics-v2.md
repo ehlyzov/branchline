@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: ['language/contract-model-v2', 'language/contract-inference-static-analysis']
 blocks: []
 supersedes: []
@@ -16,6 +16,8 @@ changelog:
     change: "Marked implemented after M9 removal of public V1 contract output."
   - date: 2026-02-08
     change: "Reopened for cleanup: diagnostics decoupled from static evidence metadata, with debug-only origin/spans policy."
+  - date: 2026-02-08
+    change: "Completed cleanup: validator diagnostics no longer depend on static evidence payloads; debug metadata visibility remains explicit and deterministic."
 ---
 # Contract Diagnostics V2
 

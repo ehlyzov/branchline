@@ -48,6 +48,8 @@ Experiment with Branchline directly in your browser—no installs required. Pick
 ## Curated examples (all preserved)
 - [collection-transforms](?example=collection-transforms){ target="_blank" } — MAP/FILTER/REDUCE style array work
 - [contract-deep-composition](?example=contract-deep-composition){ target="_blank" } — deep nested output inferred from variable-composed intermediates
+- [contract-literal-brackets-static](?example=contract-literal-brackets-static){ target="_blank" } — literal bracket keys inferred as static paths
+- [contract-empty-array-append](?example=contract-empty-array-append){ target="_blank" } — stable array element typing from `[]` + APPEND
 - [customer-profile](?example=customer-profile){ target="_blank" } — basic enrichment and null coalescing
 - [explain-derived-total](?example=explain-derived-total){ target="_blank" } — enable tracing to see EXPLAIN output
 - [junit-badge-summary](?example=junit-badge-summary){ target="_blank" } — XML parsing and normalization
@@ -73,3 +75,8 @@ Experiment with Branchline directly in your browser—no installs required. Pick
 - If the embed does not appear, open the new-tab link above.
 - XML inputs are parsed into objects; attributes use the `@attr` convention and text nodes use `#text`.
 - The playground runs entirely in your browser using the Kotlin/JS interpreter; no data leaves your machine.
+
+## Contract JSON in Playground
+- Enable **Contracts** to inspect inferred input/output contracts.
+- Keep debug off for clean JSON intended for docs/tooling.
+- Enable **Contract debug** when you need `origin` and available span metadata.

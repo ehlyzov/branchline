@@ -1,0 +1,33 @@
+{
+  "title": "Contracts: append from empty array",
+  "description": "Demonstrates stable output typing when appending object entries into an array seeded with [].",
+  "showContracts": true,
+  "program": [
+    "LET normalized = [];",
+    "FOR suite IN input.suites {",
+    "    IF suite != NULL THEN {",
+    "        LET stats = {",
+    "            name: suite[\"name\"] ?? \"unknown\",",
+    "            tests: NUMBER(suite[\"tests\"] ?? 0)",
+    "        };",
+    "        SET normalized = APPEND(normalized, stats);",
+    "    }",
+    "}",
+    "OUTPUT {",
+    "    suites: normalized",
+    "}"
+  ],
+  "input": {
+    "suites": [
+      {
+        "name": "api",
+        "tests": 4
+      },
+      null,
+      {
+        "name": "web",
+        "tests": 6
+      }
+    ]
+  }
+}

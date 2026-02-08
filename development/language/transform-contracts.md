@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: []
 blocks: []
 supersedes: []
@@ -10,6 +10,8 @@ changelog:
     change: "Updated to Contract Inference V2 baseline: nested requirement/guarantee model, V2 diagnostics, and V2-only public contract JSON."
   - date: 2026-02-08
     change: "Reopened for V2 JSON cleanup: children-only object structure, static evidence off, and debug-gated origin/spans."
+  - date: 2026-02-08
+    change: "Completed V2 JSON cleanup rollout: canonical children-based object structure, evidence-off policy, and debug-gated origin metadata."
   - date: 2026-02-01
     change: "Migrated from research/types.md and added YAML front matter."
   - date: 2026-02-01
@@ -18,7 +20,7 @@ changelog:
 # Transform contracts and signatures
 
 ## Status (as of 2026-02-08)
-- Stage: In progress (V2 JSON cleanup).
+- Stage: Implemented.
 - Signatures are parsed, validated in semantic analysis, and converted into explicit contracts.
 - Missing signatures use flow-sensitive inference via `TransformContractV2Synthesizer`.
 
