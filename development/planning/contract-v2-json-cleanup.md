@@ -15,6 +15,8 @@ changelog:
     change: "Created Contract JSON V2 cleanup plan: canonical children-only structure, static evidence disabled, origin debug-gated, precision fixes for dynamic keys and empty-array unions."
   - date: 2026-02-08
     change: "Implemented C1-C7: development-first updates, renderer/validator/synthesizer cleanup, debug-gated origin metadata, quality-gate tests, and playground/docs refresh."
+  - date: 2026-02-08
+    change: "Added post-cleanup follow-up: ensure `showContracts` preset takes effect immediately and formalize shape lattice with `Never` bottom."
 ---
 # Contract JSON V2 Cleanup
 

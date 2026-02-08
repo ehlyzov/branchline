@@ -158,15 +158,10 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   const [output, setOutput] = React.useState('');
   const [traceHuman, setTraceHuman] = React.useState<string | null>(null);
   const [traceJson, setTraceJson] = React.useState<string | null>(null);
-  const [isTracingEnabled, setIsTracingEnabled] = React.useState(false);
-  const [isContractsEnabled, setIsContractsEnabled] = React.useState(false);
-  const [contractsMode, setContractsMode] = React.useState<ContractMode>('off');
-  const [contractsDebug, setContractsDebug] = React.useState(false);
   const [inputContract, setInputContract] = React.useState<string | null>(null);
   const [outputContract, setOutputContract] = React.useState<string | null>(null);
   const [contractSource, setContractSource] = React.useState<string | null>(null);
   const [contractWarnings, setContractWarnings] = React.useState<string | null>(null);
-  const tracingRef = React.useRef(isTracingEnabled);
   const examples = React.useMemo(() => {
     const items: PlaygroundExample[] = Object.entries(exampleModules).map(([path, module]) => {
       const filename = path.split('/').pop() ?? 'example';
@@ -198,6 +193,11 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     () => buildHostedPlaygroundUrl(selectedExampleId),
     [selectedExampleId]
   );
+  const [isTracingEnabled, setIsTracingEnabled] = React.useState<boolean>(() => selectedExample?.enableTracing ?? false);
+  const [isContractsEnabled, setIsContractsEnabled] = React.useState<boolean>(() => selectedExample?.enableContracts ?? false);
+  const [contractsMode, setContractsMode] = React.useState<ContractMode>('off');
+  const [contractsDebug, setContractsDebug] = React.useState(false);
+  const tracingRef = React.useRef(isTracingEnabled);
 
   const run = React.useCallback(() => {
     const program = programEditorRef.current?.getValue() ?? '';

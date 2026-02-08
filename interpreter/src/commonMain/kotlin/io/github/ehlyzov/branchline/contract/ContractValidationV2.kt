@@ -211,6 +211,7 @@ public class ContractValidatorV2 {
         violations: MutableList<ContractViolationV2>,
     ) {
         when (expected) {
+            ValueShape.Never -> violations += violationForShape(path, expected, valueShapeOf(value))
             ValueShape.Unknown -> return
             ValueShape.Null -> if (value != null) {
                 violations += violationForShape(path, expected, valueShapeOf(value))
@@ -313,6 +314,7 @@ public class ContractValidatorV2 {
     }
 
     private fun matchesShape(expected: ValueShape, value: Any?): Boolean = when (expected) {
+        ValueShape.Never -> false
         ValueShape.Unknown -> true
         ValueShape.Null -> value == null
         ValueShape.BooleanShape -> value is Boolean

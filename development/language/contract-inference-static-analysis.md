@@ -24,6 +24,8 @@ changelog:
     change: "Reopened for JSON cleanup follow-up: literal bracket key precision, empty-array union cleanup, and static evidence shutdown."
   - date: 2026-02-08
     change: "Completed cleanup precision pass: literal bracket key/index access treated as static, opaque regions restricted to truly dynamic paths, and empty-array append flow stabilized."
+  - date: 2026-02-08
+    change: "Added lattice follow-up scope: explicit `Never` bottom, `Any` top, and join/union normalization rules for nested collection and object forms."
 ---
 # Contract Inference Static Analysis (V2)
 
@@ -46,7 +48,14 @@ Flow-sensitive static inference remains the contract source of truth. Current cl
 - Avoid degrading append-heavy flows into redundant unions (`array<any> | array<object>`).
 - Add union normalization for array/object combinations produced by joins.
 
-3. Evidence policy:
+3. Lattice formalization:
+- Model empty array literals as `array<never>`.
+- Use explicit join semantics with bottom/top:
+  - `never ⊔ T = T`
+  - `any ⊔ T = any`
+- Normalize nested unions so collection joins collapse to single collection forms where possible.
+
+4. Evidence policy:
 - Static analyzer does not persist static evidence payloads into contracts.
 - Runtime fitting remains the only future producer of evidence payloads.
 

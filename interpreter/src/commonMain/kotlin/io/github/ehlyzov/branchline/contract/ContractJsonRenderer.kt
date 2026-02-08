@@ -101,6 +101,7 @@ public object ContractJsonRenderer {
     }
 
     private fun encodeValueShape(shape: ValueShape, includeSpans: Boolean): JsonElement = when (shape) {
+        ValueShape.Never -> JsonObject(mapOf("type" to JsonPrimitive("never")))
         ValueShape.Unknown -> JsonObject(mapOf("type" to JsonPrimitive("any")))
         ValueShape.Null -> JsonObject(mapOf("type" to JsonPrimitive("null")))
         ValueShape.BooleanShape -> JsonObject(mapOf("type" to JsonPrimitive("boolean")))
@@ -164,6 +165,7 @@ public object ContractJsonRenderer {
     }
 
     private fun encodeValueShapeV2(shape: ValueShape): JsonElement = when (shape) {
+        ValueShape.Never -> JsonObject(mapOf("type" to JsonPrimitive("never")))
         ValueShape.Unknown -> JsonObject(mapOf("type" to JsonPrimitive("any")))
         ValueShape.Null -> JsonObject(mapOf("type" to JsonPrimitive("null")))
         ValueShape.BooleanShape -> JsonObject(mapOf("type" to JsonPrimitive("boolean")))

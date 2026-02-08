@@ -16,6 +16,8 @@ changelog:
     change: "Reopened for JSON cleanup: canonical children-only object structure, static evidence disabled, origin debug-only, no V2 version bump."
   - date: 2026-02-08
     change: "Contract JSON V2 cleanup completed: children-only object members in public JSON, static evidence emission disabled, origin exposed only in debug mode."
+  - date: 2026-02-08
+    change: "Added lattice follow-up: `Never` as bottom and `Any` as top in shape joins; empty array literals modeled as `array<never>`."
 ---
 # Contract Model V2
 
@@ -39,6 +41,14 @@ Contract Model V2 keeps the nested contract graph approach, but the public JSON 
 - Static evidence records are not emitted.
 - `origin` is emitted only in debug contract mode.
 - `open` is not emitted publicly; closure is represented by `closed`.
+
+## Lattice Follow-up (implemented next)
+- Add `ValueShape.Never` as lattice bottom.
+- Keep `ValueShape.Unknown` (`any`) as lattice top.
+- Join rules:
+  - `Never ⊔ T = T`
+  - `Any ⊔ T = Any`
+- Empty array literal should start as `array<never>`.
 
 ## Runtime-Fit Extension Points (future)
 - `ObservedContractEvidence`/`RuntimeFitEvidenceV2` for sample-derived hints.

@@ -14,6 +14,8 @@ changelog:
     change: "Reopened for V2 JSON cleanup gates: structural no-duplication check and debug-metadata visibility policy checks."
   - date: 2026-02-08
     change: "Implemented structural/debug gates in CLI quality tests (no duplicate schema keys; origin debug-only assertions)."
+  - date: 2026-02-08
+    change: "Added follow-up gate coverage target for lattice semantics (`array<never>` seed behavior and no regressions in unknown-ratio gates)."
 ---
 # Contract Inference Quality Gates
 
