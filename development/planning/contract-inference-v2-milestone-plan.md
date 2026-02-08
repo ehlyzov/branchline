@@ -1,0 +1,46 @@
+---
+status: In Progress
+depends_on: [
+  'language/contract-model-v2',
+  'language/contract-inference-static-analysis',
+  'language/contract-diagnostics-v2',
+]
+blocks: []
+supersedes: []
+superseded_by: []
+last_updated: 2026-02-08
+changelog:
+  - date: 2026-02-08
+    change: "Created end-to-end milestone plan for Contract Inference V2 implementation."
+---
+# Contract Inference V2 Milestone Plan
+
+## Baseline
+- Unknown-shape ratio across runnable playground examples: `176/198 = 0.889`.
+- `junit-badge-summary` unknown-shape ratio: `1.000`.
+
+## Targets
+- Curated examples unknown-shape ratio `<= 0.35`.
+- `junit-badge-summary` unknown-shape ratio `<= 0.20`.
+- JVM/JS parity maintained.
+
+## Milestones
+1. M0: Ratify and index V2 proposal set, baseline metrics, quality gates.
+2. M1: Add V2 model + JSON renderer + adapters used for migration only during development.
+3. M2: Add flow-sensitive abstract environment inference core.
+4. M3: Add path-sensitive refinement and bounded loop widening.
+5. M4: Add input provenance and nested requirement extraction.
+6. M5: Add output guarantee extraction from final abstract values.
+7. M6: Add static stdlib shape summaries.
+8. M7: Add validator V2 and diagnostics V2.
+9. M8: Wire CLI/playground/runtime to V2 contracts as default.
+10. M9: Remove V1 public contract output and finalize docs/tests/examples.
+
+## Guardrails
+- Always update `development/INDEX.md` when milestone status changes.
+- Keep development docs aligned with shipped behavior after each milestone.
+- Make one git commit per milestone.
+
+## Extension Point Commitments
+- Runtime-assisted fitting hooks are designed in V2 APIs but not enabled in this static-first roadmap.
+- Dataflow type-eval rule registry is included in analyzer design for arithmetic/logical propagation.

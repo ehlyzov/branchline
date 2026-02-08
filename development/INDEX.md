@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Added Contract Inference V2 proposal set, milestone plan, and quality gates."
+  - date: 2026-02-08
     change: "Added and implemented coalesce-aware input contract inference (`requiredAnyOf`) proposal."
   - date: 2026-02-08
     change: "Updated docs/playground planning records to remove deprecated static-playground references and align GitHub Pages deploy behavior with routed /playground/ access."
@@ -77,6 +79,11 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Conformance Suite](quality/conformance-suite.md) -- parity coverage expansion.
 - [JSONata Benchmarking](perf/jsonata-benchmarking.md) -- case matrix + validation.
 - [Interpreter Performance Tasks](perf/interpreter-performance-tasks.md) -- perf task backlog.
+- [Contract Model V2](language/contract-model-v2.md) -- nested contract graph model and evidence metadata.
+- [Contract Inference Static Analysis (V2)](language/contract-inference-static-analysis.md) -- flow-sensitive inference design with type-eval rules.
+- [Contract Diagnostics V2](language/contract-diagnostics-v2.md) -- deterministic, evidence-aware mismatch reporting.
+- [Contract Inference V2 Milestone Plan](planning/contract-inference-v2-milestone-plan.md) -- implementation sequence and guardrails.
+- [Contract Inference Quality Gates](docs/contract-inference-quality-gates.md) -- precision, parity, and performance gates.
 
 ### Implemented
 - [CLI Rollout](tooling/cli-rollout.md) -- JVM/JS CLI shipped.
