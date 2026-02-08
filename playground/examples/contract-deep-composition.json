@@ -1,0 +1,55 @@
+{
+  "title": "Contract deep composition",
+  "description": "Build nested output through temporary variables to demonstrate deep V2 contract inference.",
+  "program": [
+    "LET suites = LISTIFY(input.report.suites ?? []);",
+    "LET normalized = [];",
+    "LET totals = { tests: 0, failures: 0 };",
+    "",
+    "FOR suite IN suites {",
+    "    LET stats = {",
+    "        id: suite.id ?? \"unknown\",",
+    "        tests: NUMBER(suite.tests ?? 0),",
+    "        failures: NUMBER(suite.failures ?? 0)",
+    "    };",
+    "",
+    "    SET totals.tests = totals.tests + stats.tests;",
+    "    SET totals.failures = totals.failures + stats.failures;",
+    "",
+    "    LET quality = { status: IF stats.failures == 0 THEN \"green\" ELSE \"red\" };",
+    "    LET metrics = { tests: stats.tests, failures: stats.failures };",
+    "    SET normalized = APPEND(normalized, { id: stats.id, quality: quality, metrics: metrics });",
+    "}",
+    "",
+    "LET summary = {",
+    "    healthy: totals.failures == 0,",
+    "    totals: totals",
+    "};",
+    "",
+    "LET badge = {",
+    "    status: IF summary.healthy THEN \"passing\" ELSE \"failing\",",
+    "    summary: summary",
+    "};",
+    "",
+    "OUTPUT {",
+    "    badge: badge,",
+    "    suites: normalized",
+    "}"
+  ],
+  "input": {
+    "report": {
+      "suites": [
+        {
+          "id": "api",
+          "tests": "5",
+          "failures": "0"
+        },
+        {
+          "id": "web",
+          "tests": "8",
+          "failures": "1"
+        }
+      ]
+    }
+  }
+}

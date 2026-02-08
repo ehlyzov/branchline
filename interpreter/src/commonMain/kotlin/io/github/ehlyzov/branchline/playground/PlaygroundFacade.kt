@@ -17,7 +17,6 @@ import io.github.ehlyzov.branchline.contract.ContractJsonRenderer
 import io.github.ehlyzov.branchline.contract.ContractValidationMode
 import io.github.ehlyzov.branchline.contract.ContractViolationV2
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
-import io.github.ehlyzov.branchline.contract.TransformContractV2Adapter
 import io.github.ehlyzov.branchline.contract.formatContractViolationV2
 import io.github.ehlyzov.branchline.ir.Exec
 import io.github.ehlyzov.branchline.ir.ToIR
@@ -180,8 +179,7 @@ object PlaygroundFacade {
                 null
             }
             val inputValue = if (contract != null && contractMode != ContractValidationMode.OFF) {
-                val contractV1 = TransformContractV2Adapter.toV1(contract)
-                ContractCoercion.coerceInputBytes(contractV1.input, msg)
+                ContractCoercion.coerceInputBytes(contract.input, msg)
             } else {
                 msg
             }

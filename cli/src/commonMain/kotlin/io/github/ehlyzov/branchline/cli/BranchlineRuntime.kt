@@ -20,7 +20,6 @@ import io.github.ehlyzov.branchline.contract.ContractViolationV2
 import io.github.ehlyzov.branchline.contract.TransformContract
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
 import io.github.ehlyzov.branchline.contract.TransformContractV2
-import io.github.ehlyzov.branchline.contract.TransformContractV2Adapter
 import io.github.ehlyzov.branchline.std.SharedResourceHandle
 import io.github.ehlyzov.branchline.std.SharedResourceKind
 import io.github.ehlyzov.branchline.std.SharedStoreProvider
@@ -100,8 +99,7 @@ public class BranchlineProgram(
             return ContractExecutionResult(execute(transform, input), emptyList())
         }
         val contractV2 = contractV2ForTransform(transform)
-        val contractV1ForCoercion = TransformContractV2Adapter.toV1(contractV2)
-        val coercedInput = ContractCoercion.coerceInputBytes(contractV1ForCoercion.input, input)
+        val coercedInput = ContractCoercion.coerceInputBytes(contractV2.input, input)
         val inputViolations = ContractEnforcerV2.enforceInput(mode, contractV2.input, coercedInput)
         val output = execute(transform, coercedInput)
         val outputViolations = ContractEnforcerV2.enforceOutput(mode, contractV2.output, output)
@@ -137,8 +135,7 @@ public class BranchlineProgram(
             return ContractExecutionResult(vmExec.run(env, stringifyKeys = true), emptyList())
         }
         val contractV2 = contractV2ForTransform(transform)
-        val contractV1ForCoercion = TransformContractV2Adapter.toV1(contractV2)
-        val coercedInput = ContractCoercion.coerceInputBytes(contractV1ForCoercion.input, input)
+        val coercedInput = ContractCoercion.coerceInputBytes(contractV2.input, input)
         val inputViolations = ContractEnforcerV2.enforceInput(mode, contractV2.input, coercedInput)
         val env = buildEnv(transform, coercedInput)
         val output = vmExec.run(env, stringifyKeys = true)

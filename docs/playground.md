@@ -47,6 +47,7 @@ Experiment with Branchline directly in your browser—no installs required. Pick
 
 ## Curated examples (all preserved)
 - [collection-transforms](?example=collection-transforms){ target="_blank" } — MAP/FILTER/REDUCE style array work
+- [contract-deep-composition](?example=contract-deep-composition){ target="_blank" } — deep nested output inferred from variable-composed intermediates
 - [customer-profile](?example=customer-profile){ target="_blank" } — basic enrichment and null coalescing
 - [explain-derived-total](?example=explain-derived-total){ target="_blank" } — enable tracing to see EXPLAIN output
 - [junit-badge-summary](?example=junit-badge-summary){ target="_blank" } — XML parsing and normalization

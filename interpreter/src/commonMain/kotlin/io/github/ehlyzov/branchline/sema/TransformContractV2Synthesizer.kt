@@ -62,6 +62,7 @@ import io.github.ehlyzov.branchline.contract.ValueShape
 
 public class TransformContractV2Synthesizer(
     private val hostFns: Set<String> = emptySet(),
+    private val binaryTypeEvalRules: List<BinaryTypeEvalRule> = DefaultBinaryTypeEvalRules.rules,
 ) {
     private val env: LinkedHashMap<String, AbstractValue> = linkedMapOf()
     private val scopes = ArrayDeque<MutableSet<String>>()
@@ -481,6 +482,114 @@ public class TransformContractV2Synthesizer(
                 ),
                 evidence = listOf(evidence(expr.token, "stdlib-entries")),
             )
+            "SUBSTRING",
+            "REPLACE",
+            "JOIN",
+            "UPPER",
+            "LOWER",
+            "TRIM",
+            "FORMAT",
+            "SUBSTRING_BEFORE",
+            "SUBSTRING_AFTER",
+            "PAD",
+            "BASE64_ENCODE",
+            "NOW",
+            -> AbstractValue(
+                shape = ValueShape.TextShape,
+                provenance = args.flatMap { value -> value.provenance }.toSet(),
+                evidence = listOf(evidence(expr.token, "stdlib-text-family")),
+            )
+            "INT",
+            "PARSE_INT",
+            "LENGTH",
+            "COUNT",
+            -> AbstractValue(
+                shape = ValueShape.NumberShape,
+                provenance = args.flatMap { value -> value.provenance }.toSet(),
+                evidence = listOf(evidence(expr.token, "stdlib-number-family")),
+            )
+            "SPLIT" -> AbstractValue(
+                shape = ValueShape.ArrayShape(ValueShape.TextShape),
+                provenance = args.flatMap { value -> value.provenance }.toSet(),
+                evidence = listOf(evidence(expr.token, "stdlib-split")),
+            )
+            "BASE64_DECODE" -> AbstractValue(
+                shape = ValueShape.Bytes,
+                provenance = args.flatMap { value -> value.provenance }.toSet(),
+                evidence = listOf(evidence(expr.token, "stdlib-base64-decode")),
+            )
+            "ABS",
+            "DEC",
+            "FLOOR",
+            "CEIL",
+            "ROUND",
+            "POWER",
+            "SQRT",
+            "RANDOM",
+            "SUM",
+            "AVG",
+            "MIN",
+            "MAX",
+            -> AbstractValue(
+                shape = ValueShape.NumberShape,
+                provenance = args.flatMap { value -> value.provenance }.toSet(),
+                evidence = listOf(evidence(expr.token, "stdlib-number-family")),
+            )
+            "NOT",
+            "EXISTS",
+            "CONTAINS",
+            "MATCH",
+            "SOME",
+            "EVERY",
+            "IS_FUNCTION",
+            -> AbstractValue(
+                shape = ValueShape.BooleanShape,
+                provenance = args.flatMap { value -> value.provenance }.toSet(),
+                evidence = listOf(evidence(expr.token, "stdlib-boolean-family")),
+            )
+            "FILTER",
+            "COLLECT",
+            -> summarizePassThroughArray(args, expr.token, "stdlib-${callee.lowercase()}")
+            "MAP" -> AbstractValue(
+                shape = ValueShape.ArrayShape(ValueShape.Unknown),
+                provenance = args.firstOrNull()?.provenance.orEmpty(),
+                evidence = listOf(evidence(expr.token, "stdlib-map")),
+            )
+            "FIND" -> AbstractValue(
+                shape = args.firstOrNull()?.arrayElement() ?: ValueShape.Unknown,
+                provenance = args.firstOrNull()?.provenance.orEmpty(),
+                evidence = listOf(evidence(expr.token, "stdlib-find")),
+            )
+            "REDUCE" -> {
+                val seed = args.getOrNull(2)?.shape ?: ValueShape.Unknown
+                AbstractValue(
+                    shape = seed,
+                    provenance = args.flatMap { value -> value.provenance }.toSet(),
+                    evidence = listOf(evidence(expr.token, "stdlib-reduce")),
+                )
+            }
+            "PUT", "DELETE", "SIFT" -> {
+                val source = args.firstOrNull()
+                AbstractValue(
+                    shape = source?.shape ?: ValueShape.Unknown,
+                    provenance = source?.provenance.orEmpty(),
+                    evidence = listOf(evidence(expr.token, "stdlib-collection-update")),
+                )
+            }
+            "WALK" -> AbstractValue(
+                shape = ValueShape.ArrayShape(
+                    ValueShape.ObjectShape(
+                        schema = SchemaGuarantee(
+                            fields = linkedMapOf(),
+                            mayEmitNull = false,
+                            dynamicFields = emptyList(),
+                        ),
+                        closed = false,
+                    ),
+                ),
+                provenance = args.firstOrNull()?.provenance.orEmpty(),
+                evidence = listOf(evidence(expr.token, "stdlib-walk")),
+            )
             else -> AbstractValue(
                 shape = ValueShape.Unknown,
                 provenance = args.flatMap { value -> value.provenance }.toSet(),
@@ -611,22 +720,41 @@ public class TransformContractV2Synthesizer(
             }
             return mergeAbstractValues(left, right)
         }
-        val numericOps = setOf(
-            TokenType.PLUS,
-            TokenType.MINUS,
-            TokenType.STAR,
-            TokenType.SLASH,
-            TokenType.PERCENT,
-        )
-        if (expr.token.type in numericOps && (left.shape == ValueShape.NumberShape || right.shape == ValueShape.NumberShape)) {
-            enforceProvenanceShape(left.provenance + right.provenance, ValueShape.NumberShape, expr.token, "numeric-binary-input")
+        val evaluated = evaluateBinaryType(expr.token.type, left, right)
+        if (evaluated != null) {
+            val expected = evaluated.enforceOperandShape
+            if (expected != null) {
+                enforceProvenanceShape(
+                    left.provenance + right.provenance,
+                    expected,
+                    expr.token,
+                    "${evaluated.ruleId}-input",
+                )
+            }
             return AbstractValue(
-                shape = ValueShape.NumberShape,
-                provenance = (left.provenance + right.provenance),
-                evidence = listOf(evidence(expr.token, "numeric-binary-op")),
+                shape = evaluated.shape,
+                provenance = left.provenance + right.provenance,
+                evidence = listOf(evidence(expr.token, evaluated.ruleId, evaluated.confidence)),
             )
         }
         return mergeAbstractValues(left, right)
+    }
+
+    private fun evaluateBinaryType(
+        operator: TokenType,
+        left: AbstractValue,
+        right: AbstractValue,
+    ): BinaryTypeEvalResult? {
+        val input = BinaryTypeEvalInput(
+            operator = operator,
+            left = left.shape,
+            right = right.shape,
+        )
+        for (rule in binaryTypeEvalRules) {
+            val result = rule.evaluate(input)
+            if (result != null) return result
+        }
+        return null
     }
 
     private fun refineFromCondition(expr: Expr): Refinement {

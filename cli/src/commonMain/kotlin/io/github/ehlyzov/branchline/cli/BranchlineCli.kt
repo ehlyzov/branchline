@@ -16,7 +16,6 @@ import io.github.ehlyzov.branchline.UnionTypeRef
 import io.github.ehlyzov.branchline.contract.AccessPath
 import io.github.ehlyzov.branchline.contract.AccessSegment
 import io.github.ehlyzov.branchline.contract.ContractJsonRenderer
-import io.github.ehlyzov.branchline.contract.ContractJsonVersion
 import io.github.ehlyzov.branchline.contract.ContractValidationMode
 import io.github.ehlyzov.branchline.contract.ContractViolationV2
 import io.github.ehlyzov.branchline.contract.DynamicAccess
@@ -113,7 +112,6 @@ public data class InspectOptions(
     val transformName: String?,
     val contractsFormat: ContractFormat,
     val contractsDebug: Boolean,
-    val contractsJsonVersion: ContractJsonVersion,
 )
 
 public data class SchemaOptions(
@@ -229,7 +227,6 @@ public object BranchlineCli {
                   [--jobs <n>] [--summary-transform <name>] [--trace] [--trace-format text|json]
                   [--contracts off|warn|strict]
               bl inspect <script.bl> --contracts [--transform <name>] [--contracts-json] [--contracts-debug]
-                  [--contracts-json-version v1|v2]
               bl schema <script.bl> <TYPE_NAME> [--nullable] [--output <schema.json>]
               bl schema <script.bl> --all [--nullable] [--output <schema.json>]
               bl schema --import <schema.json> --name <TYPE_NAME> [--output <types.bl>]
@@ -272,7 +269,6 @@ public object BranchlineCli {
               --contracts         (inspect) print explicit vs inferred contracts with mismatch warnings.
               --contracts-json    (inspect) emit contract JSON instead of the text report.
               --contracts-debug   (inspect) include source spans in contract JSON output.
-              --contracts-json-version (inspect) choose contract JSON version; defaults to v2.
               --all               (schema) emit a ${'$'}defs block with all TYPE declarations.
               --nullable          (schema) use 'nullable: true' instead of 'type: [\"null\", ...]'.
               --import PATH       (schema) read a JSON Schema document and emit TYPE declarations.
@@ -477,7 +473,7 @@ public object BranchlineCli {
         )
         val selected = selectTransforms(transforms, options.transformName)
         val report = if (options.contractsFormat == ContractFormat.JSON) {
-            renderContractJson(selected, contractBuilder, options.contractsDebug, options.contractsJsonVersion)
+            renderContractJson(selected, contractBuilder, options.contractsDebug)
         } else {
             renderContractInspection(selected, contractBuilder, analyzer.warnings)
         }
@@ -1123,7 +1119,6 @@ public object BranchlineCli {
         var transform: String? = null
         var contractsFormat = ContractFormat.TEXT
         var contractsDebug = false
-        var contractsJsonVersion = ContractJsonVersion.V2
         var idx = startIndex
         while (idx < args.size) {
             val token = args[idx]
@@ -1141,11 +1136,6 @@ public object BranchlineCli {
                     contractsDebug = true
                     showContracts = true
                     idx += 1
-                }
-                token == "--contracts-json-version" && idx + 1 < args.size -> {
-                    contractsJsonVersion = parseContractJsonVersion(args[idx + 1])
-                    showContracts = true
-                    idx += 2
                 }
                 token == "--transform" && idx + 1 < args.size -> {
                     transform = args[idx + 1]
@@ -1166,7 +1156,6 @@ public object BranchlineCli {
             transformName = transform,
             contractsFormat = contractsFormat,
             contractsDebug = contractsDebug,
-            contractsJsonVersion = contractsJsonVersion,
         )
     }
 
@@ -1652,12 +1641,6 @@ private fun parseContractMode(raw: String): ContractValidationMode {
     }
 }
 
-private fun parseContractJsonVersion(raw: String): ContractJsonVersion = when (raw.trim().lowercase()) {
-    "v1", "1" -> ContractJsonVersion.V1
-    "v2", "2" -> ContractJsonVersion.V2
-    else -> throw CliException("Unknown contract JSON version '$raw'", kind = CliErrorKind.USAGE)
-}
-
 private fun parseJsonNumberMode(raw: String): JsonNumberMode {
     return try {
         JsonNumberMode.parse(raw)
@@ -1728,32 +1711,17 @@ private fun renderContractJson(
     transforms: List<TransformDecl>,
     contractBuilder: TransformContractBuilder,
     includeSpans: Boolean,
-    version: ContractJsonVersion,
 ): String {
     val entries = transforms.map { transform ->
         val name = transform.name ?: "<anonymous>"
-        when (version) {
-            ContractJsonVersion.V1 -> {
-                val contract = contractBuilder.build(transform)
-                mapOf(
-                    "name" to name,
-                    "source" to contract.source.name.lowercase(),
-                    "version" to "v1",
-                    "input" to ContractJsonRenderer.inputElement(contract, includeSpans, ContractJsonVersion.V1),
-                    "output" to ContractJsonRenderer.outputElement(contract, includeSpans, ContractJsonVersion.V1),
-                )
-            }
-            ContractJsonVersion.V2 -> {
-                val contract = contractBuilder.buildV2(transform)
-                mapOf(
-                    "name" to name,
-                    "source" to contract.source.name.lowercase(),
-                    "version" to "v2",
-                    "input" to ContractJsonRenderer.inputElement(contract, includeSpans),
-                    "output" to ContractJsonRenderer.outputElement(contract, includeSpans),
-                )
-            }
-        }
+        val contract = contractBuilder.buildV2(transform)
+        mapOf(
+            "name" to name,
+            "source" to contract.source.name.lowercase(),
+            "version" to "v2",
+            "input" to ContractJsonRenderer.inputElement(contract, includeSpans),
+            "output" to ContractJsonRenderer.outputElement(contract, includeSpans),
+        )
     }
     val payload = if (entries.size == 1) entries.first() else mapOf("transforms" to entries)
     return formatJson(payload, pretty = true)

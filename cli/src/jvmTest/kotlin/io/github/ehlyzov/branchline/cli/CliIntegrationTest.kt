@@ -142,7 +142,7 @@ public class CliIntegrationTest {
     }
 
     @Test
-    fun inspectContractsJsonSupportsV1Switch() {
+    fun inspectContractsJsonRejectsDeprecatedVersionSwitch() {
         val script = """
             TRANSFORM Main {
                 OUTPUT { greeting: "hi " + input.name }
@@ -157,14 +157,12 @@ public class CliIntegrationTest {
                 scriptPath.toString(),
                 "--contracts-json",
                 "--contracts-json-version",
-                "v1",
+                "v2",
             ),
         )
 
-        assertEquals(ExitCode.SUCCESS.code, result.exitCode)
-        val payload = Json.parseToJsonElement(result.stdout).jsonObject
-        assertEquals("v1", payload["version"]?.jsonPrimitive?.content)
-        assertTrue(payload["input"]?.jsonObject?.containsKey("fields") == true)
+        assertEquals(ExitCode.USAGE.code, result.exitCode)
+        assertTrue(result.stderr.contains("Unknown option '--contracts-json-version'"))
     }
 
     private fun runCli(args: List<String>, defaultCommand: CliCommand? = null): CliRunResult {

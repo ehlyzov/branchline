@@ -2,10 +2,16 @@ package io.github.ehlyzov.branchline.conformance
 
 import io.github.ehlyzov.branchline.Lexer
 import io.github.ehlyzov.branchline.Parser
+import io.github.ehlyzov.branchline.TokenType
 import io.github.ehlyzov.branchline.TransformDecl
+import io.github.ehlyzov.branchline.contract.ContractFitterV2
 import io.github.ehlyzov.branchline.contract.RequirementExprV2
+import io.github.ehlyzov.branchline.contract.RuntimeContractExampleV2
+import io.github.ehlyzov.branchline.contract.RuntimeFitResultV2
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
 import io.github.ehlyzov.branchline.contract.ValueShape
+import io.github.ehlyzov.branchline.sema.BinaryTypeEvalResult
+import io.github.ehlyzov.branchline.sema.BinaryTypeEvalRule
 import io.github.ehlyzov.branchline.sema.TypeResolver
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -156,6 +162,67 @@ class ConformTransformContractV2Test {
         val count = metrics.children["count"]
         assertNotNull(count)
         assertEquals(ValueShape.NumberShape, count.shape)
+    }
+
+    @Test
+    fun custom_binary_type_eval_rule_can_shape_expression_outputs() {
+        val program = """
+            TRANSFORM T {
+                LET sum = input.left + input.right;
+                OUTPUT { sum: sum }
+            }
+        """.trimIndent()
+        val builder = TransformContractBuilder(
+            typeResolver = TypeResolver(emptyList()),
+            binaryTypeEvalRules = listOf(
+                BinaryTypeEvalRule { input ->
+                    if (input.operator != TokenType.PLUS) return@BinaryTypeEvalRule null
+                    BinaryTypeEvalResult(
+                        shape = ValueShape.NumberShape,
+                        ruleId = "custom-plus",
+                        enforceOperandShape = ValueShape.NumberShape,
+                    )
+                },
+            ),
+        )
+        val contract = builder.buildV2(parseTransform(program))
+        val sum = contract.output.root.children["sum"]
+        assertNotNull(sum)
+        assertEquals(ValueShape.NumberShape, sum.shape)
+    }
+
+    @Test
+    fun runtime_fit_extension_point_accepts_observed_examples() {
+        val program = """
+            TRANSFORM T {
+                OUTPUT { value: input.value }
+            }
+        """.trimIndent()
+        val builder = TransformContractBuilder(
+            typeResolver = TypeResolver(emptyList()),
+            contractFitter = ContractFitterV2 { staticContract, examples ->
+                RuntimeFitResultV2(
+                    contract = staticContract.copy(
+                        metadata = staticContract.metadata.copy(
+                            runtimeFit = staticContract.metadata.runtimeFit.copy(
+                                strategy = "fitted-examples-${examples.size}",
+                            ),
+                        ),
+                    ),
+                )
+            },
+        )
+        val contract = builder.buildV2(
+            transform = parseTransform(program),
+            runtimeExamples = listOf(
+                RuntimeContractExampleV2(
+                    input = mapOf("value" to 1),
+                    output = mapOf("value" to 1),
+                    label = "seed",
+                ),
+            ),
+        )
+        assertEquals("fitted-examples-1", contract.metadata.runtimeFit.strategy)
     }
 
     private fun synthesizeV2(program: String) =

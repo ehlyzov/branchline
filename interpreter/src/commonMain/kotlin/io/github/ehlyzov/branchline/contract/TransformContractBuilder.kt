@@ -11,6 +11,8 @@ import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.TransformSignature
 import io.github.ehlyzov.branchline.TypeRef
 import io.github.ehlyzov.branchline.UnionTypeRef
+import io.github.ehlyzov.branchline.sema.BinaryTypeEvalRule
+import io.github.ehlyzov.branchline.sema.DefaultBinaryTypeEvalRules
 import io.github.ehlyzov.branchline.sema.TypeResolver
 import io.github.ehlyzov.branchline.sema.TransformShapeSynthesizer
 import io.github.ehlyzov.branchline.sema.TransformContractV2Synthesizer
@@ -18,20 +20,28 @@ import io.github.ehlyzov.branchline.sema.TransformContractV2Synthesizer
 public class TransformContractBuilder(
     private val typeResolver: TypeResolver,
     hostFns: Set<String> = emptySet(),
+    binaryTypeEvalRules: List<BinaryTypeEvalRule> = DefaultBinaryTypeEvalRules.rules,
+    private val contractFitter: ContractFitterV2 = NoOpContractFitterV2,
 ) {
     private val synthesizer = TransformShapeSynthesizer(hostFns)
-    private val synthesizerV2 = TransformContractV2Synthesizer(hostFns)
+    private val synthesizerV2 = TransformContractV2Synthesizer(hostFns, binaryTypeEvalRules)
 
     public fun build(transform: TransformDecl): TransformContract {
         return buildExplicitContract(transform) ?: synthesizer.synthesize(transform)
     }
 
-    public fun buildV2(transform: TransformDecl): TransformContractV2 {
+    public fun buildV2(
+        transform: TransformDecl,
+        runtimeExamples: List<RuntimeContractExampleV2> = emptyList(),
+    ): TransformContractV2 {
         val explicit = buildExplicitContract(transform)
-        if (explicit != null) {
-            return TransformContractV2Adapter.fromV1(explicit)
+        val staticContract = if (explicit != null) {
+            TransformContractV2Adapter.fromV1(explicit)
+        } else {
+            synthesizerV2.synthesize(transform)
         }
-        return synthesizerV2.synthesize(transform)
+        if (runtimeExamples.isEmpty()) return staticContract
+        return contractFitter.fit(staticContract, runtimeExamples).contract
     }
 
     public fun buildInferredContract(transform: TransformDecl): TransformContract =
