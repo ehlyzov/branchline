@@ -12,6 +12,8 @@ last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
     change: "Created end-to-end milestone plan for Contract Inference V2 implementation."
+  - date: 2026-02-08
+    change: "Completed M1 with TransformContractV2 model classes, V1<->V2 adapter, and versioned JSON rendering."
 ---
 # Contract Inference V2 Milestone Plan
 
@@ -25,16 +27,16 @@ changelog:
 - JVM/JS parity maintained.
 
 ## Milestones
-1. M0: Ratify and index V2 proposal set, baseline metrics, quality gates.
-2. M1: Add V2 model + JSON renderer + adapters used for migration only during development.
-3. M2: Add flow-sensitive abstract environment inference core.
-4. M3: Add path-sensitive refinement and bounded loop widening.
-5. M4: Add input provenance and nested requirement extraction.
-6. M5: Add output guarantee extraction from final abstract values.
-7. M6: Add static stdlib shape summaries.
-8. M7: Add validator V2 and diagnostics V2.
-9. M8: Wire CLI/playground/runtime to V2 contracts as default.
-10. M9: Remove V1 public contract output and finalize docs/tests/examples.
+1. [x] M0: Ratify and index V2 proposal set, baseline metrics, quality gates.
+2. [x] M1: Add V2 model + JSON renderer + adapters used for migration only during development.
+3. [ ] M2: Add flow-sensitive abstract environment inference core.
+4. [ ] M3: Add path-sensitive refinement and bounded loop widening.
+5. [ ] M4: Add input provenance and nested requirement extraction.
+6. [ ] M5: Add output guarantee extraction from final abstract values.
+7. [ ] M6: Add static stdlib shape summaries.
+8. [ ] M7: Add validator V2 and diagnostics V2.
+9. [ ] M8: Wire CLI/playground/runtime to V2 contracts as default.
+10. [ ] M9: Remove V1 public contract output and finalize docs/tests/examples.
 
 ## Guardrails
 - Always update `development/INDEX.md` when milestone status changes.

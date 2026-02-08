@@ -24,6 +24,9 @@ public class TransformContractBuilder(
         return buildExplicitContract(transform) ?: synthesizer.synthesize(transform)
     }
 
+    public fun buildV2(transform: TransformDecl): TransformContractV2 =
+        TransformContractV2Adapter.fromV1(build(transform))
+
     public fun buildInferredContract(transform: TransformDecl): TransformContract =
         synthesizer.synthesize(transform)
 
