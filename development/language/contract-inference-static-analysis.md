@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Added input-type-seeded inference mode for wildcard-output signatures with static seed descent and conservative dynamic fallback."
+  - date: 2026-02-08
     change: "Created static analysis plan for flow-sensitive contract inference with dataflow type-eval extension points."
   - date: 2026-02-08
     change: "Implemented V2 flow-sensitive synthesizer core with abstract environment joins and numeric binary-op type-eval rule hook."
@@ -38,6 +40,18 @@ Flow-sensitive static inference remains the contract source of truth. Current cl
 - Tracks variable shape flow through assignments, branches, loops, and object/array mutation.
 - Extracts input provenance and conditional requirements.
 - Produces output guarantees from final abstract values.
+
+## Hybrid Seeded Mode (wildcard output signatures)
+- Entry is selected by `TransformContractBuilder` when output type resolves to `any`/`any?`.
+- Synthesizer accepts optional input seed context from declared input type.
+- Static `input.*` reads descend from seed shape and can produce concrete inferred output types.
+- Dynamic segments (`input[key]`, computed keys) remain conservative:
+  - Emit `opaqueRegions` on affected path.
+  - Return `any` for affected dynamic read.
+- Input schema composition rules:
+  - Declared non-`any` shape wins over inferred shape at same path.
+  - Declared `any` may be narrowed by inferred concrete shape.
+  - Inferred requirement expressions and opaque regions are preserved.
 
 ## Active Cleanup Targets
 1. Dynamic key precision:

@@ -71,9 +71,10 @@ public class TransformContractV2Synthesizer(
     private val inputOpaque = LinkedHashMap<String, OpaqueRegionV2>()
     private val outputOpaque = LinkedHashMap<String, OpaqueRegionV2>()
     private var outputRoot: GuaranteeNodeV2? = null
+    private var inputSeedShape: ValueShape? = null
 
-    public fun synthesize(transform: TransformDecl): TransformContractV2 {
-        reset()
+    public fun synthesize(transform: TransformDecl, inputSeedShape: ValueShape? = null): TransformContractV2 {
+        reset(inputSeedShape)
         withScope(transform.params) {
             analyzeBlock(transform.body as CodeBlock)
         }
@@ -84,7 +85,7 @@ public class TransformContractV2Synthesizer(
         )
     }
 
-    private fun reset() {
+    private fun reset(inputSeedShape: ValueShape?) {
         env.clear()
         scopes.clear()
         inputPathRecords.clear()
@@ -92,6 +93,7 @@ public class TransformContractV2Synthesizer(
         inputOpaque.clear()
         outputOpaque.clear()
         outputRoot = null
+        this.inputSeedShape = inputSeedShape
     }
 
     private fun analyzeBlock(block: CodeBlock) {
@@ -262,7 +264,20 @@ public class TransformContractV2Synthesizer(
 
     private fun evalIdentifier(expr: IdentifierExpr): AbstractValue {
         val name = expr.name
-        if (isInputAlias(name) || hostFns.contains(name)) {
+        if (isInputAlias(name)) {
+            val seed = inputSeedShape ?: ValueShape.Unknown
+            val provenance = if (inputSeedShape != null) {
+                setOf(AccessPath(emptyList()))
+            } else {
+                emptySet()
+            }
+            return AbstractValue(
+                shape = seed,
+                provenance = provenance,
+                evidence = listOf(evidence(expr.token, "input-identifier")),
+            )
+        }
+        if (hostFns.contains(name)) {
             return AbstractValue(ValueShape.Unknown)
         }
         env[name]?.let { return it }
@@ -318,14 +333,14 @@ public class TransformContractV2Synthesizer(
 
     private fun evalInputAccess(expr: AccessExpr, token: Token): AbstractValue {
         if (expr.segs.isEmpty()) {
-            return AbstractValue(ValueShape.Unknown)
+            return AbstractValue(inputSeedShape ?: ValueShape.Unknown)
         }
         val normalized = normalizeAccessSegments(expr.segs, evaluateDynamicKeys = true)
-        val shape = ValueShape.Unknown
         if (normalized.hasDynamic) {
             addInputOpaque(AccessPath(normalized.segments), DynamicReason.KEY)
-            return AbstractValue(shape, evidence = listOf(evidence(token, "dynamic-input-access")))
+            return AbstractValue(ValueShape.Unknown, evidence = listOf(evidence(token, "dynamic-input-access")))
         }
+        val shape = descendShape(inputSeedShape ?: ValueShape.Unknown, normalized.segments)
         val path = AccessPath(normalized.segments)
         recordInputPath(path, shape, token, "input-access")
         return AbstractValue(

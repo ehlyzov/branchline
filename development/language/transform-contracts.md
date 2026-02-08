@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Added hybrid wildcard-output routing: signature input type can seed V2 inference while output remains inferred when declared as `_`/`_?` (or alias resolving to `any`)."
+  - date: 2026-02-08
     change: "Updated to Contract Inference V2 baseline: nested requirement/guarantee model, V2 diagnostics, and V2-only public contract JSON."
   - date: 2026-02-08
     change: "Reopened for V2 JSON cleanup: children-only object structure, static evidence off, and debug-gated origin/spans."
@@ -23,6 +25,7 @@ changelog:
 - Stage: Implemented.
 - Signatures are parsed, validated in semantic analysis, and converted into explicit contracts.
 - Missing signatures use flow-sensitive inference via `TransformContractV2Synthesizer`.
+- Wildcard output signatures (`_`, `_?`, or aliases resolving to `any`) use a hybrid mode: declared input type seeds inference and output remains inferred.
 
 ## Signature syntax (implemented)
 ```
@@ -37,9 +40,18 @@ Notes:
 - The mode block is optional; `buffer` is currently supported.
 
 ## Contract behavior
-- Explicit signatures are converted via `TransformContractBuilder`.
-- Missing signatures fall back to V2 static inference.
+- No signature: V2 static inference.
+- Signature with non-wildcard output: explicit contract conversion via `TransformContractBuilder`.
+- Signature with wildcard output: hybrid mode (declared input seed + V2 output inference).
 - Runtime validation uses `ContractValidatorV2` / `ContractEnforcerV2`.
+
+## Hybrid wildcard-output mode
+- Trigger: transform signature output resolves to `any`/`any?`.
+- Input contract baseline comes from declared input type.
+- Analyzer reads from `input.*` use declared input shape as static seed for path descent.
+- Dynamic access stays conservative: opaque regions remain emitted for dynamic key paths.
+- Output contract remains `source = inferred`.
+- Metadata marks that input-type seed participated in inference.
 
 ## V2 cleanup targets
 - Public object member structure is canonicalized to `root.children` only.

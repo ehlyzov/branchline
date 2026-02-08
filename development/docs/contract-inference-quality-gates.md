@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Added hybrid wildcard-output gate coverage: seeded static path precision, dynamic fallback conservatism, and metadata marker checks."
+  - date: 2026-02-08
     change: "Created quality gate definitions for Contract Inference V2."
   - date: 2026-02-08
     change: "Implemented CLI JVM quality-gate tests for curated unknown-ratio and junit-badge-summary thresholds."
@@ -31,6 +33,10 @@ changelog:
   - `stdlib-strings-casts`
   - `stdlib-strings-text`
   - `xml-input-output-roundtrip`
+- Hybrid-specific precision checks:
+  - typed input + wildcard output infers concrete output shape for static paths.
+  - `GET` with static key on typed input infers keyed type (with fallback merge).
+  - dynamic key reads remain `any` and add `opaqueRegions`.
 
 ## Structural JSON Gates (new)
 - Contract JSON must not duplicate object members in both `shape.schema.fields` and `children`.
@@ -41,6 +47,7 @@ changelog:
 - Default JSON output omits `origin` and spans.
 - Debug output includes `origin` and available spans/debug metadata.
 - CLI inspect and Playground debug toggle must match behavior.
+- Hybrid metadata marker is deterministic and present only when input-type seed path is active.
 
 ## Determinism Gates
 - Contract JSON output for the same script is byte-stable per platform.

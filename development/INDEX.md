@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Added Input-Type-Seeded Output Inference planning doc for hybrid wildcard-output inference using declared input type seeds."
+  - date: 2026-02-08
     change: "Logged conformance-alignment follow-up for contract lattice precision (SET/GET/cast path-shape preservation under `any` top)."
   - date: 2026-02-08
     change: "Tracked post-cleanup follow-up for contract inference lattice (`Never` bottom) and playground `showContracts` preset reliability."
@@ -95,6 +97,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Benchmarks Docs Fix Plan](docs/benchmarks-docs-fix-plan.md) -- MkDocs/benchmarks patch plan.
 - [Docs + Playground Plan](docs/docs-playground-plan.md) -- docs plan; depends on Docs Refresh.
 - [I/O Contracts Milestone Plan](planning/io-contracts-milestone-plan.md) -- implementation order and agent instructions.
+- [Input-Type-Seeded Output Inference](planning/input-type-seeded-output-inference.md) -- hybrid plan to infer output from flow while seeding inference with declared input types when output is wildcard.
 
 ### In Progress
 - [Docs Refresh](docs/docs-refresh.md) -- draft content and structure.

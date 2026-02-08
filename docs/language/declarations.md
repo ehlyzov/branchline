@@ -20,6 +20,11 @@ transformOptions ::= OPTIONS "{" optionEntry* "}"
 ```
 Transforms process data from sources to outputs. Signatures document parameter and result types. When omitted, both input and output types default to `Any`. Use `_`/`_?` as placeholders for `Any`/`Any?`.
 
+Contract inference routing:
+- No signature: input/output contracts are fully inferred.
+- Signature with concrete output type: explicit contract conversion is used.
+- Signature with wildcard output (`_`, `_?`, or alias resolving to `any`): input type seeds flow inference and output stays inferred.
+
 Example signatures:
 ```
 TRANSFORM X(input: _) -> _ { ... }
