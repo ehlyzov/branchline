@@ -20,6 +20,8 @@ changelog:
     change: "Completed M3 with path-sensitive guard refinements (null/object) and bounded merges."
   - date: 2026-02-08
     change: "Completed M4 with provenance-based nested input requirement extraction and conservative dynamic opaque regions."
+  - date: 2026-02-08
+    change: "Completed M5 with output guarantee extraction from final abstract values and local object mutation tracking."
 ---
 # Contract Inference V2 Milestone Plan
 
@@ -38,7 +40,7 @@ changelog:
 3. [x] M2: Add flow-sensitive abstract environment inference core.
 4. [x] M3: Add path-sensitive refinement and bounded loop widening.
 5. [x] M4: Add input provenance and nested requirement extraction.
-6. [ ] M5: Add output guarantee extraction from final abstract values.
+6. [x] M5: Add output guarantee extraction from final abstract values.
 7. [ ] M6: Add static stdlib shape summaries.
 8. [ ] M7: Add validator V2 and diagnostics V2.
 9. [ ] M8: Wire CLI/playground/runtime to V2 contracts as default.

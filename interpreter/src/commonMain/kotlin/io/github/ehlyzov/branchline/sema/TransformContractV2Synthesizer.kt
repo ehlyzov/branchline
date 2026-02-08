@@ -127,27 +127,38 @@ public class TransformContractV2Synthesizer(
             }
 
             is SetStmt -> {
-                evalExpr(stmt.value)
+                val value = evalExpr(stmt.value)
                 evalAccessTarget(stmt.target)
+                applySetToLocalTarget(stmt.target, value)
             }
 
             is AppendToStmt -> {
                 evalAccessTarget(stmt.target)
-                evalExpr(stmt.value)
+                val value = evalExpr(stmt.value)
                 stmt.init?.let { evalExpr(it) }
+                applyAppendToLocalTarget(stmt.target, value)
             }
 
             is ModifyStmt -> {
                 evalAccessTarget(stmt.target)
+                val updateShapes = mutableListOf<Pair<ObjKey, AbstractValue>>()
                 for (prop in stmt.updates) {
                     when (prop) {
-                        is LiteralProperty -> evalExpr(prop.value)
+                        is LiteralProperty -> {
+                            val value = evalExpr(prop.value)
+                            updateShapes += prop.key to value
+                        }
                         is ComputedProperty -> {
                             evalExpr(prop.keyExpr)
-                            evalExpr(prop.value)
+                            val value = evalExpr(prop.value)
+                            addOutputOpaque(AccessPath(listOf(AccessSegment.Dynamic)), DynamicReason.COMPUTED)
+                            if (value.provenance.isNotEmpty()) {
+                                addInputOpaque(AccessPath(listOf(AccessSegment.Dynamic)), DynamicReason.COMPUTED)
+                            }
                         }
                     }
                 }
+                applyModifyToLocalTarget(stmt.target, updateShapes)
             }
 
             is IfStmt -> analyzeIfStmt(stmt)
@@ -1037,6 +1048,121 @@ public class TransformContractV2Synthesizer(
         env[baseName] = current.copy(shape = promoted)
     }
 
+    private fun applySetToLocalTarget(target: AccessExpr, value: AbstractValue) {
+        val resolved = resolveLocalTargetPath(target) ?: return
+        val current = env[resolved.base] ?: return
+        val nextShape = writeShapeAtPath(current.shape, resolved.segments, value.shape)
+        env[resolved.base] = current.copy(
+            shape = nextShape,
+            evidence = (current.evidence + value.evidence).distinct(),
+        )
+    }
+
+    private fun applyAppendToLocalTarget(target: AccessExpr, value: AbstractValue) {
+        val resolved = resolveLocalTargetPath(target) ?: return
+        val current = env[resolved.base] ?: return
+        val existing = descendBySegments(current.shape, resolved.segments)
+        val nextLeaf = when (existing) {
+            is ValueShape.ArrayShape -> ValueShape.ArrayShape(mergeValueShape(existing.element, value.shape))
+            else -> ValueShape.ArrayShape(value.shape)
+        }
+        val nextShape = writeShapeAtPath(current.shape, resolved.segments, nextLeaf)
+        env[resolved.base] = current.copy(
+            shape = nextShape,
+            evidence = (current.evidence + value.evidence).distinct(),
+        )
+    }
+
+    private fun applyModifyToLocalTarget(
+        target: AccessExpr,
+        updates: List<Pair<ObjKey, AbstractValue>>,
+    ) {
+        val resolved = resolveLocalTargetPath(target) ?: return
+        val current = env[resolved.base] ?: return
+        var nextShape = ensureObjectPath(current.shape, resolved.segments)
+        for ((key, value) in updates) {
+            val seg = staticSegment(key)
+            nextShape = writeShapeAtPath(nextShape, resolved.segments + seg, value.shape)
+        }
+        env[resolved.base] = current.copy(
+            shape = nextShape,
+            evidence = (current.evidence + updates.flatMap { (_, value) -> value.evidence }).distinct(),
+        )
+    }
+
+    private fun resolveLocalTargetPath(target: AccessExpr): ResolvedLocalTarget? {
+        val base = target.base as? IdentifierExpr ?: return null
+        if (isInputAlias(base.name) || hostFns.contains(base.name)) return null
+        val segments = mutableListOf<AccessSegment>()
+        for (seg in target.segs) {
+            val static = seg as? AccessSeg.Static ?: return null
+            segments += staticSegment(static.key)
+        }
+        return ResolvedLocalTarget(base.name, segments)
+    }
+
+    private fun writeShapeAtPath(
+        shape: ValueShape,
+        path: List<AccessSegment>,
+        valueShape: ValueShape,
+    ): ValueShape {
+        if (path.isEmpty()) return mergeValueShape(shape, valueShape)
+        val head = path.first()
+        val tail = path.drop(1)
+        return when (shape) {
+            is ValueShape.ObjectShape -> {
+                val key = when (head) {
+                    is AccessSegment.Field -> head.name
+                    is AccessSegment.Index -> head.index
+                    AccessSegment.Dynamic -> return shape
+                }
+                val fields = LinkedHashMap(shape.schema.fields)
+                val existing = fields[key]
+                val next = writeShapeAtPath(existing?.shape ?: ValueShape.Unknown, tail, valueShape)
+                fields[key] = FieldShape(
+                    required = true,
+                    shape = next,
+                    origin = existing?.origin ?: OriginKind.MERGED,
+                )
+                ValueShape.ObjectShape(
+                    schema = shape.schema.copy(fields = fields),
+                    closed = shape.closed,
+                )
+            }
+            is ValueShape.Union -> ValueShape.Union(shape.options.map { option ->
+                writeShapeAtPath(option, path, valueShape)
+            }.distinct())
+            else -> {
+                val promoted = ensureObjectPath(shape, path)
+                writeShapeAtPath(promoted, path, valueShape)
+            }
+        }
+    }
+
+    private fun descendBySegments(shape: ValueShape, path: List<AccessSegment>): ValueShape {
+        var current = shape
+        for (segment in path) {
+            current = when (current) {
+                is ValueShape.ObjectShape -> {
+                    val key = when (segment) {
+                        is AccessSegment.Field -> segment.name
+                        is AccessSegment.Index -> segment.index
+                        AccessSegment.Dynamic -> return ValueShape.Unknown
+                    }
+                    current.schema.fields[key]?.shape ?: ValueShape.Unknown
+                }
+                is ValueShape.ArrayShape -> current.element
+                is ValueShape.SetShape -> current.element
+                is ValueShape.Union -> current.options.map { option ->
+                    descendBySegments(option, listOf(segment))
+                }.reduce(::mergeValueShape)
+                else -> ValueShape.Unknown
+            }
+            if (current == ValueShape.Unknown) break
+        }
+        return current
+    }
+
     private fun ensureObjectPath(shape: ValueShape, path: List<AccessSegment>): ValueShape {
         if (path.isEmpty()) return shape
         val head = path.first()
@@ -1179,6 +1305,11 @@ public class TransformContractV2Synthesizer(
         val path: AccessPath,
         var shape: ValueShape,
         val evidence: MutableList<InferenceEvidenceV2>,
+    )
+
+    private data class ResolvedLocalTarget(
+        val base: String,
+        val segments: List<AccessSegment>,
     )
 
     private data class AbstractValue(

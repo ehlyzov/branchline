@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Completed Contract Inference V2 M5: output guarantee extraction from final abstract values including local object mutations."
+  - date: 2026-02-08
     change: "Completed Contract Inference V2 M4: provenance-driven nested input requirement extraction and dynamic opaque-region tracking."
   - date: 2026-02-08
     change: "Completed Contract Inference V2 M3: path-sensitive null/object guard refinements with bounded merges."

@@ -14,6 +14,8 @@ changelog:
     change: "Implemented M3 path-sensitive refinements for null/object guards with bounded branch/loop merge behavior."
   - date: 2026-02-08
     change: "Implemented M4 provenance-based input shape extraction, nested path promotion, and cast/numeric expectation propagation."
+  - date: 2026-02-08
+    change: "Implemented M5 output guarantee extraction from final abstract variable state with SET/APPEND/MODIFY updates."
 ---
 # Contract Inference Static Analysis (V2)
 
