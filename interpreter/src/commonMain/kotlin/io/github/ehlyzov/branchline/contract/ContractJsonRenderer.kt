@@ -141,13 +141,9 @@ public object ContractJsonRenderer {
         }
         val payload = linkedMapOf<String, JsonElement>(
             "required" to JsonPrimitive(node.required),
-            "shape" to encodeValueShape(node.shape, includeSpans),
-            "open" to JsonPrimitive(node.open),
+            "shape" to encodeValueShapeV2(node.shape),
             "children" to JsonObject(children),
         )
-        if (node.evidence.isNotEmpty()) {
-            payload["evidence"] = encodeEvidence(node.evidence, includeSpans)
-        }
         return JsonObject(payload)
     }
 
@@ -158,15 +154,46 @@ public object ContractJsonRenderer {
         }
         val payload = linkedMapOf<String, JsonElement>(
             "required" to JsonPrimitive(node.required),
-            "shape" to encodeValueShape(node.shape, includeSpans),
-            "open" to JsonPrimitive(node.open),
-            "origin" to JsonPrimitive(node.origin.name),
+            "shape" to encodeValueShapeV2(node.shape),
             "children" to JsonObject(children),
         )
-        if (node.evidence.isNotEmpty()) {
-            payload["evidence"] = encodeEvidence(node.evidence, includeSpans)
+        if (includeSpans) {
+            payload["origin"] = JsonPrimitive(node.origin.name)
         }
         return JsonObject(payload)
+    }
+
+    private fun encodeValueShapeV2(shape: ValueShape): JsonElement = when (shape) {
+        ValueShape.Unknown -> JsonObject(mapOf("type" to JsonPrimitive("any")))
+        ValueShape.Null -> JsonObject(mapOf("type" to JsonPrimitive("null")))
+        ValueShape.BooleanShape -> JsonObject(mapOf("type" to JsonPrimitive("boolean")))
+        ValueShape.NumberShape -> JsonObject(mapOf("type" to JsonPrimitive("number")))
+        ValueShape.Bytes -> JsonObject(mapOf("type" to JsonPrimitive("bytes")))
+        ValueShape.TextShape -> JsonObject(mapOf("type" to JsonPrimitive("text")))
+        is ValueShape.ArrayShape -> JsonObject(
+            mapOf(
+                "type" to JsonPrimitive("array"),
+                "element" to encodeValueShapeV2(shape.element),
+            )
+        )
+        is ValueShape.SetShape -> JsonObject(
+            mapOf(
+                "type" to JsonPrimitive("set"),
+                "element" to encodeValueShapeV2(shape.element),
+            )
+        )
+        is ValueShape.ObjectShape -> JsonObject(
+            mapOf(
+                "type" to JsonPrimitive("object"),
+                "closed" to JsonPrimitive(shape.closed),
+            )
+        )
+        is ValueShape.Union -> JsonObject(
+            mapOf(
+                "type" to JsonPrimitive("union"),
+                "options" to JsonArray(shape.options.map(::encodeValueShapeV2)),
+            )
+        )
     }
 
     private fun encodeRequirementExprListV2(expressions: List<RequirementExprV2>): JsonElement =
@@ -207,21 +234,6 @@ public object ContractJsonRenderer {
                     "reason" to JsonPrimitive(region.reason.name),
                 ),
             )
-        })
-
-    private fun encodeEvidence(items: List<InferenceEvidenceV2>, includeSpans: Boolean): JsonElement =
-        JsonArray(items.map { evidence ->
-            val payload = linkedMapOf<String, JsonElement>(
-                "ruleId" to JsonPrimitive(evidence.ruleId),
-                "confidence" to JsonPrimitive(evidence.confidence),
-            )
-            if (evidence.notes != null) {
-                payload["notes"] = JsonPrimitive(evidence.notes)
-            }
-            if (includeSpans && evidence.sourceSpans.isNotEmpty()) {
-                payload["sourceSpans"] = JsonArray(evidence.sourceSpans.map(::encodeToken))
-            }
-            JsonObject(payload)
         })
 
     private fun encodeDynamicAccess(items: List<DynamicAccess>): JsonElement =
