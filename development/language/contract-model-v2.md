@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: ['language/transform-contracts', 'language/transform-contracts-next']
 blocks: []
 supersedes: []
@@ -14,6 +14,8 @@ changelog:
     change: "Marked implemented after M9: V2-only public contract JSON and runtime-fit/type-eval extension hooks."
   - date: 2026-02-08
     change: "Reopened for JSON cleanup: canonical children-only object structure, static evidence disabled, origin debug-only, no V2 version bump."
+  - date: 2026-02-08
+    change: "Contract JSON V2 cleanup completed: children-only object members in public JSON, static evidence emission disabled, origin exposed only in debug mode."
 ---
 # Contract Model V2
 

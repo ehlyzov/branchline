@@ -48,6 +48,52 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - XML output validates prefixed element and attribute names against in-scope `@xmlns` declarations in strict mode.
 - CLI emits conversion-loss warnings to stderr when known lossy JSON/XML conversions occur.
 
+## Contract JSON Modes
+- `bl inspect <script.bl> --contracts-json` emits clean V2 JSON for tooling and docs.
+- `bl inspect <script.bl> --contracts-json --contracts-debug` additionally emits debug metadata (`origin`, and spans if available).
+
+Example (default):
+```json
+{
+  "version": "v2",
+  "root": {
+    "required": true,
+    "shape": { "type": "object", "closed": false },
+    "children": {
+      "greeting": {
+        "required": true,
+        "shape": { "type": "text" },
+        "children": {}
+      }
+    }
+  },
+  "mayEmitNull": false,
+  "opaqueRegions": []
+}
+```
+
+Example (`--contracts-debug`):
+```json
+{
+  "version": "v2",
+  "root": {
+    "required": true,
+    "shape": { "type": "object", "closed": false },
+    "origin": "OUTPUT",
+    "children": {
+      "greeting": {
+        "required": true,
+        "shape": { "type": "text" },
+        "origin": "OUTPUT",
+        "children": {}
+      }
+    }
+  },
+  "mayEmitNull": false,
+  "opaqueRegions": []
+}
+```
+
 ## Internal Interchange
 - Branchline runtime now provides internal CBOR encode/decode helpers for lossless Branchline-to-Branchline interchange.
 - CBOR map keys are restricted to text or integer keys; other key types are rejected.

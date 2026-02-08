@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: [
   'language/contract-model-v2',
   'language/contract-inference-static-analysis',
@@ -13,6 +13,8 @@ last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
     change: "Created Contract JSON V2 cleanup plan: canonical children-only structure, static evidence disabled, origin debug-gated, precision fixes for dynamic keys and empty-array unions."
+  - date: 2026-02-08
+    change: "Implemented C1-C7: development-first updates, renderer/validator/synthesizer cleanup, debug-gated origin metadata, quality-gate tests, and playground/docs refresh."
 ---
 # Contract JSON V2 Cleanup
 

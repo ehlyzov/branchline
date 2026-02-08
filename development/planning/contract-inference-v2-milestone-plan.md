@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: [
   'language/contract-model-v2',
   'language/contract-inference-static-analysis',
@@ -32,6 +32,8 @@ changelog:
     change: "Completed M9: removed public V1 contract JSON output, added runtime-fit/type-eval extension hooks, quality-gate tests, and new playground example."
   - date: 2026-02-08
     change: "Started post-M9 Contract JSON V2 cleanup milestones (no version bump, evidence-off, debug-gated origin, precision fixes)."
+  - date: 2026-02-08
+    change: "Completed post-M9 cleanup milestones C1-C7 with renderer/model/validator cleanup, precision fixes, tests, docs, and new playground examples."
 ---
 # Contract Inference V2 Milestone Plan
 
@@ -57,13 +59,13 @@ changelog:
 10. [x] M9: Remove V1 public contract output and finalize docs/tests/examples.
 
 ## Cleanup Milestones (active)
-1. [ ] C1: Development docs alignment for V2 cleanup scope and gates.
-2. [ ] C2: Contract JSON renderer canonicalization (children-only object members, no public `open`).
-3. [ ] C3: Validator/model alignment with no static-evidence dependency.
-4. [ ] C4: Static evidence emission shutdown.
-5. [ ] C5: Precision fixes for literal bracket access and empty-array union normalization.
-6. [ ] C6: CLI/Playground debug metadata gating and integration tests.
-7. [ ] C7: Docs/playground examples refresh and release gate validation.
+1. [x] C1: Development docs alignment for V2 cleanup scope and gates.
+2. [x] C2: Contract JSON renderer canonicalization (children-only object members, no public `open`).
+3. [x] C3: Validator/model alignment with no static-evidence dependency.
+4. [x] C4: Static evidence emission shutdown.
+5. [x] C5: Precision fixes for literal bracket access and empty-array union normalization.
+6. [x] C6: CLI/Playground debug metadata gating and integration tests.
+7. [x] C7: Docs/playground examples refresh and release gate validation.
 
 ## Guardrails
 - Always update `development/INDEX.md` when milestone status changes.

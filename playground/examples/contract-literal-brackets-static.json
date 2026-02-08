@@ -1,0 +1,19 @@
+{
+  "title": "Contracts: literal bracket keys",
+  "description": "Shows that literal bracket paths (e.g. suite[\"@name\"]) are inferred as static paths instead of opaque dynamic keys.",
+  "showContracts": true,
+  "program": [
+    "LET suiteName = input.testsuites[\"@name\"] ?? \"missing\";",
+    "LET tests = NUMBER(input.testsuites[\"@tests\"] ?? 0);",
+    "OUTPUT {",
+    "    suite_name: suiteName,",
+    "    tests: tests",
+    "}"
+  ],
+  "input": {
+    "testsuites": {
+      "@name": "suite-a",
+      "@tests": 5
+    }
+  }
+}
