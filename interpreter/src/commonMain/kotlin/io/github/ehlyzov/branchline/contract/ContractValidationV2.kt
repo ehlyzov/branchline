@@ -1,7 +1,6 @@
 package io.github.ehlyzov.branchline.contract
 
 import kotlin.math.min
-import kotlin.math.round
 
 public enum class ContractViolationKindV2 {
     MISSING_REQUIRED_PATH,
@@ -18,7 +17,6 @@ public data class ContractViolationV2(
     val expected: ValueShape? = null,
     val actual: ValueShape? = null,
     val ruleId: String? = null,
-    val confidence: Double? = null,
     val hints: List<String> = emptyList(),
 )
 
@@ -123,14 +121,14 @@ public class ContractValidatorV2 {
             return
         }
         if (value == null) return
-        validateShape(node.shape, value, path, node, violations)
+        validateShape(node.shape, value, path, violations)
         val map = value as? Map<*, *> ?: return
         val fields = map.entries.associate { entry -> entry.key?.toString() to entry.value }
         for ((name, child) in node.children) {
             val childValue = fields[name]
             validateRequirementNode(child, childValue, appendField(path, name), violations)
         }
-        if (!node.open) {
+        if (!requirementNodeIsOpen(node)) {
             for (key in fields.keys) {
                 if (key == null) continue
                 if (!node.children.containsKey(key)) {
@@ -160,13 +158,13 @@ public class ContractValidatorV2 {
             return
         }
         if (value == null) return
-        validateShape(node.shape, value, path, node, violations)
+        validateShape(node.shape, value, path, violations)
         val map = value as? Map<*, *> ?: return
         val fields = map.entries.associate { entry -> entry.key?.toString() to entry.value }
         for ((name, child) in node.children) {
             validateGuaranteeNode(child, fields[name], appendField(path, name), violations)
         }
-        if (!node.open) {
+        if (!guaranteeNodeIsOpen(node)) {
             for (key in fields.keys) {
                 if (key == null) continue
                 if (!node.children.containsKey(key)) {
@@ -210,25 +208,24 @@ public class ContractValidatorV2 {
         expected: ValueShape,
         value: Any?,
         path: List<PathSegmentV2>,
-        node: Any,
         violations: MutableList<ContractViolationV2>,
     ) {
         when (expected) {
             ValueShape.Unknown -> return
             ValueShape.Null -> if (value != null) {
-                violations += violationForShape(path, expected, valueShapeOf(value), node)
+                violations += violationForShape(path, expected, valueShapeOf(value))
             }
             ValueShape.BooleanShape -> if (value !is Boolean) {
-                violations += violationForShape(path, expected, valueShapeOf(value), node)
+                violations += violationForShape(path, expected, valueShapeOf(value))
             }
             ValueShape.NumberShape -> if (!isNumericValue(value)) {
-                violations += violationForShape(path, expected, valueShapeOf(value), node)
+                violations += violationForShape(path, expected, valueShapeOf(value))
             }
             ValueShape.Bytes -> if (value !is ByteArray) {
-                violations += violationForShape(path, expected, valueShapeOf(value), node)
+                violations += violationForShape(path, expected, valueShapeOf(value))
             }
             ValueShape.TextShape -> if (value !is String) {
-                violations += violationForShape(path, expected, valueShapeOf(value), node)
+                violations += violationForShape(path, expected, valueShapeOf(value))
             }
             is ValueShape.ArrayShape -> {
                 val list = when (value) {
@@ -237,36 +234,36 @@ public class ContractValidatorV2 {
                     else -> null
                 }
                 if (list == null) {
-                    violations += violationForShape(path, expected, valueShapeOf(value), node)
+                    violations += violationForShape(path, expected, valueShapeOf(value))
                     return
                 }
                 if (expected.element == ValueShape.Unknown) return
                 list.forEachIndexed { index, item ->
-                    validateShape(expected.element, item, appendIndex(path, index), node, violations)
+                    validateShape(expected.element, item, appendIndex(path, index), violations)
                 }
             }
             is ValueShape.SetShape -> {
                 val set = value as? Set<*>
                 if (set == null) {
-                    violations += violationForShape(path, expected, valueShapeOf(value), node)
+                    violations += violationForShape(path, expected, valueShapeOf(value))
                     return
                 }
                 if (expected.element == ValueShape.Unknown) return
                 var idx = 0
                 for (item in set) {
-                    validateShape(expected.element, item, appendIndex(path, idx), node, violations)
+                    validateShape(expected.element, item, appendIndex(path, idx), violations)
                     idx += 1
                 }
             }
             is ValueShape.ObjectShape -> {
                 if (value !is Map<*, *>) {
-                    violations += violationForShape(path, expected, valueShapeOf(value), node)
+                    violations += violationForShape(path, expected, valueShapeOf(value))
                 }
             }
             is ValueShape.Union -> {
                 val accepted = expected.options.any { option -> matchesShape(option, value) }
                 if (!accepted) {
-                    violations += violationForShape(path, expected, valueShapeOf(value), node)
+                    violations += violationForShape(path, expected, valueShapeOf(value))
                 }
             }
         }
@@ -278,14 +275,11 @@ public class ContractValidatorV2 {
         node: Any,
         actual: ValueShape?,
     ): ContractViolationV2 {
-        val evidence = evidenceOf(node)
         return ContractViolationV2(
             path = path,
             kind = kind,
             expected = shapeOf(node),
             actual = actual,
-            ruleId = evidence?.ruleId,
-            confidence = evidence?.confidence,
         )
     }
 
@@ -293,29 +287,29 @@ public class ContractValidatorV2 {
         path: List<PathSegmentV2>,
         expected: ValueShape,
         actual: ValueShape?,
-        node: Any,
     ): ContractViolationV2 {
-        val evidence = evidenceOf(node)
         return ContractViolationV2(
             path = renderPath(path),
             kind = ContractViolationKindV2.SHAPE_MISMATCH,
             expected = expected,
             actual = actual,
-            ruleId = evidence?.ruleId,
-            confidence = evidence?.confidence,
         )
-    }
-
-    private fun evidenceOf(node: Any): InferenceEvidenceV2? = when (node) {
-        is RequirementNodeV2 -> node.evidence.firstOrNull()
-        is GuaranteeNodeV2 -> node.evidence.firstOrNull()
-        else -> null
     }
 
     private fun shapeOf(node: Any): ValueShape? = when (node) {
         is RequirementNodeV2 -> node.shape
         is GuaranteeNodeV2 -> node.shape
         else -> null
+    }
+
+    private fun requirementNodeIsOpen(node: RequirementNodeV2): Boolean = when (val shape = node.shape) {
+        is ValueShape.ObjectShape -> !shape.closed
+        else -> node.open
+    }
+
+    private fun guaranteeNodeIsOpen(node: GuaranteeNodeV2): Boolean = when (val shape = node.shape) {
+        is ValueShape.ObjectShape -> !shape.closed
+        else -> node.open
     }
 
     private fun matchesShape(expected: ValueShape, value: Any?): Boolean = when (expected) {
@@ -470,8 +464,7 @@ public fun formatContractViolationV2(violation: ContractViolationV2): String {
     val expected = violation.expected?.let(::renderValueShapeLabel)
     val actual = violation.actual?.let(::renderValueShapeLabel)
     val rule = violation.ruleId?.let { " [rule=$it]" } ?: ""
-    val confidence = violation.confidence?.let { value -> " [confidence=${formatConfidence(value)}]" } ?: ""
-    val suffix = rule + confidence
+    val suffix = rule
     return when (violation.kind) {
         ContractViolationKindV2.MISSING_REQUIRED_PATH -> "Missing required path at ${violation.path}$suffix"
         ContractViolationKindV2.MISSING_CONDITIONAL_GROUP -> "Missing conditional requirement at ${violation.path}$suffix"
@@ -480,11 +473,6 @@ public fun formatContractViolationV2(violation: ContractViolationV2): String {
         ContractViolationKindV2.NULLABILITY_MISMATCH -> "Nullability mismatch at ${violation.path}$suffix"
         ContractViolationKindV2.OPAQUE_REGION_WARNING -> "Opaque region at ${violation.path}: ${violation.hints.joinToString("; ")}$suffix"
     }
-}
-
-private fun formatConfidence(value: Double): String {
-    val rounded = round(value * 100.0) / 100.0
-    return rounded.toString()
 }
 
 public fun formatContractViolationsV2(violations: List<ContractViolationV2>): String {
