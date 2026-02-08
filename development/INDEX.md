@@ -4,8 +4,10 @@ depends_on: []
 blocks: []
 supersedes: ['planning/current-research-tasks']
 superseded_by: []
-last_updated: 2026-02-07
+last_updated: 2026-02-08
 changelog:
+  - date: 2026-02-08
+    change: "Updated docs/playground planning records to remove deprecated static-playground references and align GitHub Pages deploy behavior with routed /playground/ access."
   - date: 2026-02-01
     change: "Created development knowledge base index."
   - date: 2026-02-01

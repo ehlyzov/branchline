@@ -6,6 +6,7 @@
 - If you notice unexpected changes while working, stop immediately and ask how to proceed.
 - Never run destructive git commands (reset/checkout/restore/hard) unless explicitly instructed.
 - Never edit `.env` or environment variable files.
+- Route every planned repository change through `/development` first (proposal/update), then implement; keep development docs in sync with delivered behavior.
 - When adding or updating proposals in `/development`, always update `development/INDEX.md`.
 
 ## Project Structure & Priorities
