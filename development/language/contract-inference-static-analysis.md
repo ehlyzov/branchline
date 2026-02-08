@@ -1,5 +1,5 @@
 ---
-status: Implemented
+status: In Progress
 depends_on: ['language/contract-model-v2']
 blocks: []
 supersedes: []
@@ -21,39 +21,38 @@ changelog:
   - date: 2026-02-08
     change: "Implemented M9 type-eval rule extension API (`BinaryTypeEvalRule`) and runtime-example fitter hook wiring in TransformContractBuilder."
   - date: 2026-02-08
-    change: "Marked implemented after M9 completion and quality-gate enforcement."
+    change: "Reopened for JSON cleanup follow-up: literal bracket key precision, empty-array union cleanup, and static evidence shutdown."
 ---
 # Contract Inference Static Analysis (V2)
 
 ## Summary
-Replace syntax-only inference with a flow-sensitive abstract interpreter that tracks value shapes, provenance, and requirement conditions through control flow.
+Flow-sensitive static inference remains the contract source of truth. Current cleanup focuses on precision and cleaner serialization output.
 
-## Analysis Model
-- Abstract environment maps variables to `AbstractValue`.
-- `AbstractValue` includes:
-  - possible `ValueShape` set
-  - nullability
-  - input provenance paths
-  - confidence/evidence references
-- Branch merge uses lattice join.
-- Loops use bounded fixpoint with widening for deterministic convergence.
+## Current Analyzer Baseline
+- Tracks variable shape flow through assignments, branches, loops, and object/array mutation.
+- Extracts input provenance and conditional requirements.
+- Produces output guarantees from final abstract values.
+
+## Active Cleanup Targets
+1. Dynamic key precision:
+- Bracket access with literal key/index should be treated as static path segments.
+- Opaque regions should be emitted only for truly dynamic expressions.
+- Preserve static prefixes for opaque-region paths.
+
+2. Empty-array precision:
+- Represent empty-array seed with bottom-like element behavior.
+- Avoid degrading append-heavy flows into redundant unions (`array<any> | array<object>`).
+- Add union normalization for array/object combinations produced by joins.
+
+3. Evidence policy:
+- Static analyzer does not persist static evidence payloads into contracts.
+- Runtime fitting remains the only future producer of evidence payloads.
 
 ## Dataflow Type-Eval Extension Points
-- `BinaryTypeEvalRule` registry for expression-level typing refinements.
-- Initial rules:
-  - arithmetic propagation (`z = a + b` with numeric operand evidence promotes numeric result)
-  - text concat propagation (`x + y` with text operand yields text)
-  - boolean/logical operator propagation
-  - null-coalesce propagation
-- Rule engine keeps confidence-aware evidence; low-confidence rules cannot create strict requiredness.
-- Implemented anchors:
-  - `interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/sema/ContractTypeEvalExtensions.kt`
-  - `TransformContractV2Synthesizer(..., binaryTypeEvalRules = ...)`
-
-## Static-First Output
-- Emit V2 requirements and guarantees from final abstract state.
-- Preserve conservative treatment of dynamic access (`input[key]` => opaque region).
+- `BinaryTypeEvalRule` stays as the extension surface for expression-level typing.
+- Initial behavior supports numeric/text/boolean operator propagation.
+- This remains the hook for future richer dataflow constraints (`z = a + b` propagation and similar rules).
 
 ## Future Runtime Example Fitting
-- Static analyzer emits stable IDs and evidence hooks consumed later by runtime fitter.
-- Observed examples can refine confidence and optionality but cannot override hard static contradictions.
+- Runtime fitting hooks remain available but disabled by default.
+- Static facts remain authoritative unless runtime-fit policy explicitly allows refinement.

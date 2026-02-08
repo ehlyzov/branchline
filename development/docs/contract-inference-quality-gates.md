@@ -1,5 +1,5 @@
 ---
-status: Implemented
+status: In Progress
 depends_on: ['planning/contract-inference-v2-milestone-plan']
 blocks: []
 supersedes: []
@@ -10,13 +10,15 @@ changelog:
     change: "Created quality gate definitions for Contract Inference V2."
   - date: 2026-02-08
     change: "Implemented CLI JVM quality-gate tests for curated unknown-ratio and junit-badge-summary thresholds."
+  - date: 2026-02-08
+    change: "Reopened for V2 JSON cleanup gates: structural no-duplication check and debug-metadata visibility policy checks."
 ---
 # Contract Inference Quality Gates
 
 ## Precision Gates
 - Curated example unknown-shape ratio must be `<= 0.35`.
 - `playground/examples/junit-badge-summary.json` unknown-shape ratio must be `<= 0.20`.
-- Current curated quality-gate set:
+- Curated quality-gate set:
   - `contract-deep-composition`
   - `error-handling-try-catch`
   - `junit-badge-summary`
@@ -25,6 +27,16 @@ changelog:
   - `stdlib-strings-casts`
   - `stdlib-strings-text`
   - `xml-input-output-roundtrip`
+
+## Structural JSON Gates (new)
+- Contract JSON must not duplicate object members in both `shape.schema.fields` and `children`.
+- Public JSON must not include `open`.
+- Public JSON must not include static `evidence` payloads.
+
+## Debug Visibility Gates (new)
+- Default JSON output omits `origin` and spans.
+- Debug output includes `origin` and available spans/debug metadata.
+- CLI inspect and Playground debug toggle must match behavior.
 
 ## Determinism Gates
 - Contract JSON output for the same script is byte-stable per platform.
@@ -38,8 +50,7 @@ changelog:
 - V2 inference must not increase total CLI inspect time by more than 2.0x on curated examples.
 
 ## Reporting
-- Implemented metric runner test: `cli/src/jvmTest/kotlin/io/github/ehlyzov/branchline/cli/ContractInferenceQualityGateTest.kt`.
-- Emits/asserts:
-  - unknown/total shape count
-  - unknown ratio
-  - per-example failures
+- Existing metric runner: `cli/src/jvmTest/kotlin/io/github/ehlyzov/branchline/cli/ContractInferenceQualityGateTest.kt`.
+- Additions required in cleanup phase:
+  - structural JSON assertions
+  - debug visibility assertions

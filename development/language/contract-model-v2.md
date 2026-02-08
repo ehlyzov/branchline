@@ -1,5 +1,5 @@
 ---
-status: Implemented
+status: In Progress
 depends_on: ['language/transform-contracts', 'language/transform-contracts-next']
 blocks: []
 supersedes: []
@@ -12,49 +12,41 @@ changelog:
     change: "Implemented core Contract V2 data model and migration adapter in interpreter contract package."
   - date: 2026-02-08
     change: "Marked implemented after M9: V2-only public contract JSON and runtime-fit/type-eval extension hooks."
+  - date: 2026-02-08
+    change: "Reopened for JSON cleanup: canonical children-only object structure, static evidence disabled, origin debug-only, no V2 version bump."
 ---
 # Contract Model V2
 
 ## Summary
-Contract Model V2 replaces the flat field map model with a nested graph model that can represent deep object/array requirements and guarantees inferred from program flow.
+Contract Model V2 keeps the nested contract graph approach, but the public JSON rendering is being cleaned up to remove duplication and debug noise.
 
 ## Goals
 - Represent nested requirements and guarantees (`input.testsuites.testsuite[*].@name`).
-- Capture conditional requirements as explicit expressions.
+- Keep object member structure canonical in `children` only.
 - Keep dynamic-access handling conservative to avoid false precision.
-- Attach inference evidence metadata (spans, rules, confidence).
-- Define extension points for future runtime-assisted fitting from observed examples.
+- Hide debug metadata from default output.
+- Preserve extension points for runtime-assisted fitting and dataflow type-eval customization.
 
 ## Non-goals
-- Runtime example fitting in this phase.
-- Any language syntax changes.
+- Enabling runtime example fitting in this phase.
+- Language syntax changes.
 
-## Core Model Additions
-- `TransformContractV2(input, output, source, metadata)`
-- `RequirementNode` and `GuaranteeNode` tree with per-node shape.
-- `RequirementExpr` for conditional requirements:
-  - `AllOf`
-  - `AnyOf`
-  - `PathPresent`
-  - `PathNonNull`
-- `OpaqueRegion` marker for dynamic access zones.
-- `InferenceEvidence`:
-  - `sourceSpans`
-  - `ruleId`
-  - `confidence` (0..1)
-  - `notes`
+## Active Cleanup Decisions
+- Public V2 JSON is changed in place (no version bump).
+- `shape.schema.fields` is not used as a second field source in public output.
+- Static evidence records are not emitted.
+- `origin` is emitted only in debug contract mode.
+- `open` is not emitted publicly; closure is represented by `closed`.
 
 ## Runtime-Fit Extension Points (future)
-- `ObservedContractEvidence` hook to attach sample-derived hints without mutating static facts.
-- `ContractFitter` interface:
-  - accepts base static contract + observed examples
-  - returns additive evidence and confidence deltas
-  - never upgrades opaque dynamic regions to strict guarantees without explicit policy.
-- Versioned merge policy so static and observed evidence remain attributable.
-- Implemented API anchors:
-  - `interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractFitExtensionsV2.kt`
-  - `TransformContractBuilder.buildV2(..., runtimeExamples = ...)` extension hook.
+- `ObservedContractEvidence`/`RuntimeFitEvidenceV2` for sample-derived hints.
+- `ContractFitterV2` merge hook remains available through `TransformContractBuilder.buildV2(..., runtimeExamples = ...)`.
+- Policy remains conservative for opaque regions and contradictions.
+
+## Dataflow Type-Eval Extension Points
+- `BinaryTypeEvalRule` registry remains available and enabled for static analysis extensibility.
+- Rule pipeline supports arithmetic/logical/coalesce inference and future domain-specific rules.
 
 ## Migration Direction
-- V2 becomes the only public contract format after implementation is complete.
-- V1 compatibility code may exist temporarily during development but is removed before roadmap completion.
+- Public output remains V2 only.
+- Cleanup is applied directly to V2 payload shape.
