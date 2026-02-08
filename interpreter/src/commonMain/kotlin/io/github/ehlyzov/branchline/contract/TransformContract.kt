@@ -100,6 +100,9 @@ public sealed interface AccessSegment {
 @Serializable
 public sealed interface ValueShape {
     @Serializable
+    public data object Never : ValueShape
+
+    @Serializable
     public data object Unknown : ValueShape
 
     @Serializable

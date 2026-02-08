@@ -77,6 +77,7 @@ public data class InferenceEvidenceV2(
 public data class ContractMetadataV2(
     val runtimeFit: RuntimeFitExtensionPoint = RuntimeFitExtensionPoint(),
     val typeEval: TypeEvalExtensionPoint = TypeEvalExtensionPoint(),
+    val inference: InferenceExtensionPoint = InferenceExtensionPoint(),
 )
 
 @Serializable
@@ -95,3 +96,7 @@ public data class TypeEvalExtensionPoint(
     ),
 )
 
+@Serializable
+public data class InferenceExtensionPoint(
+    val inputTypeSeeded: Boolean = false,
+)

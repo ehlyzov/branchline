@@ -162,7 +162,13 @@ public class PlaygroundFacadeTest {
         """.trimIndent()
         val result = PlaygroundFacade.run(
             program,
-            "{}",
+            """
+            {
+              "testsuites": {
+                "@name": "suite-a"
+              }
+            }
+            """.trimIndent(),
             includeContracts = true
         )
 
@@ -176,6 +182,111 @@ public class PlaygroundFacadeTest {
         val children = anyOf["children"]?.jsonArray
         assertNotNull(children)
         assertEquals(2, children.size)
+    }
+
+    @Test
+    public fun literalBracketInputAccessStaysStaticWithoutOpaqueRootWildcard() {
+        val program = """
+            LET suiteName = input.testsuites["@name"] ?? "missing";
+            OUTPUT { name: suiteName }
+        """.trimIndent()
+        val result = PlaygroundFacade.run(
+            program,
+            """
+            {
+              "testsuites": {
+                "@name": "suite-a"
+              }
+            }
+            """.trimIndent(),
+            includeContracts = true
+        )
+
+        assertTrue(result.success)
+        val inputContract = Json.parseToJsonElement(result.inputContractJson ?: error("missing input contract")).jsonObject
+        val opaque = inputContract["opaqueRegions"]?.jsonArray ?: error("missing opaque regions")
+        assertTrue(opaque.isEmpty(), "literal bracket access should not emit opaque region")
+        val rootChildren = inputContract["root"]?.jsonObject?.get("children")?.jsonObject ?: error("missing root children")
+        assertTrue(rootChildren.containsKey("testsuites"))
+        val testsuitesChildren = rootChildren["testsuites"]?.jsonObject?.get("children")?.jsonObject ?: error("missing testsuites children")
+        assertTrue(testsuitesChildren.containsKey("@name"))
+    }
+
+    @Test
+    public fun appendFromEmptySeedAvoidsArrayAnyUnionNoise() {
+        val program = """
+            LET normalized = [];
+            FOR suite IN input.suites {
+                IF suite != NULL THEN {
+                    LET stats = { name: suite["name"] ?? "unknown" };
+                    SET normalized = APPEND(normalized, stats);
+                }
+            }
+            OUTPUT { suites: normalized }
+        """.trimIndent()
+        val result = PlaygroundFacade.run(
+            program,
+            """
+            {
+              "suites": [
+                { "name": "a" },
+                null
+              ]
+            }
+            """.trimIndent(),
+            includeContracts = true
+        )
+
+        assertTrue(result.success)
+        val outputContract = Json.parseToJsonElement(result.outputContractJson ?: error("missing output contract")).jsonObject
+        val rootChildren = outputContract["root"]?.jsonObject?.get("children")?.jsonObject ?: error("missing root children")
+        val suites = rootChildren["suites"]?.jsonObject ?: error("missing suites node")
+        val suitesShape = suites["shape"]?.jsonObject ?: error("missing suites shape")
+        assertEquals("array", suitesShape["type"]?.toString()?.trim('"'))
+        val elementShape = suitesShape["element"]?.jsonObject ?: error("missing element shape")
+        assertEquals("object", elementShape["type"]?.toString()?.trim('"'))
+    }
+
+    @Test
+    public fun playgroundDebugToggleGatesOriginMetadata() {
+        val program = """
+            OUTPUT { greeting: "Hello, " + input.name }
+        """.trimIndent()
+        val input = """
+            {
+              "name": "Ada"
+            }
+        """.trimIndent()
+
+        val standard = PlaygroundFacade.runWithContracts(
+            program = program,
+            inputJson = input,
+            enableTracing = false,
+            includeContracts = true,
+            contractsMode = "off",
+            includeContractSpans = false,
+            sharedJsonConfig = null,
+            outputFormat = "json",
+        )
+        val debug = PlaygroundFacade.runWithContracts(
+            program = program,
+            inputJson = input,
+            enableTracing = false,
+            includeContracts = true,
+            contractsMode = "off",
+            includeContractSpans = true,
+            sharedJsonConfig = null,
+            outputFormat = "json",
+        )
+
+        assertTrue(standard.success)
+        assertTrue(debug.success)
+        val standardOutput = Json.parseToJsonElement(standard.outputContractJson ?: error("missing standard output")).jsonObject
+        val debugOutput = Json.parseToJsonElement(debug.outputContractJson ?: error("missing debug output")).jsonObject
+        val standardRoot = standardOutput["root"]?.jsonObject ?: error("missing standard root")
+        val debugRoot = debugOutput["root"]?.jsonObject ?: error("missing debug root")
+        assertTrue(!standardRoot.containsKey("origin"))
+        assertEquals("OUTPUT", debugRoot["origin"]?.toString()?.trim('"'))
     }
 
     @Test

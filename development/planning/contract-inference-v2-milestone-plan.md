@@ -30,6 +30,10 @@ changelog:
     change: "Completed M8 by wiring CLI/playground contract paths to V2 by default with JSON version switch support."
   - date: 2026-02-08
     change: "Completed M9: removed public V1 contract JSON output, added runtime-fit/type-eval extension hooks, quality-gate tests, and new playground example."
+  - date: 2026-02-08
+    change: "Started post-M9 Contract JSON V2 cleanup milestones (no version bump, evidence-off, debug-gated origin, precision fixes)."
+  - date: 2026-02-08
+    change: "Completed post-M9 cleanup milestones C1-C7 with renderer/model/validator cleanup, precision fixes, tests, docs, and new playground examples."
 ---
 # Contract Inference V2 Milestone Plan
 
@@ -42,7 +46,7 @@ changelog:
 - `junit-badge-summary` unknown-shape ratio `<= 0.20`.
 - JVM/JS parity maintained.
 
-## Milestones
+## Completed Milestones
 1. [x] M0: Ratify and index V2 proposal set, baseline metrics, quality gates.
 2. [x] M1: Add V2 model + JSON renderer + adapters used for migration only during development.
 3. [x] M2: Add flow-sensitive abstract environment inference core.
@@ -54,11 +58,20 @@ changelog:
 9. [x] M8: Wire CLI/playground/runtime to V2 contracts as default.
 10. [x] M9: Remove V1 public contract output and finalize docs/tests/examples.
 
+## Cleanup Milestones (active)
+1. [x] C1: Development docs alignment for V2 cleanup scope and gates.
+2. [x] C2: Contract JSON renderer canonicalization (children-only object members, no public `open`).
+3. [x] C3: Validator/model alignment with no static-evidence dependency.
+4. [x] C4: Static evidence emission shutdown.
+5. [x] C5: Precision fixes for literal bracket access and empty-array union normalization.
+6. [x] C6: CLI/Playground debug metadata gating and integration tests.
+7. [x] C7: Docs/playground examples refresh and release gate validation.
+
 ## Guardrails
 - Always update `development/INDEX.md` when milestone status changes.
 - Keep development docs aligned with shipped behavior after each milestone.
 - Make one git commit per milestone.
 
 ## Extension Point Commitments
-- Runtime-assisted fitting hooks are designed in V2 APIs but not enabled in this static-first roadmap.
-- Dataflow type-eval rule registry is included in analyzer design for arithmetic/logical propagation.
+- Runtime-assisted fitting hooks remain in V2 APIs but are disabled by default.
+- Dataflow type-eval rule registry remains in analyzer design for arithmetic/logical propagation and future custom rules.

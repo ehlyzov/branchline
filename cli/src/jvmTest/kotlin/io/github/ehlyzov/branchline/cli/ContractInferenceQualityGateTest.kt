@@ -1,5 +1,6 @@
 package io.github.ehlyzov.branchline.cli
 
+import io.github.ehlyzov.branchline.contract.ContractJsonRenderer
 import io.github.ehlyzov.branchline.contract.GuaranteeNodeV2
 import io.github.ehlyzov.branchline.contract.RequirementNodeV2
 import io.github.ehlyzov.branchline.contract.TransformContractV2
@@ -7,9 +8,11 @@ import io.github.ehlyzov.branchline.contract.ValueShape
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
@@ -45,19 +48,37 @@ class ContractInferenceQualityGateTest {
         )
     }
 
+    @Test
+    fun v2_json_has_no_duplicate_shape_schema_fields() {
+        val contract = contractForExample("junit-badge-summary")
+        val outputJson = Json.parseToJsonElement(
+            ContractJsonRenderer.renderSchemaGuaranteeV2(contract.output, includeSpans = false, pretty = true),
+        )
+        assertNoSchemaKey(outputJson)
+    }
+
+    @Test
+    fun v2_json_origin_is_debug_only() {
+        val contract = contractForExample("customer-profile")
+        val standard = Json.parseToJsonElement(
+            ContractJsonRenderer.renderSchemaGuaranteeV2(contract.output, includeSpans = false, pretty = true),
+        ).jsonObject
+        val debug = Json.parseToJsonElement(
+            ContractJsonRenderer.renderSchemaGuaranteeV2(contract.output, includeSpans = true, pretty = true),
+        ).jsonObject
+        val standardRoot = standard["root"]?.jsonObject ?: error("missing standard root")
+        val debugRoot = debug["root"]?.jsonObject ?: error("missing debug root")
+        assertTrue(!standardRoot.containsKey("origin"), "origin must be absent in default contracts JSON")
+        assertEquals("OUTPUT", debugRoot["origin"]?.toString()?.trim('"'))
+    }
+
     private fun collectStats(exampleNames: List<String>): AggregateStats {
         val examplesDir = resolveExamplesDir()
         var unknown = 0
         var total = 0
         val perExample = LinkedHashMap<String, Double>()
         for (name in exampleNames) {
-            val file = examplesDir.resolve("$name.json")
-            require(Files.exists(file)) { "Missing playground example: $file" }
-            val payload = json.parseToJsonElement(Files.readString(file)).jsonObject
-            val program = parseProgram(payload)
-            val runtime = BranchlineProgram(wrapProgramIfNeeded(program))
-            val transform = runtime.selectTransform(null)
-            val contract = runtime.contractV2ForTransform(transform)
+            val contract = contractForExample(name)
             val stats = contractStats(contract)
             unknown += stats.unknown
             total += stats.total
@@ -79,6 +100,17 @@ class ContractInferenceQualityGateTest {
             }
             else -> error("Unsupported program payload: $program")
         }
+    }
+
+    private fun contractForExample(name: String): TransformContractV2 {
+        val examplesDir = resolveExamplesDir()
+        val file = examplesDir.resolve("$name.json")
+        require(Files.exists(file)) { "Missing playground example: $file" }
+        val payload = json.parseToJsonElement(Files.readString(file)).jsonObject
+        val program = parseProgram(payload)
+        val runtime = BranchlineProgram(wrapProgramIfNeeded(program))
+        val transform = runtime.selectTransform(null)
+        return runtime.contractV2ForTransform(transform)
     }
 
     private fun wrapProgramIfNeeded(program: String): String {
@@ -113,6 +145,7 @@ class ContractInferenceQualityGateTest {
     }
 
     private fun shapeStats(shape: ValueShape): ShapeStats = when (shape) {
+        ValueShape.Never -> ShapeStats(unknown = 0, total = 1)
         ValueShape.Unknown -> ShapeStats(unknown = 1, total = 1)
         ValueShape.Null,
         ValueShape.BooleanShape,
@@ -146,6 +179,17 @@ class ContractInferenceQualityGateTest {
         )
         return candidates.firstOrNull { candidate -> Files.isDirectory(candidate) }
             ?: error("Unable to locate playground/examples from ${Path.of("").toAbsolutePath()}")
+    }
+
+    private fun assertNoSchemaKey(element: JsonElement) {
+        when (element) {
+            is JsonObject -> {
+                assertTrue(!element.containsKey("schema"), "Found deprecated duplicate object schema key in JSON node: $element")
+                element.values.forEach(::assertNoSchemaKey)
+            }
+            is JsonArray -> element.forEach(::assertNoSchemaKey)
+            is JsonPrimitive -> Unit
+        }
     }
 
     private data class ShapeStats(

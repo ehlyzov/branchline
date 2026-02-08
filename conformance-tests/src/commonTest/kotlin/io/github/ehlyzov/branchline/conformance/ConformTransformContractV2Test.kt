@@ -4,11 +4,15 @@ import io.github.ehlyzov.branchline.Lexer
 import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.TokenType
 import io.github.ehlyzov.branchline.TransformDecl
+import io.github.ehlyzov.branchline.TypeDecl
+import io.github.ehlyzov.branchline.contract.AccessSegment
+import io.github.ehlyzov.branchline.contract.ContractSource
 import io.github.ehlyzov.branchline.contract.ContractFitterV2
 import io.github.ehlyzov.branchline.contract.RequirementExprV2
 import io.github.ehlyzov.branchline.contract.RuntimeContractExampleV2
 import io.github.ehlyzov.branchline.contract.RuntimeFitResultV2
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
+import io.github.ehlyzov.branchline.contract.TransformContractV2
 import io.github.ehlyzov.branchline.contract.ValueShape
 import io.github.ehlyzov.branchline.sema.BinaryTypeEvalResult
 import io.github.ehlyzov.branchline.sema.BinaryTypeEvalRule
@@ -66,9 +70,9 @@ class ConformTransformContractV2Test {
     fun null_guard_refines_shape_for_then_branch_access() {
         val program = """
             TRANSFORM T {
-                LET payload = input.payload ?? {};
+                LET payload = input.payload;
                 IF payload != NULL THEN {
-                    OUTPUT { name: payload.name }
+                    OUTPUT { name: TEXT(payload.name) }
                 } ELSE {
                     OUTPUT { name: "none" }
                 }
@@ -165,6 +169,88 @@ class ConformTransformContractV2Test {
     }
 
     @Test
+    fun wildcard_output_signature_uses_hybrid_seeded_inference() {
+        val program = """
+            TRANSFORM T(input: { payload?: { name: text } }) -> _ {
+                LET payload = input.payload;
+                IF payload != NULL THEN {
+                    OUTPUT { name: payload.name }
+                } ELSE {
+                    OUTPUT { name: "none" }
+                }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        assertEquals(ContractSource.INFERRED, contract.source)
+        assertTrue(contract.metadata.inference.inputTypeSeeded)
+        val name = contract.output.root.children["name"]
+        assertNotNull(name)
+        assertEquals(ValueShape.TextShape, name.shape)
+    }
+
+    @Test
+    fun wildcard_output_alias_resolving_to_any_uses_hybrid_routing() {
+        val program = """
+            TYPE AnyOutput = UNION any
+            TRANSFORM T(input: { value: number }) -> AnyOutput {
+                OUTPUT { value: input.value }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        assertEquals(ContractSource.INFERRED, contract.source)
+        assertTrue(contract.metadata.inference.inputTypeSeeded)
+        val value = contract.output.root.children["value"]
+        assertNotNull(value)
+        assertEquals(ValueShape.NumberShape, value.shape)
+    }
+
+    @Test
+    fun wildcard_hybrid_mode_uses_typed_seed_for_get_static_key() {
+        val program = """
+            TRANSFORM T(input: { metrics: { count: number } }) -> _ {
+                OUTPUT { count: GET(input.metrics, "count", 0) }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        val count = contract.output.root.children["count"]
+        assertNotNull(count)
+        assertEquals(ValueShape.NumberShape, count.shape)
+    }
+
+    @Test
+    fun non_wildcard_output_signature_stays_explicit() {
+        val program = """
+            TRANSFORM T(input: { payload?: { name: text } }) -> { name: text } {
+                OUTPUT { name: input.payload.name ?? "none" }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        assertEquals(ContractSource.EXPLICIT, contract.source)
+        assertTrue(!contract.metadata.inference.inputTypeSeeded)
+    }
+
+    @Test
+    fun wildcard_seeded_inference_keeps_dynamic_access_conservative() {
+        val program = """
+            TRANSFORM T(input: { payload: { name: text } }) -> _ {
+                LET key = "name";
+                OUTPUT { value: input.payload[key] }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        val value = contract.output.root.children["value"]
+        assertNotNull(value)
+        assertEquals(ValueShape.Unknown, value.shape)
+        assertTrue(
+            contract.input.opaqueRegions.any { region ->
+                region.path.segments.size == 2 &&
+                    (region.path.segments[0] as? AccessSegment.Field)?.name == "payload" &&
+                    region.path.segments[1] == AccessSegment.Dynamic
+            },
+        )
+    }
+
+    @Test
     fun custom_binary_type_eval_rule_can_shape_expression_outputs() {
         val program = """
             TRANSFORM T {
@@ -226,11 +312,22 @@ class ConformTransformContractV2Test {
     }
 
     private fun synthesizeV2(program: String) =
-        TransformContractBuilder(TypeResolver(emptyList())).buildV2(parseTransform(program))
+        buildV2Contract(program)
 
-    private fun parseTransform(program: String): TransformDecl {
+    private fun parseTransform(program: String): TransformDecl = parseProgram(program)
+        .decls
+        .filterIsInstance<TransformDecl>()
+        .single()
+
+    private fun buildV2Contract(program: String): TransformContractV2 {
+        val parsed = parseProgram(program)
+        val typeDecls = parsed.decls.filterIsInstance<TypeDecl>()
+        val transform = parsed.decls.filterIsInstance<TransformDecl>().single()
+        return TransformContractBuilder(TypeResolver(typeDecls)).buildV2(transform)
+    }
+
+    private fun parseProgram(program: String): io.github.ehlyzov.branchline.Program {
         val tokens = Lexer(program).lex()
-        val parsed = Parser(tokens, program).parse()
-        return parsed.decls.filterIsInstance<TransformDecl>().single()
+        return Parser(tokens, program).parse()
     }
 }

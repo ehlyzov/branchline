@@ -7,6 +7,16 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Added Input-Type-Seeded Output Inference planning doc for hybrid wildcard-output inference using declared input type seeds."
+  - date: 2026-02-08
+    change: "Logged conformance-alignment follow-up for contract lattice precision (SET/GET/cast path-shape preservation under `any` top)."
+  - date: 2026-02-08
+    change: "Tracked post-cleanup follow-up for contract inference lattice (`Never` bottom) and playground `showContracts` preset reliability."
+  - date: 2026-02-08
+    change: "Completed Contract JSON V2 cleanup C1-C7; moved related contract docs/plans back to implemented and added cleanup plan record."
+  - date: 2026-02-08
+    change: "Started Contract JSON V2 cleanup track and moved related contract docs/plans to in-progress; added dedicated cleanup plan doc."
+  - date: 2026-02-08
     change: "Completed Contract Inference V2 M9: removed public V1 contract JSON output, added extension hooks, quality-gate tests, and playground example; moved V2 docs/plans to implemented."
   - date: 2026-02-08
     change: "Completed Contract Inference V2 M8: CLI/playground/runtime moved to V2 contracts by default, with inspect JSON version switch."
@@ -87,6 +97,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Benchmarks Docs Fix Plan](docs/benchmarks-docs-fix-plan.md) -- MkDocs/benchmarks patch plan.
 - [Docs + Playground Plan](docs/docs-playground-plan.md) -- docs plan; depends on Docs Refresh.
 - [I/O Contracts Milestone Plan](planning/io-contracts-milestone-plan.md) -- implementation order and agent instructions.
+- [Input-Type-Seeded Output Inference](planning/input-type-seeded-output-inference.md) -- hybrid plan to infer output from flow while seeding inference with declared input types when output is wildcard.
 
 ### In Progress
 - [Docs Refresh](docs/docs-refresh.md) -- draft content and structure.
@@ -108,13 +119,14 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Numeric Semantics](language/numeric-semantics.md) -- current numeric behavior.
 - [CASE/WHEN](language/case-when.md) -- guard-only CASE expression implemented.
 - [Input Aliases](language/input-aliases.md) -- `input` default with `row` compatibility alias.
-- [Transform Contracts](language/transform-contracts.md) -- signatures and contract inference.
+- [Transform Contracts](language/transform-contracts.md) -- signatures and contract inference with cleaned V2 JSON output/debug gating.
 - [Transform Contracts Next Phase](language/transform-contracts-next.md) -- runtime validation and contract JSON export.
-- [Contract Model V2](language/contract-model-v2.md) -- nested contract graph model, evidence metadata, and runtime-fit extension points.
-- [Contract Inference Static Analysis (V2)](language/contract-inference-static-analysis.md) -- flow-sensitive inference with binary type-eval extension rules.
-- [Contract Diagnostics V2](language/contract-diagnostics-v2.md) -- deterministic, evidence-aware mismatch reporting for V2 validator/enforcer.
-- [Contract Inference V2 Milestone Plan](planning/contract-inference-v2-milestone-plan.md) -- completed M0-M9 implementation sequence and outcomes.
-- [Contract Inference Quality Gates](docs/contract-inference-quality-gates.md) -- implemented precision/parity/performance gates and metric tests.
+- [Contract Model V2](language/contract-model-v2.md) -- nested contract graph with children-only JSON members and extension points.
+- [Contract Inference Static Analysis (V2)](language/contract-inference-static-analysis.md) -- flow-sensitive inference with literal bracket precision and empty-array append stability.
+- [Contract Diagnostics V2](language/contract-diagnostics-v2.md) -- deterministic mismatch reporting without static evidence dependency.
+- [Contract Inference V2 Milestone Plan](planning/contract-inference-v2-milestone-plan.md) -- completed M0-M9 plus cleanup C1-C7 implementation sequence.
+- [Contract Inference Quality Gates](docs/contract-inference-quality-gates.md) -- precision/parity/performance plus structural/debug metadata gates.
+- [Contract JSON V2 Cleanup](planning/contract-v2-json-cleanup.md) -- completed no-version-bump V2 payload cleanup and rollout notes.
 - [Transform Options](language/transform-options.md) -- per-transform OPTIONS blocks.
 - [Duplicate JSON Key Policy](language/json-duplicate-keys.md) -- error/last/first handling.
 - [JSON Canonicalization Mode](language/json-canonicalization.md) -- deterministic JSON ordering + numeric formatting.

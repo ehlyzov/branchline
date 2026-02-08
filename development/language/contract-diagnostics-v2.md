@@ -14,27 +14,29 @@ changelog:
     change: "Wired V2 validation and diagnostics into CLI run/exec and Playground contract warnings."
   - date: 2026-02-08
     change: "Marked implemented after M9 removal of public V1 contract output."
+  - date: 2026-02-08
+    change: "Reopened for cleanup: diagnostics decoupled from static evidence metadata, with debug-only origin/spans policy."
+  - date: 2026-02-08
+    change: "Completed cleanup: validator diagnostics no longer depend on static evidence payloads; debug metadata visibility remains explicit and deterministic."
 ---
 # Contract Diagnostics V2
 
 ## Summary
-Contract diagnostics are upgraded to report deterministic, path-rich mismatches tied to inference evidence.
+Diagnostics remain deterministic and path-rich, but they are being simplified to not depend on static inference evidence payloads.
 
 ## Goals
 - Deterministic ordering across JVM/JS.
 - Structured mismatch categories.
 - Actionable message payloads for CLI and Playground.
-- Evidence traceability for inferred constraints.
+- No dependence on static evidence objects.
 
-## Violation Model
+## Violation Model (target)
 - `ContractViolationV2` fields:
   - `path`
   - `kind`
   - `expected`
   - `actual`
-  - `ruleId`
-  - `confidence`
-  - `evidenceSpans`
+  - `ruleId` (optional, validator/local rule identity)
   - `hints`
 
 ## Mismatch Categories
@@ -45,10 +47,11 @@ Contract diagnostics are upgraded to report deterministic, path-rich mismatches 
 - Nullability mismatch
 - Opaque-region validation warning
 
-## Rendering
-- Human renderer (CLI/playground warnings)
-- JSON renderer for tooling
+## Cleanup Direction
+- Validator must not rely on `node.evidence` for message quality.
+- `origin` and spans are debug-facing metadata only.
+- Runtime-fit evidence remains a future add-on and is currently disabled.
 
 ## Compatibility Policy
-- V2 diagnostics are canonical output.
-- Legacy V1 diagnostics are removed from public CLI/Playground contract surfaces.
+- V2 diagnostics remain canonical output.
+- Cleanup is in-place for V2 with no extra version bump.

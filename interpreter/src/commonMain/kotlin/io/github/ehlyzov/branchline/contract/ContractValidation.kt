@@ -264,6 +264,7 @@ public class ContractValidator {
         violations: MutableList<ContractViolation>,
     ) {
         when (expected) {
+            ValueShape.Never -> violations += typeMismatch(path, expected, value)
             ValueShape.Unknown -> return
             ValueShape.Null -> if (value != null) {
                 violations += typeMismatch(path, expected, value)
@@ -358,6 +359,7 @@ public class ContractValidator {
     }
 
     private fun matchesShape(expected: ValueShape, value: Any?): Boolean = when (expected) {
+        ValueShape.Never -> false
         ValueShape.Unknown -> true
         ValueShape.Null -> value == null
         ValueShape.BooleanShape -> value is Boolean
@@ -541,6 +543,7 @@ public fun formatContractViolations(violations: List<ContractViolation>): String
 }
 
 public fun renderValueShapeLabel(shape: ValueShape): String = when (shape) {
+    ValueShape.Never -> "never"
     ValueShape.Unknown -> "any"
     ValueShape.Null -> "null"
     ValueShape.BooleanShape -> "boolean"

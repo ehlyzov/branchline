@@ -26,6 +26,7 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - JSON numeric key conversion is opt-in via `--json-key-mode numeric`; it converts non-negative integer keys without leading zeros (except `0`) for nested objects (top-level input keys remain strings).
 - JSON bytes are accepted only when contracts declare `bytes`; they must be base64 strings using the standard alphabet with `=` padding and no line breaks.
 - Inferred contracts are flow-sensitive and emitted in V2 nested form (`root.children` + requirement expressions). Coalesce reads (`a ?? b`) emit conditional one-of requirements instead of forcing both fields as unconditional required inputs.
+- Wildcard output signatures (`-> _` / `-> _?`) run in hybrid mode: declared input type seeds static inference and output remains inferred.
 - XML input maps attributes to `@name` keys.
 - XML pure text content maps to `$`; mixed content text segments map to `$1`, `$2`, ...
 - XML repeated sibling elements map to arrays.
@@ -47,6 +48,52 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - XML output accepts `@order` as an explicit sibling name order list, then appends remaining siblings lexicographically.
 - XML output validates prefixed element and attribute names against in-scope `@xmlns` declarations in strict mode.
 - CLI emits conversion-loss warnings to stderr when known lossy JSON/XML conversions occur.
+
+## Contract JSON Modes
+- `bl inspect <script.bl> --contracts-json` emits clean V2 JSON for tooling and docs.
+- `bl inspect <script.bl> --contracts-json --contracts-debug` additionally emits debug metadata (`origin`, and spans if available).
+
+Example (default):
+```json
+{
+  "version": "v2",
+  "root": {
+    "required": true,
+    "shape": { "type": "object", "closed": false },
+    "children": {
+      "greeting": {
+        "required": true,
+        "shape": { "type": "text" },
+        "children": {}
+      }
+    }
+  },
+  "mayEmitNull": false,
+  "opaqueRegions": []
+}
+```
+
+Example (`--contracts-debug`):
+```json
+{
+  "version": "v2",
+  "root": {
+    "required": true,
+    "shape": { "type": "object", "closed": false },
+    "origin": "OUTPUT",
+    "children": {
+      "greeting": {
+        "required": true,
+        "shape": { "type": "text" },
+        "origin": "OUTPUT",
+        "children": {}
+      }
+    }
+  },
+  "mayEmitNull": false,
+  "opaqueRegions": []
+}
+```
 
 ## Internal Interchange
 - Branchline runtime now provides internal CBOR encode/decode helpers for lossless Branchline-to-Branchline interchange.
