@@ -9,13 +9,7 @@ public object TransformContractV2Adapter {
                 shape = field.shape,
                 open = true,
                 children = linkedMapOf(),
-                evidence = listOf(
-                    InferenceEvidenceV2(
-                        sourceSpans = field.sourceSpans,
-                        ruleId = "v1-field-lift",
-                        confidence = 1.0,
-                    ),
-                ),
+                evidence = emptyList(),
             )
         }
         val requirementExprs = mutableListOf<RequirementExprV2>()
@@ -83,11 +77,10 @@ public object TransformContractV2Adapter {
     public fun toV1(contract: TransformContractV2): TransformContract {
         val inputFields = LinkedHashMap<String, FieldConstraint>()
         for ((name, node) in contract.input.root.children) {
-            val spans = node.evidence.flatMap { evidence -> evidence.sourceSpans }.distinct()
             inputFields[name] = FieldConstraint(
                 required = node.required,
                 shape = node.shape,
-                sourceSpans = spans,
+                sourceSpans = emptyList(),
             )
         }
         val requiredAnyOf = mutableListOf<RequiredAnyOfGroup>()
@@ -140,4 +133,3 @@ public object TransformContractV2Adapter {
         else -> null
     }
 }
-
