@@ -118,11 +118,16 @@ public class TransformContractV2Synthesizer(
                 val value = evalExpr(stmt.value)
                 stmt.init?.let { evalExpr(it) }
                 val previous = env[stmt.name]
-                val elementShape = mergeValueShape(previous?.arrayElement() ?: ValueShape.Unknown, value.shape)
+                val elementShape = if (previous?.emptyArraySeed == true) {
+                    value.shape
+                } else {
+                    mergeValueShape(previous?.arrayElement() ?: ValueShape.Unknown, value.shape)
+                }
                 env[stmt.name] = AbstractValue(
                     shape = ValueShape.ArrayShape(elementShape),
                     provenance = emptySet(),
                     evidence = value.evidence,
+                    emptyArraySeed = false,
                 )
                 declareLocal(stmt.name)
             }
@@ -231,11 +236,7 @@ public class TransformContractV2Synthesizer(
         if (target.base !is IdentifierExpr) {
             evalExpr(target.base)
         }
-        for (seg in target.segs) {
-            if (seg is AccessSeg.Dynamic) {
-                evalExpr(seg.keyExpr)
-            }
-        }
+        normalizeAccessSegments(target.segs, evaluateDynamicKeys = true)
     }
 
     private fun evalExpr(expr: Expr): AbstractValue = when (expr) {
@@ -283,33 +284,26 @@ public class TransformContractV2Synthesizer(
             return evalInputAccess(expr, base.token)
         }
         val baseValue = evalExpr(expr.base)
-        val dynamic = expr.segs.any { it is AccessSeg.Dynamic }
-        for (seg in expr.segs) {
-            if (seg is AccessSeg.Dynamic) {
-                evalExpr(seg.keyExpr)
-            }
-        }
+        val access = normalizeAccessSegments(expr.segs, evaluateDynamicKeys = true)
         if (base != null) {
-            promoteShapeForStaticAccess(base.name, expr.segs)
+            promoteShapeForStaticAccess(base.name, access.segments, access.hasDynamic)
         }
-        if (dynamic) {
-            addInputOpaque(
-                AccessPath(expr.segs.map {
-                    when (it) {
-                        is AccessSeg.Static -> staticSegment(it.key)
-                        is AccessSeg.Dynamic -> AccessSegment.Dynamic
-                    }
-                }),
-                DynamicReason.KEY,
-            )
+        if (access.hasDynamic) {
+            if (baseValue.provenance.isNotEmpty()) {
+                for (path in baseValue.provenance) {
+                    addInputOpaque(AccessPath(path.segments + access.segments), DynamicReason.KEY)
+                }
+            } else {
+                addInputOpaque(AccessPath(access.segments), DynamicReason.KEY)
+            }
             return AbstractValue(ValueShape.Unknown, evidence = listOf(evidence(expr.token, "dynamic-access")))
         }
-        val descended = descendShape(baseValue.shape, expr.segs)
+        val descended = descendShape(baseValue.shape, access.segments)
         val provenance = if (baseValue.provenance.isEmpty()) {
             emptySet()
         } else {
             baseValue.provenance.map { path ->
-                AccessPath(path.segments + expr.segs.map { seg -> staticSegment((seg as AccessSeg.Static).key) })
+                AccessPath(path.segments + access.segments)
             }.toSet()
         }
         for (path in provenance) {
@@ -326,24 +320,13 @@ public class TransformContractV2Synthesizer(
         if (expr.segs.isEmpty()) {
             return AbstractValue(ValueShape.Unknown)
         }
-        val staticSegments = mutableListOf<AccessSegment>()
-        var hasDynamic = false
-        for (seg in expr.segs) {
-            when (seg) {
-                is AccessSeg.Static -> staticSegments += staticSegment(seg.key)
-                is AccessSeg.Dynamic -> {
-                    hasDynamic = true
-                    evalExpr(seg.keyExpr)
-                    staticSegments += AccessSegment.Dynamic
-                }
-            }
-        }
+        val normalized = normalizeAccessSegments(expr.segs, evaluateDynamicKeys = true)
         val shape = ValueShape.Unknown
-        if (hasDynamic) {
-            addInputOpaque(AccessPath(staticSegments), DynamicReason.KEY)
+        if (normalized.hasDynamic) {
+            addInputOpaque(AccessPath(normalized.segments), DynamicReason.KEY)
             return AbstractValue(shape, evidence = listOf(evidence(token, "dynamic-input-access")))
         }
-        val path = AccessPath(staticSegments)
+        val path = AccessPath(normalized.segments)
         recordInputPath(path, shape, token, "input-access")
         return AbstractValue(
             shape = shape,
@@ -404,6 +387,7 @@ public class TransformContractV2Synthesizer(
         return AbstractValue(
             shape = ValueShape.ArrayShape(element),
             evidence = listOf(evidence(expr.token, "array-literal")),
+            emptyArraySeed = expr.elements.isEmpty(),
         )
     }
 
@@ -655,11 +639,12 @@ public class TransformContractV2Synthesizer(
         val listValue = args.getOrNull(0) ?: return AbstractValue(ValueShape.ArrayShape(ValueShape.Unknown))
         val item = args.getOrNull(1) ?: AbstractValue(ValueShape.Unknown)
         val baseElement = listValue.arrayElement()
-        val element = mergeValueShape(baseElement, item.shape)
+        val element = if (listValue.emptyArraySeed) item.shape else mergeValueShape(baseElement, item.shape)
         return AbstractValue(
             shape = ValueShape.ArrayShape(element),
             provenance = listValue.provenance + item.provenance,
             evidence = listOf(evidence(token, rule)),
+            emptyArraySeed = false,
         )
     }
 
@@ -1010,11 +995,9 @@ public class TransformContractV2Synthesizer(
 
     private fun staticInputAccessPath(expr: AccessExpr): AccessPath? {
         val base = expr.base as? IdentifierExpr ?: return null
-        val staticSegments = mutableListOf<AccessSegment>()
-        for (seg in expr.segs) {
-            val static = seg as? AccessSeg.Static ?: return null
-            staticSegments += staticSegment(static.key)
-        }
+        val normalized = normalizeAccessSegments(expr.segs, evaluateDynamicKeys = false)
+        if (normalized.hasDynamic) return null
+        val staticSegments = normalized.segments
         return if (isInputAlias(base.name)) {
             AccessPath(staticSegments)
         } else if (!isLocal(base.name) && !hostFns.contains(base.name)) {
@@ -1207,22 +1190,102 @@ public class TransformContractV2Synthesizer(
         return merged
     }
 
-    private fun mergeAbstractValues(left: AbstractValue, right: AbstractValue): AbstractValue = AbstractValue(
-        shape = mergeValueShape(left.shape, right.shape),
-        provenance = left.provenance + right.provenance,
-        evidence = emptyList(),
-    )
+    private fun mergeAbstractValues(left: AbstractValue, right: AbstractValue): AbstractValue {
+        val provenance = left.provenance + right.provenance
+        if (left.emptyArraySeed && right.emptyArraySeed) {
+            return AbstractValue(
+                shape = mergeValueShape(left.shape, right.shape),
+                provenance = provenance,
+                evidence = emptyList(),
+                emptyArraySeed = true,
+            )
+        }
+        if (left.emptyArraySeed && right.shape is ValueShape.ArrayShape) {
+            return AbstractValue(
+                shape = right.shape,
+                provenance = provenance,
+                evidence = emptyList(),
+                emptyArraySeed = false,
+            )
+        }
+        if (right.emptyArraySeed && left.shape is ValueShape.ArrayShape) {
+            return AbstractValue(
+                shape = left.shape,
+                provenance = provenance,
+                evidence = emptyList(),
+                emptyArraySeed = false,
+            )
+        }
+        return AbstractValue(
+            shape = mergeValueShape(left.shape, right.shape),
+            provenance = provenance,
+            evidence = emptyList(),
+            emptyArraySeed = false,
+        )
+    }
 
     private fun mergeValueShape(left: ValueShape, right: ValueShape): ValueShape {
         if (left == ValueShape.Unknown) return right
         if (right == ValueShape.Unknown) return left
         if (left == right) return left
+        if (left is ValueShape.ArrayShape && right is ValueShape.ArrayShape) {
+            return ValueShape.ArrayShape(mergeCollectionElementShape(left.element, right.element))
+        }
+        if (left is ValueShape.SetShape && right is ValueShape.SetShape) {
+            return ValueShape.SetShape(mergeCollectionElementShape(left.element, right.element))
+        }
         val leftOptions = if (left is ValueShape.Union) left.options else listOf(left)
         val rightOptions = if (right is ValueShape.Union) right.options else listOf(right)
         val merged = LinkedHashSet<ValueShape>()
         merged.addAll(leftOptions)
         merged.addAll(rightOptions)
-        return ValueShape.Union(merged.toList())
+        return normalizeUnionShape(merged.toList())
+    }
+
+    private fun mergeCollectionElementShape(left: ValueShape, right: ValueShape): ValueShape {
+        if (left == ValueShape.Unknown || right == ValueShape.Unknown) {
+            return ValueShape.Unknown
+        }
+        return mergeValueShape(left, right)
+    }
+
+    private fun normalizeUnionShape(options: List<ValueShape>): ValueShape {
+        var arrayElement: ValueShape? = null
+        var setElement: ValueShape? = null
+        val normalized = mutableListOf<ValueShape>()
+        for (option in options) {
+            when (option) {
+                is ValueShape.ArrayShape -> {
+                    val previous = arrayElement
+                    arrayElement = if (previous == null) {
+                        option.element
+                    } else {
+                        mergeCollectionElementShape(previous, option.element)
+                    }
+                }
+                is ValueShape.SetShape -> {
+                    val previous = setElement
+                    setElement = if (previous == null) {
+                        option.element
+                    } else {
+                        mergeCollectionElementShape(previous, option.element)
+                    }
+                }
+                else -> normalized += option
+            }
+        }
+        arrayElement?.let { element ->
+            normalized += ValueShape.ArrayShape(element)
+        }
+        setElement?.let { element ->
+            normalized += ValueShape.SetShape(element)
+        }
+        val distinct = normalized.distinct()
+        return when (distinct.size) {
+            0 -> ValueShape.Unknown
+            1 -> distinct.first()
+            else -> ValueShape.Union(distinct)
+        }
     }
 
     private fun shapeMayBeNull(shape: ValueShape): Boolean = when (shape) {
@@ -1231,33 +1294,28 @@ public class TransformContractV2Synthesizer(
         else -> false
     }
 
-    private fun descendShape(shape: ValueShape, segs: List<AccessSeg>): ValueShape {
+    private fun descendShape(shape: ValueShape, segs: List<AccessSegment>): ValueShape {
         var current = shape
         for (seg in segs) {
             current = when (seg) {
-                is AccessSeg.Dynamic -> ValueShape.Unknown
-                is AccessSeg.Static -> descendStatic(current, seg.key)
+                AccessSegment.Dynamic -> ValueShape.Unknown
+                else -> descendStatic(current, seg)
             }
             if (current == ValueShape.Unknown) return current
         }
         return current
     }
 
-    private fun descendStatic(shape: ValueShape, key: ObjKey): ValueShape = when (shape) {
-        is ValueShape.ObjectShape -> when (key) {
-            is ObjKey.Name -> shape.schema.fields[key.v]?.shape ?: ValueShape.Unknown
-            is ObjKey.Index -> shape.schema.fields[renderIndexKey(key)]?.shape ?: ValueShape.Unknown
+    private fun descendStatic(shape: ValueShape, segment: AccessSegment): ValueShape = when (shape) {
+        is ValueShape.ObjectShape -> when (segment) {
+            is AccessSegment.Field -> shape.schema.fields[segment.name]?.shape ?: ValueShape.Unknown
+            is AccessSegment.Index -> shape.schema.fields[segment.index]?.shape ?: ValueShape.Unknown
+            AccessSegment.Dynamic -> ValueShape.Unknown
         }
         is ValueShape.ArrayShape -> shape.element
         is ValueShape.SetShape -> shape.element
-        is ValueShape.Union -> shape.options.map { option -> descendStatic(option, key) }.reduce(::mergeValueShape)
+        is ValueShape.Union -> shape.options.map { option -> descendStatic(option, segment) }.reduce(::mergeValueShape)
         else -> ValueShape.Unknown
-    }
-
-    private fun renderIndexKey(key: ObjKey.Index): String = when (key) {
-        is I32 -> key.v.toString()
-        is I64 -> key.v.toString()
-        is IBig -> key.v.toString()
     }
 
     private fun addInputOpaque(path: AccessPath, reason: DynamicReason) {
@@ -1297,16 +1355,11 @@ public class TransformContractV2Synthesizer(
         }
     }
 
-    private fun promoteShapeForStaticAccess(baseName: String, segs: List<AccessSeg>) {
+    private fun promoteShapeForStaticAccess(baseName: String, segments: List<AccessSegment>, hasDynamic: Boolean) {
         if (isInputAlias(baseName) || hostFns.contains(baseName)) return
-        if (segs.isEmpty()) return
+        if (segments.isEmpty() || hasDynamic) return
         val current = env[baseName] ?: return
-        val staticSegments = mutableListOf<AccessSegment>()
-        for (seg in segs) {
-            val static = seg as? AccessSeg.Static ?: return
-            staticSegments += staticSegment(static.key)
-        }
-        val promoted = ensureObjectPath(current.shape, staticSegments)
+        val promoted = ensureObjectPath(current.shape, segments)
         env[baseName] = current.copy(shape = promoted)
     }
 
@@ -1355,12 +1408,9 @@ public class TransformContractV2Synthesizer(
     private fun resolveLocalTargetPath(target: AccessExpr): ResolvedLocalTarget? {
         val base = target.base as? IdentifierExpr ?: return null
         if (isInputAlias(base.name) || hostFns.contains(base.name)) return null
-        val segments = mutableListOf<AccessSegment>()
-        for (seg in target.segs) {
-            val static = seg as? AccessSeg.Static ?: return null
-            segments += staticSegment(static.key)
-        }
-        return ResolvedLocalTarget(base.name, segments)
+        val normalized = normalizeAccessSegments(target.segs, evaluateDynamicKeys = false)
+        if (normalized.hasDynamic) return null
+        return ResolvedLocalTarget(base.name, normalized.segments)
     }
 
     private fun writeShapeAtPath(
@@ -1563,6 +1613,43 @@ public class TransformContractV2Synthesizer(
         is IBig -> AccessSegment.Index(key.v.toString())
     }
 
+    private fun literalStaticSegment(expr: Expr): AccessSegment? = when (expr) {
+        is StringExpr -> AccessSegment.Field(expr.value)
+        is NumberLiteral -> when (val value = expr.value) {
+            is I32 -> AccessSegment.Index(value.v.toString())
+            is I64 -> AccessSegment.Index(value.v.toString())
+            is IBig -> AccessSegment.Index(value.v.toString())
+            else -> null
+        }
+        else -> null
+    }
+
+    private fun normalizeAccessSegments(
+        segs: List<AccessSeg>,
+        evaluateDynamicKeys: Boolean,
+    ): NormalizedAccessSegments {
+        val normalized = mutableListOf<AccessSegment>()
+        var hasDynamic = false
+        for (seg in segs) {
+            when (seg) {
+                is AccessSeg.Static -> normalized += staticSegment(seg.key)
+                is AccessSeg.Dynamic -> {
+                    val literal = literalStaticSegment(seg.keyExpr)
+                    if (literal != null) {
+                        normalized += literal
+                    } else {
+                        if (evaluateDynamicKeys) {
+                            evalExpr(seg.keyExpr)
+                        }
+                        normalized += AccessSegment.Dynamic
+                        hasDynamic = true
+                    }
+                }
+            }
+        }
+        return NormalizedAccessSegments(normalized, hasDynamic)
+    }
+
     private data class InputPathRecord(
         val path: AccessPath,
         var shape: ValueShape,
@@ -1577,6 +1664,7 @@ public class TransformContractV2Synthesizer(
         val shape: ValueShape,
         val provenance: Set<AccessPath> = emptySet(),
         val evidence: List<InferenceEvidenceV2> = emptyList(),
+        val emptyArraySeed: Boolean = false,
     ) {
         fun arrayElement(): ValueShape = when (shape) {
             is ValueShape.ArrayShape -> shape.element
@@ -1602,6 +1690,11 @@ public class TransformContractV2Synthesizer(
     private data class Refinement(
         val thenRules: List<RefinementRule>,
         val elseRules: List<RefinementRule>,
+    )
+
+    private data class NormalizedAccessSegments(
+        val segments: List<AccessSegment>,
+        val hasDynamic: Boolean,
     )
 
     private data class RefinementRule(
