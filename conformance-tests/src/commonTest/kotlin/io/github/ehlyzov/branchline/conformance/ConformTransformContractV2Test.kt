@@ -66,9 +66,9 @@ class ConformTransformContractV2Test {
     fun null_guard_refines_shape_for_then_branch_access() {
         val program = """
             TRANSFORM T {
-                LET payload = input.payload ?? {};
+                LET payload = input.payload;
                 IF payload != NULL THEN {
-                    OUTPUT { name: payload.name }
+                    OUTPUT { name: TEXT(payload.name) }
                 } ELSE {
                     OUTPUT { name: "none" }
                 }
@@ -77,7 +77,7 @@ class ConformTransformContractV2Test {
         val contract = synthesizeV2(program)
         val name = contract.output.root.children["name"]
         assertNotNull(name)
-        assertEquals(ValueShape.Unknown, name.shape)
+        assertEquals(ValueShape.TextShape, name.shape)
     }
 
     @Test
