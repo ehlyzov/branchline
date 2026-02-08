@@ -125,6 +125,39 @@ class ConformTransformContractV2Test {
         assertEquals(ValueShape.NumberShape, total.shape)
     }
 
+    @Test
+    fun listify_and_append_summaries_produce_array_element_shape() {
+        val program = """
+            TRANSFORM T {
+                LET base = LISTIFY(input.payload);
+                LET out = APPEND(base, { id: "x" });
+                OUTPUT { out: out }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        val out = contract.output.root.children["out"]
+        assertNotNull(out)
+        val arrayShape = out.shape as? ValueShape.ArrayShape
+        assertNotNull(arrayShape)
+        assertTrue(arrayShape.element is ValueShape.ObjectShape || arrayShape.element == ValueShape.Unknown)
+    }
+
+    @Test
+    fun get_summary_tracks_static_key_path() {
+        val program = """
+            TRANSFORM T {
+                LET count = NUMBER(GET(input.metrics, "count", 0));
+                OUTPUT { count: count }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        val metrics = contract.input.root.children["metrics"]
+        assertNotNull(metrics)
+        val count = metrics.children["count"]
+        assertNotNull(count)
+        assertEquals(ValueShape.NumberShape, count.shape)
+    }
+
     private fun synthesizeV2(program: String) =
         TransformContractBuilder(TypeResolver(emptyList())).buildV2(parseTransform(program))
 
