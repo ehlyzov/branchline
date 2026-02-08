@@ -74,6 +74,7 @@ public object ContractCoercion {
     }
 
     private fun coerceValue(value: Any?, shape: ValueShape): Any? = when (shape) {
+        ValueShape.Never -> value
         ValueShape.Bytes -> coerceBytes(value)
         is ValueShape.ArrayShape -> coerceArray(value, shape.element)
         is ValueShape.SetShape -> coerceSet(value, shape.element)

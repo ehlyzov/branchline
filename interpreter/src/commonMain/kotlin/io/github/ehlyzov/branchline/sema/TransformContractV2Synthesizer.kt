@@ -380,7 +380,7 @@ public class TransformContractV2Synthesizer(
 
     private fun evalArray(expr: ArrayExpr): AbstractValue {
         val element = if (expr.elements.isEmpty()) {
-            ValueShape.Unknown
+            ValueShape.Never
         } else {
             expr.elements.map { item -> evalExpr(item).shape }.reduce(::mergeValueShape)
         }
@@ -905,11 +905,11 @@ public class TransformContractV2Synthesizer(
     }
 
     private fun removeNullFromShape(shape: ValueShape): ValueShape = when (shape) {
-        ValueShape.Null -> ValueShape.Unknown
+        ValueShape.Null -> ValueShape.Never
         is ValueShape.Union -> {
             val remaining = shape.options.filterNot { option -> option == ValueShape.Null }
             when (remaining.size) {
-                0 -> ValueShape.Unknown
+                0 -> ValueShape.Never
                 1 -> remaining.first()
                 else -> ValueShape.Union(remaining)
             }
@@ -918,6 +918,7 @@ public class TransformContractV2Synthesizer(
     }
 
     private fun toObjectOnlyShape(shape: ValueShape): ValueShape = when (shape) {
+        ValueShape.Never -> ValueShape.Never
         is ValueShape.ObjectShape -> shape
         is ValueShape.Union -> {
             val objectOptions = shape.options.filterIsInstance<ValueShape.ObjectShape>()
@@ -953,11 +954,12 @@ public class TransformContractV2Synthesizer(
     }
 
     private fun removeObjectFromShape(shape: ValueShape): ValueShape = when (shape) {
-        is ValueShape.ObjectShape -> ValueShape.Unknown
+        ValueShape.Never -> ValueShape.Never
+        is ValueShape.ObjectShape -> ValueShape.Never
         is ValueShape.Union -> {
             val remaining = shape.options.filterNot { option -> option is ValueShape.ObjectShape }
             when (remaining.size) {
-                0 -> ValueShape.Unknown
+                0 -> ValueShape.Never
                 1 -> remaining.first()
                 else -> ValueShape.Union(remaining)
             }
@@ -1225,14 +1227,18 @@ public class TransformContractV2Synthesizer(
     }
 
     private fun mergeValueShape(left: ValueShape, right: ValueShape): ValueShape {
-        if (left == ValueShape.Unknown) return right
-        if (right == ValueShape.Unknown) return left
+        if (left == ValueShape.Never) return right
+        if (right == ValueShape.Never) return left
+        if (left == ValueShape.Unknown || right == ValueShape.Unknown) return ValueShape.Unknown
         if (left == right) return left
         if (left is ValueShape.ArrayShape && right is ValueShape.ArrayShape) {
             return ValueShape.ArrayShape(mergeCollectionElementShape(left.element, right.element))
         }
         if (left is ValueShape.SetShape && right is ValueShape.SetShape) {
             return ValueShape.SetShape(mergeCollectionElementShape(left.element, right.element))
+        }
+        if (left is ValueShape.ObjectShape && right is ValueShape.ObjectShape) {
+            return mergeObjectShapes(left, right)
         }
         val leftOptions = if (left is ValueShape.Union) left.options else listOf(left)
         val rightOptions = if (right is ValueShape.Union) right.options else listOf(right)
@@ -1242,18 +1248,21 @@ public class TransformContractV2Synthesizer(
         return normalizeUnionShape(merged.toList())
     }
 
-    private fun mergeCollectionElementShape(left: ValueShape, right: ValueShape): ValueShape {
-        if (left == ValueShape.Unknown || right == ValueShape.Unknown) {
-            return ValueShape.Unknown
-        }
-        return mergeValueShape(left, right)
-    }
+    private fun mergeCollectionElementShape(left: ValueShape, right: ValueShape): ValueShape = mergeValueShape(left, right)
 
     private fun normalizeUnionShape(options: List<ValueShape>): ValueShape {
+        val flattened = flattenUnionOptions(options)
         var arrayElement: ValueShape? = null
         var setElement: ValueShape? = null
+        var objectShape: ValueShape.ObjectShape? = null
         val normalized = mutableListOf<ValueShape>()
-        for (option in options) {
+        for (option in flattened) {
+            if (option == ValueShape.Never) {
+                continue
+            }
+            if (option == ValueShape.Unknown) {
+                return ValueShape.Unknown
+            }
             when (option) {
                 is ValueShape.ArrayShape -> {
                     val previous = arrayElement
@@ -1271,6 +1280,9 @@ public class TransformContractV2Synthesizer(
                         mergeCollectionElementShape(previous, option.element)
                     }
                 }
+                is ValueShape.ObjectShape -> {
+                    objectShape = if (objectShape == null) option else mergeObjectShapes(objectShape, option)
+                }
                 else -> normalized += option
             }
         }
@@ -1280,12 +1292,64 @@ public class TransformContractV2Synthesizer(
         setElement?.let { element ->
             normalized += ValueShape.SetShape(element)
         }
+        objectShape?.let { mergedObject ->
+            normalized += mergedObject
+        }
         val distinct = normalized.distinct()
         return when (distinct.size) {
-            0 -> ValueShape.Unknown
+            0 -> ValueShape.Never
             1 -> distinct.first()
             else -> ValueShape.Union(distinct)
         }
+    }
+
+    private fun flattenUnionOptions(options: List<ValueShape>): List<ValueShape> {
+        val flattened = mutableListOf<ValueShape>()
+        for (option in options) {
+            if (option is ValueShape.Union) {
+                flattened += flattenUnionOptions(option.options)
+            } else {
+                flattened += option
+            }
+        }
+        return flattened
+    }
+
+    private fun mergeObjectShapes(left: ValueShape.ObjectShape, right: ValueShape.ObjectShape): ValueShape.ObjectShape {
+        val fieldNames = left.schema.fields.keys + right.schema.fields.keys
+        val mergedFields = LinkedHashMap<String, FieldShape>()
+        for (name in fieldNames) {
+            val l = left.schema.fields[name]
+            val r = right.schema.fields[name]
+            val mergedShape = when {
+                l == null && r != null -> r.shape
+                r == null && l != null -> l.shape
+                l != null && r != null -> mergeValueShape(l.shape, r.shape)
+                else -> ValueShape.Never
+            }
+            val required = (l?.required ?: false) && (r?.required ?: false)
+            val origin = when {
+                l == null && r != null -> r.origin
+                r == null && l != null -> l.origin
+                l != null && r != null && l.origin == r.origin -> l.origin
+                else -> OriginKind.MERGED
+            }
+            mergedFields[name] = FieldShape(
+                required = required,
+                shape = mergedShape,
+                origin = origin,
+            )
+        }
+        val mergedDynamicFields = (left.schema.dynamicFields + right.schema.dynamicFields)
+            .distinctBy { field -> opaqueKey(field.path) + "|" + field.reason.name }
+        return ValueShape.ObjectShape(
+            schema = SchemaGuarantee(
+                fields = mergedFields,
+                mayEmitNull = left.schema.mayEmitNull || right.schema.mayEmitNull,
+                dynamicFields = mergedDynamicFields,
+            ),
+            closed = left.closed && right.closed,
+        )
     }
 
     private fun shapeMayBeNull(shape: ValueShape): Boolean = when (shape) {
@@ -1301,12 +1365,13 @@ public class TransformContractV2Synthesizer(
                 AccessSegment.Dynamic -> ValueShape.Unknown
                 else -> descendStatic(current, seg)
             }
-            if (current == ValueShape.Unknown) return current
+            if (current == ValueShape.Unknown || current == ValueShape.Never) return current
         }
         return current
     }
 
     private fun descendStatic(shape: ValueShape, segment: AccessSegment): ValueShape = when (shape) {
+        ValueShape.Never -> ValueShape.Never
         is ValueShape.ObjectShape -> when (segment) {
             is AccessSegment.Field -> shape.schema.fields[segment.name]?.shape ?: ValueShape.Unknown
             is AccessSegment.Index -> shape.schema.fields[segment.index]?.shape ?: ValueShape.Unknown
@@ -1673,17 +1738,32 @@ public class TransformContractV2Synthesizer(
                 when (option) {
                     is ValueShape.ArrayShape -> option.element
                     is ValueShape.SetShape -> option.element
-                    else -> ValueShape.Unknown
+                    else -> ValueShape.Never
                 }
             }.reduce(::mergeUnionShapes)
             else -> ValueShape.Unknown
         }
 
         private fun mergeUnionShapes(left: ValueShape, right: ValueShape): ValueShape {
-            if (left == ValueShape.Unknown) return right
-            if (right == ValueShape.Unknown) return left
+            if (left == ValueShape.Never) return right
+            if (right == ValueShape.Never) return left
+            if (left == ValueShape.Unknown || right == ValueShape.Unknown) return ValueShape.Unknown
             if (left == right) return left
-            return ValueShape.Union(listOf(left, right).distinct())
+            val merged = flattenUnionShapes(left) + flattenUnionShapes(right)
+            if (merged.any { option -> option == ValueShape.Unknown }) return ValueShape.Unknown
+            val distinct = merged
+                .filterNot { option -> option == ValueShape.Never }
+                .distinct()
+            return when (distinct.size) {
+                0 -> ValueShape.Never
+                1 -> distinct.first()
+                else -> ValueShape.Union(distinct)
+            }
+        }
+
+        private fun flattenUnionShapes(shape: ValueShape): List<ValueShape> = when (shape) {
+            is ValueShape.Union -> shape.options.flatMap(::flattenUnionShapes)
+            else -> listOf(shape)
         }
     }
 

@@ -145,6 +145,7 @@ class ContractInferenceQualityGateTest {
     }
 
     private fun shapeStats(shape: ValueShape): ShapeStats = when (shape) {
+        ValueShape.Never -> ShapeStats(unknown = 0, total = 1)
         ValueShape.Unknown -> ShapeStats(unknown = 1, total = 1)
         ValueShape.Null,
         ValueShape.BooleanShape,
