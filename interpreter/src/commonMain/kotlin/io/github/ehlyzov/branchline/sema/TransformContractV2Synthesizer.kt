@@ -170,8 +170,11 @@ public class TransformContractV2Synthesizer(
     private fun analyzeIfStmt(stmt: IfStmt) {
         evalExpr(stmt.condition)
         val baseline = cloneEnv()
-        val thenEnv = analyzeBranchWithEnv(baseline, stmt.thenBlock)
-        val elseEnv = stmt.elseBlock?.let { analyzeBranchWithEnv(baseline, it) } ?: baseline
+        val refinement = refineFromCondition(stmt.condition)
+        val thenSeed = applyRefinements(baseline, refinement.thenRules)
+        val elseSeed = applyRefinements(baseline, refinement.elseRules)
+        val thenEnv = analyzeBranchWithEnv(thenSeed, stmt.thenBlock)
+        val elseEnv = stmt.elseBlock?.let { analyzeBranchWithEnv(elseSeed, it) } ?: elseSeed
         replaceEnv(mergeEnv(thenEnv, elseEnv))
     }
 
@@ -460,6 +463,230 @@ public class TransformContractV2Synthesizer(
             )
         }
         return mergeAbstractValues(left, right)
+    }
+
+    private fun refineFromCondition(expr: Expr): Refinement {
+        val nullEq = when (expr) {
+            is BinaryExpr -> refineNullComparison(expr)
+            else -> null
+        }
+        if (nullEq != null) {
+            return nullEq
+        }
+        val objectRule = when (expr) {
+            is CallExpr -> refineIsObject(expr)
+            else -> null
+        }
+        if (objectRule != null) {
+            return objectRule
+        }
+        return Refinement(emptyList(), emptyList())
+    }
+
+    private fun refineNullComparison(expr: BinaryExpr): Refinement? {
+        val op = expr.token.type
+        if (op != TokenType.EQ && op != TokenType.NEQ) {
+            return null
+        }
+        val leftNull = expr.left is NullLiteral
+        val rightNull = expr.right is NullLiteral
+        if (leftNull == rightNull) return null
+        val targetExpr = if (leftNull) expr.right else expr.left
+        val target = refinementTarget(targetExpr) ?: return null
+        val isNotNullComparison = op == TokenType.NEQ
+        return if (isNotNullComparison) {
+            Refinement(
+                thenRules = listOf(RefinementRule(target, RefineKind.NON_NULL)),
+                elseRules = listOf(RefinementRule(target, RefineKind.NULL_ONLY)),
+            )
+        } else {
+            Refinement(
+                thenRules = listOf(RefinementRule(target, RefineKind.NULL_ONLY)),
+                elseRules = listOf(RefinementRule(target, RefineKind.NON_NULL)),
+            )
+        }
+    }
+
+    private fun refineIsObject(expr: CallExpr): Refinement? {
+        if (expr.callee.name.uppercase() != "IS_OBJECT") return null
+        if (expr.args.size != 1) return null
+        val target = refinementTarget(expr.args[0]) ?: return null
+        return Refinement(
+            thenRules = listOf(RefinementRule(target, RefineKind.OBJECT_ONLY)),
+            elseRules = listOf(RefinementRule(target, RefineKind.NOT_OBJECT)),
+        )
+    }
+
+    private fun refinementTarget(expr: Expr): RefinementTarget? = when (expr) {
+        is IdentifierExpr -> {
+            if (isInputAlias(expr.name) || hostFns.contains(expr.name)) return null
+            RefinementTarget(expr.name, emptyList())
+        }
+        is AccessExpr -> {
+            val base = expr.base as? IdentifierExpr ?: return null
+            if (isInputAlias(base.name) || hostFns.contains(base.name)) return null
+            val path = mutableListOf<AccessSegment>()
+            for (seg in expr.segs) {
+                val static = seg as? AccessSeg.Static ?: return null
+                path += staticSegment(static.key)
+            }
+            RefinementTarget(base.name, path)
+        }
+        else -> null
+    }
+
+    private fun applyRefinements(
+        seed: LinkedHashMap<String, AbstractValue>,
+        rules: List<RefinementRule>,
+    ): LinkedHashMap<String, AbstractValue> {
+        if (rules.isEmpty()) return LinkedHashMap(seed)
+        val next = LinkedHashMap(seed)
+        for (rule in rules) {
+            val current = next[rule.target.base] ?: continue
+            val refinedShape = refineShapeAtPath(current.shape, rule.target.segments, rule.kind)
+            next[rule.target.base] = current.copy(
+                shape = refinedShape,
+                evidence = current.evidence + listOf(
+                    InferenceEvidenceV2(
+                        sourceSpans = emptyList(),
+                        ruleId = "path-refinement-${rule.kind.name.lowercase()}",
+                        confidence = 0.9,
+                    ),
+                ),
+            )
+        }
+        return next
+    }
+
+    private fun refineShapeAtPath(
+        shape: ValueShape,
+        path: List<AccessSegment>,
+        kind: RefineKind,
+    ): ValueShape {
+        if (path.isEmpty()) {
+            return refineTerminalShape(shape, kind)
+        }
+        val head = path.first()
+        val tail = path.drop(1)
+        return when (shape) {
+            is ValueShape.ObjectShape -> {
+                val key = when (head) {
+                    is AccessSegment.Field -> head.name
+                    is AccessSegment.Index -> head.index
+                    AccessSegment.Dynamic -> return shape
+                }
+                val fields = LinkedHashMap(shape.schema.fields)
+                val existing = fields[key]
+                val nextShape = refineShapeAtPath(existing?.shape ?: ValueShape.Unknown, tail, kind)
+                fields[key] = FieldShape(
+                    required = existing?.required ?: true,
+                    shape = nextShape,
+                    origin = existing?.origin ?: OriginKind.MERGED,
+                )
+                ValueShape.ObjectShape(
+                    schema = shape.schema.copy(fields = fields),
+                    closed = shape.closed,
+                )
+            }
+            is ValueShape.Union -> {
+                val refined = shape.options.map { option ->
+                    refineShapeAtPath(option, path, kind)
+                }
+                ValueShape.Union(refined.distinct())
+            }
+            ValueShape.Unknown -> {
+                val child = refineShapeAtPath(ValueShape.Unknown, tail, kind)
+                val keyName = when (head) {
+                    is AccessSegment.Field -> head.name
+                    is AccessSegment.Index -> head.index
+                    AccessSegment.Dynamic -> return shape
+                }
+                val fields = linkedMapOf<String, FieldShape>(
+                    keyName to FieldShape(
+                        required = true,
+                        shape = child,
+                        origin = OriginKind.MERGED,
+                    ),
+                )
+                ValueShape.ObjectShape(
+                    schema = SchemaGuarantee(
+                        fields = fields,
+                        mayEmitNull = false,
+                        dynamicFields = emptyList(),
+                    ),
+                    closed = false,
+                )
+            }
+            else -> shape
+        }
+    }
+
+    private fun refineTerminalShape(shape: ValueShape, kind: RefineKind): ValueShape = when (kind) {
+        RefineKind.NON_NULL -> removeNullFromShape(shape)
+        RefineKind.NULL_ONLY -> ValueShape.Null
+        RefineKind.OBJECT_ONLY -> toObjectOnlyShape(shape)
+        RefineKind.NOT_OBJECT -> removeObjectFromShape(shape)
+    }
+
+    private fun removeNullFromShape(shape: ValueShape): ValueShape = when (shape) {
+        ValueShape.Null -> ValueShape.Unknown
+        is ValueShape.Union -> {
+            val remaining = shape.options.filterNot { option -> option == ValueShape.Null }
+            when (remaining.size) {
+                0 -> ValueShape.Unknown
+                1 -> remaining.first()
+                else -> ValueShape.Union(remaining)
+            }
+        }
+        else -> shape
+    }
+
+    private fun toObjectOnlyShape(shape: ValueShape): ValueShape = when (shape) {
+        is ValueShape.ObjectShape -> shape
+        is ValueShape.Union -> {
+            val objectOptions = shape.options.filterIsInstance<ValueShape.ObjectShape>()
+            when (objectOptions.size) {
+                0 -> ValueShape.ObjectShape(
+                    schema = SchemaGuarantee(
+                        fields = linkedMapOf(),
+                        mayEmitNull = false,
+                        dynamicFields = emptyList(),
+                    ),
+                    closed = false,
+                )
+                1 -> objectOptions.first()
+                else -> ValueShape.Union(objectOptions)
+            }
+        }
+        ValueShape.Unknown -> ValueShape.ObjectShape(
+            schema = SchemaGuarantee(
+                fields = linkedMapOf(),
+                mayEmitNull = false,
+                dynamicFields = emptyList(),
+            ),
+            closed = false,
+        )
+        else -> ValueShape.ObjectShape(
+            schema = SchemaGuarantee(
+                fields = linkedMapOf(),
+                mayEmitNull = false,
+                dynamicFields = emptyList(),
+            ),
+            closed = false,
+        )
+    }
+
+    private fun removeObjectFromShape(shape: ValueShape): ValueShape = when (shape) {
+        is ValueShape.ObjectShape -> ValueShape.Unknown
+        is ValueShape.Union -> {
+            val remaining = shape.options.filterNot { option -> option is ValueShape.ObjectShape }
+            when (remaining.size) {
+                0 -> ValueShape.Unknown
+                1 -> remaining.first()
+                else -> ValueShape.Union(remaining)
+            }
+        }
+        else -> shape
     }
 
     private fun collectCoalesceAlternatives(expr: BinaryExpr): List<AccessPath> {
@@ -890,5 +1117,26 @@ public class TransformContractV2Synthesizer(
             return ValueShape.Union(listOf(left, right).distinct())
         }
     }
-}
 
+    private data class Refinement(
+        val thenRules: List<RefinementRule>,
+        val elseRules: List<RefinementRule>,
+    )
+
+    private data class RefinementRule(
+        val target: RefinementTarget,
+        val kind: RefineKind,
+    )
+
+    private data class RefinementTarget(
+        val base: String,
+        val segments: List<AccessSegment>,
+    )
+
+    private enum class RefineKind {
+        NON_NULL,
+        NULL_ONLY,
+        OBJECT_ONLY,
+        NOT_OBJECT,
+    }
+}
