@@ -11,6 +11,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
+import io.github.ehlyzov.branchline.cli.parseXmlInput
 import io.github.ehlyzov.branchline.FuncDecl
 import io.github.ehlyzov.branchline.Lexer
 import io.github.ehlyzov.branchline.Parser
@@ -71,7 +72,8 @@ class PlaygroundExamplesJsTest {
                 val ir = ToIR(funcs, hostFns).compile(transform.body.statements)
                 val runner = buildRunnerFromIRMP(ir, hostFns = hostFns, funcs = funcs)
 
-                val input = toKotlin(inputElement) as? Map<String, Any?> ?: emptyMap()
+                val inputFormat = example["inputFormat"]?.jsonPrimitive?.content?.lowercase()
+                val input = parseExampleInput(inputElement, inputFormat)
                 val sharedNames = sharedResourceNames(example)
                 val seededInput = linkedMapOf<String, Any?>().apply {
                     putAll(input)
@@ -127,6 +129,13 @@ class PlaygroundExamplesJsTest {
         is JsonObject -> linkedMapOf<String, Any?>().apply {
             elem.forEach { (k, v) -> this[k] = toKotlin(v) }
         }
+    }
+
+    private fun parseExampleInput(inputElement: JsonElement, inputFormat: String?): Map<String, Any?> {
+        if (inputFormat == "xml") {
+            return parseXmlInput(inputElement.jsonPrimitive.content)
+        }
+        return toKotlin(inputElement) as? Map<String, Any?> ?: emptyMap()
     }
 
     private fun renderSharedDecls(example: JsonObject): String {

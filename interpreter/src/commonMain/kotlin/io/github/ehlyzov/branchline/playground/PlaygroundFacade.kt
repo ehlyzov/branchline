@@ -25,6 +25,7 @@ import io.github.ehlyzov.branchline.json.JsonParseOptions
 import io.github.ehlyzov.branchline.json.formatJsonValue
 import io.github.ehlyzov.branchline.json.parseJsonObjectInput
 import io.github.ehlyzov.branchline.json.formatCanonicalJson
+import io.github.ehlyzov.branchline.xml.formatXmlOutput
 import io.github.ehlyzov.branchline.sema.SemanticAnalyzer
 import io.github.ehlyzov.branchline.sema.TypeResolver
 import io.github.ehlyzov.branchline.std.StdLib
@@ -218,6 +219,8 @@ object PlaygroundFacade {
                 PlaygroundOutputFormat.JSON -> formatJsonValue(result, pretty = true, numberMode = JsonNumberMode.SAFE)
                 PlaygroundOutputFormat.JSON_COMPACT -> formatJsonValue(result, pretty = false, numberMode = JsonNumberMode.SAFE)
                 PlaygroundOutputFormat.JSON_CANONICAL -> formatCanonicalJson(result, JsonNumberMode.SAFE)
+                PlaygroundOutputFormat.XML -> formatXmlOutput(result, pretty = true)
+                PlaygroundOutputFormat.XML_COMPACT -> formatXmlOutput(result, pretty = false)
             }
             val explanationMap = tracer?.let { Debug.explainOutput(result) }
             val explainJson = explanationMap?.let {
@@ -421,11 +424,15 @@ private enum class PlaygroundOutputFormat {
     JSON,
     JSON_COMPACT,
     JSON_CANONICAL,
+    XML,
+    XML_COMPACT,
 }
 
 private fun parseOutputFormat(raw: String): PlaygroundOutputFormat = when (raw.lowercase()) {
     "json-compact", "json_compact" -> PlaygroundOutputFormat.JSON_COMPACT
     "json-canonical", "json_canonical" -> PlaygroundOutputFormat.JSON_CANONICAL
+    "xml-compact", "xml_compact" -> PlaygroundOutputFormat.XML_COMPACT
+    "xml" -> PlaygroundOutputFormat.XML
     else -> PlaygroundOutputFormat.JSON
 }
 
