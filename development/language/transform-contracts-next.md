@@ -92,9 +92,9 @@ Add common tests for:
 
 5. **Tooling**
    - CLI flags: `--contracts=off|warn|strict`.
-   - CLI debug toggle: `--contracts-debug` (includes spans in exported contract JSON).
+   - CLI debug toggle: `--contracts-debug` (includes debug metadata such as `origin`, plus spans when available).
    - Playground toggle for runtime validation (defaults to off to preserve behavior).
-   - Playground debug toggle: show spans only when debug mode is enabled.
+   - Playground debug toggle: show debug metadata only when debug mode is enabled.
 
 6. **Tests**
    - Extend `conformance-tests/src/commonTest` with runtime validation cases.
