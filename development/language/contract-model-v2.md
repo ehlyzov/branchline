@@ -8,6 +8,8 @@ last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
     change: "Created Contract Model V2 proposal with nested requirements, evidence metadata, and runtime-fit extension points."
+  - date: 2026-02-08
+    change: "Implemented core Contract V2 data model and migration adapter in interpreter contract package."
 ---
 # Contract Model V2
 
