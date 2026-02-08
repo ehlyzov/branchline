@@ -56,6 +56,42 @@ class ConformTransformContractV2Test {
         assertTrue(anyOf.children.size >= 2)
     }
 
+    @Test
+    fun null_guard_refines_shape_for_then_branch_access() {
+        val program = """
+            TRANSFORM T {
+                LET payload = input.payload ?? {};
+                IF payload != NULL THEN {
+                    OUTPUT { name: payload.name }
+                } ELSE {
+                    OUTPUT { name: "none" }
+                }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        val name = contract.output.root.children["name"]
+        assertNotNull(name)
+        assertEquals(ValueShape.TextShape, name.shape)
+    }
+
+    @Test
+    fun object_guard_refines_target_to_object_shape() {
+        val program = """
+            TRANSFORM T {
+                LET payload = input.payload;
+                IF IS_OBJECT(payload) THEN {
+                    OUTPUT { ok: payload.id ?? 0 }
+                } ELSE {
+                    OUTPUT { ok: 0 }
+                }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        val payload = contract.input.root.children["payload"]
+        assertNotNull(payload)
+        assertTrue(payload.shape is ValueShape.ObjectShape || payload.shape == ValueShape.Unknown)
+    }
+
     private fun synthesizeV2(program: String) =
         TransformContractBuilder(TypeResolver(emptyList())).buildV2(parseTransform(program))
 
@@ -65,4 +101,3 @@ class ConformTransformContractV2Test {
         return parsed.decls.filterIsInstance<TransformDecl>().single()
     }
 }
-

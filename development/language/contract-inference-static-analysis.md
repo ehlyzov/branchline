@@ -10,6 +10,8 @@ changelog:
     change: "Created static analysis plan for flow-sensitive contract inference with dataflow type-eval extension points."
   - date: 2026-02-08
     change: "Implemented V2 flow-sensitive synthesizer core with abstract environment joins and numeric binary-op type-eval rule hook."
+  - date: 2026-02-08
+    change: "Implemented M3 path-sensitive refinements for null/object guards with bounded branch/loop merge behavior."
 ---
 # Contract Inference Static Analysis (V2)
 
