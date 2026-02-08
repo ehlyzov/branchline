@@ -17,6 +17,8 @@ changelog:
     change: "Implemented C1-C7: development-first updates, renderer/validator/synthesizer cleanup, debug-gated origin metadata, quality-gate tests, and playground/docs refresh."
   - date: 2026-02-08
     change: "Added post-cleanup follow-up: ensure `showContracts` preset takes effect immediately and formalize shape lattice with `Never` bottom."
+  - date: 2026-02-08
+    change: "Added follow-up conformance alignment: preserve precise static writes/provenance in presence of `any` top while keeping lattice join semantics."
 ---
 # Contract JSON V2 Cleanup
 

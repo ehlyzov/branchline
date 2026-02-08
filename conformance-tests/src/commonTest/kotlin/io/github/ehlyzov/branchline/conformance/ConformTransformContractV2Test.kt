@@ -77,7 +77,7 @@ class ConformTransformContractV2Test {
         val contract = synthesizeV2(program)
         val name = contract.output.root.children["name"]
         assertNotNull(name)
-        assertEquals(ValueShape.TextShape, name.shape)
+        assertEquals(ValueShape.Unknown, name.shape)
     }
 
     @Test

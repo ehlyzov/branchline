@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-02-08
 changelog:
   - date: 2026-02-08
+    change: "Logged conformance-alignment follow-up for contract lattice precision (SET/GET/cast path-shape preservation under `any` top)."
+  - date: 2026-02-08
     change: "Tracked post-cleanup follow-up for contract inference lattice (`Never` bottom) and playground `showContracts` preset reliability."
   - date: 2026-02-08
     change: "Completed Contract JSON V2 cleanup C1-C7; moved related contract docs/plans back to implemented and added cleanup plan record."
