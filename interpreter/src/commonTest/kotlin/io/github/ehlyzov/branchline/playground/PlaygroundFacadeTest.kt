@@ -148,8 +148,8 @@ public class PlaygroundFacadeTest {
         val outputRoot = outputContract["root"]?.jsonObject
         val inputChildren = inputRoot?.get("children")?.jsonObject
         val outputChildren = outputRoot?.get("children")?.jsonObject
-        assertEquals("v2", inputContract["version"]?.toString()?.trim('"'))
-        assertEquals("v2", outputContract["version"]?.toString()?.trim('"'))
+        assertEquals("v3", inputContract["version"]?.toString()?.trim('"'))
+        assertEquals("v3", outputContract["version"]?.toString()?.trim('"'))
         assertTrue(inputChildren?.containsKey("name") == true)
         assertTrue(outputChildren?.containsKey("greeting") == true)
     }
@@ -174,11 +174,11 @@ public class PlaygroundFacadeTest {
 
         assertTrue(result.success)
         val inputContract = Json.parseToJsonElement(result.inputContractJson ?: error("missing input contract")).jsonObject
-        val requirements = inputContract["requirements"]?.jsonArray
-        assertNotNull(requirements)
-        assertEquals(1, requirements.size)
-        val anyOf = requirements[0].jsonObject
-        assertEquals("anyOf", anyOf["kind"]?.toString()?.trim('"'))
+        val obligations = inputContract["obligations"]?.jsonArray
+        assertNotNull(obligations)
+        assertEquals(1, obligations.size)
+        val anyOf = obligations[0].jsonObject["expr"]?.jsonObject ?: error("missing expr")
+        assertEquals("oneOf", anyOf["kind"]?.toString()?.trim('"'))
         val children = anyOf["children"]?.jsonArray
         assertNotNull(children)
         assertEquals(2, children.size)
@@ -241,10 +241,9 @@ public class PlaygroundFacadeTest {
         val outputContract = Json.parseToJsonElement(result.outputContractJson ?: error("missing output contract")).jsonObject
         val rootChildren = outputContract["root"]?.jsonObject?.get("children")?.jsonObject ?: error("missing root children")
         val suites = rootChildren["suites"]?.jsonObject ?: error("missing suites node")
-        val suitesShape = suites["shape"]?.jsonObject ?: error("missing suites shape")
-        assertEquals("array", suitesShape["type"]?.toString()?.trim('"'))
-        val elementShape = suitesShape["element"]?.jsonObject ?: error("missing element shape")
-        assertEquals("object", elementShape["type"]?.toString()?.trim('"'))
+        assertEquals("array", suites["kind"]?.toString()?.trim('"'))
+        val element = suites["element"]?.jsonObject ?: error("missing element node")
+        assertEquals("object", element["kind"]?.toString()?.trim('"'))
     }
 
     @Test

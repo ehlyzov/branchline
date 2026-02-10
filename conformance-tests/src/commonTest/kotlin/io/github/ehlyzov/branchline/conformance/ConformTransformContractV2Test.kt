@@ -67,6 +67,30 @@ class ConformTransformContractV2Test {
     }
 
     @Test
+    fun coalesce_inside_loop_does_not_leak_local_suite_variable_into_input_requirements() {
+        val program = """
+            TRANSFORM T {
+                LET root = input.testsuites ?? input.testsuite ?? {};
+                LET suitesRaw = root.testsuite ?? root;
+                LET suites = IF suitesRaw == NULL THEN []
+                    ELSE IF IS_OBJECT(suitesRaw) THEN [suitesRaw]
+                    ELSE suitesRaw;
+                FOR suite IN suites {
+                    IF suite != NULL THEN {
+                        OUTPUT { name: suite["@name"] ?? suite["@package"] ?? "missing" }
+                    }
+                }
+            }
+        """.trimIndent()
+        val contract = synthesizeV2(program)
+        val leaked = requirementPaths(contract.input.requirements).any { path ->
+            val first = path.segments.firstOrNull() as? AccessSegment.Field
+            first?.name == "suite"
+        }
+        assertTrue(!leaked, "loop-local variable 'suite' must not appear as input requirement")
+    }
+
+    @Test
     fun null_guard_refines_shape_for_then_branch_access() {
         val program = """
             TRANSFORM T {
@@ -329,5 +353,23 @@ class ConformTransformContractV2Test {
     private fun parseProgram(program: String): io.github.ehlyzov.branchline.Program {
         val tokens = Lexer(program).lex()
         return Parser(tokens, program).parse()
+    }
+
+    private fun requirementPaths(expressions: List<RequirementExprV2>): List<io.github.ehlyzov.branchline.contract.AccessPath> {
+        val out = mutableListOf<io.github.ehlyzov.branchline.contract.AccessPath>()
+        expressions.forEach { expr -> collectRequirementPaths(expr, out) }
+        return out
+    }
+
+    private fun collectRequirementPaths(
+        expr: RequirementExprV2,
+        out: MutableList<io.github.ehlyzov.branchline.contract.AccessPath>,
+    ) {
+        when (expr) {
+            is RequirementExprV2.PathPresent -> out += expr.path
+            is RequirementExprV2.PathNonNull -> out += expr.path
+            is RequirementExprV2.AnyOf -> expr.children.forEach { child -> collectRequirementPaths(child, out) }
+            is RequirementExprV2.AllOf -> expr.children.forEach { child -> collectRequirementPaths(child, out) }
+        }
     }
 }

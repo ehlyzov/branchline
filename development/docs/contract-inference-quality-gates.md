@@ -6,6 +6,8 @@ supersedes: []
 superseded_by: []
 last_updated: 2026-02-08
 changelog:
+  - date: 2026-02-09
+    change: "Added V3 strictness gates: local-scope leakage regression, enum-domain enforcement, quantified array-element obligations, satisfiability checks, and witness generation validation."
   - date: 2026-02-08
     change: "Added hybrid wildcard-output gate coverage: seeded static path precision, dynamic fallback conservatism, and metadata marker checks."
   - date: 2026-02-08
@@ -56,6 +58,17 @@ changelog:
 ## Validation Gates
 - Warn/strict behavior parity with existing semantics where rules overlap.
 - V2 diagnostics ordering is deterministic.
+- V3 strict gate for `junit-badge-summary`:
+  - real sample input passes strict validation,
+  - no bogus `input.suite.*` requirement leaks from local loop vars,
+  - output `suites[*]` enforces element field contract.
+- Domain strictness gate:
+  - inferred enum domain on output `status` rejects non-domain values.
+
+## Satisfiability + Witness Gates
+- Every inferred V3 contract must be satisfiable or explicitly degraded to safe subset with diagnostics.
+- Witness generator must produce at least one strict-valid input and output sample per contract.
+- Generated witnesses must pass validator in JVM and JS.
 
 ## Performance Gates
 - V2 inference must not increase total CLI inspect time by more than 2.0x on curated examples.

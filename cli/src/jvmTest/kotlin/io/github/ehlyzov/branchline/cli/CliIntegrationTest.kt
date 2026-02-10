@@ -10,6 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -119,7 +120,7 @@ public class CliIntegrationTest {
     }
 
     @Test
-    fun inspectContractsJsonDefaultsToV2() {
+    fun inspectContractsJsonDefaultsToV3() {
         val script = """
             TRANSFORM Main {
                 OUTPUT { greeting: "hi " + input.name }
@@ -133,6 +134,31 @@ public class CliIntegrationTest {
                 "inspect",
                 scriptPath.toString(),
                 "--contracts-json",
+            ),
+        )
+
+        assertEquals(ExitCode.SUCCESS.code, result.exitCode)
+        val payload = Json.parseToJsonElement(result.stdout).jsonObject
+        assertEquals("v3", payload["version"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun inspectContractsJsonSupportsVersionOverrideToV2() {
+        val script = """
+            TRANSFORM Main {
+                OUTPUT { greeting: "hi " + input.name }
+            }
+        """.trimIndent()
+        val scriptPath = Files.createTempFile("branchline-inspect", ".bl")
+        Files.writeString(scriptPath, script, StandardCharsets.UTF_8)
+
+        val result = runCli(
+            args = listOf(
+                "inspect",
+                scriptPath.toString(),
+                "--contracts-json",
+                "--contracts-version",
+                "v2",
             ),
         )
 
@@ -163,6 +189,32 @@ public class CliIntegrationTest {
 
         assertEquals(ExitCode.USAGE.code, result.exitCode)
         assertTrue(result.stderr.contains("Unknown option '--contracts-json-version'"))
+    }
+
+    @Test
+    fun inspectContractsJsonWitnessIncludesInputAndOutput() {
+        val script = """
+            TRANSFORM Main {
+                OUTPUT { greeting: "hi " + input.name }
+            }
+        """.trimIndent()
+        val scriptPath = Files.createTempFile("branchline-inspect", ".bl")
+        Files.writeString(scriptPath, script, StandardCharsets.UTF_8)
+
+        val result = runCli(
+            args = listOf(
+                "inspect",
+                scriptPath.toString(),
+                "--contracts-json",
+                "--contracts-witness",
+            ),
+        )
+
+        assertEquals(ExitCode.SUCCESS.code, result.exitCode)
+        val payload = Json.parseToJsonElement(result.stdout).jsonObject
+        val witness = payload["witness"]?.jsonObject ?: error("missing witness")
+        assertTrue(witness.containsKey("input"))
+        assertTrue(witness.containsKey("output"))
     }
 
     @Test
@@ -205,6 +257,54 @@ public class CliIntegrationTest {
         assertEquals("OUTPUT", debugOutputRoot["origin"]?.jsonPrimitive?.content)
         assertTrue(!standardOutputRoot.containsKey("evidence"))
         assertTrue(!debugOutputRoot.containsKey("evidence"))
+    }
+
+    @Test
+    fun inspectContractsJsonHidesObligationInferenceMetadataWithoutDebug() {
+        val script = """
+            TRANSFORM Main {
+                LET root = input.testsuites ?? input.testsuite ?? {};
+                OUTPUT { status: root["@name"] ?? "missing" }
+            }
+        """.trimIndent()
+        val scriptPath = Files.createTempFile("branchline-inspect", ".bl")
+        Files.writeString(scriptPath, script, StandardCharsets.UTF_8)
+
+        val standard = runCli(
+            args = listOf(
+                "inspect",
+                scriptPath.toString(),
+                "--contracts-json",
+            ),
+        )
+        val debug = runCli(
+            args = listOf(
+                "inspect",
+                scriptPath.toString(),
+                "--contracts-json",
+                "--contracts-debug",
+            ),
+        )
+
+        assertEquals(ExitCode.SUCCESS.code, standard.exitCode)
+        assertEquals(ExitCode.SUCCESS.code, debug.exitCode)
+
+        val standardPayload = Json.parseToJsonElement(standard.stdout).jsonObject
+        val debugPayload = Json.parseToJsonElement(debug.stdout).jsonObject
+
+        val standardInputObligation = standardPayload["input"]?.jsonObject
+            ?.get("obligations")?.jsonArray?.firstOrNull()?.jsonObject
+            ?: error("missing standard obligation")
+        val debugInputObligation = debugPayload["input"]?.jsonObject
+            ?.get("obligations")?.jsonArray?.firstOrNull()?.jsonObject
+            ?: error("missing debug obligation")
+
+        assertTrue(!standardInputObligation.containsKey("confidence"))
+        assertTrue(!standardInputObligation.containsKey("ruleId"))
+        assertTrue(!standardInputObligation.containsKey("heuristic"))
+        assertTrue(debugInputObligation.containsKey("confidence"))
+        assertTrue(debugInputObligation.containsKey("ruleId"))
+        assertTrue(debugInputObligation.containsKey("heuristic"))
     }
 
     private fun runCli(args: List<String>, defaultCommand: CliCommand? = null): CliRunResult {

@@ -13,8 +13,9 @@ Expressions compute values and support operators, function calls, and data const
 
 ## Coalesce contracts
 - Inferred input contracts treat `??` as a fallback chain.
-- Example: `input.testsuites ?? input.testsuite` emits a one-of contract group (`requiredAnyOf`) instead of requiring both fields unconditionally.
+- Example: `input.testsuites ?? input.testsuite` emits a one-of obligation instead of requiring both fields unconditionally.
 - In warn/strict contract modes, at least one fallback path in each group must be present with a non-null value.
+- Fields read behind fallbacks (for example `suite["@tests"] ?? 0`) remain optional in inferred input nodes because defaults make them non-mandatory.
 
 ## Constraints
 - `CASE` requires an `ELSE` branch.

@@ -6,6 +6,8 @@ supersedes: []
 superseded_by: []
 last_updated: 2026-02-08
 changelog:
+  - date: 2026-02-09
+    change: "Added V3 soundness guardrails: local/input provenance split, obligation confidence tagging, quantified collection constraints, and enum-domain inference for strict output fields."
   - date: 2026-02-08
     change: "Added input-type-seeded inference mode for wildcard-output signatures with static seed descent and conservative dynamic fallback."
   - date: 2026-02-08
@@ -52,6 +54,13 @@ Flow-sensitive static inference remains the contract source of truth. Current cl
   - Declared non-`any` shape wins over inferred shape at same path.
   - Declared `any` may be narrowed by inferred concrete shape.
   - Inferred requirement expressions and opaque regions are preserved.
+
+## V3 soundness and strictness upgrades
+- Lexical symbol tracking must classify identifiers as input-origin or local-origin.
+- Requirement extraction (`??` and path obligations) must ignore local-origin identifiers.
+- Collection loops can emit quantified obligations (`ForAll`/`Exists`) instead of flattening all paths into top-level requirements.
+- Field-domain inference can emit enum text domains from conditional literal branches (for example status labels).
+- Obligations carry confidence and heuristic flags; strict mode enforces only sound/high-confidence obligations.
 
 ## Active Cleanup Targets
 1. Dynamic key precision:

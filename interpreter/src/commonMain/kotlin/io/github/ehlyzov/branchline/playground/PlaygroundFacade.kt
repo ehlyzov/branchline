@@ -12,11 +12,12 @@ import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
 import io.github.ehlyzov.branchline.contract.ContractCoercion
-import io.github.ehlyzov.branchline.contract.ContractEnforcerV2
+import io.github.ehlyzov.branchline.contract.ContractEnforcerV3
 import io.github.ehlyzov.branchline.contract.ContractJsonRenderer
 import io.github.ehlyzov.branchline.contract.ContractValidationMode
 import io.github.ehlyzov.branchline.contract.ContractViolationV2
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
+import io.github.ehlyzov.branchline.contract.TransformContractV3Adapter
 import io.github.ehlyzov.branchline.contract.formatContractViolationV2
 import io.github.ehlyzov.branchline.ir.Exec
 import io.github.ehlyzov.branchline.ir.ToIR
@@ -174,12 +175,13 @@ object PlaygroundFacade {
             }
             val contract = if (includeContracts || contractMode != ContractValidationMode.OFF) {
                 val typeResolver = TypeResolver(typeDecls)
-                TransformContractBuilder(typeResolver, hostFns.keys).buildV2(transform)
+                TransformContractBuilder(typeResolver, hostFns.keys).buildV3(transform)
             } else {
                 null
             }
+            val contractV2Compat = contract?.let(TransformContractV3Adapter::toV2)
             val inputValue = if (contract != null && contractMode != ContractValidationMode.OFF) {
-                ContractCoercion.coerceInputBytes(contract.input, msg)
+                ContractCoercion.coerceInputBytes(contractV2Compat?.input ?: error("missing contract"), msg)
             } else {
                 msg
             }
@@ -196,13 +198,13 @@ object PlaygroundFacade {
                 }
             }
             val inputViolations = if (contract != null && contractMode != ContractValidationMode.OFF) {
-                ContractEnforcerV2.enforceInput(contractMode, contract.input, inputValue)
+                ContractEnforcerV3.enforceInput(contractMode, contract.input, inputValue)
             } else {
                 emptyList()
             }
             val result = exec.run(env, stringifyKeys = true)
             val outputViolations = if (contract != null && contractMode != ContractValidationMode.OFF) {
-                ContractEnforcerV2.enforceOutput(contractMode, contract.output, result)
+                ContractEnforcerV3.enforceOutput(contractMode, contract.output, result)
             } else {
                 emptyList()
             }
@@ -228,10 +230,10 @@ object PlaygroundFacade {
             }
             val explainHuman = tracer?.let { TraceReport.from(it) }?.let(::renderTraceSummary)
             val inputContractJson = contract?.takeIf { includeContracts }?.let { built ->
-                ContractJsonRenderer.renderSchemaRequirementV2(built.input, includeContractSpans, pretty = true)
+                ContractJsonRenderer.renderSchemaRequirementV3(built.input, includeContractSpans, pretty = true)
             }
             val outputContractJson = contract?.takeIf { includeContracts }?.let { built ->
-                ContractJsonRenderer.renderSchemaGuaranteeV2(built.output, includeContractSpans, pretty = true)
+                ContractJsonRenderer.renderSchemaGuaranteeV3(built.output, includeContractSpans, pretty = true)
             }
             val contractSource = contract?.source?.name?.lowercase()
             val contractWarnings = renderContractWarnings(inputViolations + outputViolations, contractMode)

@@ -6,6 +6,8 @@ supersedes: []
 superseded_by: []
 last_updated: 2026-02-08
 changelog:
+  - date: 2026-02-09
+    change: "Promoted strict contract generation to V3 defaults (inspect/runtime): quantified obligations, value-domain constraints, and witness/satisfiability metadata."
   - date: 2026-02-08
     change: "Added hybrid wildcard-output routing: signature input type can seed V2 inference while output remains inferred when declared as `_`/`_?` (or alias resolving to `any`)."
   - date: 2026-02-08
@@ -40,10 +42,15 @@ Notes:
 - The mode block is optional; `buffer` is currently supported.
 
 ## Contract behavior
-- No signature: V2 static inference.
+- No signature: V3 static inference (V2 still exportable for compatibility).
 - Signature with non-wildcard output: explicit contract conversion via `TransformContractBuilder`.
-- Signature with wildcard output: hybrid mode (declared input seed + V2 output inference).
-- Runtime validation uses `ContractValidatorV2` / `ContractEnforcerV2`.
+- Signature with wildcard output: hybrid mode (declared input seed + inferred output).
+- Runtime strict validation uses `ContractValidatorV3` / `ContractEnforcerV3`.
+
+## V3 strict defaults
+- `bl inspect --contracts-json` defaults to V3 payloads.
+- `--contracts-version v2|v3` controls inspect export during migration.
+- `--contracts-witness` exposes generated witness input/output for strict-check sanity.
 
 ## Hybrid wildcard-output mode
 - Trigger: transform signature output resolves to `any`/`any?`.

@@ -16,6 +16,7 @@ import io.github.ehlyzov.branchline.UnionTypeRef
 import io.github.ehlyzov.branchline.contract.AccessPath
 import io.github.ehlyzov.branchline.contract.AccessSegment
 import io.github.ehlyzov.branchline.contract.ContractJsonRenderer
+import io.github.ehlyzov.branchline.contract.ContractWitnessGeneratorV3
 import io.github.ehlyzov.branchline.contract.ContractValidationMode
 import io.github.ehlyzov.branchline.contract.ContractViolationV2
 import io.github.ehlyzov.branchline.contract.DynamicAccess
@@ -26,6 +27,7 @@ import io.github.ehlyzov.branchline.contract.SchemaGuarantee
 import io.github.ehlyzov.branchline.contract.SchemaRequirement
 import io.github.ehlyzov.branchline.contract.TransformContract
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
+import io.github.ehlyzov.branchline.contract.TransformContractV3Adapter
 import io.github.ehlyzov.branchline.contract.ValueShape
 import io.github.ehlyzov.branchline.contract.formatContractViolationV2
 import io.github.ehlyzov.branchline.contract.renderValueShapeLabel
@@ -44,6 +46,16 @@ import io.github.ehlyzov.branchline.vm.BytecodeIO
 public enum class PlatformKind { JVM, JS }
 
 public enum class ContractFormat { TEXT, JSON }
+
+public enum class ContractVersion { V2, V3;
+    companion object {
+        fun parse(value: String): ContractVersion = when (value.lowercase()) {
+            "v2" -> V2
+            "v3" -> V3
+            else -> throw CliException("Unknown contracts version '$value'", kind = CliErrorKind.USAGE)
+        }
+    }
+}
 
 public enum class InputFormat { JSON, XML;
     companion object {
@@ -112,6 +124,8 @@ public data class InspectOptions(
     val transformName: String?,
     val contractsFormat: ContractFormat,
     val contractsDebug: Boolean,
+    val contractsVersion: ContractVersion,
+    val contractsWitness: Boolean,
 )
 
 public data class SchemaOptions(
@@ -226,7 +240,8 @@ public object BranchlineCli {
                   [--shared-format json|xml|text] [--shared-key relative|basename|custom]
                   [--jobs <n>] [--summary-transform <name>] [--trace] [--trace-format text|json]
                   [--contracts off|warn|strict]
-              bl inspect <script.bl> --contracts [--transform <name>] [--contracts-json] [--contracts-debug]
+              bl inspect <script.bl> --contracts [--transform <name>] [--contracts-json]
+                  [--contracts-version v2|v3] [--contracts-witness] [--contracts-debug]
               bl schema <script.bl> <TYPE_NAME> [--nullable] [--output <schema.json>]
               bl schema <script.bl> --all [--nullable] [--output <schema.json>]
               bl schema --import <schema.json> --name <TYPE_NAME> [--output <types.bl>]
@@ -268,6 +283,8 @@ public object BranchlineCli {
               --contracts MODE    (run/exec) validate contracts: off (default), warn, strict.
               --contracts         (inspect) print explicit vs inferred contracts with mismatch warnings.
               --contracts-json    (inspect) emit contract JSON instead of the text report.
+              --contracts-version (inspect) choose contract JSON model version ('v3' default, 'v2' compatibility).
+              --contracts-witness (inspect) include synthesized strict-valid witness payloads in JSON output.
               --contracts-debug   (inspect) include debug metadata (origin and spans) in contract JSON output.
               --all               (schema) emit a ${'$'}defs block with all TYPE declarations.
               --nullable          (schema) use 'nullable: true' instead of 'type: [\"null\", ...]'.
@@ -473,7 +490,13 @@ public object BranchlineCli {
         )
         val selected = selectTransforms(transforms, options.transformName)
         val report = if (options.contractsFormat == ContractFormat.JSON) {
-            renderContractJson(selected, contractBuilder, options.contractsDebug)
+            renderContractJson(
+                transforms = selected,
+                contractBuilder = contractBuilder,
+                includeDebugMetadata = options.contractsDebug,
+                version = options.contractsVersion,
+                includeWitness = options.contractsWitness,
+            )
         } else {
             renderContractInspection(selected, contractBuilder, analyzer.warnings)
         }
@@ -1119,6 +1142,8 @@ public object BranchlineCli {
         var transform: String? = null
         var contractsFormat = ContractFormat.TEXT
         var contractsDebug = false
+        var contractsVersion = ContractVersion.V3
+        var contractsWitness = false
         var idx = startIndex
         while (idx < args.size) {
             val token = args[idx]
@@ -1134,6 +1159,25 @@ public object BranchlineCli {
                 }
                 token == "--contracts-debug" -> {
                     contractsDebug = true
+                    showContracts = true
+                    idx += 1
+                }
+                token.startsWith("--contracts-version=") -> {
+                    contractsVersion = ContractVersion.parse(token.substringAfter("="))
+                    showContracts = true
+                    idx += 1
+                }
+                token == "--contracts-version" && idx + 1 < args.size -> {
+                    contractsVersion = ContractVersion.parse(args[idx + 1])
+                    showContracts = true
+                    idx += 2
+                }
+                token == "--contracts-version" -> throw CliException(
+                    "--contracts-version requires a value",
+                    kind = CliErrorKind.USAGE,
+                )
+                token == "--contracts-witness" -> {
+                    contractsWitness = true
                     showContracts = true
                     idx += 1
                 }
@@ -1156,6 +1200,8 @@ public object BranchlineCli {
             transformName = transform,
             contractsFormat = contractsFormat,
             contractsDebug = contractsDebug,
+            contractsVersion = contractsVersion,
+            contractsWitness = contractsWitness,
         )
     }
 
@@ -1711,20 +1757,77 @@ private fun renderContractJson(
     transforms: List<TransformDecl>,
     contractBuilder: TransformContractBuilder,
     includeDebugMetadata: Boolean,
+    version: ContractVersion,
+    includeWitness: Boolean,
 ): String {
     val entries = transforms.map { transform ->
-        val name = transform.name ?: "<anonymous>"
-        val contract = contractBuilder.buildV2(transform)
-        mapOf(
-            "name" to name,
-            "source" to contract.source.name.lowercase(),
-            "version" to "v2",
-            "input" to ContractJsonRenderer.inputElement(contract, includeDebugMetadata),
-            "output" to ContractJsonRenderer.outputElement(contract, includeDebugMetadata),
-        )
+        when (version) {
+            ContractVersion.V2 -> renderContractJsonEntryV2(
+                transform = transform,
+                contractBuilder = contractBuilder,
+                includeDebugMetadata = includeDebugMetadata,
+                includeWitness = includeWitness,
+            )
+            ContractVersion.V3 -> renderContractJsonEntryV3(
+                transform = transform,
+                contractBuilder = contractBuilder,
+                includeDebugMetadata = includeDebugMetadata,
+                includeWitness = includeWitness,
+            )
+        }
     }
     val payload = if (entries.size == 1) entries.first() else mapOf("transforms" to entries)
     return formatJson(payload, pretty = true)
+}
+
+private fun renderContractJsonEntryV2(
+    transform: TransformDecl,
+    contractBuilder: TransformContractBuilder,
+    includeDebugMetadata: Boolean,
+    includeWitness: Boolean,
+): Map<String, Any?> {
+    val name = transform.name ?: "<anonymous>"
+    val contract = contractBuilder.buildV2(transform)
+    val payload = linkedMapOf<String, Any?>(
+        "name" to name,
+        "source" to contract.source.name.lowercase(),
+        "version" to "v2",
+        "input" to ContractJsonRenderer.inputElement(contract, includeDebugMetadata),
+        "output" to ContractJsonRenderer.outputElement(contract, includeDebugMetadata),
+    )
+    if (includeWitness) {
+        val witness = ContractWitnessGeneratorV3.generate(TransformContractV3Adapter.fromV2(contract))
+        payload["witness"] = mapOf(
+            "input" to witness.input,
+            "output" to witness.output,
+        )
+    }
+    return payload
+}
+
+private fun renderContractJsonEntryV3(
+    transform: TransformDecl,
+    contractBuilder: TransformContractBuilder,
+    includeDebugMetadata: Boolean,
+    includeWitness: Boolean,
+): Map<String, Any?> {
+    val name = transform.name ?: "<anonymous>"
+    val contract = contractBuilder.buildV3(transform)
+    val payload = linkedMapOf<String, Any?>(
+        "name" to name,
+        "source" to contract.source.name.lowercase(),
+        "version" to "v3",
+        "input" to ContractJsonRenderer.inputElementV3(contract, includeDebugMetadata),
+        "output" to ContractJsonRenderer.outputElementV3(contract, includeDebugMetadata),
+    )
+    if (includeWitness) {
+        val witness = ContractWitnessGeneratorV3.generate(contract)
+        payload["witness"] = mapOf(
+            "input" to witness.input,
+            "output" to witness.output,
+        )
+    }
+    return payload
 }
 
 private fun renderTransformContractBlock(

@@ -18,6 +18,12 @@ public object ContractJsonRenderer {
     public fun outputElement(contract: TransformContractV2, includeSpans: Boolean): JsonElement =
         encodeGuaranteeV2(contract.output, includeSpans)
 
+    public fun inputElementV3(contract: TransformContractV3, includeSpans: Boolean): JsonElement =
+        encodeRequirementV3(contract.input, includeSpans)
+
+    public fun outputElementV3(contract: TransformContractV3, includeSpans: Boolean): JsonElement =
+        encodeGuaranteeV3(contract.output, includeSpans)
+
     public fun renderSchemaRequirementV2(
         requirement: RequirementSchemaV2,
         includeSpans: Boolean,
@@ -29,6 +35,18 @@ public object ContractJsonRenderer {
         includeSpans: Boolean,
         pretty: Boolean = true,
     ): String = encodeElement(encodeGuaranteeV2(guarantee, includeSpans), pretty)
+
+    public fun renderSchemaRequirementV3(
+        requirement: RequirementSchemaV3,
+        includeSpans: Boolean,
+        pretty: Boolean = true,
+    ): String = encodeElement(encodeRequirementV3(requirement, includeSpans), pretty)
+
+    public fun renderSchemaGuaranteeV3(
+        guarantee: GuaranteeSchemaV3,
+        includeSpans: Boolean,
+        pretty: Boolean = true,
+    ): String = encodeElement(encodeGuaranteeV3(guarantee, includeSpans), pretty)
 
     private fun encodeElement(element: JsonElement, pretty: Boolean): String {
         val json = if (pretty) prettyJson else compactJson
@@ -78,6 +96,33 @@ public object ContractJsonRenderer {
             "mayEmitNull" to JsonPrimitive(guarantee.mayEmitNull),
             "opaqueRegions" to encodeOpaqueRegions(guarantee.opaqueRegions),
         ),
+    )
+
+    private fun encodeRequirementV3(requirement: RequirementSchemaV3, includeSpans: Boolean): JsonElement = JsonObject(
+        linkedMapOf<String, JsonElement>(
+            "version" to JsonPrimitive("v3"),
+            "root" to encodeNodeV3(requirement.root, includeSpans),
+            "obligations" to encodeObligationsV3(requirement.obligations, includeSpans),
+            "opaqueRegions" to encodeOpaqueRegions(requirement.opaqueRegions),
+        ).apply {
+            if (includeSpans && requirement.evidence.isNotEmpty()) {
+                this["evidence"] = encodeEvidenceV3(requirement.evidence, includeSpans = true)
+            }
+        },
+    )
+
+    private fun encodeGuaranteeV3(guarantee: GuaranteeSchemaV3, includeSpans: Boolean): JsonElement = JsonObject(
+        linkedMapOf<String, JsonElement>(
+            "version" to JsonPrimitive("v3"),
+            "root" to encodeNodeV3(guarantee.root, includeSpans),
+            "obligations" to encodeObligationsV3(guarantee.obligations, includeSpans),
+            "mayEmitNull" to JsonPrimitive(guarantee.mayEmitNull),
+            "opaqueRegions" to encodeOpaqueRegions(guarantee.opaqueRegions),
+        ).apply {
+            if (includeSpans && guarantee.evidence.isNotEmpty()) {
+                this["evidence"] = encodeEvidenceV3(guarantee.evidence, includeSpans = true)
+            }
+        },
     )
 
     private fun encodeFieldConstraint(constraint: FieldConstraint, includeSpans: Boolean): JsonElement {
@@ -200,6 +245,148 @@ public object ContractJsonRenderer {
 
     private fun encodeRequirementExprListV2(expressions: List<RequirementExprV2>): JsonElement =
         JsonArray(expressions.map(::encodeRequirementExprV2))
+
+    private fun encodeNodeV3(node: NodeV3, includeSpans: Boolean): JsonElement {
+        val children = LinkedHashMap<String, JsonElement>()
+        node.children.forEach { (name, child) ->
+            children[name] = encodeNodeV3(child, includeSpans)
+        }
+        val payload = linkedMapOf<String, JsonElement>(
+            "required" to JsonPrimitive(node.required),
+            "kind" to JsonPrimitive(node.kind.name.lowercase()),
+            "open" to JsonPrimitive(node.open),
+            "children" to JsonObject(children),
+            "domains" to JsonArray(node.domains.map(::encodeDomainV3)),
+        )
+        node.element?.let { element ->
+            payload["element"] = encodeNodeV3(element, includeSpans)
+        }
+        if (node.options.isNotEmpty()) {
+            payload["options"] = JsonArray(node.options.map { option -> encodeNodeV3(option, includeSpans) })
+        }
+        if (includeSpans && node.origin != null) {
+            payload["origin"] = JsonPrimitive(node.origin.name)
+        }
+        return JsonObject(payload)
+    }
+
+    private fun encodeObligationsV3(
+        obligations: List<ContractObligationV3>,
+        includeDebugMetadata: Boolean,
+    ): JsonElement =
+        JsonArray(obligations.map { obligation -> encodeObligationV3(obligation, includeDebugMetadata) })
+
+    private fun encodeObligationV3(
+        obligation: ContractObligationV3,
+        includeDebugMetadata: Boolean,
+    ): JsonElement = JsonObject(
+        linkedMapOf<String, JsonElement>(
+            "expr" to encodeConstraintExprV3(obligation.expr),
+        ).apply {
+            if (includeDebugMetadata) {
+                this["confidence"] = JsonPrimitive(obligation.confidence)
+                this["ruleId"] = JsonPrimitive(obligation.ruleId)
+                this["heuristic"] = JsonPrimitive(obligation.heuristic)
+            }
+        },
+    )
+
+    private fun encodeConstraintExprV3(expr: ConstraintExprV3): JsonElement = when (expr) {
+        is ConstraintExprV3.PathPresent -> JsonObject(
+            linkedMapOf(
+                "kind" to JsonPrimitive("pathPresent"),
+                "path" to encodeAccessPath(expr.path),
+            ),
+        )
+        is ConstraintExprV3.PathNonNull -> JsonObject(
+            linkedMapOf(
+                "kind" to JsonPrimitive("pathNonNull"),
+                "path" to encodeAccessPath(expr.path),
+            ),
+        )
+        is ConstraintExprV3.OneOf -> JsonObject(
+            linkedMapOf(
+                "kind" to JsonPrimitive("oneOf"),
+                "children" to JsonArray(expr.children.map(::encodeConstraintExprV3)),
+            ),
+        )
+        is ConstraintExprV3.AllOf -> JsonObject(
+            linkedMapOf(
+                "kind" to JsonPrimitive("allOf"),
+                "children" to JsonArray(expr.children.map(::encodeConstraintExprV3)),
+            ),
+        )
+        is ConstraintExprV3.ForAll -> JsonObject(
+            linkedMapOf(
+                "kind" to JsonPrimitive("forAll"),
+                "path" to encodeAccessPath(expr.path),
+                "requiredFields" to JsonArray(expr.requiredFields.map(::JsonPrimitive)),
+                "fieldDomains" to JsonObject(
+                    LinkedHashMap<String, JsonElement>().apply {
+                        expr.fieldDomains.forEach { (name, domain) ->
+                            this[name] = encodeDomainV3(domain)
+                        }
+                    },
+                ),
+                "requireAnyOf" to JsonArray(
+                    expr.requireAnyOf.map { group -> JsonArray(group.map(::JsonPrimitive)) },
+                ),
+            ),
+        )
+        is ConstraintExprV3.Exists -> JsonObject(
+            linkedMapOf(
+                "kind" to JsonPrimitive("exists"),
+                "path" to encodeAccessPath(expr.path),
+                "minCount" to JsonPrimitive(expr.minCount),
+            ),
+        )
+        is ConstraintExprV3.ValueDomain -> JsonObject(
+            linkedMapOf(
+                "kind" to JsonPrimitive("valueDomain"),
+                "path" to encodeAccessPath(expr.path),
+                "domain" to encodeDomainV3(expr.domain),
+            ),
+        )
+    }
+
+    private fun encodeDomainV3(domain: ValueDomainV3): JsonElement = when (domain) {
+        is ValueDomainV3.EnumText -> JsonObject(
+            linkedMapOf(
+                "kind" to JsonPrimitive("enumText"),
+                "values" to JsonArray(domain.values.map(::JsonPrimitive)),
+            ),
+        )
+        is ValueDomainV3.NumberRange -> {
+            val payload = linkedMapOf<String, JsonElement>(
+                "kind" to JsonPrimitive("numberRange"),
+                "integerOnly" to JsonPrimitive(domain.integerOnly),
+            )
+            domain.min?.let { min -> payload["min"] = JsonPrimitive(min) }
+            domain.max?.let { max -> payload["max"] = JsonPrimitive(max) }
+            JsonObject(payload)
+        }
+        is ValueDomainV3.Regex -> JsonObject(
+            linkedMapOf(
+                "kind" to JsonPrimitive("regex"),
+                "pattern" to JsonPrimitive(domain.pattern),
+            ),
+        )
+    }
+
+    private fun encodeEvidenceV3(evidence: List<InferenceEvidenceV3>, includeSpans: Boolean): JsonElement =
+        JsonArray(evidence.map { item -> encodeEvidenceItemV3(item, includeSpans) })
+
+    private fun encodeEvidenceItemV3(evidence: InferenceEvidenceV3, includeSpans: Boolean): JsonElement {
+        val payload = linkedMapOf<String, JsonElement>(
+            "ruleId" to JsonPrimitive(evidence.ruleId),
+            "confidence" to JsonPrimitive(evidence.confidence),
+        )
+        evidence.notes?.let { notes -> payload["notes"] = JsonPrimitive(notes) }
+        if (includeSpans && evidence.sourceSpans.isNotEmpty()) {
+            payload["sourceSpans"] = JsonArray(evidence.sourceSpans.map(::encodeToken))
+        }
+        return JsonObject(payload)
+    }
 
     private fun encodeRequirementExprV2(expr: RequirementExprV2): JsonElement = when (expr) {
         is RequirementExprV2.AllOf -> JsonObject(

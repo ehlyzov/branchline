@@ -201,9 +201,12 @@ public class TransformContractV2Synthesizer(
         val iterable = evalExpr(stmt.iterable)
         val baseline = cloneEnv()
         val loopSeed = LinkedHashMap(baseline)
+        val elementProvenance = iterable.provenance.map { path ->
+            AccessPath(path.segments + AccessSegment.Dynamic)
+        }.toSet()
         val element = AbstractValue(
             shape = iterable.arrayElement(),
-            provenance = emptySet(),
+            provenance = elementProvenance,
             evidence = iterable.evidence,
         )
         loopSeed[stmt.varName] = element
@@ -717,6 +720,14 @@ public class TransformContractV2Synthesizer(
                     alternatives.map { path -> RequirementExprV2.PathNonNull(path) },
                 )
             }
+            coalescePreferredConstraintShape(left.shape, right.shape)?.let { preferred ->
+                enforceProvenanceShape(
+                    left.provenance + right.provenance,
+                    preferred,
+                    expr.token,
+                    "coalesce-fallback-shape",
+                )
+            }
             return mergeAbstractValues(left, right)
         }
         val evaluated = evaluateBinaryType(expr.token.type, left, right)
@@ -754,6 +765,23 @@ public class TransformContractV2Synthesizer(
             if (result != null) return result
         }
         return null
+    }
+
+    private fun coalescePreferredConstraintShape(left: ValueShape, right: ValueShape): ValueShape? {
+        return when {
+            left == ValueShape.Unknown && isCoalesceConstraintShape(right) -> right
+            right == ValueShape.Unknown && isCoalesceConstraintShape(left) -> left
+            else -> null
+        }
+    }
+
+    private fun isCoalesceConstraintShape(shape: ValueShape): Boolean = when (shape) {
+        ValueShape.TextShape,
+        ValueShape.NumberShape,
+        ValueShape.BooleanShape,
+        ValueShape.Bytes,
+        -> true
+        else -> false
     }
 
     private fun refineFromCondition(expr: Expr): Refinement {
@@ -1086,11 +1114,16 @@ public class TransformContractV2Synthesizer(
     ) {
         if (path.segments.isEmpty()) return
         var cursor = root
-        path.segments.forEachIndexed { index, segment ->
+        var index = 0
+        for (segment in path.segments) {
+            if (segment == AccessSegment.Dynamic) {
+                index += 1
+                continue
+            }
             val name = when (segment) {
                 is AccessSegment.Field -> segment.name
                 is AccessSegment.Index -> segment.index
-                AccessSegment.Dynamic -> return@forEachIndexed
+                AccessSegment.Dynamic -> continue
             }
             val existing = cursor.children[name]
             val isLeaf = index == path.segments.lastIndex
@@ -1104,7 +1137,7 @@ public class TransformContractV2Synthesizer(
             )
             val next = if (existing == null) {
                 RequirementNodeV2(
-                    required = true,
+                    required = false,
                     shape = defaultShape,
                     open = true,
                     children = linkedMapOf(),
@@ -1118,6 +1151,7 @@ public class TransformContractV2Synthesizer(
             }
             cursor.children[name] = next
             cursor = next
+            index += 1
         }
     }
 
@@ -1650,19 +1684,21 @@ public class TransformContractV2Synthesizer(
     }
 
     private fun withScope(initialLocals: Collection<String>, action: () -> Unit) {
-        val created = mutableSetOf<String>()
-        scopes.addLast(created)
+        val scopeLocals = mutableSetOf<String>()
+        val introduced = mutableSetOf<String>()
+        scopes.addLast(scopeLocals)
         for (name in initialLocals) {
+            scopeLocals += name
             if (!env.containsKey(name)) {
                 env[name] = AbstractValue(ValueShape.Unknown)
-                created += name
+                introduced += name
             }
         }
         try {
             action()
         } finally {
             scopes.removeLast()
-            for (name in created) {
+            for (name in introduced) {
                 env.remove(name)
             }
         }

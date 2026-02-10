@@ -1,12 +1,29 @@
 package io.github.ehlyzov.branchline.contract
 
 import io.github.ehlyzov.branchline.ArrayTypeRef
+import io.github.ehlyzov.branchline.BinaryExpr
+import io.github.ehlyzov.branchline.CaseExpr
+import io.github.ehlyzov.branchline.CaseWhen
+import io.github.ehlyzov.branchline.CodeBlock
+import io.github.ehlyzov.branchline.Expr
 import io.github.ehlyzov.branchline.EnumTypeRef
+import io.github.ehlyzov.branchline.ExprStmt
+import io.github.ehlyzov.branchline.ForEachStmt
+import io.github.ehlyzov.branchline.IfElseExpr
+import io.github.ehlyzov.branchline.IfStmt
+import io.github.ehlyzov.branchline.LetStmt
+import io.github.ehlyzov.branchline.LiteralProperty
 import io.github.ehlyzov.branchline.NamedTypeRef
+import io.github.ehlyzov.branchline.ObjKey
+import io.github.ehlyzov.branchline.OutputStmt
 import io.github.ehlyzov.branchline.PrimitiveType
 import io.github.ehlyzov.branchline.PrimitiveTypeRef
 import io.github.ehlyzov.branchline.RecordTypeRef
+import io.github.ehlyzov.branchline.SetStmt
+import io.github.ehlyzov.branchline.SetVarStmt
 import io.github.ehlyzov.branchline.SetTypeRef
+import io.github.ehlyzov.branchline.StringExpr
+import io.github.ehlyzov.branchline.TokenType
 import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.TransformSignature
 import io.github.ehlyzov.branchline.TypeRef
@@ -37,6 +54,66 @@ public class TransformContractBuilder(
         val staticContract = buildStaticContractV2(transform)
         if (runtimeExamples.isEmpty()) return staticContract
         return contractFitter.fit(staticContract, runtimeExamples).contract
+    }
+
+    public fun buildV3(
+        transform: TransformDecl,
+        options: BuildV3Options = BuildV3Options(),
+    ): TransformContractV3 {
+        val baseV3 = TransformContractV3Adapter.fromV2(buildStaticContractV2(transform))
+        val enriched = enrichV3Contract(baseV3, transform)
+        val filtered = applyBuildV3Options(enriched, options)
+        val satisfiability = ContractSatisfiabilityV3.check(filtered)
+        if (satisfiability.satisfiable) {
+            return filtered.copy(
+                metadata = filtered.metadata.copy(
+                    satisfiability = SatisfiabilityMetadataV3(
+                        checked = true,
+                        satisfiable = true,
+                        diagnostics = emptyList(),
+                    ),
+                ),
+            )
+        }
+        val degraded = filtered.copy(
+            input = filtered.input.copy(obligations = emptyList()),
+            output = filtered.output.copy(obligations = emptyList()),
+            metadata = filtered.metadata.copy(
+                satisfiability = SatisfiabilityMetadataV3(
+                    checked = true,
+                    satisfiable = false,
+                    diagnostics = satisfiability.diagnostics,
+                ),
+            ),
+        )
+        return degraded
+    }
+
+    private fun applyBuildV3Options(contract: TransformContractV3, options: BuildV3Options): TransformContractV3 {
+        return contract.copy(
+            input = contract.input.copy(
+                obligations = filterObligations(
+                    obligations = contract.input.obligations,
+                    confidenceThreshold = options.confidenceThreshold,
+                    includeHeuristic = options.includeHeuristicObligations,
+                ),
+            ),
+            output = contract.output.copy(
+                obligations = filterObligations(
+                    obligations = contract.output.obligations,
+                    confidenceThreshold = options.confidenceThreshold,
+                    includeHeuristic = options.includeHeuristicObligations,
+                ),
+            ),
+        )
+    }
+
+    private fun filterObligations(
+        obligations: List<ContractObligationV3>,
+        confidenceThreshold: Double,
+        includeHeuristic: Boolean,
+    ): List<ContractObligationV3> = obligations.filter { obligation ->
+        obligation.confidence >= confidenceThreshold && (includeHeuristic || !obligation.heuristic)
     }
 
     private fun buildStaticContractV2(transform: TransformDecl): TransformContractV2 {
@@ -325,4 +402,232 @@ public class TransformContractBuilder(
         is ValueShape.Union -> shape.options.any { option -> shapeMayBeNull(option) }
         else -> false
     }
+
+    private fun enrichV3Contract(contract: TransformContractV3, transform: TransformDecl): TransformContractV3 {
+        val outputObligations = mutableListOf<ContractObligationV3>()
+        outputObligations += deriveForAllObligations(contract.output.root, AccessPath(emptyList()))
+        deriveStatusEnumDomain(transform)?.let { enumDomain ->
+            outputObligations += ContractObligationV3(
+                expr = ConstraintExprV3.ValueDomain(
+                    path = AccessPath(listOf(AccessSegment.Field("status"))),
+                    domain = enumDomain,
+                ),
+                confidence = 0.95,
+                ruleId = "status-enum-domain",
+                heuristic = false,
+            )
+        }
+        val outputRoot = applyStatusDomain(contract.output.root, deriveStatusEnumDomain(transform))
+        val mergedOutputObligations = (contract.output.obligations + outputObligations).distinct()
+        val dedupedOutputObligations = dedupeOutputObligationsAgainstNode(outputRoot, mergedOutputObligations)
+        return contract.copy(
+            output = contract.output.copy(
+                root = outputRoot,
+                obligations = dedupedOutputObligations,
+            ),
+        )
+    }
+
+    private fun deriveForAllObligations(node: NodeV3, path: AccessPath): List<ContractObligationV3> {
+        val obligations = mutableListOf<ContractObligationV3>()
+        if (node.kind == NodeKindV3.ARRAY) {
+            val element = node.element
+            if (element != null && element.kind == NodeKindV3.OBJECT && element.children.isNotEmpty()) {
+                val required = element.children.entries
+                    .filter { (_, child) -> child.required }
+                    .map { (name, _) -> name }
+                obligations += ContractObligationV3(
+                    expr = ConstraintExprV3.ForAll(
+                        path = path,
+                        requiredFields = required,
+                    ),
+                    confidence = 0.95,
+                    ruleId = "array-element-required-fields",
+                    heuristic = false,
+                )
+            }
+        }
+        node.children.forEach { (name, child) ->
+            obligations += deriveForAllObligations(child, appendPath(path, AccessSegment.Field(name)))
+        }
+        node.options.forEach { option ->
+            obligations += deriveForAllObligations(option, path)
+        }
+        return obligations
+    }
+
+    private fun deriveStatusEnumDomain(transform: TransformDecl): ValueDomainV3.EnumText? {
+        val definitions = collectDefinitions(transform.body as CodeBlock)
+        val values = linkedSetOf<String>()
+        collectOutputFieldExpressions(transform.body as CodeBlock, "status").forEach { expr ->
+            collectStringLiteralsFromExpr(expr, definitions, values, mutableSetOf())
+        }
+        return if (values.size >= 2) ValueDomainV3.EnumText(values.toList()) else null
+    }
+
+    private fun applyStatusDomain(root: NodeV3, domain: ValueDomainV3.EnumText?): NodeV3 {
+        if (domain == null) return root
+        val status = root.children["status"] ?: return root
+        val updated = status.copy(domains = (status.domains + domain).distinct())
+        val children = LinkedHashMap(root.children)
+        children["status"] = updated
+        return root.copy(children = children)
+    }
+
+    private fun collectDefinitions(block: CodeBlock): Map<String, Expr> {
+        val defs = linkedMapOf<String, Expr>()
+        collectDefinitionsFromStatements(block.statements, defs)
+        return defs
+    }
+
+    private fun collectDefinitionsFromStatements(
+        statements: List<io.github.ehlyzov.branchline.Stmt>,
+        defs: MutableMap<String, Expr>,
+    ) {
+        for (stmt in statements) {
+            when (stmt) {
+                is LetStmt -> defs[stmt.name] = stmt.expr
+                is SetVarStmt -> defs[stmt.name] = stmt.value
+                is IfStmt -> {
+                    collectDefinitionsFromStatements(stmt.thenBlock.statements, defs)
+                    stmt.elseBlock?.let { block -> collectDefinitionsFromStatements(block.statements, defs) }
+                }
+                is ForEachStmt -> collectDefinitionsFromStatements(stmt.body.statements, defs)
+                else -> Unit
+            }
+        }
+    }
+
+    private fun collectOutputFieldExpressions(
+        block: CodeBlock,
+        fieldName: String,
+    ): List<Expr> {
+        val expressions = mutableListOf<Expr>()
+        collectOutputFieldExpressionsFromStatements(block.statements, fieldName, expressions)
+        return expressions
+    }
+
+    private fun collectOutputFieldExpressionsFromStatements(
+        statements: List<io.github.ehlyzov.branchline.Stmt>,
+        fieldName: String,
+        out: MutableList<Expr>,
+    ) {
+        for (stmt in statements) {
+            when (stmt) {
+                is OutputStmt -> {
+                    val obj = stmt.template as? io.github.ehlyzov.branchline.ObjectExpr ?: continue
+                    for (field in obj.fields) {
+                        val literal = field as? LiteralProperty ?: continue
+                        val key = literal.key as? ObjKey.Name ?: continue
+                        if (key.v == fieldName) {
+                            out += literal.value
+                        }
+                    }
+                }
+                is IfStmt -> {
+                    collectOutputFieldExpressionsFromStatements(stmt.thenBlock.statements, fieldName, out)
+                    stmt.elseBlock?.let { block ->
+                        collectOutputFieldExpressionsFromStatements(block.statements, fieldName, out)
+                    }
+                }
+                is ForEachStmt -> collectOutputFieldExpressionsFromStatements(stmt.body.statements, fieldName, out)
+                else -> Unit
+            }
+        }
+    }
+
+    private fun collectStringLiteralsFromExpr(
+        expr: Expr,
+        defs: Map<String, Expr>,
+        out: MutableSet<String>,
+        visitingNames: MutableSet<String>,
+    ) {
+        when (expr) {
+            is StringExpr -> out += expr.value
+            is IfElseExpr -> {
+                collectStringLiteralsFromExpr(expr.thenBranch, defs, out, visitingNames)
+                collectStringLiteralsFromExpr(expr.elseBranch, defs, out, visitingNames)
+            }
+            is CaseExpr -> {
+                expr.whens.forEach { whenExpr: CaseWhen ->
+                    collectStringLiteralsFromExpr(whenExpr.result, defs, out, visitingNames)
+                }
+                collectStringLiteralsFromExpr(expr.elseBranch, defs, out, visitingNames)
+            }
+            is BinaryExpr -> {
+                if (expr.token.type == TokenType.COALESCE) {
+                    collectStringLiteralsFromExpr(expr.left, defs, out, visitingNames)
+                    collectStringLiteralsFromExpr(expr.right, defs, out, visitingNames)
+                }
+            }
+            is io.github.ehlyzov.branchline.IdentifierExpr -> {
+                if (!visitingNames.add(expr.name)) return
+                val resolved = defs[expr.name]
+                if (resolved != null) {
+                    collectStringLiteralsFromExpr(resolved, defs, out, visitingNames)
+                }
+                visitingNames.remove(expr.name)
+            }
+            else -> Unit
+        }
+    }
+
+    private fun appendPath(path: AccessPath, segment: AccessSegment): AccessPath =
+        AccessPath(path.segments + segment)
+
+    private fun dedupeOutputObligationsAgainstNode(
+        root: NodeV3,
+        obligations: List<ContractObligationV3>,
+    ): List<ContractObligationV3> = obligations.filterNot { obligation ->
+        isRepresentedByOutputNode(root, obligation.expr)
+    }
+
+    private fun isRepresentedByOutputNode(root: NodeV3, expr: ConstraintExprV3): Boolean = when (expr) {
+        is ConstraintExprV3.ValueDomain -> {
+            val node = resolveNode(root, expr.path)
+            node != null && expr.domain in node.domains
+        }
+        is ConstraintExprV3.ForAll -> {
+            if (expr.requireAnyOf.isNotEmpty()) return false
+            val node = resolveNode(root, expr.path) ?: return false
+            if (node.kind != NodeKindV3.ARRAY && node.kind != NodeKindV3.SET) return false
+            val element = node.element ?: return false
+            if (element.kind != NodeKindV3.OBJECT) return false
+            val requiredFieldsCovered = expr.requiredFields.all { name ->
+                val child = element.children[name]
+                child != null && child.required
+            }
+            val fieldDomainsCovered = expr.fieldDomains.all { (name, domain) ->
+                val child = element.children[name]
+                child != null && domain in child.domains
+            }
+            requiredFieldsCovered && fieldDomainsCovered
+        }
+        else -> false
+    }
+
+    private fun resolveNode(root: NodeV3, path: AccessPath): NodeV3? {
+        var current: NodeV3? = root
+        for (segment in path.segments) {
+            current = when (segment) {
+                is AccessSegment.Field -> current?.children?.get(segment.name)
+                is AccessSegment.Index -> {
+                    when (current?.kind) {
+                        NodeKindV3.OBJECT -> current.children[segment.index]
+                        NodeKindV3.ARRAY, NodeKindV3.SET -> current.element
+                        NodeKindV3.UNION -> null
+                        else -> null
+                    }
+                }
+                AccessSegment.Dynamic -> return null
+            }
+            if (current == null) return null
+        }
+        return current
+    }
 }
+
+public data class BuildV3Options(
+    val confidenceThreshold: Double = 0.7,
+    val includeHeuristicObligations: Boolean = false,
+)

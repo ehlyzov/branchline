@@ -6,6 +6,10 @@ supersedes: ['planning/current-research-tasks']
 superseded_by: []
 last_updated: 2026-02-08
 changelog:
+  - date: 2026-02-10
+    change: "Refined Contract Model V3 semantics: structural dedupe of overlapping obligations, debug-only inferred-rule metadata, and optional-first inferred input nodes with obligation-driven requiredness."
+  - date: 2026-02-09
+    change: "Added and implemented Contract Model V3 index entry for strict obligations, quantified constraints, and witness-aware satisfiability checks."
   - date: 2026-02-08
     change: "Added Input-Type-Seeded Output Inference planning doc for hybrid wildcard-output inference using declared input type seeds."
   - date: 2026-02-08
@@ -122,6 +126,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Transform Contracts](language/transform-contracts.md) -- signatures and contract inference with cleaned V2 JSON output/debug gating.
 - [Transform Contracts Next Phase](language/transform-contracts-next.md) -- runtime validation and contract JSON export.
 - [Contract Model V2](language/contract-model-v2.md) -- nested contract graph with children-only JSON members and extension points.
+- [Contract Model V3](language/contract-model-v3.md) -- strict node-kinded contract graph with quantified obligations, value-domain constraints, satisfiability diagnostics, and witness generation hooks.
 - [Contract Inference Static Analysis (V2)](language/contract-inference-static-analysis.md) -- flow-sensitive inference with literal bracket precision and empty-array append stability.
 - [Contract Diagnostics V2](language/contract-diagnostics-v2.md) -- deterministic mismatch reporting without static evidence dependency.
 - [Contract Inference V2 Milestone Plan](planning/contract-inference-v2-milestone-plan.md) -- completed M0-M9 plus cleanup C1-C7 implementation sequence.

@@ -25,7 +25,8 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - Use `--json-numbers strict` to reject values outside the safe JSON numeric range.
 - JSON numeric key conversion is opt-in via `--json-key-mode numeric`; it converts non-negative integer keys without leading zeros (except `0`) for nested objects (top-level input keys remain strings).
 - JSON bytes are accepted only when contracts declare `bytes`; they must be base64 strings using the standard alphabet with `=` padding and no line breaks.
-- Inferred contracts are flow-sensitive and emitted in V2 nested form (`root.children` + requirement expressions). Coalesce reads (`a ?? b`) emit conditional one-of requirements instead of forcing both fields as unconditional required inputs.
+- Inferred contracts are flow-sensitive and emitted in V3 node form (`root.kind/children/element`) with explicit obligations. Coalesce reads (`a ?? b`) emit `oneOf` obligations instead of forcing both fields as unconditional required inputs.
+- In inferred input contracts, discovered read paths are descriptive and usually optional in the node tree; enforceable requiredness is carried by obligations.
 - Wildcard output signatures (`-> _` / `-> _?`) run in hybrid mode: declared input type seeds static inference and output remains inferred.
 - XML input maps attributes to `@name` keys.
 - XML pure text content maps to `$`; mixed content text segments map to `$1`, `$2`, ...
@@ -50,24 +51,27 @@ Use this section as the formal reference for Branchline syntax and semantics.
 - CLI emits conversion-loss warnings to stderr when known lossy JSON/XML conversions occur.
 
 ## Contract JSON Modes
-- `bl inspect <script.bl> --contracts-json` emits clean V2 JSON for tooling and docs.
-- `bl inspect <script.bl> --contracts-json --contracts-debug` additionally emits debug metadata (`origin`, and spans if available).
+- `bl inspect <script.bl> --contracts-json` emits V3 JSON by default.
+- `bl inspect <script.bl> --contracts-json --contracts-version v2` keeps compatibility output during migration.
+- `bl inspect <script.bl> --contracts-json --contracts-witness` includes synthesized strict-valid input/output samples.
+- `bl inspect <script.bl> --contracts-json --contracts-debug` additionally emits debug metadata (`origin`, spans, and inferred-rule metadata such as confidence/ruleId).
 
 Example (default):
 ```json
 {
-  "version": "v2",
+  "version": "v3",
   "root": {
     "required": true,
-    "shape": { "type": "object", "closed": false },
+    "kind": "object",
     "children": {
       "greeting": {
         "required": true,
-        "shape": { "type": "text" },
+        "kind": "text",
         "children": {}
       }
     }
   },
+  "obligations": [],
   "mayEmitNull": false,
   "opaqueRegions": []
 }
@@ -76,20 +80,21 @@ Example (default):
 Example (`--contracts-debug`):
 ```json
 {
-  "version": "v2",
+  "version": "v3",
   "root": {
     "required": true,
-    "shape": { "type": "object", "closed": false },
+    "kind": "object",
     "origin": "OUTPUT",
     "children": {
       "greeting": {
         "required": true,
-        "shape": { "type": "text" },
+        "kind": "text",
         "origin": "OUTPUT",
         "children": {}
       }
     }
   },
+  "obligations": [],
   "mayEmitNull": false,
   "opaqueRegions": []
 }
