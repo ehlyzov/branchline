@@ -4,8 +4,10 @@ depends_on: []
 blocks: []
 supersedes: ['planning/current-research-tasks']
 superseded_by: []
-last_updated: 2026-02-10
+last_updated: 2026-02-11
 changelog:
+  - date: 2026-02-11
+    change: "Tracked playground docs embed dark-mode contrast fix for intro tip text/readability."
   - date: 2026-02-10
     change: "Completed playground examples modernization: semicolon-free programs, broader CASE usage, stdlib-focused rewrites, and docs sync."
   - date: 2026-02-10

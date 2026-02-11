@@ -47,6 +47,17 @@ html body .md-content {
   border-radius: 6px;
 }
 
+body[data-md-color-scheme="slate"] .playground-embed__intro {
+  background: #2a2724;
+  border-color: #4f4337;
+  color: var(--md-default-fg-color, #e6e1dc);
+}
+
+body[data-md-color-scheme="slate"] .playground-embed__intro code {
+  background: #3a332d;
+  color: var(--md-code-fg-color, #f4eee6);
+}
+
 .playground-frame {
   border-radius: 14px;
   border: 1px solid rgba(15, 23, 42, 0.08);

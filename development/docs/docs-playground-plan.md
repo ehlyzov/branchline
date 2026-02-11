@@ -4,8 +4,10 @@ depends_on: ['docs/docs-refresh']
 blocks: []
 supersedes: []
 superseded_by: []
-last_updated: 2026-02-01
+last_updated: 2026-02-11
 changelog:
+  - date: 2026-02-11
+    change: "Planned docs playground dark-mode intro contrast fix for readable tip text and inline code."
   - date: 2026-02-01
     change: "Migrated from research/docs-plan.md and added YAML front matter."
   - date: 2026-02-01
