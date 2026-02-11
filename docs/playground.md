@@ -47,17 +47,18 @@ Experiment with Branchline directly in your browser—no installs required. Pick
 
 ## Curated examples (all preserved)
 - [collection-transforms](?example=collection-transforms){ target="_blank" } — MAP/FILTER/REDUCE style array work
-- [contract-deep-composition](?example=contract-deep-composition){ target="_blank" } — deep nested output inferred from variable-composed intermediates
+- [contract-deep-composition](?example=contract-deep-composition){ target="_blank" } — deep nested output inferred from stdlib-first composition
 - [contract-literal-brackets-static](?example=contract-literal-brackets-static){ target="_blank" } — literal bracket keys inferred as static paths
-- [contract-empty-array-append](?example=contract-empty-array-append){ target="_blank" } — stable array element typing from `[]` + APPEND
-- [customer-profile](?example=customer-profile){ target="_blank" } — basic enrichment and null coalescing
+- [contract-empty-array-append](?example=contract-empty-array-append){ target="_blank" } — stable array element typing via `FOR EACH ... WHERE` and `[] + APPEND`
+- [customer-profile](?example=customer-profile){ target="_blank" } — concise profile shaping with FORMAT/GET and CASE fallback
 - [explain-derived-total](?example=explain-derived-total){ target="_blank" } — enable tracing to see EXPLAIN output
-- [junit-badge-summary](?example=junit-badge-summary){ target="_blank" } — XML parsing and normalization
-- [order-shipment](?example=order-shipment){ target="_blank" } — object reshaping and path navigation
-- [pipeline-health-gating](?example=pipeline-health-gating){ target="_blank" } — ASSERT/CHECKPOINT with trace
+- [junit-badge-summary](?example=junit-badge-summary){ target="_blank" } — XML normalization via FILTER/MAP/SUM pipelines
+- [order-shipment](?example=order-shipment){ target="_blank" } — shipping snapshot with GET/FORMAT and CASE classification
+- [pipeline-health-gating](?example=pipeline-health-gating){ target="_blank" } — CASE-driven health gating with ASSERT/CHECKPOINT + trace
 - [error-handling-try-catch](?example=error-handling-try-catch){ target="_blank" } — TRY/CATCH with ASSERT fallbacks
 - [shared-memory-basics](?example=shared-memory-basics){ target="_blank" } — SHARED declarations and writes
 - Standard library coverage:
+  [stdlib-case-basic](?example=stdlib-case-basic){ target="_blank" },
   [stdlib-core-keys-values](?example=stdlib-core-keys-values){ target="_blank" },
   [stdlib-core-put-delete](?example=stdlib-core-put-delete){ target="_blank" },
   [stdlib-core-append-prepend](?example=stdlib-core-append-prepend){ target="_blank" },

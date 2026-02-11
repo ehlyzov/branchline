@@ -2,8 +2,8 @@
   "title": "Stdlib: Base64 helpers",
   "description": "Decode base64 payloads to bytes and re-encode for JSON output.",
   "program": [
-    "LET bytes = BASE64_DECODE(input.payload);",
-    "LET roundtrip = BASE64_ENCODE(bytes);",
+    "LET bytes = BASE64_DECODE(input.payload)",
+    "LET roundtrip = BASE64_ENCODE(bytes)",
     "",
     "OUTPUT {",
     "    base64: roundtrip",

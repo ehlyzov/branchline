@@ -2,9 +2,9 @@
   "title": "Explain derived totals",
   "description": "Calculate an order total and include EXPLAIN(\"total\") to inspect how the value was produced.",
   "program": [
-    "LET subtotal = input.unit_price * input.quantity;",
-    "LET discount = input.discount ?? 0;",
-    "LET total = subtotal - discount;",
+    "LET subtotal = input.unit_price * input.quantity",
+    "LET discount = input.discount ?? 0",
+    "LET total = subtotal - discount",
     "",
     "OUTPUT {",
     "    order_id: input.order_id,",

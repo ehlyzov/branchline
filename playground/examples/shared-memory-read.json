@@ -8,9 +8,9 @@
     }
   ],
   "program": [
-    "LET key = input.userId ?? \"guest\";",
-    "LET snapshot = session[key];",
-    "LET hasValue = snapshot != null;",
+    "LET key = input.userId ?? \"guest\"",
+    "LET snapshot = session[key]",
+    "LET hasValue = snapshot != null",
     "",
     "OUTPUT {",
     "    sharedKey: key,",

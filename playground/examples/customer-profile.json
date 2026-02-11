@@ -1,16 +1,16 @@
 {
   "title": "Customer profile enrichment",
-  "description": "Combine basic customer attributes into a normalized profile with a fallback loyalty tier.",
+  "description": "Build a normalized customer profile with FORMAT/GET helpers and a CASE-backed loyalty fallback.",
   "showContracts": true,
   "program": [
-    "LET fullName = input.first_name + \" \" + input.last_name;",
-    "LET loyaltyTier = input.loyalty_tier ?? \"standard\";",
-    "",
     "OUTPUT {",
     "    id: input.id,",
-    "    full_name: fullName,",
-    "    loyalty_tier: loyaltyTier,",
-    "    shipping_city: input.address.city",
+    "    full_name: FORMAT(\"{0} {1}\", [input.first_name, input.last_name]),",
+    "    loyalty_tier: CASE {",
+    "        WHEN input.loyalty_tier == NULL THEN \"standard\"",
+    "        ELSE input.loyalty_tier",
+    "    },",
+    "    shipping_city: GET(input.address, \"city\", \"unknown\")",
     "}"
   ],
   "input": {

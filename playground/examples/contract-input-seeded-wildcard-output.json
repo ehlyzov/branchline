@@ -1,11 +1,13 @@
 {
   "title": "Contract: input-seeded wildcard output",
-  "description": "Uses a typed input signature with wildcard output to infer precise output fields from static input paths while keeping dynamic access conservative.",
+  "description": "Uses a typed input signature with CASE fallback logic and dynamic-key conservatism for wildcard output inference.",
   "program": [
     "TRANSFORM Normalize(input: { payload?: { name: text }, metrics: { count: number }, key: text }) -> _ {",
-    "    LET payload = input.payload;",
-    "    LET fallbackName = IF payload != NULL THEN payload.name ELSE \"none\";",
-    "    LET count = GET(input.metrics, \"count\", 0);",
+    "    LET fallbackName = CASE {",
+    "        WHEN input.payload != NULL THEN input.payload.name",
+    "        ELSE \"none\"",
+    "    }",
+    "    LET count = GET(input.metrics, \"count\", 0)",
     "    OUTPUT {",
     "        name: fallbackName,",
     "        count: count,",

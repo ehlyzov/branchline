@@ -4,7 +4,7 @@
   "showContracts": false,
   "program": [
     "TRANSFORM Hello {",
-    "    OUTPUT { greeting: \"Hello, \" + input.name };",
+    "    OUTPUT { greeting: \"Hello, \" + input.name }",
     "}"
   ],
   "input": {

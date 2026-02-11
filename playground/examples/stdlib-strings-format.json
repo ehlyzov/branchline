@@ -2,9 +2,9 @@
   "title": "Stdlib: FORMAT",
   "description": "Named and indexed placeholders with brace escaping.",
   "program": [
-    "LET named = FORMAT(\"Hello {name} ({role})\", { name: input.name, role: input.role });",
-    "LET indexed = FORMAT(\"{0} + {0} = {1}\", [input.x, input.y]);",
-    "LET escaped = FORMAT(\"{{value}} stays literal\", { value: \"ignored\" });",
+    "LET named = FORMAT(\"Hello {name} ({role})\", { name: input.name, role: input.role })",
+    "LET indexed = FORMAT(\"{0} + {0} = {1}\", [input.x, input.y])",
+    "LET escaped = FORMAT(\"{{value}} stays literal\", { value: \"ignored\" })",
     "",
     "OUTPUT {",
     "    named: named,",

@@ -2,7 +2,7 @@
   "title": "XML mapping: mixed content",
   "description": "Demonstrates the normalized XML shape using @attributes, $, and $n text segments.",
   "program": [
-    "LET row = input.row;",
+    "LET row = input.row",
     "OUTPUT {",
     "    id: row[\"@id\"],",
     "    title: row.title[\"$\"],",

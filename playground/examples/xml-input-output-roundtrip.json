@@ -2,7 +2,7 @@
   "title": "XML input/output roundtrip",
   "description": "Parses raw XML input into Branchline mapping and emits XML output using namespace-aware ordering.",
   "program": [
-    "LET invoice = input.invoice;",
+    "LET invoice = input.invoice",
     "OUTPUT {",
     "    report: {",
     "        \"@xmlns\": { \"$\": \"urn:report\", x: invoice[\"@xmlns\"][\"x\"] },",

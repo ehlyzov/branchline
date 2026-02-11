@@ -8,11 +8,11 @@
     }
   ],
   "program": [
-    "LET key = input.userId ?? \"guest\";",
+    "LET key = input.userId ?? \"guest\"",
     "SET session[key] = {",
     "    userId: key,",
     "    lastSeen: NOW()",
-    "};",
+    "}",
     "",
     "OUTPUT {",
     "    sharedKey: key,",

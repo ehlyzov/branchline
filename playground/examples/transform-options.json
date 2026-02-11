@@ -9,7 +9,7 @@
     "    output: { adapter: json() }",
     "    shared: [ cache SINGLE ]",
     "} {",
-    "    OUTPUT { greeting: \"Hello, \" + input.name };",
+    "    OUTPUT { greeting: \"Hello, \" + input.name }",
     "}"
   ],
   "input": {

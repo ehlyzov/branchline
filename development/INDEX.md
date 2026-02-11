@@ -4,8 +4,12 @@ depends_on: []
 blocks: []
 supersedes: ['planning/current-research-tasks']
 superseded_by: []
-last_updated: 2026-02-08
+last_updated: 2026-02-10
 changelog:
+  - date: 2026-02-10
+    change: "Completed playground examples modernization: semicolon-free programs, broader CASE usage, stdlib-focused rewrites, and docs sync."
+  - date: 2026-02-10
+    change: "Started aggressive playground example modernization tracking (semicolon-free style, CASE adoption, and stdlib-first rewrites)."
   - date: 2026-02-10
     change: "Refined Contract Model V3 semantics: structural dedupe of overlapping obligations, debug-only inferred-rule metadata, and optional-first inferred input nodes with obligation-driven requiredness."
   - date: 2026-02-09
@@ -115,6 +119,7 @@ This index is the canonical entry point for the /development knowledge base. All
 
 ### Implemented
 - [CLI Rollout](tooling/cli-rollout.md) -- JVM/JS CLI shipped.
+- [Playground Examples Modernization](docs/playground-examples-modernization.md) -- aggressive modern-style rewrite of all playground examples with validation coverage.
 - [Complex Tests](quality/complex-tests.md) -- demo tests + examples.
 - [Interpreter Refactor](runtime/interpreter-refactor.md) -- Exec/caps refactor.
 - [Optional Semicolons](language/optional-semicolons.md) -- parser accepts newlines.

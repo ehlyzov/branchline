@@ -4,7 +4,7 @@
   "outputFormat": "json",
   "program": [
     "TRANSFORM LargeNumbers {",
-    "    OUTPUT input;",
+    "    OUTPUT input",
     "}"
   ],
   "input": {
