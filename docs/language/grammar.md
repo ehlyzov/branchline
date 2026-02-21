@@ -7,7 +7,7 @@ title: Grammar
 Use this page for the exact, authoritative syntax. If you only need to learn the language, start with the [Tour of Branchline](../learn/index.md).
 
 The Branchline DSL syntax is defined using Extended Backus–Naur Form (EBNF). The canonical grammar is maintained in the repository at
-[interpreter/src/jvmTest/resources/io/github/ehlyzov/branchline/ebnf.txt](https://github.com/ehlyzov/branchline-public/blob/main/interpreter/src/jvmTest/resources/io/github/ehlyzov/branchline/ebnf.txt)
+[interpreter/src/jvmTest/resources/io/github/ehlyzov/branchline/ebnf.txt](https://github.com/ehlyzov/branchline/blob/main/interpreter/src/jvmTest/resources/io/github/ehlyzov/branchline/ebnf.txt)
 and is reproduced below for convenience.
 
 ```ebnf

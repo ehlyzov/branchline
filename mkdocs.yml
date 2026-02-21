@@ -1,9 +1,9 @@
 site_name: Branchline Public
-site_url: https://ehlyzov.github.io/branchline-public/
+site_url: https://ehlyzov.github.io/branchline/
 site_description: A public version of the Branchline data transformation language
 site_author: Eugene Hlyzov
-repo_name: ehlyzov/branchline-public
-repo_url: https://github.com/ehlyzov/branchline-public
+repo_name: ehlyzov/branchline
+repo_url: https://github.com/ehlyzov/branchline
 exclude_docs: |
   benchmarks/jsonata/**
 
@@ -109,4 +109,4 @@ extra_css:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/ehlyzov/branchline-public
+      link: https://github.com/ehlyzov/branchline

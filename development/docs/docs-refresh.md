@@ -54,8 +54,8 @@ This draft lays out the revamped Branchline docs and playground experience, focu
 
 ### Clone and verify
 ```bash
-git clone https://github.com/ehlyzov/branchline-public.git
-cd branchline-public
+git clone https://github.com/ehlyzov/branchline.git
+cd branchline
 ./gradlew --version          # verifies toolchain
 ./gradlew :cli:runBl --help  # confirms CLI wiring
 ```

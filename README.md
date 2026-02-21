@@ -1,11 +1,11 @@
 # Branchline: speed, clarity, and tracing for structured data
 
-[![Interpreter Test](https://byob.yarr.is/ehlyzov/branchline-public/interpreter-test/badges)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
-[![VM Test](https://byob.yarr.is/ehlyzov/branchline-public/vm-test/badges)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
-[![Conformance Test](https://byob.yarr.is/ehlyzov/branchline-public/conformance-test/badges)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
-[![CLI Test](https://byob.yarr.is/ehlyzov/branchline-public/cli-test/badges)](https://github.com/ehlyzov/branchline-public/actions/workflows/tests.yml)
+[![Interpreter Test](https://byob.yarr.is/ehlyzov/branchline/interpreter-test/badges)](https://github.com/ehlyzov/branchline/actions/workflows/tests.yml)
+[![VM Test](https://byob.yarr.is/ehlyzov/branchline/vm-test/badges)](https://github.com/ehlyzov/branchline/actions/workflows/tests.yml)
+[![Conformance Test](https://byob.yarr.is/ehlyzov/branchline/conformance-test/badges)](https://github.com/ehlyzov/branchline/actions/workflows/tests.yml)
+[![CLI Test](https://byob.yarr.is/ehlyzov/branchline/cli-test/badges)](https://github.com/ehlyzov/branchline/actions/workflows/tests.yml)
 
-DeepWiki: [ehlyzov/branchline-public](https://deepwiki.com/ehlyzov/branchline-public)
+DeepWiki: [ehlyzov/branchline](https://deepwiki.com/ehlyzov/branchline)
 
 Branchline is an experimental data transformation language for building efficient pipelines in low-code environments. It focuses on converting one JSON-like document into another while offering tooling to make the process observable, predictable, and fast. Comparisons with JSONATA, JOLT, and similar technologies are planned for the future.
 
@@ -108,8 +108,8 @@ Branchline aims to provide several qualities that are often missing in industria
 
 ## Resources
 
-- 📚 Documentation (WIP): https://ehlyzov.github.io/branchline-public/
-- 🧪 Playground (WIP): https://ehlyzov.github.io/branchline-public/playground/
+- 📚 Documentation (WIP): https://ehlyzov.github.io/branchline/
+- 🧪 Playground (WIP): https://ehlyzov.github.io/branchline/playground/
 
 ## License
 

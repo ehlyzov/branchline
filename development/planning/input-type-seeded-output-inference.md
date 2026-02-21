@@ -152,7 +152,7 @@ Expected: output `name` inferred as `text`.
 
 ## New Agent Prompt
 ```text
-Implement “Input-Type-Seeded Output Inference” in /Users/eugene/repo/research/branchline-public.
+Implement “Input-Type-Seeded Output Inference” in /Users/eugene/repo/research/branchline.
 
 Rules:
 - Follow AGENTS.md (development-first workflow, update development/INDEX.md).

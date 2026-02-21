@@ -31,7 +31,7 @@ IBM_JSONATA_REPO=path/to/ibm-jars \
 
 ## Raw artifacts
 
-Latest assets live on the [latest GitHub release](https://github.com/ehlyzov/branchline-public/releases/latest).
+Latest assets live on the [latest GitHub release](https://github.com/ehlyzov/branchline/releases/latest).
 
 Asset names:
 
