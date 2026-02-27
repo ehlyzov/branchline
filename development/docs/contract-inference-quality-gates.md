@@ -4,52 +4,26 @@ depends_on: ['planning/contract-inference-v2-milestone-plan']
 blocks: []
 supersedes: []
 superseded_by: []
-last_updated: 2026-02-08
+last_updated: 2026-02-27
 changelog:
-  - date: 2026-02-09
-    change: "Added V3 strictness gates: local-scope leakage regression, enum-domain enforcement, quantified array-element obligations, satisfiability checks, and witness generation validation."
-  - date: 2026-02-08
-    change: "Added hybrid wildcard-output gate coverage: seeded static path precision, dynamic fallback conservatism, and metadata marker checks."
-  - date: 2026-02-08
-    change: "Created quality gate definitions for Contract Inference V2."
-  - date: 2026-02-08
-    change: "Implemented CLI JVM quality-gate tests for curated unknown-ratio and junit-badge-summary thresholds."
-  - date: 2026-02-08
-    change: "Reopened for V2 JSON cleanup gates: structural no-duplication check and debug-metadata visibility policy checks."
-  - date: 2026-02-08
-    change: "Implemented structural/debug gates in CLI quality tests (no duplicate schema keys; origin debug-only assertions)."
-  - date: 2026-02-08
-    change: "Added follow-up gate coverage target for lattice semantics (`array<never>` seed behavior and no regressions in unknown-ratio gates)."
+  - date: 2026-02-27
+    change: "Aligned gates to canonical latest-only contracts: structural/debug JSON checks, strict validation checks, and satisfiability/witness checks."
 ---
 # Contract Inference Quality Gates
 
 ## Precision Gates
 - Curated example unknown-shape ratio must be `<= 0.35`.
 - `playground/examples/junit-badge-summary.json` unknown-shape ratio must be `<= 0.20`.
-- Curated quality-gate set:
-  - `contract-deep-composition`
-  - `error-handling-try-catch`
-  - `junit-badge-summary`
-  - `stdlib-core-append-prepend`
-  - `stdlib-core-listify-get`
-  - `stdlib-strings-casts`
-  - `stdlib-strings-text`
-  - `xml-input-output-roundtrip`
-- Hybrid-specific precision checks:
-  - typed input + wildcard output infers concrete output shape for static paths.
-  - `GET` with static key on typed input infers keyed type (with fallback merge).
-  - dynamic key reads remain `any` and add `opaqueRegions`.
 
-## Structural JSON Gates (new)
+## Structural JSON Gates
 - Contract JSON must not duplicate object members in both `shape.schema.fields` and `children`.
-- Public JSON must not include `open`.
+- Canonical JSON must not include contract version fields.
 - Public JSON must not include static `evidence` payloads.
 
-## Debug Visibility Gates (new)
+## Debug Visibility Gates
 - Default JSON output omits `origin` and spans.
 - Debug output includes `origin` and available spans/debug metadata.
 - CLI inspect and Playground debug toggle must match behavior.
-- Hybrid metadata marker is deterministic and present only when input-type seed path is active.
 
 ## Determinism Gates
 - Contract JSON output for the same script is byte-stable per platform.
@@ -57,8 +31,7 @@ changelog:
 
 ## Validation Gates
 - Warn/strict behavior parity with existing semantics where rules overlap.
-- V2 diagnostics ordering is deterministic.
-- V3 strict gate for `junit-badge-summary`:
+- Strict gate for `junit-badge-summary`:
   - real sample input passes strict validation,
   - no bogus `input.suite.*` requirement leaks from local loop vars,
   - output `suites[*]` enforces element field contract.
@@ -66,16 +39,12 @@ changelog:
   - inferred enum domain on output `status` rejects non-domain values.
 
 ## Satisfiability + Witness Gates
-- Every inferred V3 contract must be satisfiable or explicitly degraded to safe subset with diagnostics.
+- Every inferred contract must be satisfiable or explicitly degraded to safe subset with diagnostics.
 - Witness generator must produce at least one strict-valid input and output sample per contract.
 - Generated witnesses must pass validator in JVM and JS.
 
 ## Performance Gates
-- V2 inference must not increase total CLI inspect time by more than 2.0x on curated examples.
+- Inference must not increase total CLI inspect time by more than 2.0x on curated examples.
 
 ## Reporting
 - Metric + structure/debug runner: `cli/src/jvmTest/kotlin/io/github/ehlyzov/branchline/cli/ContractInferenceQualityGateTest.kt`.
-- Asserts:
-  - unknown/total shape ratio gates
-  - no duplicate `schema` object member source in V2 JSON
-  - `origin` absent in standard JSON and present in debug JSON

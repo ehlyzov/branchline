@@ -393,19 +393,42 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
         }
     }
 
-    private fun parseTypeTerm(): TypeRef = when {
-        check(TokenType.ENUM) && checkNext(TokenType.LEFT_BRACE) -> {
-            advance()
-            parseEnumType(previous())
+    private fun parseTypeTerm(): TypeRef {
+        val term = when {
+            check(TokenType.ENUM) && checkNext(TokenType.LEFT_BRACE) -> {
+                advance()
+                parseEnumType(previous())
+            }
+            match(TokenType.LEFT_BRACE) -> parseRecordType(previous())
+            match(TokenType.LEFT_BRACKET) -> parseListType(previous())
+            check(TokenType.SET) && checkNext(TokenType.LT) -> {
+                advance()
+                parseSetType(previous())
+            }
+            matchName() -> parseSimpleType(previous())
+            else -> error(peek(), "Expect type")
         }
-        match(TokenType.LEFT_BRACE) -> parseRecordType(previous())
-        match(TokenType.LEFT_BRACKET) -> parseListType(previous())
-        check(TokenType.SET) && checkNext(TokenType.LT) -> {
-            advance()
-            parseSetType(previous())
+        if (!match(TokenType.QUESTION)) {
+            return term
         }
-        matchName() -> parseSimpleType(previous())
-        else -> error(peek(), "Expect type")
+        return makeNullableTypeRef(term)
+    }
+
+    private fun makeNullableTypeRef(typeRef: TypeRef): TypeRef {
+        if (typeRef is PrimitiveTypeRef && typeRef.kind == PrimitiveType.ANY && typeRef.token.lexeme == "_") {
+            return PrimitiveTypeRef(PrimitiveType.ANY_NULLABLE, typeRef.token)
+        }
+        if (typeRef is PrimitiveTypeRef && typeRef.kind == PrimitiveType.NULL) {
+            return typeRef
+        }
+        val nullType = PrimitiveTypeRef(PrimitiveType.NULL, typeRef.token)
+        if (typeRef is UnionTypeRef) {
+            if (typeRef.members.any { member -> member is PrimitiveTypeRef && member.kind == PrimitiveType.NULL }) {
+                return typeRef
+            }
+            return UnionTypeRef(typeRef.members + nullType, typeRef.token)
+        }
+        return UnionTypeRef(listOf(typeRef, nullType), typeRef.token)
     }
 
     private fun parseEnumType(start: Token): TypeRef {
@@ -461,13 +484,7 @@ class Parser(tokens: List<Token>, private val source: String? = null) {
     private fun parseSimpleType(typeTok: Token): TypeRef {
         val normalized = typeTok.lexeme.lowercase()
         return when (typeTok.lexeme) {
-            "_" -> {
-                val isNullable = match(TokenType.QUESTION)
-                PrimitiveTypeRef(
-                    if (isNullable) PrimitiveType.ANY_NULLABLE else PrimitiveType.ANY,
-                    typeTok,
-                )
-            }
+            "_" -> PrimitiveTypeRef(PrimitiveType.ANY, typeTok)
 
             else -> when (normalized) {
                 "string", "text" -> PrimitiveTypeRef(PrimitiveType.TEXT, typeTok)

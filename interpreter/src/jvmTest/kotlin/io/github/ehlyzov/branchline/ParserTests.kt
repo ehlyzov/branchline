@@ -250,6 +250,40 @@ class ParserTest {
     }
 
     @Test
+    fun `transform signature nullable type terms parsed`() {
+        val signature = parseTransform(
+            "TRANSFORM X(input: string?) -> Name? { }"
+        ).signature as TransformSignature
+        val nullableInput = signature.input as UnionTypeRef
+        assertTrue(nullableInput.members[0] is PrimitiveTypeRef)
+        assertTrue(nullableInput.members[1] is PrimitiveTypeRef)
+        assertEquals(PrimitiveType.TEXT, (nullableInput.members[0] as PrimitiveTypeRef).kind)
+        assertEquals(PrimitiveType.NULL, (nullableInput.members[1] as PrimitiveTypeRef).kind)
+        val nullableOutput = signature.output as UnionTypeRef
+        assertTrue(nullableOutput.members[0] is NamedTypeRef)
+        assertTrue(nullableOutput.members[1] is PrimitiveTypeRef)
+        assertEquals(PrimitiveType.NULL, (nullableOutput.members[1] as PrimitiveTypeRef).kind)
+
+        val complex = parseTransform(
+            "TRANSFORM Y(input: { id: string }?) -> [number]? { }"
+        ).signature as TransformSignature
+        val nullableRecord = complex.input as UnionTypeRef
+        assertTrue(nullableRecord.members[0] is RecordTypeRef)
+        assertEquals(PrimitiveType.NULL, (nullableRecord.members[1] as PrimitiveTypeRef).kind)
+        val nullableList = complex.output as UnionTypeRef
+        assertTrue(nullableList.members[0] is ArrayTypeRef)
+        assertEquals(PrimitiveType.NULL, (nullableList.members[1] as PrimitiveTypeRef).kind)
+
+        val nullableSet = parseTransform(
+            "TRANSFORM Z(input: set<string>?) -> _? { }"
+        ).signature as TransformSignature
+        val inputSet = nullableSet.input as UnionTypeRef
+        assertTrue(inputSet.members[0] is SetTypeRef)
+        assertEquals(PrimitiveType.NULL, (inputSet.members[1] as PrimitiveTypeRef).kind)
+        assertEquals(PrimitiveType.ANY_NULLABLE, (nullableSet.output as PrimitiveTypeRef).kind)
+    }
+
+    @Test
     fun `unclosed transform block throws`() {
         assertThrows<ParseException> {
             parse("""

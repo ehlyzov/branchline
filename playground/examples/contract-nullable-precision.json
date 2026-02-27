@@ -1,0 +1,22 @@
+{
+  "title": "Contract nullable precision",
+  "description": "Demonstrate precise nullable typing in signatures with canonical contract JSON and closed explicit output records.",
+  "program": [
+    "TRANSFORM NullablePrecision(input: { profile: { id: string, alias?: string?, tags?: [string]? } }) -> { profile: { id: string, alias?: string?, tags?: [string]? } } {",
+    "    OUTPUT {",
+    "        profile: {",
+    "            id: input.profile.id,",
+    "            alias: input.profile.alias ?? null,",
+    "            tags: input.profile.tags ?? null",
+    "        }",
+    "    }",
+    "}"
+  ],
+  "input": {
+    "profile": {
+      "id": "u-100",
+      "alias": null,
+      "tags": ["alpha", "beta"]
+    }
+  }
+}

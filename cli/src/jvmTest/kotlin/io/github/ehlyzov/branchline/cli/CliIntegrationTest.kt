@@ -120,7 +120,7 @@ public class CliIntegrationTest {
     }
 
     @Test
-    fun inspectContractsJsonDefaultsToV3() {
+    fun inspectContractsJsonUsesLatestCanonicalShape() {
         val script = """
             TRANSFORM Main {
                 OUTPUT { greeting: "hi " + input.name }
@@ -139,11 +139,13 @@ public class CliIntegrationTest {
 
         assertEquals(ExitCode.SUCCESS.code, result.exitCode)
         val payload = Json.parseToJsonElement(result.stdout).jsonObject
-        assertEquals("v3", payload["version"]?.jsonPrimitive?.content)
+        assertTrue(!payload.containsKey("version"))
+        assertTrue(payload.containsKey("input"))
+        assertTrue(payload.containsKey("output"))
     }
 
     @Test
-    fun inspectContractsJsonSupportsVersionOverrideToV2() {
+    fun inspectContractsJsonRejectsUnknownLegacyOption() {
         val script = """
             TRANSFORM Main {
                 OUTPUT { greeting: "hi " + input.name }
@@ -157,14 +159,12 @@ public class CliIntegrationTest {
                 "inspect",
                 scriptPath.toString(),
                 "--contracts-json",
-                "--contracts-version",
-                "v2",
+                "--contracts-legacy",
             ),
         )
 
-        assertEquals(ExitCode.SUCCESS.code, result.exitCode)
-        val payload = Json.parseToJsonElement(result.stdout).jsonObject
-        assertEquals("v2", payload["version"]?.jsonPrimitive?.content)
+        assertEquals(ExitCode.USAGE.code, result.exitCode)
+        assertTrue(result.stderr.contains("Unknown option '--contracts-legacy'"))
     }
 
     @Test
@@ -183,7 +183,7 @@ public class CliIntegrationTest {
                 scriptPath.toString(),
                 "--contracts-json",
                 "--contracts-json-version",
-                "v2",
+                "legacy",
             ),
         )
 
