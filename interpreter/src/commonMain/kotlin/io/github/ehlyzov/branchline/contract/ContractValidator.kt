@@ -2,20 +2,20 @@ package io.github.ehlyzov.branchline.contract
 
 import kotlin.math.min
 
-public class ContractViolationExceptionV3(
-    public val violations: List<ContractViolationV2>,
-) : RuntimeException(formatContractViolationsV3(violations))
+public class ContractViolationException(
+    public val violations: List<ContractViolation>,
+) : RuntimeException(formatContractViolations(violations))
 
-public object ContractEnforcerV3 {
-    private val validator = ContractValidatorV3()
+public object ContractEnforcer {
+    private val validator = ContractValidator()
 
     public fun enforceInput(
         mode: ContractValidationMode,
-        requirement: RequirementSchemaV3,
+        requirement: RequirementSchema,
         value: Any?,
         confidenceThreshold: Double = 0.7,
         includeHeuristic: Boolean = false,
-    ): List<ContractViolationV2> = enforce(
+    ): List<ContractViolation> = enforce(
         mode = mode,
         result = validator.validateInput(
             requirement = requirement,
@@ -27,11 +27,11 @@ public object ContractEnforcerV3 {
 
     public fun enforceOutput(
         mode: ContractValidationMode,
-        guarantee: GuaranteeSchemaV3,
+        guarantee: GuaranteeSchema,
         value: Any?,
         confidenceThreshold: Double = 0.7,
         includeHeuristic: Boolean = false,
-    ): List<ContractViolationV2> = enforce(
+    ): List<ContractViolation> = enforce(
         mode = mode,
         result = validator.validateOutput(
             guarantee = guarantee,
@@ -41,13 +41,13 @@ public object ContractEnforcerV3 {
         ),
     )
 
-    private fun enforce(mode: ContractValidationMode, result: ContractValidationResultV2): List<ContractViolationV2> {
+    private fun enforce(mode: ContractValidationMode, result: ContractValidationResult): List<ContractViolation> {
         return when (mode) {
             ContractValidationMode.OFF -> emptyList()
             ContractValidationMode.WARN -> result.violations
             ContractValidationMode.STRICT -> {
                 if (result.violations.isNotEmpty()) {
-                    throw ContractViolationExceptionV3(result.violations)
+                    throw ContractViolationException(result.violations)
                 }
                 emptyList()
             }
@@ -55,18 +55,18 @@ public object ContractEnforcerV3 {
     }
 }
 
-public class ContractValidatorV3 {
+public class ContractValidator {
     public fun validateInput(
-        requirement: RequirementSchemaV3,
+        requirement: RequirementSchema,
         value: Any?,
         confidenceThreshold: Double = 0.7,
         includeHeuristic: Boolean = false,
-    ): ContractValidationResultV2 {
-        val violations = mutableListOf<ContractViolationV2>()
+    ): ContractValidationResult {
+        val violations = mutableListOf<ContractViolation>()
         validateNode(
             node = requirement.root,
             value = value,
-            path = listOf(PathSegmentV3.Root("input")),
+            path = listOf(PathSegment.Root("input")),
             violations = violations,
         )
         validateObligations(
@@ -78,37 +78,37 @@ public class ContractValidatorV3 {
             includeHeuristic = includeHeuristic,
         )
         for (opaque in requirement.opaqueRegions) {
-            violations += ContractViolationV2(
+            violations += ContractViolation(
                 path = renderAccessPath("input", opaque.path),
-                kind = ContractViolationKindV2.OPAQUE_REGION_WARNING,
+                kind = ContractViolationKind.OPAQUE_REGION_WARNING,
                 hints = listOf("Dynamic path is opaque; strict deep validation is intentionally skipped."),
             )
         }
-        return ContractValidationResultV2(sortViolations(violations))
+        return ContractValidationResult(sortViolations(violations))
     }
 
     public fun validateOutput(
-        guarantee: GuaranteeSchemaV3,
+        guarantee: GuaranteeSchema,
         value: Any?,
         confidenceThreshold: Double = 0.7,
         includeHeuristic: Boolean = false,
-    ): ContractValidationResultV2 {
-        val violations = mutableListOf<ContractViolationV2>()
+    ): ContractValidationResult {
+        val violations = mutableListOf<ContractViolation>()
         if (value == null && !guarantee.mayEmitNull) {
-            violations += ContractViolationV2(
+            violations += ContractViolation(
                 path = "output",
-                kind = ContractViolationKindV2.NULLABILITY_MISMATCH,
+                kind = ContractViolationKind.NULLABILITY_MISMATCH,
                 expected = shapeFromNode(guarantee.root),
                 actual = ValueShape.Null,
                 ruleId = "output-may-emit-null",
             )
-            return ContractValidationResultV2(sortViolations(violations))
+            return ContractValidationResult(sortViolations(violations))
         }
         if (value != null) {
             validateNode(
                 node = guarantee.root,
                 value = value,
-                path = listOf(PathSegmentV3.Root("output")),
+                path = listOf(PathSegment.Root("output")),
                 violations = violations,
             )
             validateObligations(
@@ -121,25 +121,25 @@ public class ContractValidatorV3 {
             )
         }
         for (opaque in guarantee.opaqueRegions) {
-            violations += ContractViolationV2(
+            violations += ContractViolation(
                 path = renderAccessPath("output", opaque.path),
-                kind = ContractViolationKindV2.OPAQUE_REGION_WARNING,
+                kind = ContractViolationKind.OPAQUE_REGION_WARNING,
                 hints = listOf("Dynamic output path is opaque; strict deep validation is intentionally skipped."),
             )
         }
-        return ContractValidationResultV2(sortViolations(violations))
+        return ContractValidationResult(sortViolations(violations))
     }
 
     private fun validateNode(
-        node: NodeV3,
+        node: Node,
         value: Any?,
-        path: List<PathSegmentV3>,
-        violations: MutableList<ContractViolationV2>,
+        path: List<PathSegment>,
+        violations: MutableList<ContractViolation>,
     ) {
         if (node.required && value == null) {
-            violations += ContractViolationV2(
+            violations += ContractViolation(
                 path = renderPath(path),
-                kind = ContractViolationKindV2.MISSING_REQUIRED_PATH,
+                kind = ContractViolationKind.MISSING_REQUIRED_PATH,
                 expected = shapeFromNode(node),
                 actual = ValueShape.Null,
             )
@@ -147,9 +147,9 @@ public class ContractValidatorV3 {
         }
         if (value == null) return
         if (!matchesNodeKind(node, value)) {
-            violations += ContractViolationV2(
+            violations += ContractViolation(
                 path = renderPath(path),
-                kind = ContractViolationKindV2.SHAPE_MISMATCH,
+                kind = ContractViolationKind.SHAPE_MISMATCH,
                 expected = shapeFromNode(node),
                 actual = valueShapeOf(value),
             )
@@ -157,7 +157,7 @@ public class ContractValidatorV3 {
         }
         validateDomains(node.domains, value, path, violations)
         when (node.kind) {
-            NodeKindV3.OBJECT -> {
+            NodeKind.OBJECT -> {
                 val map = value as? Map<*, *> ?: return
                 val fieldMap = map.entries.associate { entry -> entry.key?.toString() to entry.value }
                 for ((name, child) in node.children) {
@@ -167,16 +167,16 @@ public class ContractValidatorV3 {
                     for (key in fieldMap.keys) {
                         if (key == null) continue
                         if (!node.children.containsKey(key)) {
-                            violations += ContractViolationV2(
+                            violations += ContractViolation(
                                 path = renderPath(appendField(path, key)),
-                                kind = ContractViolationKindV2.UNEXPECTED_FIELD,
+                                kind = ContractViolationKind.UNEXPECTED_FIELD,
                                 actual = valueShapeOf(fieldMap[key]),
                             )
                         }
                     }
                 }
             }
-            NodeKindV3.ARRAY -> {
+            NodeKind.ARRAY -> {
                 val items = when (value) {
                     is List<*> -> value
                     is Array<*> -> value.toList()
@@ -187,7 +187,7 @@ public class ContractValidatorV3 {
                     validateNode(elementNode, item, appendIndex(path, index), violations)
                 }
             }
-            NodeKindV3.SET -> {
+            NodeKind.SET -> {
                 val set = value as? Set<*> ?: return
                 val elementNode = node.element ?: return
                 var index = 0
@@ -196,29 +196,29 @@ public class ContractValidatorV3 {
                     index += 1
                 }
             }
-            NodeKindV3.UNION,
-            NodeKindV3.ANY,
-            NodeKindV3.NEVER,
-            NodeKindV3.NULL,
-            NodeKindV3.BOOLEAN,
-            NodeKindV3.NUMBER,
-            NodeKindV3.BYTES,
-            NodeKindV3.TEXT,
+            NodeKind.UNION,
+            NodeKind.ANY,
+            NodeKind.NEVER,
+            NodeKind.NULL,
+            NodeKind.BOOLEAN,
+            NodeKind.NUMBER,
+            NodeKind.BYTES,
+            NodeKind.TEXT,
             -> Unit
         }
     }
 
     private fun validateDomains(
-        domains: List<ValueDomainV3>,
+        domains: List<ValueDomain>,
         value: Any?,
-        path: List<PathSegmentV3>,
-        violations: MutableList<ContractViolationV2>,
+        path: List<PathSegment>,
+        violations: MutableList<ContractViolation>,
     ) {
         for (domain in domains) {
             if (domainMatches(domain, value)) continue
-            violations += ContractViolationV2(
+            violations += ContractViolation(
                 path = renderPath(path),
-                kind = ContractViolationKindV2.SHAPE_MISMATCH,
+                kind = ContractViolationKind.SHAPE_MISMATCH,
                 expected = valueShapeForDomain(domain),
                 actual = valueShapeOf(value),
                 ruleId = "value-domain",
@@ -227,10 +227,10 @@ public class ContractValidatorV3 {
     }
 
     private fun validateObligations(
-        obligations: List<ContractObligationV3>,
+        obligations: List<ContractObligation>,
         root: Any?,
         rootName: String,
-        violations: MutableList<ContractViolationV2>,
+        violations: MutableList<ContractViolation>,
         confidenceThreshold: Double,
         includeHeuristic: Boolean,
     ) {
@@ -240,24 +240,24 @@ public class ContractValidatorV3 {
             if (!includeHeuristic && obligation.heuristic) continue
             val ok = evaluateExpr(obligation.expr, rootMap)
             if (ok) continue
-            violations += ContractViolationV2(
+            violations += ContractViolation(
                 path = renderConstraintPath(rootName, obligation.expr),
-                kind = ContractViolationKindV2.MISSING_CONDITIONAL_GROUP,
+                kind = ContractViolationKind.MISSING_CONDITIONAL_GROUP,
                 ruleId = obligation.ruleId,
             )
         }
     }
 
-    private fun evaluateExpr(expr: ConstraintExprV3, root: Map<*, *>): Boolean = when (expr) {
-        is ConstraintExprV3.PathPresent -> resolvePathValue(root, expr.path.segments, requireNonNull = false).present
-        is ConstraintExprV3.PathNonNull -> resolvePathValue(root, expr.path.segments, requireNonNull = true).present
-        is ConstraintExprV3.OneOf -> expr.children.any { child -> evaluateExpr(child, root) }
-        is ConstraintExprV3.AllOf -> expr.children.all { child -> evaluateExpr(child, root) }
-        is ConstraintExprV3.ValueDomain -> {
+    private fun evaluateExpr(expr: ConstraintExpr, root: Map<*, *>): Boolean = when (expr) {
+        is ConstraintExpr.PathPresent -> resolvePathValue(root, expr.path.segments, requireNonNull = false).present
+        is ConstraintExpr.PathNonNull -> resolvePathValue(root, expr.path.segments, requireNonNull = true).present
+        is ConstraintExpr.OneOf -> expr.children.any { child -> evaluateExpr(child, root) }
+        is ConstraintExpr.AllOf -> expr.children.all { child -> evaluateExpr(child, root) }
+        is ConstraintExpr.DomainConstraint -> {
             val resolved = resolvePathValue(root, expr.path.segments, requireNonNull = false)
             resolved.present && domainMatches(expr.domain, resolved.value)
         }
-        is ConstraintExprV3.Exists -> {
+        is ConstraintExpr.Exists -> {
             val resolved = resolvePathValue(root, expr.path.segments, requireNonNull = false)
             val value = resolved.value
             val count = when (value) {
@@ -269,7 +269,7 @@ public class ContractValidatorV3 {
             }
             resolved.present && count >= expr.minCount
         }
-        is ConstraintExprV3.ForAll -> {
+        is ConstraintExpr.ForAll -> {
             val resolved = resolvePathValue(root, expr.path.segments, requireNonNull = false)
             if (!resolved.present) return false
             val items = when (val value = resolved.value) {
@@ -296,53 +296,53 @@ public class ContractValidatorV3 {
         }
     }
 
-    private fun matchesNodeKind(node: NodeV3, value: Any?): Boolean = when (node.kind) {
-        NodeKindV3.ANY -> true
-        NodeKindV3.NEVER -> false
-        NodeKindV3.NULL -> value == null
-        NodeKindV3.BOOLEAN -> value is Boolean
-        NodeKindV3.NUMBER -> value is Number
-        NodeKindV3.BYTES -> value is ByteArray
-        NodeKindV3.TEXT -> value is String
-        NodeKindV3.OBJECT -> value is Map<*, *>
-        NodeKindV3.ARRAY -> value is List<*> || value is Array<*>
-        NodeKindV3.SET -> value is Set<*>
-        NodeKindV3.UNION -> node.options.any { option -> matchesNodeKind(option, value) }
+    private fun matchesNodeKind(node: Node, value: Any?): Boolean = when (node.kind) {
+        NodeKind.ANY -> true
+        NodeKind.NEVER -> false
+        NodeKind.NULL -> value == null
+        NodeKind.BOOLEAN -> value is Boolean
+        NodeKind.NUMBER -> value is Number
+        NodeKind.BYTES -> value is ByteArray
+        NodeKind.TEXT -> value is String
+        NodeKind.OBJECT -> value is Map<*, *>
+        NodeKind.ARRAY -> value is List<*> || value is Array<*>
+        NodeKind.SET -> value is Set<*>
+        NodeKind.UNION -> node.options.any { option -> matchesNodeKind(option, value) }
     }
 
-    private fun domainMatches(domain: ValueDomainV3, value: Any?): Boolean = when (domain) {
-        is ValueDomainV3.EnumText -> value is String && value in domain.values
-        is ValueDomainV3.NumberRange -> {
+    private fun domainMatches(domain: ValueDomain, value: Any?): Boolean = when (domain) {
+        is ValueDomain.EnumText -> value is String && value in domain.values
+        is ValueDomain.NumberRange -> {
             val number = (value as? Number)?.toDouble() ?: return false
             val minOk = domain.min?.let { number >= it } ?: true
             val maxOk = domain.max?.let { number <= it } ?: true
             val intOk = if (!domain.integerOnly) true else number % 1.0 == 0.0
             minOk && maxOk && intOk
         }
-        is ValueDomainV3.Regex -> {
+        is ValueDomain.Regex -> {
             val text = value as? String ?: return false
             Regex(domain.pattern).matches(text)
         }
     }
 
-    private fun valueShapeForDomain(domain: ValueDomainV3): ValueShape = when (domain) {
-        is ValueDomainV3.EnumText -> ValueShape.TextShape
-        is ValueDomainV3.NumberRange -> ValueShape.NumberShape
-        is ValueDomainV3.Regex -> ValueShape.TextShape
+    private fun valueShapeForDomain(domain: ValueDomain): ValueShape = when (domain) {
+        is ValueDomain.EnumText -> ValueShape.TextShape
+        is ValueDomain.NumberRange -> ValueShape.NumberShape
+        is ValueDomain.Regex -> ValueShape.TextShape
     }
 
-    private fun shapeFromNode(node: NodeV3): ValueShape = when (node.kind) {
-        NodeKindV3.NEVER -> ValueShape.Never
-        NodeKindV3.ANY -> ValueShape.Unknown
-        NodeKindV3.NULL -> ValueShape.Null
-        NodeKindV3.BOOLEAN -> ValueShape.BooleanShape
-        NodeKindV3.NUMBER -> ValueShape.NumberShape
-        NodeKindV3.BYTES -> ValueShape.Bytes
-        NodeKindV3.TEXT -> ValueShape.TextShape
-        NodeKindV3.ARRAY -> ValueShape.ArrayShape(node.element?.let(::shapeFromNode) ?: ValueShape.Unknown)
-        NodeKindV3.SET -> ValueShape.SetShape(node.element?.let(::shapeFromNode) ?: ValueShape.Unknown)
-        NodeKindV3.UNION -> ValueShape.Union(node.options.map(::shapeFromNode))
-        NodeKindV3.OBJECT -> {
+    private fun shapeFromNode(node: Node): ValueShape = when (node.kind) {
+        NodeKind.NEVER -> ValueShape.Never
+        NodeKind.ANY -> ValueShape.Unknown
+        NodeKind.NULL -> ValueShape.Null
+        NodeKind.BOOLEAN -> ValueShape.BooleanShape
+        NodeKind.NUMBER -> ValueShape.NumberShape
+        NodeKind.BYTES -> ValueShape.Bytes
+        NodeKind.TEXT -> ValueShape.TextShape
+        NodeKind.ARRAY -> ValueShape.ArrayShape(node.element?.let(::shapeFromNode) ?: ValueShape.Unknown)
+        NodeKind.SET -> ValueShape.SetShape(node.element?.let(::shapeFromNode) ?: ValueShape.Unknown)
+        NodeKind.UNION -> ValueShape.Union(node.options.map(::shapeFromNode))
+        NodeKind.OBJECT -> {
             val fields = LinkedHashMap<String, FieldShape>()
             node.children.forEach { (name, child) ->
                 fields[name] = FieldShape(
@@ -382,14 +382,14 @@ public class ContractValidatorV3 {
         else -> ValueShape.Unknown
     }
 
-    private fun renderConstraintPath(rootName: String, expr: ConstraintExprV3): String = when (expr) {
-        is ConstraintExprV3.PathPresent -> renderAccessPath(rootName, expr.path)
-        is ConstraintExprV3.PathNonNull -> "${renderAccessPath(rootName, expr.path)} != null"
-        is ConstraintExprV3.OneOf -> expr.children.joinToString(" or ") { child -> renderConstraintPath(rootName, child) }
-        is ConstraintExprV3.AllOf -> expr.children.joinToString(" and ") { child -> renderConstraintPath(rootName, child) }
-        is ConstraintExprV3.ForAll -> "${renderAccessPath(rootName, expr.path)}[*]"
-        is ConstraintExprV3.Exists -> "${renderAccessPath(rootName, expr.path)} count >= ${expr.minCount}"
-        is ConstraintExprV3.ValueDomain -> renderAccessPath(rootName, expr.path)
+    private fun renderConstraintPath(rootName: String, expr: ConstraintExpr): String = when (expr) {
+        is ConstraintExpr.PathPresent -> renderAccessPath(rootName, expr.path)
+        is ConstraintExpr.PathNonNull -> "${renderAccessPath(rootName, expr.path)} != null"
+        is ConstraintExpr.OneOf -> expr.children.joinToString(" or ") { child -> renderConstraintPath(rootName, child) }
+        is ConstraintExpr.AllOf -> expr.children.joinToString(" and ") { child -> renderConstraintPath(rootName, child) }
+        is ConstraintExpr.ForAll -> "${renderAccessPath(rootName, expr.path)}[*]"
+        is ConstraintExpr.Exists -> "${renderAccessPath(rootName, expr.path)} count >= ${expr.minCount}"
+        is ConstraintExpr.DomainConstraint -> renderAccessPath(rootName, expr.path)
     }
 
     private fun renderAccessPath(root: String, path: AccessPath): String {
@@ -408,7 +408,7 @@ public class ContractValidatorV3 {
         root: Map<*, *>,
         segments: List<AccessSegment>,
         requireNonNull: Boolean,
-    ): ResolvedPathValueV3 {
+    ): ResolvedPathValue {
         var current: Any? = root
         var present = true
         for (segment in segments) {
@@ -455,54 +455,54 @@ public class ContractValidatorV3 {
                 }
             }
         }
-        if (!present) return ResolvedPathValueV3(false, null)
-        if (!requireNonNull) return ResolvedPathValueV3(true, current)
-        return ResolvedPathValueV3(current != null, current)
+        if (!present) return ResolvedPathValue(false, null)
+        if (!requireNonNull) return ResolvedPathValue(true, current)
+        return ResolvedPathValue(current != null, current)
     }
 
-    private fun appendField(path: List<PathSegmentV3>, name: String): List<PathSegmentV3> =
-        path + PathSegmentV3.Field(name)
+    private fun appendField(path: List<PathSegment>, name: String): List<PathSegment> =
+        path + PathSegment.Field(name)
 
-    private fun appendIndex(path: List<PathSegmentV3>, index: Int): List<PathSegmentV3> =
-        path + PathSegmentV3.Index(index)
+    private fun appendIndex(path: List<PathSegment>, index: Int): List<PathSegment> =
+        path + PathSegment.Index(index)
 
-    private fun renderPath(path: List<PathSegmentV3>): String {
+    private fun renderPath(path: List<PathSegment>): String {
         val builder = StringBuilder()
         path.forEachIndexed { index, segment ->
             when (segment) {
-                is PathSegmentV3.Root -> builder.append(segment.name)
-                is PathSegmentV3.Field -> {
+                is PathSegment.Root -> builder.append(segment.name)
+                is PathSegment.Field -> {
                     if (index > 0) builder.append('.')
                     builder.append(segment.name)
                 }
-                is PathSegmentV3.Index -> builder.append('[').append(segment.index).append(']')
+                is PathSegment.Index -> builder.append('[').append(segment.index).append(']')
             }
         }
         return builder.toString()
     }
 
-    private fun sortViolations(items: List<ContractViolationV2>): List<ContractViolationV2> =
+    private fun sortViolations(items: List<ContractViolation>): List<ContractViolation> =
         items.sortedWith(compareBy({ it.path }, { it.kind.name }, { it.ruleId ?: "" }))
 }
 
-private sealed interface PathSegmentV3 {
-    data class Root(val name: String) : PathSegmentV3
-    data class Field(val name: String) : PathSegmentV3
-    data class Index(val index: Int) : PathSegmentV3
+private sealed interface PathSegment {
+    data class Root(val name: String) : PathSegment
+    data class Field(val name: String) : PathSegment
+    data class Index(val index: Int) : PathSegment
 }
 
-private data class ResolvedPathValueV3(
+private data class ResolvedPathValue(
     val present: Boolean,
     val value: Any?,
 )
 
-public fun formatContractViolationsV3(violations: List<ContractViolationV2>): String {
+public fun formatContractViolations(violations: List<ContractViolation>): String {
     if (violations.isEmpty()) return "Contract validation failed."
     val maxViolations = min(violations.size, 25)
     val lines = mutableListOf<String>()
     lines += "Contract validation failed (${violations.size} mismatch${if (violations.size == 1) "" else "es"}):"
     for (i in 0 until maxViolations) {
-        lines += "  - ${formatContractViolationV2(violations[i])}"
+        lines += "  - ${formatContractViolation(violations[i])}"
     }
     if (violations.size > maxViolations) {
         lines += "  - ... (${violations.size - maxViolations} more)"

@@ -1,39 +1,39 @@
 package io.github.ehlyzov.branchline.contract
 
-public data class ContractWitnessV3(
+public data class ContractWitness(
     val input: Any?,
     val output: Any?,
 )
 
-public object ContractWitnessGeneratorV3 {
-    public fun generateInput(requirement: RequirementSchemaV3): Any? {
+public object ContractWitnessGenerator {
+    public fun generateInput(requirement: RequirementSchema): Any? {
         val witness = buildValue(requirement.root)
         val rootMap = witness as? MutableMap<String, Any?> ?: linkedMapOf<String, Any?>()
         applyObligations(rootMap, requirement.obligations, requirement.root)
         return rootMap
     }
 
-    public fun generateOutput(guarantee: GuaranteeSchemaV3): Any? {
+    public fun generateOutput(guarantee: GuaranteeSchema): Any? {
         val witness = buildValue(guarantee.root)
         val rootMap = witness as? MutableMap<String, Any?> ?: linkedMapOf<String, Any?>()
         applyObligations(rootMap, guarantee.obligations, guarantee.root)
         return rootMap
     }
 
-    public fun generate(contract: TransformContractV3): ContractWitnessV3 = ContractWitnessV3(
+    public fun generate(contract: TransformContract): ContractWitness = ContractWitness(
         input = generateInput(contract.input),
         output = generateOutput(contract.output),
     )
 
-    private fun buildValue(node: NodeV3): Any? = when (node.kind) {
-        NodeKindV3.NEVER -> null
-        NodeKindV3.ANY -> linkedMapOf<String, Any?>()
-        NodeKindV3.NULL -> null
-        NodeKindV3.BOOLEAN -> false
-        NodeKindV3.NUMBER -> 0
-        NodeKindV3.BYTES -> byteArrayOf()
-        NodeKindV3.TEXT -> node.domains.firstOrNull()?.let(::valueFromDomain) ?: "text"
-        NodeKindV3.OBJECT -> {
+    private fun buildValue(node: Node): Any? = when (node.kind) {
+        NodeKind.NEVER -> null
+        NodeKind.ANY -> linkedMapOf<String, Any?>()
+        NodeKind.NULL -> null
+        NodeKind.BOOLEAN -> false
+        NodeKind.NUMBER -> 0
+        NodeKind.BYTES -> byteArrayOf()
+        NodeKind.TEXT -> node.domains.firstOrNull()?.let(::valueFromDomain) ?: "text"
+        NodeKind.OBJECT -> {
             val value = linkedMapOf<String, Any?>()
             node.children.forEach { (name, child) ->
                 if (child.required) {
@@ -42,15 +42,15 @@ public object ContractWitnessGeneratorV3 {
             }
             value
         }
-        NodeKindV3.ARRAY -> {
+        NodeKind.ARRAY -> {
             val element = node.element?.let(::buildValue)
             if (element == null) mutableListOf<Any?>() else mutableListOf(element)
         }
-        NodeKindV3.SET -> {
+        NodeKind.SET -> {
             val element = node.element?.let(::buildValue)
             if (element == null) linkedSetOf<Any?>() else linkedSetOf(element)
         }
-        NodeKindV3.UNION -> {
+        NodeKind.UNION -> {
             val first = node.options.firstOrNull() ?: return null
             buildValue(first)
         }
@@ -58,25 +58,25 @@ public object ContractWitnessGeneratorV3 {
 
     private fun applyObligations(
         root: MutableMap<String, Any?>,
-        obligations: List<ContractObligationV3>,
-        rootNode: NodeV3,
+        obligations: List<ContractObligation>,
+        rootNode: Node,
     ) {
         for (obligation in obligations) {
             applyExpr(root, obligation.expr, rootNode)
         }
     }
 
-    private fun applyExpr(root: MutableMap<String, Any?>, expr: ConstraintExprV3, rootNode: NodeV3) {
+    private fun applyExpr(root: MutableMap<String, Any?>, expr: ConstraintExpr, rootNode: Node) {
         when (expr) {
-            is ConstraintExprV3.PathPresent -> ensurePath(root, expr.path, nonNull = false, rootNode = rootNode)
-            is ConstraintExprV3.PathNonNull -> ensurePath(root, expr.path, nonNull = true, rootNode = rootNode)
-            is ConstraintExprV3.OneOf -> expr.children.firstOrNull()?.let { child ->
+            is ConstraintExpr.PathPresent -> ensurePath(root, expr.path, nonNull = false, rootNode = rootNode)
+            is ConstraintExpr.PathNonNull -> ensurePath(root, expr.path, nonNull = true, rootNode = rootNode)
+            is ConstraintExpr.OneOf -> expr.children.firstOrNull()?.let { child ->
                 applyExpr(root, child, rootNode)
             }
-            is ConstraintExprV3.AllOf -> expr.children.forEach { child -> applyExpr(root, child, rootNode) }
-            is ConstraintExprV3.Exists -> ensureExists(root, expr.path, expr.minCount, rootNode)
-            is ConstraintExprV3.ValueDomain -> setPathValue(root, expr.path, valueFromDomain(expr.domain))
-            is ConstraintExprV3.ForAll -> ensureForAll(root, expr, rootNode)
+            is ConstraintExpr.AllOf -> expr.children.forEach { child -> applyExpr(root, child, rootNode) }
+            is ConstraintExpr.Exists -> ensureExists(root, expr.path, expr.minCount, rootNode)
+            is ConstraintExpr.DomainConstraint -> setPathValue(root, expr.path, valueFromDomain(expr.domain))
+            is ConstraintExpr.ForAll -> ensureForAll(root, expr, rootNode)
         }
     }
 
@@ -84,7 +84,7 @@ public object ContractWitnessGeneratorV3 {
         root: MutableMap<String, Any?>,
         path: AccessPath,
         nonNull: Boolean,
-        rootNode: NodeV3,
+        rootNode: Node,
     ) {
         if (path.segments.isEmpty()) return
         var cursor: Any? = root
@@ -134,11 +134,11 @@ public object ContractWitnessGeneratorV3 {
         }
     }
 
-    private fun ensureExists(root: MutableMap<String, Any?>, path: AccessPath, minCount: Int, rootNode: NodeV3) {
+    private fun ensureExists(root: MutableMap<String, Any?>, path: AccessPath, minCount: Int, rootNode: Node) {
         if (path.segments.isEmpty()) return
         val targetNode = resolveNode(rootNode, path)
         val elementNode = when (targetNode?.kind) {
-            NodeKindV3.ARRAY, NodeKindV3.SET -> targetNode.element
+            NodeKind.ARRAY, NodeKind.SET -> targetNode.element
             else -> null
         }
         setPathValue(
@@ -148,7 +148,7 @@ public object ContractWitnessGeneratorV3 {
         )
     }
 
-    private fun ensureForAll(root: MutableMap<String, Any?>, expr: ConstraintExprV3.ForAll, rootNode: NodeV3) {
+    private fun ensureForAll(root: MutableMap<String, Any?>, expr: ConstraintExpr.ForAll, rootNode: Node) {
         val existing = resolvePath(root, expr.path)
         val list = when (existing) {
             is MutableList<*> -> existing as MutableList<Any?>
@@ -157,7 +157,7 @@ public object ContractWitnessGeneratorV3 {
         }
         val targetNode = resolveNode(rootNode, expr.path)
         val elementNode = when (targetNode?.kind) {
-            NodeKindV3.ARRAY, NodeKindV3.SET -> targetNode.element
+            NodeKind.ARRAY, NodeKind.SET -> targetNode.element
             else -> null
         }
         if (list.isEmpty()) {
@@ -185,21 +185,21 @@ public object ContractWitnessGeneratorV3 {
         setPathValue(root, expr.path, list)
     }
 
-    private fun defaultNonNullValue(path: AccessPath, rootNode: NodeV3): Any {
+    private fun defaultNonNullValue(path: AccessPath, rootNode: Node): Any {
         val targetNode = resolveNode(rootNode, path)
         val targetValue = targetNode?.let(::buildValue)
         return targetValue ?: "value"
     }
 
-    private fun resolveNode(rootNode: NodeV3, path: AccessPath): NodeV3? {
-        var current: NodeV3? = rootNode
+    private fun resolveNode(rootNode: Node, path: AccessPath): Node? {
+        var current: Node? = rootNode
         for (segment in path.segments) {
             current = when (segment) {
                 is AccessSegment.Field -> current?.children?.get(segment.name)
                 is AccessSegment.Index -> {
                     when (current?.kind) {
-                        NodeKindV3.ARRAY, NodeKindV3.SET -> current.element
-                        NodeKindV3.OBJECT -> current.children[segment.index]
+                        NodeKind.ARRAY, NodeKind.SET -> current.element
+                        NodeKind.OBJECT -> current.children[segment.index]
                         else -> null
                     }
                 }
@@ -268,13 +268,13 @@ public object ContractWitnessGeneratorV3 {
         }
     }
 
-    private fun valueFromDomain(domain: ValueDomainV3): Any = when (domain) {
-        is ValueDomainV3.EnumText -> domain.values.firstOrNull() ?: ""
-        is ValueDomainV3.NumberRange -> {
+    private fun valueFromDomain(domain: ValueDomain): Any = when (domain) {
+        is ValueDomain.EnumText -> domain.values.firstOrNull() ?: ""
+        is ValueDomain.NumberRange -> {
             val min = domain.min ?: 0.0
             if (domain.integerOnly) min.toInt() else min
         }
-        is ValueDomainV3.Regex -> {
+        is ValueDomain.Regex -> {
             if (domain.pattern.contains("[A-Za-z]")) "sample" else "value"
         }
     }

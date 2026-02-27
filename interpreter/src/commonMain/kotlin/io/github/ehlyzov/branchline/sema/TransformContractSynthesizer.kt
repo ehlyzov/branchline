@@ -48,37 +48,37 @@ import io.github.ehlyzov.branchline.contract.AccessSegment
 import io.github.ehlyzov.branchline.contract.ContractSource
 import io.github.ehlyzov.branchline.contract.DynamicReason
 import io.github.ehlyzov.branchline.contract.FieldShape
-import io.github.ehlyzov.branchline.contract.GuaranteeNodeV2
-import io.github.ehlyzov.branchline.contract.GuaranteeSchemaV2
-import io.github.ehlyzov.branchline.contract.InferenceEvidenceV2
-import io.github.ehlyzov.branchline.contract.OpaqueRegionV2
+import io.github.ehlyzov.branchline.contract.AnalysisGuaranteeNode
+import io.github.ehlyzov.branchline.contract.AnalysisGuaranteeSchema
+import io.github.ehlyzov.branchline.contract.AnalysisInferenceEvidence
+import io.github.ehlyzov.branchline.contract.OpaqueRegion
 import io.github.ehlyzov.branchline.contract.OriginKind
-import io.github.ehlyzov.branchline.contract.RequirementExprV2
-import io.github.ehlyzov.branchline.contract.RequirementNodeV2
-import io.github.ehlyzov.branchline.contract.RequirementSchemaV2
+import io.github.ehlyzov.branchline.contract.AnalysisRequirementExpr
+import io.github.ehlyzov.branchline.contract.AnalysisRequirementNode
+import io.github.ehlyzov.branchline.contract.AnalysisRequirementSchema
 import io.github.ehlyzov.branchline.contract.SchemaGuarantee
-import io.github.ehlyzov.branchline.contract.TransformContractV2
+import io.github.ehlyzov.branchline.contract.AnalysisContract
 import io.github.ehlyzov.branchline.contract.ValueShape
 
-public class TransformContractV2Synthesizer(
+public class TransformContractSynthesizer(
     private val hostFns: Set<String> = emptySet(),
     private val binaryTypeEvalRules: List<BinaryTypeEvalRule> = DefaultBinaryTypeEvalRules.rules,
 ) {
     private val env: LinkedHashMap<String, AbstractValue> = linkedMapOf()
     private val scopes = ArrayDeque<MutableSet<String>>()
     private val inputPathRecords = LinkedHashMap<String, InputPathRecord>()
-    private val requirementExprs = mutableListOf<RequirementExprV2>()
-    private val inputOpaque = LinkedHashMap<String, OpaqueRegionV2>()
-    private val outputOpaque = LinkedHashMap<String, OpaqueRegionV2>()
-    private var outputRoot: GuaranteeNodeV2? = null
+    private val requirementExprs = mutableListOf<AnalysisRequirementExpr>()
+    private val inputOpaque = LinkedHashMap<String, OpaqueRegion>()
+    private val outputOpaque = LinkedHashMap<String, OpaqueRegion>()
+    private var outputRoot: AnalysisGuaranteeNode? = null
     private var inputSeedShape: ValueShape? = null
 
-    public fun synthesize(transform: TransformDecl, inputSeedShape: ValueShape? = null): TransformContractV2 {
+    public fun synthesize(transform: TransformDecl, inputSeedShape: ValueShape? = null): AnalysisContract {
         reset(inputSeedShape)
         withScope(transform.params) {
             analyzeBlock(transform.body as CodeBlock)
         }
-        return TransformContractV2(
+        return AnalysisContract(
             input = buildInputSchema(),
             output = buildOutputSchema(),
             source = ContractSource.INFERRED,
@@ -716,8 +716,8 @@ public class TransformContractV2Synthesizer(
         if (expr.token.type == TokenType.COALESCE) {
             val alternatives = collectCoalesceAlternatives(expr)
             if (alternatives.size >= 2) {
-                requirementExprs += RequirementExprV2.AnyOf(
-                    alternatives.map { path -> RequirementExprV2.PathNonNull(path) },
+                requirementExprs += AnalysisRequirementExpr.AnyOf(
+                    alternatives.map { path -> AnalysisRequirementExpr.PathNonNull(path) },
                 )
             }
             coalescePreferredConstraintShape(left.shape, right.shape)?.let { preferred ->
@@ -866,7 +866,7 @@ public class TransformContractV2Synthesizer(
             next[rule.target.base] = current.copy(
                 shape = refinedShape,
                 evidence = current.evidence + listOf(
-                    InferenceEvidenceV2(
+                    AnalysisInferenceEvidence(
                         sourceSpans = emptyList(),
                         ruleId = "path-refinement-${rule.kind.name.lowercase()}",
                         confidence = 0.9,
@@ -1052,8 +1052,8 @@ public class TransformContractV2Synthesizer(
         }
     }
 
-    private fun buildInputSchema(): RequirementSchemaV2 {
-        val root = RequirementNodeV2(
+    private fun buildInputSchema(): AnalysisRequirementSchema {
+        val root = AnalysisRequirementNode(
             required = true,
             shape = ValueShape.ObjectShape(
                 schema = SchemaGuarantee(
@@ -1077,15 +1077,15 @@ public class TransformContractV2Synthesizer(
                 root.children[name] = child.copy(required = false)
             }
         }
-        return RequirementSchemaV2(
+        return AnalysisRequirementSchema(
             root = root,
             requirements = requirementExprs.distinct(),
             opaqueRegions = inputOpaque.values.toList(),
         )
     }
 
-    private fun buildOutputSchema(): GuaranteeSchemaV2 {
-        val root = outputRoot ?: GuaranteeNodeV2(
+    private fun buildOutputSchema(): AnalysisGuaranteeSchema {
+        val root = outputRoot ?: AnalysisGuaranteeNode(
             required = true,
             shape = ValueShape.ObjectShape(
                 schema = SchemaGuarantee(
@@ -1100,7 +1100,7 @@ public class TransformContractV2Synthesizer(
             children = linkedMapOf(),
             evidence = emptyList(),
         )
-        return GuaranteeSchemaV2(
+        return AnalysisGuaranteeSchema(
             root = root,
             mayEmitNull = shapeMayBeNull(root.shape),
             opaqueRegions = outputOpaque.values.toList(),
@@ -1108,7 +1108,7 @@ public class TransformContractV2Synthesizer(
     }
 
     private fun addRequirementPath(
-        root: RequirementNodeV2,
+        root: AnalysisRequirementNode,
         path: AccessPath,
         shape: ValueShape,
     ) {
@@ -1136,7 +1136,7 @@ public class TransformContractV2Synthesizer(
                 closed = false,
             )
             val next = if (existing == null) {
-                RequirementNodeV2(
+                AnalysisRequirementNode(
                     required = false,
                     shape = defaultShape,
                     open = true,
@@ -1155,12 +1155,12 @@ public class TransformContractV2Synthesizer(
         }
     }
 
-    private fun topLevelOptionalFromAnyOf(expressions: List<RequirementExprV2>): Set<String> {
+    private fun topLevelOptionalFromAnyOf(expressions: List<AnalysisRequirementExpr>): Set<String> {
         val names = linkedSetOf<String>()
         for (expr in expressions) {
-            val anyOf = expr as? RequirementExprV2.AnyOf ?: continue
+            val anyOf = expr as? AnalysisRequirementExpr.AnyOf ?: continue
             for (child in anyOf.children) {
-                val leaf = child as? RequirementExprV2.PathNonNull ?: continue
+                val leaf = child as? AnalysisRequirementExpr.PathNonNull ?: continue
                 val first = leaf.path.segments.firstOrNull() as? AccessSegment.Field ?: continue
                 names += first.name
             }
@@ -1172,9 +1172,9 @@ public class TransformContractV2Synthesizer(
         shape: ValueShape,
         required: Boolean,
         origin: OriginKind,
-    ): GuaranteeNodeV2 {
+    ): AnalysisGuaranteeNode {
         if (shape is ValueShape.ObjectShape) {
-            val children = LinkedHashMap<String, GuaranteeNodeV2>()
+            val children = LinkedHashMap<String, AnalysisGuaranteeNode>()
             for ((name, field) in shape.schema.fields) {
                 children[name] = guaranteeNodeFromShape(
                     shape = field.shape,
@@ -1182,7 +1182,7 @@ public class TransformContractV2Synthesizer(
                     origin = field.origin,
                 )
             }
-            return GuaranteeNodeV2(
+            return AnalysisGuaranteeNode(
                 required = required,
                 shape = shape,
                 open = !shape.closed,
@@ -1191,7 +1191,7 @@ public class TransformContractV2Synthesizer(
                 evidence = emptyList(),
             )
         }
-        return GuaranteeNodeV2(
+        return AnalysisGuaranteeNode(
             required = required,
             shape = shape,
             open = true,
@@ -1201,9 +1201,9 @@ public class TransformContractV2Synthesizer(
         )
     }
 
-    private fun mergeGuaranteeNodes(left: GuaranteeNodeV2, right: GuaranteeNodeV2): GuaranteeNodeV2 {
+    private fun mergeGuaranteeNodes(left: AnalysisGuaranteeNode, right: AnalysisGuaranteeNode): AnalysisGuaranteeNode {
         val names = left.children.keys + right.children.keys
-        val mergedChildren = LinkedHashMap<String, GuaranteeNodeV2>()
+        val mergedChildren = LinkedHashMap<String, AnalysisGuaranteeNode>()
         for (name in names) {
             val l = left.children[name]
             val r = right.children[name]
@@ -1213,7 +1213,7 @@ public class TransformContractV2Synthesizer(
                 else -> mergeGuaranteeNodes(l, r)
             }
         }
-        return GuaranteeNodeV2(
+        return AnalysisGuaranteeNode(
             required = left.required || right.required,
             shape = mergeValueShape(left.shape, right.shape),
             open = left.open || right.open,
@@ -1433,11 +1433,11 @@ public class TransformContractV2Synthesizer(
     }
 
     private fun addInputOpaque(path: AccessPath, reason: DynamicReason) {
-        inputOpaque[opaqueKey(path)] = OpaqueRegionV2(path, reason)
+        inputOpaque[opaqueKey(path)] = OpaqueRegion(path, reason)
     }
 
     private fun addOutputOpaque(path: AccessPath, reason: DynamicReason) {
-        outputOpaque[opaqueKey(path)] = OpaqueRegionV2(path, reason)
+        outputOpaque[opaqueKey(path)] = OpaqueRegion(path, reason)
     }
 
     private fun opaqueKey(path: AccessPath): String = path.segments.joinToString(".") { segment ->
@@ -1647,8 +1647,8 @@ public class TransformContractV2Synthesizer(
         }
     }
 
-    private fun evidence(token: Token, ruleId: String, confidence: Double = 0.8): InferenceEvidenceV2 =
-        InferenceEvidenceV2(
+    private fun evidence(token: Token, ruleId: String, confidence: Double = 0.8): AnalysisInferenceEvidence =
+        AnalysisInferenceEvidence(
             sourceSpans = listOf(token),
             ruleId = ruleId,
             confidence = confidence,
@@ -1785,7 +1785,7 @@ public class TransformContractV2Synthesizer(
     private data class AbstractValue(
         val shape: ValueShape,
         val provenance: Set<AccessPath> = emptySet(),
-        val evidence: List<InferenceEvidenceV2> = emptyList(),
+        val evidence: List<AnalysisInferenceEvidence> = emptyList(),
         val emptyArraySeed: Boolean = false,
     ) {
         fun arrayElement(): ValueShape = when (shape) {

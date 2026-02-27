@@ -148,8 +148,8 @@ public class PlaygroundFacadeTest {
         val outputRoot = outputContract["root"]?.jsonObject
         val inputChildren = inputRoot?.get("children")?.jsonObject
         val outputChildren = outputRoot?.get("children")?.jsonObject
-        assertEquals("v3", inputContract["version"]?.toString()?.trim('"'))
-        assertEquals("v3", outputContract["version"]?.toString()?.trim('"'))
+        assertTrue(!inputContract.containsKey("version"))
+        assertTrue(!outputContract.containsKey("version"))
         assertTrue(inputChildren?.containsKey("name") == true)
         assertTrue(outputChildren?.containsKey("greeting") == true)
     }

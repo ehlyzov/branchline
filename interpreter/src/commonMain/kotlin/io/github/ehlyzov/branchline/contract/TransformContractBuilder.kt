@@ -31,43 +31,49 @@ import io.github.ehlyzov.branchline.UnionTypeRef
 import io.github.ehlyzov.branchline.sema.BinaryTypeEvalRule
 import io.github.ehlyzov.branchline.sema.DefaultBinaryTypeEvalRules
 import io.github.ehlyzov.branchline.sema.TypeResolver
-import io.github.ehlyzov.branchline.sema.TransformShapeSynthesizer
-import io.github.ehlyzov.branchline.sema.TransformContractV2Synthesizer
+import io.github.ehlyzov.branchline.sema.TransformContractSynthesizer
 
 public class TransformContractBuilder(
     private val typeResolver: TypeResolver,
     hostFns: Set<String> = emptySet(),
     binaryTypeEvalRules: List<BinaryTypeEvalRule> = DefaultBinaryTypeEvalRules.rules,
-    private val contractFitter: ContractFitterV2 = NoOpContractFitterV2,
+    private val contractFitter: ContractFitter = NoOpContractFitter,
 ) {
-    private val synthesizer = TransformShapeSynthesizer(hostFns)
-    private val synthesizerV2 = TransformContractV2Synthesizer(hostFns, binaryTypeEvalRules)
+    private val synthesizer = TransformContractSynthesizer(hostFns, binaryTypeEvalRules)
 
-    public fun build(transform: TransformDecl): TransformContract {
-        return buildExplicitContract(transform) ?: synthesizer.synthesize(transform)
-    }
-
-    public fun buildV2(
+    public fun build(
         transform: TransformDecl,
-        runtimeExamples: List<RuntimeContractExampleV2> = emptyList(),
-    ): TransformContractV2 {
-        val staticContract = buildStaticContractV2(transform)
-        if (runtimeExamples.isEmpty()) return staticContract
-        return contractFitter.fit(staticContract, runtimeExamples).contract
-    }
-
-    public fun buildV3(
-        transform: TransformDecl,
-        options: BuildV3Options = BuildV3Options(),
-    ): TransformContractV3 {
-        val baseV3 = TransformContractV3Adapter.fromV2(buildStaticContractV2(transform))
-        val enriched = enrichV3Contract(baseV3, transform)
-        val filtered = applyBuildV3Options(enriched, options)
-        val satisfiability = ContractSatisfiabilityV3.check(filtered)
+        options: BuildOptions = BuildOptions(),
+    ): TransformContract {
+        val explicitContract = transform.signature?.let { signature ->
+            val outputType = signature.output
+            if (outputType != null && !isWildcardOutputType(outputType)) {
+                buildExplicitContract(signature)
+            } else {
+                null
+            }
+        }
+        val inferredOrHybridBase = if (explicitContract == null) {
+            val analysisContract = buildAnalysisContract(transform)
+            val fittedContract = contractFitter.fit(
+                staticContract = analysisContract,
+                examples = emptyList(),
+            ).contract
+            TransformContractAdapter.fromAnalysis(fittedContract)
+        } else {
+            explicitContract
+        }
+        val enriched = if (inferredOrHybridBase.source == ContractSource.INFERRED) {
+            enrichContract(inferredOrHybridBase, transform)
+        } else {
+            inferredOrHybridBase
+        }
+        val filtered = applyBuildOptions(enriched, options)
+        val satisfiability = ContractSatisfiability.check(filtered)
         if (satisfiability.satisfiable) {
             return filtered.copy(
                 metadata = filtered.metadata.copy(
-                    satisfiability = SatisfiabilityMetadataV3(
+                    satisfiability = SatisfiabilityMetadata(
                         checked = true,
                         satisfiable = true,
                         diagnostics = emptyList(),
@@ -79,7 +85,7 @@ public class TransformContractBuilder(
             input = filtered.input.copy(obligations = emptyList()),
             output = filtered.output.copy(obligations = emptyList()),
             metadata = filtered.metadata.copy(
-                satisfiability = SatisfiabilityMetadataV3(
+                satisfiability = SatisfiabilityMetadata(
                     checked = true,
                     satisfiable = false,
                     diagnostics = satisfiability.diagnostics,
@@ -89,7 +95,7 @@ public class TransformContractBuilder(
         return degraded
     }
 
-    private fun applyBuildV3Options(contract: TransformContractV3, options: BuildV3Options): TransformContractV3 {
+    private fun applyBuildOptions(contract: TransformContract, options: BuildOptions): TransformContract {
         return contract.copy(
             input = contract.input.copy(
                 obligations = filterObligations(
@@ -109,21 +115,24 @@ public class TransformContractBuilder(
     }
 
     private fun filterObligations(
-        obligations: List<ContractObligationV3>,
+        obligations: List<ContractObligation>,
         confidenceThreshold: Double,
         includeHeuristic: Boolean,
-    ): List<ContractObligationV3> = obligations.filter { obligation ->
+    ): List<ContractObligation> = obligations.filter { obligation ->
         obligation.confidence >= confidenceThreshold && (includeHeuristic || !obligation.heuristic)
     }
 
-    private fun buildStaticContractV2(transform: TransformDecl): TransformContractV2 {
-        val signature = transform.signature ?: return synthesizerV2.synthesize(transform)
-        val outputType = signature.output ?: return TransformContractV2Adapter.fromV1(buildExplicitContract(signature))
-        if (!isWildcardOutputType(outputType)) {
-            return TransformContractV2Adapter.fromV1(buildExplicitContract(signature))
+    private fun buildAnalysisContract(transform: TransformDecl): AnalysisContract {
+        val signature = transform.signature
+        if (signature == null) {
+            return synthesizer.synthesize(transform)
         }
-        val declaredInput = signature.input?.let(::buildDeclaredRequirementSchemaV2)
-        val seededInference = synthesizerV2.synthesize(
+        val outputType = signature.output
+        if (outputType == null || !isWildcardOutputType(outputType)) {
+            return synthesizer.synthesize(transform)
+        }
+        val declaredInput = signature.input?.let(::buildDeclaredAnalysisRequirementSchema)
+        val seededInference = synthesizer.synthesize(
             transform = transform,
             inputSeedShape = declaredInput?.root?.shape,
         )
@@ -141,7 +150,7 @@ public class TransformContractBuilder(
     }
 
     public fun buildInferredContract(transform: TransformDecl): TransformContract =
-        synthesizer.synthesize(transform)
+        build(transform)
 
     public fun buildExplicitContract(transform: TransformDecl): TransformContract? {
         val signature = transform.signature ?: return null
@@ -163,10 +172,18 @@ public class TransformContractBuilder(
                 dynamicFields = emptyList(),
             )
         return TransformContract(
-            input = inputRequirement,
-            output = outputGuarantee,
+            input = requirementFromSchema(inputRequirement),
+            output = guaranteeFromSchema(outputGuarantee),
             source = ContractSource.EXPLICIT,
-        )
+        ).let { contract ->
+            val input = signature.input?.let { inputType ->
+                contract.input.copy(root = applyDomainsFromTypeRef(inputType, contract.input.root))
+            } ?: contract.input
+            val output = signature.output?.let { outputType ->
+                contract.output.copy(root = applyDomainsFromTypeRef(outputType, contract.output.root))
+            } ?: contract.output
+            contract.copy(input = input, output = output)
+        }
     }
 
     private fun inputFromTypeRef(typeRef: TypeRef): SchemaRequirement {
@@ -259,7 +276,7 @@ public class TransformContractBuilder(
         else -> false
     }
 
-    private fun buildDeclaredRequirementSchemaV2(typeRef: TypeRef): RequirementSchemaV2 = RequirementSchemaV2(
+    private fun buildDeclaredAnalysisRequirementSchema(typeRef: TypeRef): AnalysisRequirementSchema = AnalysisRequirementSchema(
         root = requirementNodeFromShape(
             shape = shapeFromTypeRef(typeRef),
             required = true,
@@ -268,16 +285,16 @@ public class TransformContractBuilder(
         opaqueRegions = emptyList(),
     )
 
-    private fun requirementNodeFromShape(shape: ValueShape, required: Boolean): RequirementNodeV2 {
+    private fun requirementNodeFromShape(shape: ValueShape, required: Boolean): AnalysisRequirementNode {
         if (shape is ValueShape.ObjectShape) {
-            val children = LinkedHashMap<String, RequirementNodeV2>()
+            val children = LinkedHashMap<String, AnalysisRequirementNode>()
             for ((name, field) in shape.schema.fields) {
                 children[name] = requirementNodeFromShape(
                     shape = field.shape,
                     required = field.required,
                 )
             }
-            return RequirementNodeV2(
+            return AnalysisRequirementNode(
                 required = required,
                 shape = shape,
                 open = !shape.closed,
@@ -285,7 +302,7 @@ public class TransformContractBuilder(
                 evidence = emptyList(),
             )
         }
-        return RequirementNodeV2(
+        return AnalysisRequirementNode(
             required = required,
             shape = shape,
             open = true,
@@ -295,14 +312,14 @@ public class TransformContractBuilder(
     }
 
     private fun mergeDeclaredAndInferredInput(
-        declared: RequirementSchemaV2,
-        inferred: RequirementSchemaV2,
-    ): RequirementSchemaV2 {
+        declared: AnalysisRequirementSchema,
+        inferred: AnalysisRequirementSchema,
+    ): AnalysisRequirementSchema {
         val mergedOpaque = (declared.opaqueRegions + inferred.opaqueRegions)
             .associateBy { region -> opaqueRegionKey(region.path, region.reason) }
             .values
             .toList()
-        return RequirementSchemaV2(
+        return AnalysisRequirementSchema(
             root = mergeRequirementNodes(declared.root, inferred.root),
             requirements = (declared.requirements + inferred.requirements).distinct(),
             opaqueRegions = mergedOpaque,
@@ -310,11 +327,11 @@ public class TransformContractBuilder(
     }
 
     private fun mergeRequirementNodes(
-        declared: RequirementNodeV2,
-        inferred: RequirementNodeV2,
-    ): RequirementNodeV2 {
+        declared: AnalysisRequirementNode,
+        inferred: AnalysisRequirementNode,
+    ): AnalysisRequirementNode {
         val childNames = declared.children.keys + inferred.children.keys
-        val mergedChildren = LinkedHashMap<String, RequirementNodeV2>()
+        val mergedChildren = LinkedHashMap<String, AnalysisRequirementNode>()
         for (name in childNames) {
             val declaredChild = declared.children[name]
             val inferredChild = inferred.children[name]
@@ -324,7 +341,7 @@ public class TransformContractBuilder(
                 else -> mergeRequirementNodes(declaredChild, inferredChild)
             }
         }
-        return RequirementNodeV2(
+        return AnalysisRequirementNode(
             required = declared.required || inferred.required,
             shape = mergeDeclaredPreferredShape(declared.shape, inferred.shape),
             open = declared.open && inferred.open,
@@ -403,12 +420,12 @@ public class TransformContractBuilder(
         else -> false
     }
 
-    private fun enrichV3Contract(contract: TransformContractV3, transform: TransformDecl): TransformContractV3 {
-        val outputObligations = mutableListOf<ContractObligationV3>()
+    private fun enrichContract(contract: TransformContract, transform: TransformDecl): TransformContract {
+        val outputObligations = mutableListOf<ContractObligation>()
         outputObligations += deriveForAllObligations(contract.output.root, AccessPath(emptyList()))
         deriveStatusEnumDomain(transform)?.let { enumDomain ->
-            outputObligations += ContractObligationV3(
-                expr = ConstraintExprV3.ValueDomain(
+            outputObligations += ContractObligation(
+                expr = ConstraintExpr.DomainConstraint(
                     path = AccessPath(listOf(AccessSegment.Field("status"))),
                     domain = enumDomain,
                 ),
@@ -428,16 +445,16 @@ public class TransformContractBuilder(
         )
     }
 
-    private fun deriveForAllObligations(node: NodeV3, path: AccessPath): List<ContractObligationV3> {
-        val obligations = mutableListOf<ContractObligationV3>()
-        if (node.kind == NodeKindV3.ARRAY) {
+    private fun deriveForAllObligations(node: Node, path: AccessPath): List<ContractObligation> {
+        val obligations = mutableListOf<ContractObligation>()
+        if (node.kind == NodeKind.ARRAY) {
             val element = node.element
-            if (element != null && element.kind == NodeKindV3.OBJECT && element.children.isNotEmpty()) {
+            if (element != null && element.kind == NodeKind.OBJECT && element.children.isNotEmpty()) {
                 val required = element.children.entries
                     .filter { (_, child) -> child.required }
                     .map { (name, _) -> name }
-                obligations += ContractObligationV3(
-                    expr = ConstraintExprV3.ForAll(
+                obligations += ContractObligation(
+                    expr = ConstraintExpr.ForAll(
                         path = path,
                         requiredFields = required,
                     ),
@@ -456,16 +473,16 @@ public class TransformContractBuilder(
         return obligations
     }
 
-    private fun deriveStatusEnumDomain(transform: TransformDecl): ValueDomainV3.EnumText? {
+    private fun deriveStatusEnumDomain(transform: TransformDecl): ValueDomain.EnumText? {
         val definitions = collectDefinitions(transform.body as CodeBlock)
         val values = linkedSetOf<String>()
         collectOutputFieldExpressions(transform.body as CodeBlock, "status").forEach { expr ->
             collectStringLiteralsFromExpr(expr, definitions, values, mutableSetOf())
         }
-        return if (values.size >= 2) ValueDomainV3.EnumText(values.toList()) else null
+        return if (values.size >= 2) ValueDomain.EnumText(values.toList()) else null
     }
 
-    private fun applyStatusDomain(root: NodeV3, domain: ValueDomainV3.EnumText?): NodeV3 {
+    private fun applyStatusDomain(root: Node, domain: ValueDomain.EnumText?): Node {
         if (domain == null) return root
         val status = root.children["status"] ?: return root
         val updated = status.copy(domains = (status.domains + domain).distinct())
@@ -576,23 +593,23 @@ public class TransformContractBuilder(
         AccessPath(path.segments + segment)
 
     private fun dedupeOutputObligationsAgainstNode(
-        root: NodeV3,
-        obligations: List<ContractObligationV3>,
-    ): List<ContractObligationV3> = obligations.filterNot { obligation ->
+        root: Node,
+        obligations: List<ContractObligation>,
+    ): List<ContractObligation> = obligations.filterNot { obligation ->
         isRepresentedByOutputNode(root, obligation.expr)
     }
 
-    private fun isRepresentedByOutputNode(root: NodeV3, expr: ConstraintExprV3): Boolean = when (expr) {
-        is ConstraintExprV3.ValueDomain -> {
+    private fun isRepresentedByOutputNode(root: Node, expr: ConstraintExpr): Boolean = when (expr) {
+        is ConstraintExpr.DomainConstraint -> {
             val node = resolveNode(root, expr.path)
             node != null && expr.domain in node.domains
         }
-        is ConstraintExprV3.ForAll -> {
+        is ConstraintExpr.ForAll -> {
             if (expr.requireAnyOf.isNotEmpty()) return false
             val node = resolveNode(root, expr.path) ?: return false
-            if (node.kind != NodeKindV3.ARRAY && node.kind != NodeKindV3.SET) return false
+            if (node.kind != NodeKind.ARRAY && node.kind != NodeKind.SET) return false
             val element = node.element ?: return false
-            if (element.kind != NodeKindV3.OBJECT) return false
+            if (element.kind != NodeKind.OBJECT) return false
             val requiredFieldsCovered = expr.requiredFields.all { name ->
                 val child = element.children[name]
                 child != null && child.required
@@ -606,16 +623,16 @@ public class TransformContractBuilder(
         else -> false
     }
 
-    private fun resolveNode(root: NodeV3, path: AccessPath): NodeV3? {
-        var current: NodeV3? = root
+    private fun resolveNode(root: Node, path: AccessPath): Node? {
+        var current: Node? = root
         for (segment in path.segments) {
             current = when (segment) {
                 is AccessSegment.Field -> current?.children?.get(segment.name)
                 is AccessSegment.Index -> {
                     when (current?.kind) {
-                        NodeKindV3.OBJECT -> current.children[segment.index]
-                        NodeKindV3.ARRAY, NodeKindV3.SET -> current.element
-                        NodeKindV3.UNION -> null
+                        NodeKind.OBJECT -> current.children[segment.index]
+                        NodeKind.ARRAY, NodeKind.SET -> current.element
+                        NodeKind.UNION -> null
                         else -> null
                     }
                 }
@@ -625,9 +642,166 @@ public class TransformContractBuilder(
         }
         return current
     }
+
+    private fun requirementFromSchema(schema: SchemaRequirement): RequirementSchema = RequirementSchema(
+        root = Node(
+            required = true,
+            kind = NodeKind.OBJECT,
+            open = schema.open,
+            children = LinkedHashMap<String, Node>().apply {
+                schema.fields.forEach { (name, field) ->
+                    this[name] = nodeFromShape(
+                        shape = field.shape,
+                        required = field.required,
+                        origin = null,
+                    )
+                }
+            },
+        ),
+        obligations = schema.requiredAnyOf.map { group ->
+            ContractObligation(
+                expr = ConstraintExpr.OneOf(
+                    group.alternatives.map { path -> ConstraintExpr.PathNonNull(path) },
+                ),
+                confidence = 1.0,
+                ruleId = "explicit-required-any-of",
+                heuristic = false,
+            )
+        },
+        opaqueRegions = schema.dynamicAccess.map { access ->
+            OpaqueRegion(path = access.path, reason = access.reason)
+        },
+    )
+
+    private fun guaranteeFromSchema(schema: SchemaGuarantee): GuaranteeSchema = GuaranteeSchema(
+        root = Node(
+            required = true,
+            kind = NodeKind.OBJECT,
+            open = false,
+            children = LinkedHashMap<String, Node>().apply {
+                schema.fields.forEach { (name, field) ->
+                    this[name] = nodeFromShape(
+                        shape = field.shape,
+                        required = field.required,
+                        origin = field.origin,
+                    )
+                }
+            },
+        ),
+        obligations = emptyList(),
+        mayEmitNull = schema.mayEmitNull,
+        opaqueRegions = schema.dynamicFields.map { field ->
+            OpaqueRegion(path = field.path, reason = field.reason)
+        },
+    )
+
+    private fun nodeFromShape(shape: ValueShape, required: Boolean, origin: OriginKind?): Node = when (shape) {
+        ValueShape.Never -> Node(required = required, kind = NodeKind.NEVER, origin = origin)
+        ValueShape.Unknown -> Node(required = required, kind = NodeKind.ANY, origin = origin)
+        ValueShape.Null -> Node(required = required, kind = NodeKind.NULL, origin = origin)
+        ValueShape.BooleanShape -> Node(required = required, kind = NodeKind.BOOLEAN, origin = origin)
+        ValueShape.NumberShape -> Node(required = required, kind = NodeKind.NUMBER, origin = origin)
+        ValueShape.Bytes -> Node(required = required, kind = NodeKind.BYTES, origin = origin)
+        ValueShape.TextShape -> Node(required = required, kind = NodeKind.TEXT, origin = origin)
+        is ValueShape.ArrayShape -> Node(
+            required = required,
+            kind = NodeKind.ARRAY,
+            element = nodeFromShape(shape.element, required = true, origin = origin),
+            origin = origin,
+        )
+        is ValueShape.SetShape -> Node(
+            required = required,
+            kind = NodeKind.SET,
+            element = nodeFromShape(shape.element, required = true, origin = origin),
+            origin = origin,
+        )
+        is ValueShape.Union -> Node(
+            required = required,
+            kind = NodeKind.UNION,
+            options = shape.options.map { option ->
+                nodeFromShape(option, required = true, origin = origin)
+            },
+            origin = origin,
+        )
+        is ValueShape.ObjectShape -> {
+            val children = LinkedHashMap<String, Node>()
+            shape.schema.fields.forEach { (name, field) ->
+                children[name] = nodeFromShape(field.shape, field.required, field.origin)
+            }
+            Node(
+                required = required,
+                kind = NodeKind.OBJECT,
+                open = !shape.closed,
+                children = children,
+                origin = origin,
+            )
+        }
+    }
+
+    private fun applyDomainsFromTypeRef(typeRef: TypeRef, node: Node): Node {
+        val resolved = typeResolver.resolve(typeRef)
+        return applyDomainsFromResolvedType(resolved, node)
+    }
+
+    private fun applyDomainsFromResolvedType(typeRef: TypeRef, node: Node): Node = when (typeRef) {
+        is NamedTypeRef -> applyDomainsFromResolvedType(typeResolver.resolve(typeRef), node)
+        is EnumTypeRef -> {
+            val domain = ValueDomain.EnumText(typeRef.values)
+            node.copy(domains = (node.domains + domain).distinct())
+        }
+        is PrimitiveTypeRef -> node
+        is ArrayTypeRef -> {
+            val elementNode = node.element ?: return node
+            node.copy(
+                element = applyDomainsFromResolvedType(
+                    typeRef = typeResolver.resolve(typeRef.elementType),
+                    node = elementNode,
+                ),
+            )
+        }
+        is SetTypeRef -> {
+            val elementNode = node.element ?: return node
+            node.copy(
+                element = applyDomainsFromResolvedType(
+                    typeRef = typeResolver.resolve(typeRef.elementType),
+                    node = elementNode,
+                ),
+            )
+        }
+        is RecordTypeRef -> {
+            val children = LinkedHashMap(node.children)
+            for (field in typeRef.fields) {
+                val child = children[field.name] ?: continue
+                children[field.name] = applyDomainsFromTypeRef(field.type, child)
+            }
+            node.copy(
+                open = false,
+                children = children,
+            )
+        }
+        is UnionTypeRef -> {
+            if (node.kind == NodeKind.UNION && node.options.size == typeRef.members.size) {
+                node.copy(
+                    options = node.options.mapIndexed { index, option ->
+                        applyDomainsFromTypeRef(typeRef.members[index], option)
+                    },
+                )
+            } else {
+                val resolvedMembers = typeRef.members.map { member -> typeResolver.resolve(member) }
+                val nonNullMembers = resolvedMembers.filterNot { member ->
+                    member is PrimitiveTypeRef && member.kind == PrimitiveType.NULL
+                }
+                if (nonNullMembers.size == 1) {
+                    applyDomainsFromResolvedType(nonNullMembers.single(), node)
+                } else {
+                    node
+                }
+            }
+        }
+    }
 }
 
-public data class BuildV3Options(
+public data class BuildOptions(
     val confidenceThreshold: Double = 0.7,
     val includeHeuristicObligations: Boolean = false,
 )

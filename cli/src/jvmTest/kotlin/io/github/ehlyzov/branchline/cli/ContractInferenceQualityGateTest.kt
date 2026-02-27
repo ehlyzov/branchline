@@ -1,10 +1,9 @@
 package io.github.ehlyzov.branchline.cli
 
 import io.github.ehlyzov.branchline.contract.ContractJsonRenderer
-import io.github.ehlyzov.branchline.contract.GuaranteeNodeV2
-import io.github.ehlyzov.branchline.contract.RequirementNodeV2
-import io.github.ehlyzov.branchline.contract.TransformContractV2
-import io.github.ehlyzov.branchline.contract.ValueShape
+import io.github.ehlyzov.branchline.contract.Node
+import io.github.ehlyzov.branchline.contract.NodeKind
+import io.github.ehlyzov.branchline.contract.TransformContract
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.Test
@@ -49,22 +48,22 @@ class ContractInferenceQualityGateTest {
     }
 
     @Test
-    fun v2_json_has_no_duplicate_shape_schema_fields() {
+    fun contracts_json_has_no_duplicate_shape_schema_fields() {
         val contract = contractForExample("junit-badge-summary")
         val outputJson = Json.parseToJsonElement(
-            ContractJsonRenderer.renderSchemaGuaranteeV2(contract.output, includeSpans = false, pretty = true),
+            ContractJsonRenderer.renderSchemaGuarantee(contract.output, includeSpans = false, pretty = true),
         )
         assertNoSchemaKey(outputJson)
     }
 
     @Test
-    fun v2_json_origin_is_debug_only() {
+    fun contracts_json_origin_is_debug_only() {
         val contract = contractForExample("customer-profile")
         val standard = Json.parseToJsonElement(
-            ContractJsonRenderer.renderSchemaGuaranteeV2(contract.output, includeSpans = false, pretty = true),
+            ContractJsonRenderer.renderSchemaGuarantee(contract.output, includeSpans = false, pretty = true),
         ).jsonObject
         val debug = Json.parseToJsonElement(
-            ContractJsonRenderer.renderSchemaGuaranteeV2(contract.output, includeSpans = true, pretty = true),
+            ContractJsonRenderer.renderSchemaGuarantee(contract.output, includeSpans = true, pretty = true),
         ).jsonObject
         val standardRoot = standard["root"]?.jsonObject ?: error("missing standard root")
         val debugRoot = debug["root"]?.jsonObject ?: error("missing debug root")
@@ -102,7 +101,7 @@ class ContractInferenceQualityGateTest {
         }
     }
 
-    private fun contractForExample(name: String): TransformContractV2 {
+    private fun contractForExample(name: String): TransformContract {
         val examplesDir = resolveExamplesDir()
         val file = examplesDir.resolve("$name.json")
         require(Files.exists(file)) { "Missing playground example: $file" }
@@ -110,7 +109,7 @@ class ContractInferenceQualityGateTest {
         val program = parseProgram(payload)
         val runtime = BranchlineProgram(wrapProgramIfNeeded(program))
         val transform = runtime.selectTransform(null)
-        return runtime.contractV2ForTransform(transform)
+        return runtime.contractForTransform(transform)
     }
 
     private fun wrapProgramIfNeeded(program: String): String {
@@ -122,53 +121,24 @@ class ContractInferenceQualityGateTest {
         }
     }
 
-    private fun contractStats(contract: TransformContractV2): ShapeStats {
-        val input = requirementNodeStats(contract.input.root)
-        val output = guaranteeNodeStats(contract.output.root)
-        return input + output
-    }
+    private fun contractStats(contract: TransformContract): ShapeStats =
+        nodeStats(contract.input.root) + nodeStats(contract.output.root)
 
-    private fun requirementNodeStats(node: RequirementNodeV2): ShapeStats {
-        var stats = shapeStats(node.shape)
+    private fun nodeStats(node: Node): ShapeStats {
+        var stats = ShapeStats(
+            unknown = if (node.kind == NodeKind.ANY) 1 else 0,
+            total = 1,
+        )
         for (child in node.children.values) {
-            stats += requirementNodeStats(child)
+            stats += nodeStats(child)
+        }
+        node.element?.let { element ->
+            stats += nodeStats(element)
+        }
+        for (option in node.options) {
+            stats += nodeStats(option)
         }
         return stats
-    }
-
-    private fun guaranteeNodeStats(node: GuaranteeNodeV2): ShapeStats {
-        var stats = shapeStats(node.shape)
-        for (child in node.children.values) {
-            stats += guaranteeNodeStats(child)
-        }
-        return stats
-    }
-
-    private fun shapeStats(shape: ValueShape): ShapeStats = when (shape) {
-        ValueShape.Never -> ShapeStats(unknown = 0, total = 1)
-        ValueShape.Unknown -> ShapeStats(unknown = 1, total = 1)
-        ValueShape.Null,
-        ValueShape.BooleanShape,
-        ValueShape.NumberShape,
-        ValueShape.Bytes,
-        ValueShape.TextShape,
-        -> ShapeStats(unknown = 0, total = 1)
-        is ValueShape.ArrayShape -> ShapeStats(unknown = 0, total = 1) + shapeStats(shape.element)
-        is ValueShape.SetShape -> ShapeStats(unknown = 0, total = 1) + shapeStats(shape.element)
-        is ValueShape.ObjectShape -> {
-            var stats = ShapeStats(unknown = 0, total = 1)
-            for (field in shape.schema.fields.values) {
-                stats += shapeStats(field.shape)
-            }
-            stats
-        }
-        is ValueShape.Union -> {
-            var stats = ShapeStats(unknown = 0, total = 1)
-            for (option in shape.options) {
-                stats += shapeStats(option)
-            }
-            stats
-        }
     }
 
     private fun resolveExamplesDir(): Path {

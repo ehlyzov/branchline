@@ -1,100 +1,97 @@
 package io.github.ehlyzov.branchline.conformance
 
+import io.github.ehlyzov.branchline.contract.AccessPath
+import io.github.ehlyzov.branchline.contract.AccessSegment
+import io.github.ehlyzov.branchline.contract.ConstraintExpr
+import io.github.ehlyzov.branchline.contract.ContractEnforcer
+import io.github.ehlyzov.branchline.contract.ContractObligation
+import io.github.ehlyzov.branchline.contract.ContractValidationMode
+import io.github.ehlyzov.branchline.contract.ContractViolationException
+import io.github.ehlyzov.branchline.contract.ContractViolationKind
+import io.github.ehlyzov.branchline.contract.GuaranteeSchema
+import io.github.ehlyzov.branchline.contract.Node
+import io.github.ehlyzov.branchline.contract.NodeKind
+import io.github.ehlyzov.branchline.contract.RequirementSchema
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
-import io.github.ehlyzov.branchline.contract.ContractEnforcer
-import io.github.ehlyzov.branchline.contract.ContractValidationMode
-import io.github.ehlyzov.branchline.contract.ContractViolationException
-import io.github.ehlyzov.branchline.contract.ContractViolationKind
-import io.github.ehlyzov.branchline.contract.AccessPath
-import io.github.ehlyzov.branchline.contract.AccessSegment
-import io.github.ehlyzov.branchline.contract.FieldConstraint
-import io.github.ehlyzov.branchline.contract.FieldShape
-import io.github.ehlyzov.branchline.contract.RequiredAnyOfGroup
-import io.github.ehlyzov.branchline.contract.SchemaGuarantee
-import io.github.ehlyzov.branchline.contract.SchemaRequirement
-import io.github.ehlyzov.branchline.contract.ValueShape
-import io.github.ehlyzov.branchline.contract.OriginKind
 
 class ConformContractValidationTest {
 
     @Test
     fun warn_mode_reports_missing_required_fields() {
-        val requirement = SchemaRequirement(
-            fields = linkedMapOf(
-                "id" to FieldConstraint(
-                    required = true,
-                    shape = ValueShape.NumberShape,
-                    sourceSpans = emptyList(),
+        val requirement = RequirementSchema(
+            root = Node(
+                required = true,
+                kind = NodeKind.OBJECT,
+                open = true,
+                children = linkedMapOf(
+                    "id" to Node(required = true, kind = NodeKind.NUMBER),
                 ),
             ),
-            open = true,
-            dynamicAccess = emptyList(),
-            requiredAnyOf = emptyList(),
+            obligations = emptyList(),
+            opaqueRegions = emptyList(),
         )
         val violations = ContractEnforcer.enforceInput(ContractValidationMode.WARN, requirement, emptyMap<String, Any?>())
         assertTrue(violations.isNotEmpty())
-        assertEquals(ContractViolationKind.MISSING_FIELD, violations.first().kind)
+        assertEquals(ContractViolationKind.MISSING_REQUIRED_PATH, violations.first().kind)
     }
 
     @Test
     fun warn_mode_reports_missing_required_any_of_group() {
-        val requirement = SchemaRequirement(
-            fields = linkedMapOf(
-                "testsuites" to FieldConstraint(
-                    required = false,
-                    shape = ValueShape.Unknown,
-                    sourceSpans = emptyList(),
-                ),
-                "testsuite" to FieldConstraint(
-                    required = false,
-                    shape = ValueShape.Unknown,
-                    sourceSpans = emptyList(),
+        val requirement = RequirementSchema(
+            root = Node(
+                required = true,
+                kind = NodeKind.OBJECT,
+                open = true,
+                children = linkedMapOf(
+                    "testsuites" to Node(required = false, kind = NodeKind.ANY),
+                    "testsuite" to Node(required = false, kind = NodeKind.ANY),
                 ),
             ),
-            open = true,
-            dynamicAccess = emptyList(),
-            requiredAnyOf = listOf(
-                RequiredAnyOfGroup(
-                    alternatives = listOf(
-                        AccessPath(listOf(AccessSegment.Field("testsuites"))),
-                        AccessPath(listOf(AccessSegment.Field("testsuite"))),
+            obligations = listOf(
+                ContractObligation(
+                    expr = ConstraintExpr.OneOf(
+                        listOf(
+                            ConstraintExpr.PathNonNull(AccessPath(listOf(AccessSegment.Field("testsuites")))),
+                            ConstraintExpr.PathNonNull(AccessPath(listOf(AccessSegment.Field("testsuite")))),
+                        ),
                     ),
+                    ruleId = "required-any-of",
                 ),
             ),
+            opaqueRegions = emptyList(),
         )
         val violations = ContractEnforcer.enforceInput(ContractValidationMode.WARN, requirement, emptyMap<String, Any?>())
         assertEquals(1, violations.size)
-        assertEquals(ContractViolationKind.MISSING_ANY_OF_GROUP, violations.first().kind)
+        assertEquals(ContractViolationKind.MISSING_CONDITIONAL_GROUP, violations.first().kind)
     }
 
     @Test
     fun strict_mode_throws_when_required_any_of_group_is_missing() {
-        val requirement = SchemaRequirement(
-            fields = linkedMapOf(
-                "testsuites" to FieldConstraint(
-                    required = false,
-                    shape = ValueShape.Unknown,
-                    sourceSpans = emptyList(),
-                ),
-                "testsuite" to FieldConstraint(
-                    required = false,
-                    shape = ValueShape.Unknown,
-                    sourceSpans = emptyList(),
+        val requirement = RequirementSchema(
+            root = Node(
+                required = true,
+                kind = NodeKind.OBJECT,
+                open = true,
+                children = linkedMapOf(
+                    "testsuites" to Node(required = false, kind = NodeKind.ANY),
+                    "testsuite" to Node(required = false, kind = NodeKind.ANY),
                 ),
             ),
-            open = true,
-            dynamicAccess = emptyList(),
-            requiredAnyOf = listOf(
-                RequiredAnyOfGroup(
-                    alternatives = listOf(
-                        AccessPath(listOf(AccessSegment.Field("testsuites"))),
-                        AccessPath(listOf(AccessSegment.Field("testsuite"))),
+            obligations = listOf(
+                ContractObligation(
+                    expr = ConstraintExpr.OneOf(
+                        listOf(
+                            ConstraintExpr.PathNonNull(AccessPath(listOf(AccessSegment.Field("testsuites")))),
+                            ConstraintExpr.PathNonNull(AccessPath(listOf(AccessSegment.Field("testsuite")))),
+                        ),
                     ),
+                    ruleId = "required-any-of",
                 ),
             ),
+            opaqueRegions = emptyList(),
         )
         assertFailsWith<ContractViolationException> {
             ContractEnforcer.enforceInput(ContractValidationMode.STRICT, requirement, emptyMap<String, Any?>())
@@ -103,29 +100,28 @@ class ConformContractValidationTest {
 
     @Test
     fun required_any_of_group_accepts_present_non_null_alternative() {
-        val requirement = SchemaRequirement(
-            fields = linkedMapOf(
-                "testsuites" to FieldConstraint(
-                    required = false,
-                    shape = ValueShape.Unknown,
-                    sourceSpans = emptyList(),
-                ),
-                "testsuite" to FieldConstraint(
-                    required = false,
-                    shape = ValueShape.Unknown,
-                    sourceSpans = emptyList(),
+        val requirement = RequirementSchema(
+            root = Node(
+                required = true,
+                kind = NodeKind.OBJECT,
+                open = true,
+                children = linkedMapOf(
+                    "testsuites" to Node(required = false, kind = NodeKind.ANY),
+                    "testsuite" to Node(required = false, kind = NodeKind.ANY),
                 ),
             ),
-            open = true,
-            dynamicAccess = emptyList(),
-            requiredAnyOf = listOf(
-                RequiredAnyOfGroup(
-                    alternatives = listOf(
-                        AccessPath(listOf(AccessSegment.Field("testsuites"))),
-                        AccessPath(listOf(AccessSegment.Field("testsuite"))),
+            obligations = listOf(
+                ContractObligation(
+                    expr = ConstraintExpr.OneOf(
+                        listOf(
+                            ConstraintExpr.PathNonNull(AccessPath(listOf(AccessSegment.Field("testsuites")))),
+                            ConstraintExpr.PathNonNull(AccessPath(listOf(AccessSegment.Field("testsuite")))),
+                        ),
                     ),
+                    ruleId = "required-any-of",
                 ),
             ),
+            opaqueRegions = emptyList(),
         )
         val violations = ContractEnforcer.enforceInput(
             ContractValidationMode.WARN,
@@ -137,16 +133,18 @@ class ConformContractValidationTest {
 
     @Test
     fun strict_mode_throws_on_type_mismatch() {
-        val guarantee = SchemaGuarantee(
-            fields = linkedMapOf(
-                "status" to FieldShape(
-                    required = true,
-                    shape = ValueShape.TextShape,
-                    origin = OriginKind.OUTPUT,
+        val guarantee = GuaranteeSchema(
+            root = Node(
+                required = true,
+                kind = NodeKind.OBJECT,
+                open = false,
+                children = linkedMapOf(
+                    "status" to Node(required = true, kind = NodeKind.TEXT),
                 ),
             ),
+            obligations = emptyList(),
             mayEmitNull = false,
-            dynamicFields = emptyList(),
+            opaqueRegions = emptyList(),
         )
         assertFailsWith<ContractViolationException> {
             ContractEnforcer.enforceOutput(
@@ -159,16 +157,22 @@ class ConformContractValidationTest {
 
     @Test
     fun validates_list_of_outputs() {
-        val guarantee = SchemaGuarantee(
-            fields = linkedMapOf(
-                "ok" to FieldShape(
+        val guarantee = GuaranteeSchema(
+            root = Node(
+                required = true,
+                kind = NodeKind.ARRAY,
+                element = Node(
                     required = true,
-                    shape = ValueShape.BooleanShape,
-                    origin = OriginKind.OUTPUT,
+                    kind = NodeKind.OBJECT,
+                    open = false,
+                    children = linkedMapOf(
+                        "ok" to Node(required = true, kind = NodeKind.BOOLEAN),
+                    ),
                 ),
             ),
+            obligations = emptyList(),
             mayEmitNull = false,
-            dynamicFields = emptyList(),
+            opaqueRegions = emptyList(),
         )
         val payload = listOf(
             mapOf("ok" to true),

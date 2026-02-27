@@ -4,8 +4,14 @@ depends_on: []
 blocks: []
 supersedes: ['planning/current-research-tasks']
 superseded_by: []
-last_updated: 2026-02-11
+last_updated: 2026-02-27
 changelog:
+  - date: 2026-02-27
+    change: "Completed Contract Type Precision Upgrade: latest-only contract stack, canonical inspect JSON, nullable precision, explicit closure preservation, domain propagation, and SemVer contract-diff gate."
+  - date: 2026-02-26
+    change: "Started latest-only contract stack hard-cut implementation for Contract Type Precision Upgrade (remove V2/V3 API layers, unify canonical contract model, and retire inspect contract-version switching)."
+  - date: 2026-02-26
+    change: "Added proposed Contract Type Precision Upgrade doc for nullable typing, closure preservation, domain propagation, and contract-diff CI gates."
   - date: 2026-02-11
     change: "Tracked playground docs embed dark-mode contrast fix for intro tip text/readability."
   - date: 2026-02-10
@@ -120,6 +126,7 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Interpreter Performance Tasks](perf/interpreter-performance-tasks.md) -- perf task backlog.
 
 ### Implemented
+- [Contract Type Precision Upgrade](language/contract-type-precision-upgrade.md) -- latest-only contract stack hard-cut plus nullable precision, closure/domain fixes, and SemVer contract-diff gates.
 - [CLI Rollout](tooling/cli-rollout.md) -- JVM/JS CLI shipped.
 - [Playground Examples Modernization](docs/playground-examples-modernization.md) -- aggressive modern-style rewrite of all playground examples with validation coverage.
 - [Complex Tests](quality/complex-tests.md) -- demo tests + examples.
@@ -130,15 +137,15 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Numeric Semantics](language/numeric-semantics.md) -- current numeric behavior.
 - [CASE/WHEN](language/case-when.md) -- guard-only CASE expression implemented.
 - [Input Aliases](language/input-aliases.md) -- `input` default with `row` compatibility alias.
-- [Transform Contracts](language/transform-contracts.md) -- signatures and contract inference with cleaned V2 JSON output/debug gating.
+- [Transform Contracts](language/transform-contracts.md) -- signatures and canonical contract inference/runtime behavior.
 - [Transform Contracts Next Phase](language/transform-contracts-next.md) -- runtime validation and contract JSON export.
-- [Contract Model V2](language/contract-model-v2.md) -- nested contract graph with children-only JSON members and extension points.
-- [Contract Model V3](language/contract-model-v3.md) -- strict node-kinded contract graph with quantified obligations, value-domain constraints, satisfiability diagnostics, and witness generation hooks.
-- [Contract Inference Static Analysis (V2)](language/contract-inference-static-analysis.md) -- flow-sensitive inference with literal bracket precision and empty-array append stability.
-- [Contract Diagnostics V2](language/contract-diagnostics-v2.md) -- deterministic mismatch reporting without static evidence dependency.
-- [Contract Inference V2 Milestone Plan](planning/contract-inference-v2-milestone-plan.md) -- completed M0-M9 plus cleanup C1-C7 implementation sequence.
+- [Contract Model](language/contract-model-v2.md) -- historical contract-model foundation and migration notes.
+- [Contract Model (Strict)](language/contract-model-v3.md) -- strict node-kinded model with quantified obligations, domains, satisfiability, and witnesses.
+- [Contract Inference Static Analysis](language/contract-inference-static-analysis.md) -- flow-sensitive inference with literal bracket precision and empty-array append stability.
+- [Contract Diagnostics](language/contract-diagnostics-v2.md) -- deterministic mismatch reporting without static evidence dependency.
+- [Contract Inference Milestone Plan](planning/contract-inference-v2-milestone-plan.md) -- completed milestone sequence and cleanup order.
 - [Contract Inference Quality Gates](docs/contract-inference-quality-gates.md) -- precision/parity/performance plus structural/debug metadata gates.
-- [Contract JSON V2 Cleanup](planning/contract-v2-json-cleanup.md) -- completed no-version-bump V2 payload cleanup and rollout notes.
+- [Contract JSON Cleanup](planning/contract-v2-json-cleanup.md) -- completed canonical JSON cleanup and rollout notes.
 - [Transform Options](language/transform-options.md) -- per-transform OPTIONS blocks.
 - [Duplicate JSON Key Policy](language/json-duplicate-keys.md) -- error/last/first handling.
 - [JSON Canonicalization Mode](language/json-canonicalization.md) -- deterministic JSON ordering + numeric formatting.

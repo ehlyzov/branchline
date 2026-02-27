@@ -2,6 +2,7 @@ package io.github.ehlyzov.branchline.cli
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import io.github.ehlyzov.branchline.ArrayTypeRef
@@ -29,15 +30,39 @@ internal data class ContractDiffSummary(
     val nonBreakingChanges: List<String>,
 )
 
+internal data class LoadedContractDocument(
+    val label: String,
+    val payload: JsonElement,
+)
+
+internal enum class SemVerImpact {
+    PATCH,
+    MINOR,
+    MAJOR,
+}
+
 internal fun renderContractDiff(
     oldDefinition: LoadedTypeDefinition,
     newDefinition: LoadedTypeDefinition,
 ): String {
     val summary = diffTypeRefs(oldDefinition.typeRef, newDefinition.typeRef)
+    return renderContractDiff(
+        oldLabel = oldDefinition.label,
+        newLabel = newDefinition.label,
+        summary = summary,
+    )
+}
+
+internal fun renderContractDiff(
+    oldLabel: String,
+    newLabel: String,
+    summary: ContractDiffSummary,
+): String {
     val lines = mutableListOf<String>()
-    lines += "Contract diff: ${oldDefinition.label} -> ${newDefinition.label}"
+    lines += "Contract diff: $oldLabel -> $newLabel"
     if (summary.breakingChanges.isEmpty() && summary.nonBreakingChanges.isEmpty()) {
         lines += "No changes detected."
+        lines += "SemVer impact: ${SemVerImpact.PATCH.name}"
         return lines.joinToString("\n")
     }
     if (summary.breakingChanges.isNotEmpty()) {
@@ -48,7 +73,113 @@ internal fun renderContractDiff(
         lines += "Non-breaking changes:"
         summary.nonBreakingChanges.forEach { change -> lines += "  - $change" }
     }
+    lines += "SemVer impact: ${classifySemVerImpact(summary).name}"
     return lines.joinToString("\n")
+}
+
+internal fun classifySemVerImpact(summary: ContractDiffSummary): SemVerImpact = when {
+    summary.breakingChanges.isNotEmpty() -> SemVerImpact.MAJOR
+    summary.nonBreakingChanges.isNotEmpty() -> SemVerImpact.MINOR
+    else -> SemVerImpact.PATCH
+}
+
+internal fun loadContractDocument(path: String): LoadedContractDocument? {
+    val raw = readTextFile(path)
+    val parsed = try {
+        Json.parseToJsonElement(raw)
+    } catch (_: Throwable) {
+        return null
+    }
+    if (!looksLikeContractPayload(parsed)) return null
+    return LoadedContractDocument(
+        label = "contract:$path",
+        payload = parsed,
+    )
+}
+
+internal fun diffContractDocuments(
+    oldDocument: LoadedContractDocument,
+    newDocument: LoadedContractDocument,
+): ContractDiffSummary {
+    val breaking = mutableListOf<String>()
+    val nonBreaking = mutableListOf<String>()
+    diffJsonElements(
+        path = "$",
+        oldElement = oldDocument.payload,
+        newElement = newDocument.payload,
+        breaking = breaking,
+        nonBreaking = nonBreaking,
+    )
+    return ContractDiffSummary(
+        breakingChanges = breaking,
+        nonBreakingChanges = nonBreaking,
+    )
+}
+
+private fun looksLikeContractPayload(element: JsonElement): Boolean {
+    val root = element as? JsonObject ?: return false
+    if (root.containsKey("input") && root.containsKey("output")) return true
+    val transforms = root["transforms"] as? JsonArray ?: return false
+    return transforms.all { item ->
+        val obj = item as? JsonObject ?: return@all false
+        obj.containsKey("input") && obj.containsKey("output")
+    }
+}
+
+private fun diffJsonElements(
+    path: String,
+    oldElement: JsonElement,
+    newElement: JsonElement,
+    breaking: MutableList<String>,
+    nonBreaking: MutableList<String>,
+) {
+    if (oldElement::class != newElement::class) {
+        breaking += "Type changed at $path"
+        return
+    }
+    when {
+        oldElement is JsonObject && newElement is JsonObject -> {
+            val oldKeys = oldElement.keys
+            val newKeys = newElement.keys
+            (oldKeys - newKeys).sorted().forEach { key ->
+                breaking += "Removed key at $path.$key"
+            }
+            (newKeys - oldKeys).sorted().forEach { key ->
+                nonBreaking += "Added key at $path.$key"
+            }
+            (oldKeys.intersect(newKeys)).sorted().forEach { key ->
+                diffJsonElements(
+                    path = "$path.$key",
+                    oldElement = oldElement.getValue(key),
+                    newElement = newElement.getValue(key),
+                    breaking = breaking,
+                    nonBreaking = nonBreaking,
+                )
+            }
+        }
+        oldElement is JsonArray && newElement is JsonArray -> {
+            if (newElement.size < oldElement.size) {
+                breaking += "Array shortened at $path (${oldElement.size} -> ${newElement.size})"
+            } else if (newElement.size > oldElement.size) {
+                nonBreaking += "Array extended at $path (${oldElement.size} -> ${newElement.size})"
+            }
+            val commonSize = minOf(oldElement.size, newElement.size)
+            for (index in 0 until commonSize) {
+                diffJsonElements(
+                    path = "$path[$index]",
+                    oldElement = oldElement[index],
+                    newElement = newElement[index],
+                    breaking = breaking,
+                    nonBreaking = nonBreaking,
+                )
+            }
+        }
+        oldElement is JsonPrimitive && newElement is JsonPrimitive -> {
+            if (oldElement.content != newElement.content) {
+                breaking += "Value changed at $path (${oldElement.content} -> ${newElement.content})"
+            }
+        }
+    }
 }
 
 internal fun loadTypeDefinition(
@@ -124,7 +255,7 @@ private fun selectTypeDecl(typeDecls: List<TypeDecl>, typeName: String?): TypeDe
     throw CliException("Multiple TYPE declarations found (${names}); use --type to choose one")
 }
 
-private fun diffTypeRefs(oldType: TypeRef, newType: TypeRef): ContractDiffSummary {
+internal fun diffTypeRefs(oldType: TypeRef, newType: TypeRef): ContractDiffSummary {
     val breaking = mutableListOf<String>()
     val nonBreaking = mutableListOf<String>()
     when {

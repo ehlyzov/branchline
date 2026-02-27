@@ -9,29 +9,29 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-class ContractJsonRendererV3Test {
+class ContractJsonRendererTest {
     @Test
-    fun v3_json_is_deterministic_for_same_contract() {
-        val contract = sampleContractV3()
-        val first = ContractJsonRenderer.renderSchemaGuaranteeV3(
+    fun json_is_deterministic_for_same_contract() {
+        val contract = sampleContract()
+        val first = ContractJsonRenderer.renderSchemaGuarantee(
             guarantee = contract.output,
             includeSpans = false,
             pretty = true,
         )
-        val second = ContractJsonRenderer.renderSchemaGuaranteeV3(
+        val second = ContractJsonRenderer.renderSchemaGuarantee(
             guarantee = contract.output,
             includeSpans = false,
             pretty = true,
         )
         assertEquals(first, second)
         val parsed = Json.parseToJsonElement(first).jsonObject
-        assertEquals("v3", parsed["version"]?.toString()?.trim('"'))
+        assertTrue(!parsed.containsKey("version"))
     }
 
     @Test
-    fun v3_json_encodes_array_element_object_children_explicitly() {
-        val contract = sampleContractV3()
-        val rendered = ContractJsonRenderer.renderSchemaGuaranteeV3(
+    fun json_encodes_array_element_object_children_explicitly() {
+        val contract = sampleContract()
+        val rendered = ContractJsonRenderer.renderSchemaGuarantee(
             guarantee = contract.output,
             includeSpans = false,
             pretty = true,
@@ -51,13 +51,13 @@ class ContractJsonRendererV3Test {
     }
 
     @Test
-    fun v3_json_gates_origin_and_spans_to_debug_output() {
-        val contract = sampleContractV3()
+    fun json_gates_origin_and_spans_to_debug_output() {
+        val contract = sampleContract()
         val standard = Json.parseToJsonElement(
-            ContractJsonRenderer.renderSchemaGuaranteeV3(contract.output, includeSpans = false, pretty = true),
+            ContractJsonRenderer.renderSchemaGuarantee(contract.output, includeSpans = false, pretty = true),
         ).jsonObject
         val debug = Json.parseToJsonElement(
-            ContractJsonRenderer.renderSchemaGuaranteeV3(contract.output, includeSpans = true, pretty = true),
+            ContractJsonRenderer.renderSchemaGuarantee(contract.output, includeSpans = true, pretty = true),
         ).jsonObject
         val standardRoot = standard["root"]?.jsonObject ?: error("missing standard root")
         val debugRoot = debug["root"]?.jsonObject ?: error("missing debug root")
@@ -66,9 +66,9 @@ class ContractJsonRendererV3Test {
     }
 
     @Test
-    fun v3_json_renders_obligations_and_domains() {
-        val contract = sampleContractV3()
-        val rendered = ContractJsonRenderer.renderSchemaGuaranteeV3(
+    fun json_renders_obligations_and_domains() {
+        val contract = sampleContract()
+        val rendered = ContractJsonRenderer.renderSchemaGuarantee(
             guarantee = contract.output,
             includeSpans = false,
             pretty = true,
@@ -81,13 +81,13 @@ class ContractJsonRendererV3Test {
     }
 
     @Test
-    fun v3_json_hides_obligation_metadata_without_debug() {
-        val contract = sampleContractV3()
+    fun json_hides_obligation_metadata_without_debug() {
+        val contract = sampleContract()
         val standard = Json.parseToJsonElement(
-            ContractJsonRenderer.renderSchemaGuaranteeV3(contract.output, includeSpans = false, pretty = true),
+            ContractJsonRenderer.renderSchemaGuarantee(contract.output, includeSpans = false, pretty = true),
         ).jsonObject
         val debug = Json.parseToJsonElement(
-            ContractJsonRenderer.renderSchemaGuaranteeV3(contract.output, includeSpans = true, pretty = true),
+            ContractJsonRenderer.renderSchemaGuarantee(contract.output, includeSpans = true, pretty = true),
         ).jsonObject
 
         val standardObligation = standard["obligations"]?.jsonArray?.firstOrNull()?.jsonObject
@@ -103,68 +103,68 @@ class ContractJsonRendererV3Test {
         assertTrue(debugObligation.containsKey("heuristic"))
     }
 
-    private fun sampleContractV3(): TransformContractV3 {
-        val inputRoot = NodeV3(
+    private fun sampleContract(): TransformContract {
+        val inputRoot = Node(
             required = true,
-            kind = NodeKindV3.OBJECT,
+            kind = NodeKind.OBJECT,
             open = true,
             children = linkedMapOf(
-                "testsuites" to NodeV3(required = false, kind = NodeKindV3.ANY),
-                "testsuite" to NodeV3(required = false, kind = NodeKindV3.ANY),
+                "testsuites" to Node(required = false, kind = NodeKind.ANY),
+                "testsuite" to Node(required = false, kind = NodeKind.ANY),
             ),
         )
-        val outputRoot = NodeV3(
+        val outputRoot = Node(
             required = true,
-            kind = NodeKindV3.OBJECT,
+            kind = NodeKind.OBJECT,
             open = false,
             origin = OriginKind.OUTPUT,
             children = linkedMapOf(
-                "status" to NodeV3(
+                "status" to Node(
                     required = true,
-                    kind = NodeKindV3.TEXT,
+                    kind = NodeKind.TEXT,
                     origin = OriginKind.OUTPUT,
-                    domains = listOf(ValueDomainV3.EnumText(listOf("error", "passing", "failing"))),
+                    domains = listOf(ValueDomain.EnumText(listOf("error", "passing", "failing"))),
                 ),
-                "suites" to NodeV3(
+                "suites" to Node(
                     required = true,
-                    kind = NodeKindV3.ARRAY,
+                    kind = NodeKind.ARRAY,
                     origin = OriginKind.OUTPUT,
-                    element = NodeV3(
+                    element = Node(
                         required = true,
-                        kind = NodeKindV3.OBJECT,
+                        kind = NodeKind.OBJECT,
                         open = false,
                         children = linkedMapOf(
-                            "name" to NodeV3(required = true, kind = NodeKindV3.TEXT, origin = OriginKind.OUTPUT),
-                            "tests" to NodeV3(required = true, kind = NodeKindV3.NUMBER, origin = OriginKind.OUTPUT),
-                            "failures" to NodeV3(required = true, kind = NodeKindV3.NUMBER, origin = OriginKind.OUTPUT),
-                            "errors" to NodeV3(required = true, kind = NodeKindV3.NUMBER, origin = OriginKind.OUTPUT),
-                            "skipped" to NodeV3(required = true, kind = NodeKindV3.NUMBER, origin = OriginKind.OUTPUT),
+                            "name" to Node(required = true, kind = NodeKind.TEXT, origin = OriginKind.OUTPUT),
+                            "tests" to Node(required = true, kind = NodeKind.NUMBER, origin = OriginKind.OUTPUT),
+                            "failures" to Node(required = true, kind = NodeKind.NUMBER, origin = OriginKind.OUTPUT),
+                            "errors" to Node(required = true, kind = NodeKind.NUMBER, origin = OriginKind.OUTPUT),
+                            "skipped" to Node(required = true, kind = NodeKind.NUMBER, origin = OriginKind.OUTPUT),
                         ),
                         origin = OriginKind.OUTPUT,
                     ),
                 ),
             ),
         )
-        return TransformContractV3(
-            input = RequirementSchemaV3(
+        return TransformContract(
+            input = RequirementSchema(
                 root = inputRoot,
                 obligations = listOf(
-                    ContractObligationV3(
-                        expr = ConstraintExprV3.OneOf(
+                    ContractObligation(
+                        expr = ConstraintExpr.OneOf(
                             listOf(
-                                ConstraintExprV3.PathNonNull(AccessPath(listOf(AccessSegment.Field("testsuites")))),
-                                ConstraintExprV3.PathNonNull(AccessPath(listOf(AccessSegment.Field("testsuite")))),
+                                ConstraintExpr.PathNonNull(AccessPath(listOf(AccessSegment.Field("testsuites")))),
+                                ConstraintExpr.PathNonNull(AccessPath(listOf(AccessSegment.Field("testsuite")))),
                             ),
                         ),
                     ),
                 ),
                 opaqueRegions = emptyList(),
             ),
-            output = GuaranteeSchemaV3(
+            output = GuaranteeSchema(
                 root = outputRoot,
                 obligations = listOf(
-                    ContractObligationV3(
-                        expr = ConstraintExprV3.ForAll(
+                    ContractObligation(
+                        expr = ConstraintExpr.ForAll(
                             path = AccessPath(listOf(AccessSegment.Field("suites"))),
                             requiredFields = listOf("name", "tests", "failures", "errors", "skipped"),
                         ),

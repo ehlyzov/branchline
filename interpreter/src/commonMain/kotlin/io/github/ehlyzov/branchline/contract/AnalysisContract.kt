@@ -4,69 +4,69 @@ import io.github.ehlyzov.branchline.Token
 import kotlinx.serialization.Serializable
 
 @Serializable
-public data class TransformContractV2(
-    val input: RequirementSchemaV2,
-    val output: GuaranteeSchemaV2,
+public data class AnalysisContract(
+    val input: AnalysisRequirementSchema,
+    val output: AnalysisGuaranteeSchema,
     val source: ContractSource,
-    val metadata: ContractMetadataV2 = ContractMetadataV2(),
+    val metadata: AnalysisContractMetadata = AnalysisContractMetadata(),
 )
 
 @Serializable
-public data class RequirementSchemaV2(
-    val root: RequirementNodeV2,
-    val requirements: List<RequirementExprV2>,
-    val opaqueRegions: List<OpaqueRegionV2>,
+public data class AnalysisRequirementSchema(
+    val root: AnalysisRequirementNode,
+    val requirements: List<AnalysisRequirementExpr>,
+    val opaqueRegions: List<OpaqueRegion>,
 )
 
 @Serializable
-public data class GuaranteeSchemaV2(
-    val root: GuaranteeNodeV2,
+public data class AnalysisGuaranteeSchema(
+    val root: AnalysisGuaranteeNode,
     val mayEmitNull: Boolean,
-    val opaqueRegions: List<OpaqueRegionV2>,
+    val opaqueRegions: List<OpaqueRegion>,
 )
 
 @Serializable
-public data class RequirementNodeV2(
+public data class AnalysisRequirementNode(
     val required: Boolean,
     val shape: ValueShape,
     val open: Boolean,
-    val children: LinkedHashMap<String, RequirementNodeV2>,
-    val evidence: List<InferenceEvidenceV2>,
+    val children: LinkedHashMap<String, AnalysisRequirementNode>,
+    val evidence: List<AnalysisInferenceEvidence>,
 )
 
 @Serializable
-public data class GuaranteeNodeV2(
+public data class AnalysisGuaranteeNode(
     val required: Boolean,
     val shape: ValueShape,
     val open: Boolean,
     val origin: OriginKind,
-    val children: LinkedHashMap<String, GuaranteeNodeV2>,
-    val evidence: List<InferenceEvidenceV2>,
+    val children: LinkedHashMap<String, AnalysisGuaranteeNode>,
+    val evidence: List<AnalysisInferenceEvidence>,
 )
 
 @Serializable
-public sealed interface RequirementExprV2 {
+public sealed interface AnalysisRequirementExpr {
     @Serializable
-    public data class AllOf(val children: List<RequirementExprV2>) : RequirementExprV2
+    public data class AllOf(val children: List<AnalysisRequirementExpr>) : AnalysisRequirementExpr
 
     @Serializable
-    public data class AnyOf(val children: List<RequirementExprV2>) : RequirementExprV2
+    public data class AnyOf(val children: List<AnalysisRequirementExpr>) : AnalysisRequirementExpr
 
     @Serializable
-    public data class PathPresent(val path: AccessPath) : RequirementExprV2
+    public data class PathPresent(val path: AccessPath) : AnalysisRequirementExpr
 
     @Serializable
-    public data class PathNonNull(val path: AccessPath) : RequirementExprV2
+    public data class PathNonNull(val path: AccessPath) : AnalysisRequirementExpr
 }
 
 @Serializable
-public data class OpaqueRegionV2(
+public data class OpaqueRegion(
     val path: AccessPath,
     val reason: DynamicReason,
 )
 
 @Serializable
-public data class InferenceEvidenceV2(
+public data class AnalysisInferenceEvidence(
     val sourceSpans: List<Token>,
     val ruleId: String,
     val confidence: Double,
@@ -74,7 +74,7 @@ public data class InferenceEvidenceV2(
 )
 
 @Serializable
-public data class ContractMetadataV2(
+public data class AnalysisContractMetadata(
     val runtimeFit: RuntimeFitExtensionPoint = RuntimeFitExtensionPoint(),
     val typeEval: TypeEvalExtensionPoint = TypeEvalExtensionPoint(),
     val inference: InferenceExtensionPoint = InferenceExtensionPoint(),

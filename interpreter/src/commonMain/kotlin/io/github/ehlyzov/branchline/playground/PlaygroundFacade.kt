@@ -12,13 +12,12 @@ import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.TransformDecl
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
 import io.github.ehlyzov.branchline.contract.ContractCoercion
-import io.github.ehlyzov.branchline.contract.ContractEnforcerV3
+import io.github.ehlyzov.branchline.contract.ContractEnforcer
 import io.github.ehlyzov.branchline.contract.ContractJsonRenderer
 import io.github.ehlyzov.branchline.contract.ContractValidationMode
-import io.github.ehlyzov.branchline.contract.ContractViolationV2
+import io.github.ehlyzov.branchline.contract.ContractViolation
 import io.github.ehlyzov.branchline.contract.TransformContractBuilder
-import io.github.ehlyzov.branchline.contract.TransformContractV3Adapter
-import io.github.ehlyzov.branchline.contract.formatContractViolationV2
+import io.github.ehlyzov.branchline.contract.formatContractViolation
 import io.github.ehlyzov.branchline.ir.Exec
 import io.github.ehlyzov.branchline.ir.ToIR
 import io.github.ehlyzov.branchline.json.JsonNumberMode
@@ -175,13 +174,12 @@ object PlaygroundFacade {
             }
             val contract = if (includeContracts || contractMode != ContractValidationMode.OFF) {
                 val typeResolver = TypeResolver(typeDecls)
-                TransformContractBuilder(typeResolver, hostFns.keys).buildV3(transform)
+                TransformContractBuilder(typeResolver, hostFns.keys).build(transform)
             } else {
                 null
             }
-            val contractV2Compat = contract?.let(TransformContractV3Adapter::toV2)
             val inputValue = if (contract != null && contractMode != ContractValidationMode.OFF) {
-                ContractCoercion.coerceInputBytes(contractV2Compat?.input ?: error("missing contract"), msg)
+                ContractCoercion.coerceInputBytes(contract.input, msg)
             } else {
                 msg
             }
@@ -198,13 +196,13 @@ object PlaygroundFacade {
                 }
             }
             val inputViolations = if (contract != null && contractMode != ContractValidationMode.OFF) {
-                ContractEnforcerV3.enforceInput(contractMode, contract.input, inputValue)
+                ContractEnforcer.enforceInput(contractMode, contract.input, inputValue)
             } else {
                 emptyList()
             }
             val result = exec.run(env, stringifyKeys = true)
             val outputViolations = if (contract != null && contractMode != ContractValidationMode.OFF) {
-                ContractEnforcerV3.enforceOutput(contractMode, contract.output, result)
+                ContractEnforcer.enforceOutput(contractMode, contract.output, result)
             } else {
                 emptyList()
             }
@@ -230,10 +228,10 @@ object PlaygroundFacade {
             }
             val explainHuman = tracer?.let { TraceReport.from(it) }?.let(::renderTraceSummary)
             val inputContractJson = contract?.takeIf { includeContracts }?.let { built ->
-                ContractJsonRenderer.renderSchemaRequirementV3(built.input, includeContractSpans, pretty = true)
+                ContractJsonRenderer.renderSchemaRequirement(built.input, includeContractSpans, pretty = true)
             }
             val outputContractJson = contract?.takeIf { includeContracts }?.let { built ->
-                ContractJsonRenderer.renderSchemaGuaranteeV3(built.output, includeContractSpans, pretty = true)
+                ContractJsonRenderer.renderSchemaGuarantee(built.output, includeContractSpans, pretty = true)
             }
             val contractSource = contract?.source?.name?.lowercase()
             val contractWarnings = renderContractWarnings(inputViolations + outputViolations, contractMode)
@@ -439,9 +437,9 @@ private fun parseOutputFormat(raw: String): PlaygroundOutputFormat = when (raw.l
 }
 
 private fun renderContractWarnings(
-    violations: List<ContractViolationV2>,
+    violations: List<ContractViolation>,
     mode: ContractValidationMode,
 ): String? {
     if (mode != ContractValidationMode.WARN || violations.isEmpty()) return null
-    return violations.joinToString("\n") { violation -> formatContractViolationV2(violation) }
+    return violations.joinToString("\n") { violation -> formatContractViolation(violation) }
 }

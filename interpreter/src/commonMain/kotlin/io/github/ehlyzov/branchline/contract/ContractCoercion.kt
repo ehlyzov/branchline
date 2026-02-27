@@ -6,7 +6,7 @@ import io.github.ehlyzov.branchline.runtime.base64Decode
 
 public object ContractCoercion {
     public fun coerceInputBytes(
-        requirement: RequirementSchemaV2,
+        requirement: AnalysisRequirementSchema,
         value: Map<String, Any?>,
     ): Map<String, Any?> {
         val coerced = coerceObjectFieldsFromRequirementNode(value, requirement.root)
@@ -23,6 +23,15 @@ public object ContractCoercion {
         return coerced as Map<String, Any?>
     }
 
+    public fun coerceInputBytes(
+        requirement: RequirementSchema,
+        value: Map<String, Any?>,
+    ): Map<String, Any?> {
+        val coerced = coerceValueForNode(value, requirement.root)
+        @Suppress("UNCHECKED_CAST")
+        return (coerced as? Map<Any?, Any?> ?: value) as Map<String, Any?>
+    }
+
     private fun coerceObjectFieldsFromConstraints(
         value: Map<*, *>,
         fields: Map<String, FieldConstraint>,
@@ -30,7 +39,7 @@ public object ContractCoercion {
 
     private fun coerceObjectFieldsFromRequirementNode(
         value: Map<*, *>,
-        node: RequirementNodeV2,
+        node: AnalysisRequirementNode,
     ): Map<Any?, Any?> {
         var changed = false
         val out = LinkedHashMap<Any?, Any?>(value.size)
@@ -85,12 +94,44 @@ public object ContractCoercion {
 
     private fun coerceValueForRequirementNode(
         value: Any?,
-        node: RequirementNodeV2,
+        node: AnalysisRequirementNode,
     ): Any? {
         val coerced = coerceValue(value, node.shape)
         if (node.children.isEmpty()) return coerced
         val obj = coerced as? Map<*, *> ?: return coerced
         return coerceObjectFieldsFromRequirementNode(obj, node)
+    }
+
+    private fun coerceValueForNode(value: Any?, node: Node): Any? = when (node.kind) {
+        NodeKind.BYTES -> coerceBytes(value)
+        NodeKind.ARRAY -> {
+            val elementShape = node.element?.let(::shapeFromNode) ?: ValueShape.Unknown
+            coerceArray(value, elementShape)
+        }
+        NodeKind.SET -> {
+            val elementShape = node.element?.let(::shapeFromNode) ?: ValueShape.Unknown
+            coerceSet(value, elementShape)
+        }
+        NodeKind.OBJECT -> {
+            val obj = value as? Map<*, *> ?: return value
+            var changed = false
+            val out = LinkedHashMap<Any?, Any?>(obj.size)
+            for ((rawKey, rawValue) in obj) {
+                val keyName = rawKey as? String
+                val child = if (keyName == null) null else node.children[keyName]
+                val coerced = if (child == null) rawValue else coerceValueForNode(rawValue, child)
+                if (!changed && coerced !== rawValue) {
+                    changed = true
+                }
+                out[rawKey] = coerced
+            }
+            if (changed) out else value
+        }
+        NodeKind.UNION -> {
+            val options = ValueShape.Union(node.options.map(::shapeFromNode))
+            coerceUnion(value, options)
+        }
+        else -> value
     }
 
     private fun coerceBytes(value: Any?): Any? {
@@ -163,5 +204,36 @@ public object ContractCoercion {
             if (coerced !== value) return coerced
         }
         return value
+    }
+
+    private fun shapeFromNode(node: Node): ValueShape = when (node.kind) {
+        NodeKind.NEVER -> ValueShape.Never
+        NodeKind.ANY -> ValueShape.Unknown
+        NodeKind.NULL -> ValueShape.Null
+        NodeKind.BOOLEAN -> ValueShape.BooleanShape
+        NodeKind.NUMBER -> ValueShape.NumberShape
+        NodeKind.BYTES -> ValueShape.Bytes
+        NodeKind.TEXT -> ValueShape.TextShape
+        NodeKind.ARRAY -> ValueShape.ArrayShape(node.element?.let(::shapeFromNode) ?: ValueShape.Unknown)
+        NodeKind.SET -> ValueShape.SetShape(node.element?.let(::shapeFromNode) ?: ValueShape.Unknown)
+        NodeKind.UNION -> ValueShape.Union(node.options.map(::shapeFromNode))
+        NodeKind.OBJECT -> {
+            val fields = LinkedHashMap<String, FieldShape>()
+            node.children.forEach { (name, child) ->
+                fields[name] = FieldShape(
+                    required = child.required,
+                    shape = shapeFromNode(child),
+                    origin = child.origin ?: OriginKind.MERGED,
+                )
+            }
+            ValueShape.ObjectShape(
+                schema = SchemaGuarantee(
+                    fields = fields,
+                    mayEmitNull = false,
+                    dynamicFields = emptyList(),
+                ),
+                closed = !node.open,
+            )
+        }
     }
 }

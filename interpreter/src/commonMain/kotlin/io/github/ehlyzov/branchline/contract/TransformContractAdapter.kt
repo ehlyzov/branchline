@@ -1,31 +1,31 @@
 package io.github.ehlyzov.branchline.contract
 
-public object TransformContractV3Adapter {
-    public fun fromV2(contract: TransformContractV2): TransformContractV3 {
+public object TransformContractAdapter {
+    public fun fromAnalysis(contract: AnalysisContract): TransformContract {
         val inputObligations = contract.input.requirements.map { expr ->
-            ContractObligationV3(
-                expr = requirementExprToV3(expr),
+            ContractObligation(
+                expr = requirementExprFromAnalysis(expr),
                 confidence = 1.0,
-                ruleId = "v2-requirement",
+                ruleId = "analysis-requirement",
                 heuristic = false,
             )
         }
-        return TransformContractV3(
-            input = RequirementSchemaV3(
-                root = requirementNodeToV3(contract.input.root),
+        return TransformContract(
+            input = RequirementSchema(
+                root = requirementNodeFromAnalysis(contract.input.root),
                 obligations = inputObligations,
                 opaqueRegions = contract.input.opaqueRegions,
                 evidence = emptyList(),
             ),
-            output = GuaranteeSchemaV3(
-                root = guaranteeNodeToV3(contract.output.root),
+            output = GuaranteeSchema(
+                root = guaranteeNodeFromAnalysis(contract.output.root),
                 obligations = emptyList(),
                 mayEmitNull = contract.output.mayEmitNull,
                 opaqueRegions = contract.output.opaqueRegions,
                 evidence = emptyList(),
             ),
             source = contract.source,
-            metadata = ContractMetadataV3(
+            metadata = ContractMetadata(
                 runtimeFit = contract.metadata.runtimeFit,
                 typeEval = contract.metadata.typeEval,
                 inference = contract.metadata.inference,
@@ -33,23 +33,23 @@ public object TransformContractV3Adapter {
         )
     }
 
-    public fun toV2(contract: TransformContractV3): TransformContractV2 {
+    public fun toAnalysis(contract: TransformContract): AnalysisContract {
         val requirements = contract.input.obligations.mapNotNull { obligation ->
             obligationToRequirementExpr(obligation.expr)
         }
-        return TransformContractV2(
-            input = RequirementSchemaV2(
-                root = requirementNodeToV2(contract.input.root),
+        return AnalysisContract(
+            input = AnalysisRequirementSchema(
+                root = requirementNodeToAnalysis(contract.input.root),
                 requirements = requirements,
                 opaqueRegions = contract.input.opaqueRegions,
             ),
-            output = GuaranteeSchemaV2(
-                root = guaranteeNodeToV2(contract.output.root),
+            output = AnalysisGuaranteeSchema(
+                root = guaranteeNodeToAnalysis(contract.output.root),
                 mayEmitNull = contract.output.mayEmitNull,
                 opaqueRegions = contract.output.opaqueRegions,
             ),
             source = contract.source,
-            metadata = ContractMetadataV2(
+            metadata = AnalysisContractMetadata(
                 runtimeFit = contract.metadata.runtimeFit,
                 typeEval = contract.metadata.typeEval,
                 inference = contract.metadata.inference,
@@ -57,28 +57,28 @@ public object TransformContractV3Adapter {
         )
     }
 
-    private fun requirementExprToV3(expr: RequirementExprV2): ConstraintExprV3 = when (expr) {
-        is RequirementExprV2.AllOf -> ConstraintExprV3.AllOf(expr.children.map(::requirementExprToV3))
-        is RequirementExprV2.AnyOf -> ConstraintExprV3.OneOf(expr.children.map(::requirementExprToV3))
-        is RequirementExprV2.PathPresent -> ConstraintExprV3.PathPresent(expr.path)
-        is RequirementExprV2.PathNonNull -> ConstraintExprV3.PathNonNull(expr.path)
+    private fun requirementExprFromAnalysis(expr: AnalysisRequirementExpr): ConstraintExpr = when (expr) {
+        is AnalysisRequirementExpr.AllOf -> ConstraintExpr.AllOf(expr.children.map(::requirementExprFromAnalysis))
+        is AnalysisRequirementExpr.AnyOf -> ConstraintExpr.OneOf(expr.children.map(::requirementExprFromAnalysis))
+        is AnalysisRequirementExpr.PathPresent -> ConstraintExpr.PathPresent(expr.path)
+        is AnalysisRequirementExpr.PathNonNull -> ConstraintExpr.PathNonNull(expr.path)
     }
 
-    private fun obligationToRequirementExpr(expr: ConstraintExprV3): RequirementExprV2? = when (expr) {
-        is ConstraintExprV3.PathPresent -> RequirementExprV2.PathPresent(expr.path)
-        is ConstraintExprV3.PathNonNull -> RequirementExprV2.PathNonNull(expr.path)
-        is ConstraintExprV3.OneOf -> RequirementExprV2.AnyOf(expr.children.mapNotNull(::obligationToRequirementExpr))
-        is ConstraintExprV3.AllOf -> RequirementExprV2.AllOf(expr.children.mapNotNull(::obligationToRequirementExpr))
-        is ConstraintExprV3.ForAll -> null
-        is ConstraintExprV3.Exists -> null
-        is ConstraintExprV3.ValueDomain -> null
+    private fun obligationToRequirementExpr(expr: ConstraintExpr): AnalysisRequirementExpr? = when (expr) {
+        is ConstraintExpr.PathPresent -> AnalysisRequirementExpr.PathPresent(expr.path)
+        is ConstraintExpr.PathNonNull -> AnalysisRequirementExpr.PathNonNull(expr.path)
+        is ConstraintExpr.OneOf -> AnalysisRequirementExpr.AnyOf(expr.children.mapNotNull(::obligationToRequirementExpr))
+        is ConstraintExpr.AllOf -> AnalysisRequirementExpr.AllOf(expr.children.mapNotNull(::obligationToRequirementExpr))
+        is ConstraintExpr.ForAll -> null
+        is ConstraintExpr.Exists -> null
+        is ConstraintExpr.DomainConstraint -> null
     }
 
-    private fun requirementNodeToV3(node: RequirementNodeV2): NodeV3 {
+    private fun requirementNodeFromAnalysis(node: AnalysisRequirementNode): Node {
         val fromShape = nodeFromShape(node.shape, node.required, null)
         val mergedChildren = LinkedHashMap(fromShape.children)
         node.children.forEach { (name, child) ->
-            val next = requirementNodeToV3(child)
+            val next = requirementNodeFromAnalysis(child)
             val previous = mergedChildren[name]
             mergedChildren[name] = if (previous == null) next else mergeNode(
                 previous,
@@ -92,11 +92,11 @@ public object TransformContractV3Adapter {
         )
     }
 
-    private fun guaranteeNodeToV3(node: GuaranteeNodeV2): NodeV3 {
+    private fun guaranteeNodeFromAnalysis(node: AnalysisGuaranteeNode): Node {
         val fromShape = nodeFromShape(node.shape, node.required, node.origin)
         val mergedChildren = LinkedHashMap(fromShape.children)
         node.children.forEach { (name, child) ->
-            val next = guaranteeNodeToV3(child)
+            val next = guaranteeNodeFromAnalysis(child)
             val previous = mergedChildren[name]
             mergedChildren[name] = if (previous == null) next else mergeNode(
                 previous,
@@ -111,12 +111,12 @@ public object TransformContractV3Adapter {
         ))
     }
 
-    private fun requirementNodeToV2(node: NodeV3): RequirementNodeV2 {
-        val children = LinkedHashMap<String, RequirementNodeV2>()
+    private fun requirementNodeToAnalysis(node: Node): AnalysisRequirementNode {
+        val children = LinkedHashMap<String, AnalysisRequirementNode>()
         node.children.forEach { (name, child) ->
-            children[name] = requirementNodeToV2(child)
+            children[name] = requirementNodeToAnalysis(child)
         }
-        return RequirementNodeV2(
+        return AnalysisRequirementNode(
             required = node.required,
             shape = shapeFromNode(node),
             open = node.open,
@@ -125,12 +125,12 @@ public object TransformContractV3Adapter {
         )
     }
 
-    private fun guaranteeNodeToV2(node: NodeV3): GuaranteeNodeV2 {
-        val children = LinkedHashMap<String, GuaranteeNodeV2>()
+    private fun guaranteeNodeToAnalysis(node: Node): AnalysisGuaranteeNode {
+        val children = LinkedHashMap<String, AnalysisGuaranteeNode>()
         node.children.forEach { (name, child) ->
-            children[name] = guaranteeNodeToV2(child)
+            children[name] = guaranteeNodeToAnalysis(child)
         }
-        return GuaranteeNodeV2(
+        return AnalysisGuaranteeNode(
             required = node.required,
             shape = shapeFromNode(node),
             open = node.open,
@@ -141,12 +141,12 @@ public object TransformContractV3Adapter {
     }
 
     private fun mergeNode(
-        left: NodeV3,
-        right: NodeV3,
+        left: Node,
+        right: Node,
         normalizeAnyWithChildren: Boolean,
-    ): NodeV3 {
+    ): Node {
         val childNames = left.children.keys + right.children.keys
-        val children = LinkedHashMap<String, NodeV3>()
+        val children = LinkedHashMap<String, Node>()
         for (name in childNames) {
             val l = left.children[name]
             val r = right.children[name]
@@ -168,50 +168,50 @@ public object TransformContractV3Adapter {
         return if (normalizeAnyWithChildren) normalizeAnyNodeWithChildren(merged) else merged
     }
 
-    private fun normalizeAnyNodeWithChildren(node: NodeV3): NodeV3 {
-        if (node.kind != NodeKindV3.ANY || node.children.isEmpty()) {
+    private fun normalizeAnyNodeWithChildren(node: Node): Node {
+        if (node.kind != NodeKind.ANY || node.children.isEmpty()) {
             return node
         }
         return node.copy(
-            kind = NodeKindV3.OBJECT,
+            kind = NodeKind.OBJECT,
             open = true,
         )
     }
 
-    private fun nodeFromShape(shape: ValueShape, required: Boolean, origin: OriginKind?): NodeV3 = when (shape) {
-        ValueShape.Never -> NodeV3(required = required, kind = NodeKindV3.NEVER, origin = origin)
-        ValueShape.Unknown -> NodeV3(required = required, kind = NodeKindV3.ANY, origin = origin)
-        ValueShape.Null -> NodeV3(required = required, kind = NodeKindV3.NULL, origin = origin)
-        ValueShape.BooleanShape -> NodeV3(required = required, kind = NodeKindV3.BOOLEAN, origin = origin)
-        ValueShape.NumberShape -> NodeV3(required = required, kind = NodeKindV3.NUMBER, origin = origin)
-        ValueShape.Bytes -> NodeV3(required = required, kind = NodeKindV3.BYTES, origin = origin)
-        ValueShape.TextShape -> NodeV3(required = required, kind = NodeKindV3.TEXT, origin = origin)
-        is ValueShape.ArrayShape -> NodeV3(
+    private fun nodeFromShape(shape: ValueShape, required: Boolean, origin: OriginKind?): Node = when (shape) {
+        ValueShape.Never -> Node(required = required, kind = NodeKind.NEVER, origin = origin)
+        ValueShape.Unknown -> Node(required = required, kind = NodeKind.ANY, origin = origin)
+        ValueShape.Null -> Node(required = required, kind = NodeKind.NULL, origin = origin)
+        ValueShape.BooleanShape -> Node(required = required, kind = NodeKind.BOOLEAN, origin = origin)
+        ValueShape.NumberShape -> Node(required = required, kind = NodeKind.NUMBER, origin = origin)
+        ValueShape.Bytes -> Node(required = required, kind = NodeKind.BYTES, origin = origin)
+        ValueShape.TextShape -> Node(required = required, kind = NodeKind.TEXT, origin = origin)
+        is ValueShape.ArrayShape -> Node(
             required = required,
-            kind = NodeKindV3.ARRAY,
+            kind = NodeKind.ARRAY,
             element = nodeFromShape(shape.element, required = true, origin = origin),
             origin = origin,
         )
-        is ValueShape.SetShape -> NodeV3(
+        is ValueShape.SetShape -> Node(
             required = required,
-            kind = NodeKindV3.SET,
+            kind = NodeKind.SET,
             element = nodeFromShape(shape.element, required = true, origin = origin),
             origin = origin,
         )
-        is ValueShape.Union -> NodeV3(
+        is ValueShape.Union -> Node(
             required = required,
-            kind = NodeKindV3.UNION,
+            kind = NodeKind.UNION,
             options = shape.options.map { option -> nodeFromShape(option, required = true, origin = origin) },
             origin = origin,
         )
         is ValueShape.ObjectShape -> {
-            val children = LinkedHashMap<String, NodeV3>()
+            val children = LinkedHashMap<String, Node>()
             for ((name, field) in shape.schema.fields) {
                 children[name] = nodeFromShape(field.shape, field.required, field.origin)
             }
-            NodeV3(
+            Node(
                 required = required,
-                kind = NodeKindV3.OBJECT,
+                kind = NodeKind.OBJECT,
                 open = !shape.closed,
                 children = children,
                 origin = origin,
@@ -219,22 +219,22 @@ public object TransformContractV3Adapter {
         }
     }
 
-    private fun shapeFromNode(node: NodeV3): ValueShape = when (node.kind) {
-        NodeKindV3.NEVER -> ValueShape.Never
-        NodeKindV3.ANY -> ValueShape.Unknown
-        NodeKindV3.NULL -> ValueShape.Null
-        NodeKindV3.BOOLEAN -> ValueShape.BooleanShape
-        NodeKindV3.NUMBER -> ValueShape.NumberShape
-        NodeKindV3.BYTES -> ValueShape.Bytes
-        NodeKindV3.TEXT -> ValueShape.TextShape
-        NodeKindV3.ARRAY -> ValueShape.ArrayShape(
+    private fun shapeFromNode(node: Node): ValueShape = when (node.kind) {
+        NodeKind.NEVER -> ValueShape.Never
+        NodeKind.ANY -> ValueShape.Unknown
+        NodeKind.NULL -> ValueShape.Null
+        NodeKind.BOOLEAN -> ValueShape.BooleanShape
+        NodeKind.NUMBER -> ValueShape.NumberShape
+        NodeKind.BYTES -> ValueShape.Bytes
+        NodeKind.TEXT -> ValueShape.TextShape
+        NodeKind.ARRAY -> ValueShape.ArrayShape(
             element = node.element?.let(::shapeFromNode) ?: ValueShape.Unknown,
         )
-        NodeKindV3.SET -> ValueShape.SetShape(
+        NodeKind.SET -> ValueShape.SetShape(
             element = node.element?.let(::shapeFromNode) ?: ValueShape.Unknown,
         )
-        NodeKindV3.UNION -> ValueShape.Union(node.options.map(::shapeFromNode))
-        NodeKindV3.OBJECT -> {
+        NodeKind.UNION -> ValueShape.Union(node.options.map(::shapeFromNode))
+        NodeKind.OBJECT -> {
             val fields = LinkedHashMap<String, FieldShape>()
             node.children.forEach { (name, child) ->
                 fields[name] = FieldShape(

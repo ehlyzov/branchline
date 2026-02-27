@@ -1,6 +1,6 @@
 {
   "title": "Contract deep composition",
-  "description": "Build nested output through stdlib-driven totals and CASE-based status composition to demonstrate deep V2 contract inference.",
+  "description": "Build nested output through stdlib-driven totals and CASE-based status composition to demonstrate deep contract inference.",
   "program": [
     "LET suites = FILTER(LISTIFY(input.report.suites ?? []), (suite) -> suite != NULL)",
     "LET normalized = []",

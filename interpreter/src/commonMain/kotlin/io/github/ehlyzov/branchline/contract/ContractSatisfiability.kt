@@ -1,16 +1,16 @@
 package io.github.ehlyzov.branchline.contract
 
-public data class ContractSatisfiabilityResultV3(
+public data class ContractSatisfiabilityResult(
     val checked: Boolean,
     val satisfiable: Boolean,
     val diagnostics: List<String>,
 )
 
-public object ContractSatisfiabilityV3 {
-    private val validator = ContractValidatorV3()
+public object ContractSatisfiability {
+    private val validator = ContractValidator()
 
-    public fun check(contract: TransformContractV3): ContractSatisfiabilityResultV3 {
-        val witness = ContractWitnessGeneratorV3.generate(contract)
+    public fun check(contract: TransformContract): ContractSatisfiabilityResult {
+        val witness = ContractWitnessGenerator.generate(contract)
         val inputViolations = validator.validateInput(
             requirement = contract.input,
             value = witness.input,
@@ -25,16 +25,16 @@ public object ContractSatisfiabilityV3 {
         ).violations
         val violations = inputViolations + outputViolations
         if (violations.isEmpty()) {
-            return ContractSatisfiabilityResultV3(
+            return ContractSatisfiabilityResult(
                 checked = true,
                 satisfiable = true,
                 diagnostics = emptyList(),
             )
         }
-        return ContractSatisfiabilityResultV3(
+        return ContractSatisfiabilityResult(
             checked = true,
             satisfiable = false,
-            diagnostics = violations.map(::formatContractViolationV2),
+            diagnostics = violations.map(::formatContractViolation),
         )
     }
 }
