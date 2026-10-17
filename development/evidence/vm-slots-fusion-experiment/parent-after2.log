@@ -1,0 +1,1 @@
+PASS parent factorial checks=1016; 40 seeded input sets, independent interpreter/reference results, all 4 flags x diagnostics, exact errors/final env/order/snapshot, fallback cases

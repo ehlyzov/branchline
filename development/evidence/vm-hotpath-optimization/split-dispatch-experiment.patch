@@ -1,0 +1,114 @@
+--- VM.slice1.kt
++++ vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt
+@@ -445,12 +445,12 @@
+     }
+ 
+     /**
+-     * Table-driven execution path using opcode + operand arrays.
+-     * This is the hot path; avoid constructing Instruction objects.
++     * Keep common operations visible inside run without inlining the full VM.
++     * Uncommon operations share the ordinary dispatcher below.
+      */
+-    private fun executeOpcode(op: Opcode) {
++    @Suppress("NOTHING_TO_INLINE")
++    private inline fun executeOpcode(op: Opcode) {
+         when (op) {
+-            // Stack Operations
+             Opcode.PUSH -> {
+                 val v = bytecode.getConstOperand(pc)
+                 if (v is LambdaTemplate) {
+@@ -461,6 +461,34 @@
+             }
+             Opcode.DUP -> push(peek())
+             Opcode.POP -> pop()
++            Opcode.LOAD_VAR -> {
++                val name = bytecode.getStringOperand(pc)
++                val value = loadVariable(name)
++                push(value)
++                emitVarRead(name, value)
++            }
++            Opcode.STORE_VAR -> storeVar(bytecode.getStringOperand(pc))
++            Opcode.LOAD_LOCAL -> {
++                val idx = bytecode.getIntOperand(pc)
++                val v = if (idx >= 0 && idx < locals.size) locals[idx] else null
++                push(v)
++            }
++            Opcode.STORE_LOCAL -> {
++                val idx = bytecode.getIntOperand(pc)
++                val value = pop()
++                ensureLocals(idx + 1)
++                locals[idx] = value
++            }
++            Opcode.ADD -> binaryNumeric(VmNumericOp.ADD)
++            Opcode.ACCESS_STATIC -> accessStatic(bytecode.getObjKeyOperand(pc))
++            Opcode.NEXT_FOREACH -> nextForEach(bytecode.getIntOperand(pc, 0), bytecode.getIntOperand(pc, 1))
++            else -> executeColdOpcode(op)
++        }
++    }
++
++    /** Remaining operations stay outside the compact execution-loop switch. */
++    private fun executeColdOpcode(op: Opcode) {
++        when (op) {
+             Opcode.SWAP -> {
+                 val a = pop()
+                 val b = pop()
+@@ -469,32 +497,13 @@
+             }
+ 
+             // Variable Operations
+-            Opcode.LOAD_VAR -> {
+-                val name = bytecode.getStringOperand(pc)
+-                val value = loadVariable(name)
+-                push(value)
+-                emitVarRead(name, value)
+-            }
+-            Opcode.STORE_VAR -> storeVar(bytecode.getStringOperand(pc))
+             Opcode.LOAD_SCOPE -> {
+                 val name = bytecode.getStringOperand(pc)
+                 val value = environment[name]
+                 push(value)
+             }
+-            Opcode.LOAD_LOCAL -> {
+-                val idx = bytecode.getIntOperand(pc)
+-                val v = if (idx >= 0 && idx < locals.size) locals[idx] else null
+-                push(v)
+-            }
+-            Opcode.STORE_LOCAL -> {
+-                val idx = bytecode.getIntOperand(pc)
+-                val value = pop()
+-                ensureLocals(idx + 1)
+-                locals[idx] = value
+-            }
+ 
+             // Arithmetic Operations
+-            Opcode.ADD -> binaryNumeric(VmNumericOp.ADD)
+             Opcode.SUB -> binaryNumeric(VmNumericOp.SUB)
+             Opcode.MUL -> binaryNumeric(VmNumericOp.MUL)
+             Opcode.DIV -> binaryNumeric(VmNumericOp.DIV)
+@@ -531,7 +540,6 @@
+             // Object/Array Operations
+             Opcode.MAKE_OBJECT -> makeObject(bytecode.getIntOperand(pc, 0))
+             Opcode.MAKE_ARRAY -> makeArray(bytecode.getIntOperand(pc, 0))
+-            Opcode.ACCESS_STATIC -> accessStatic(bytecode.getObjKeyOperand(pc))
+             Opcode.ACCESS_DYNAMIC -> accessDynamic()
+             Opcode.SET_STATIC -> setStatic(bytecode.getObjKeyOperand(pc))
+             Opcode.SET_DYNAMIC -> setDynamic()
+@@ -585,7 +593,6 @@
+             }
+             Opcode.MODIFY -> modifyObject(bytecode.getIntOperand(pc, 0))
+             Opcode.INIT_FOREACH -> initForEach(bytecode.getStringOperand(pc, 0), bytecode.getIntOperand(pc, 0))
+-            Opcode.NEXT_FOREACH -> nextForEach(bytecode.getIntOperand(pc, 0), bytecode.getIntOperand(pc, 1))
+             Opcode.TRY_START -> startTry(bytecode.getIntOperand(pc, 0))
+             Opcode.TRY_END -> endTry()
+             Opcode.CATCH -> handleCatch(bytecode.getStringOperand(pc, 0), bytecode.getIntOperand(pc, 0))
+@@ -600,6 +607,10 @@
+                 val snap = buildSnapshotJson(pc + 1)
+                 throw VMException.Abort(mapOf("__suspended" to true, "snapshot" to snap))
+             }
++            Opcode.PUSH, Opcode.DUP, Opcode.POP,
++            Opcode.LOAD_VAR, Opcode.STORE_VAR, Opcode.LOAD_LOCAL, Opcode.STORE_LOCAL,
++            Opcode.ADD, Opcode.ACCESS_STATIC, Opcode.NEXT_FOREACH ->
++                error("Opcode $op must be handled by the hot dispatcher")
+         }
+     }
+ 

@@ -1,0 +1,9 @@
+
+TRANSFORM Main {
+LET child = input.child ?? {}
+LET code = GET(child, "code", "unknown")
+LET xs = input.values ?? []
+LET first = CASE { WHEN LENGTH(xs) > 0 THEN xs[0] ELSE NULL }
+
+OUTPUT {code: code, first: first}
+}

@@ -1,0 +1,15 @@
+--- VM.slice1.kt
++++ vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt
+@@ -447,8 +447,11 @@
+     /**
+      * Table-driven execution path using opcode + operand arrays.
+      * This is the hot path; avoid constructing Instruction objects.
++     * Inline into the sole loop callsite so JVM optimization can see dispatch
++     * and operand-stack operations together.
+      */
+-    private fun executeOpcode(op: Opcode) {
++    @Suppress("NOTHING_TO_INLINE")
++    private inline fun executeOpcode(op: Opcode) {
+         when (op) {
+             // Stack Operations
+             Opcode.PUSH -> {

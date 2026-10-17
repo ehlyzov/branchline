@@ -1,0 +1,9 @@
+
+TRANSFORM Main {
+LET rows = input.rows ?? []
+LET ranks = SORT(DISTINCT(MAP(rows, (r) -> r.rank)))
+LET ordered = FLATTEN(MAP(ranks, (rank) ->
+    FILTER(rows, (r) -> r.rank == rank)))
+
+OUTPUT {ordered: ordered}
+}

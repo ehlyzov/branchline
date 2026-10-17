@@ -1,0 +1,3 @@
+/var/folders/l0/2_7b6j512jjgg1_qwx96frd40000gp/T/branchline-optin-tcji1a32/preview_unmarked.kt:2:32: error: unstable VM alpha preview: no source or binary compatibility guarantee. Opt in explicitly to run experiments.
+fun run(code: Bytecode) = VM().prepareBlocks(code)
+                               ^^^^^^^^^^^^^

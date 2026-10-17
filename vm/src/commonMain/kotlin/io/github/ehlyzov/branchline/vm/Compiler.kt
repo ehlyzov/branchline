@@ -60,6 +60,33 @@ class Compiler(
     private val unresolvedJumps = mutableListOf<UnresolvedJump>()
     private val hostNameToIndex = LinkedHashMap<String, Int>()
     private val localIndexByName = LinkedHashMap<String, Int>()
+    // Roots created here and not yet observed outside compiler-proven writes.
+    // true denotes an array (also eligible for PRIVATE_ARRAY_APPEND).
+    private val privateCollections = mutableMapOf<String, Boolean>()
+    private data class PrivateCollectionChange(val name: String, val previous: Boolean?)
+    private val privateCollectionChanges = ArrayList<PrivateCollectionChange>()
+
+    private fun updatePrivateCollection(name: String, kind: Boolean?) {
+        val previous = privateCollections[name]
+        if (previous == kind) return
+        privateCollectionChanges.add(PrivateCollectionChange(name, previous))
+        if (kind == null) privateCollections.remove(name) else privateCollections[name] = kind
+    }
+
+    private fun clearPrivateCollections() {
+        for ((name, kind) in privateCollections) {
+            privateCollectionChanges.add(PrivateCollectionChange(name, kind))
+        }
+        privateCollections.clear()
+    }
+
+    private fun restorePrivateCollections(checkpoint: Int) {
+        while (privateCollectionChanges.size > checkpoint) {
+            val change = privateCollectionChanges.removeAt(privateCollectionChanges.lastIndex)
+            if (change.previous == null) privateCollections.remove(change.name)
+            else privateCollections[change.name] = change.previous
+        }
+    }
 
     private data class UnresolvedJump(
         val instructionIndex: Int,
@@ -81,11 +108,11 @@ class Compiler(
         unresolvedJumps.clear()
         localIndexByName.clear()
         hostNameToIndex.clear()
+        privateCollections.clear()
+        privateCollectionChanges.clear()
 
         // Compile all IR nodes
-        for (node in irNodes) {
-            compileNode(node)
-        }
+        compileNodes(irNodes)
 
         // Resolve jump addresses
         resolveJumps()
@@ -105,6 +132,121 @@ class Compiler(
             debugInfo = debugInfo.toMap(),
             traceMetadata = metadata,
         )
+    }
+
+    /**
+     * A fresh literal root stays private until it is read, rebound, captured, or
+     * exposed to arbitrary code. Inspect a whole control-flow node before
+     * entering it: one observing branch disables mutation in every iteration.
+     * Nested/path updates keep their ordinary copy semantics.
+     */
+    private fun compileNodes(nodes: List<IRNode>) {
+        // A scope restores only eligibility bindings that actually changed;
+        // unrelated private roots cost nothing when entering another branch.
+        val checkpoint = privateCollectionChanges.size
+        try {
+            for (node in nodes) {
+                invalidatePrivateCollections(node)
+                compileNode(node)
+                if (node is IRLet) {
+                    when (node.expr) {
+                        is ArrayExpr -> updatePrivateCollection(node.name, true)
+                        is ObjectExpr -> updatePrivateCollection(node.name, false)
+                        else -> Unit
+                    }
+                }
+            }
+        } finally {
+            restorePrivateCollections(checkpoint)
+        }
+    }
+
+    private fun invalidatePrivateCollections(node: IRNode) {
+        if (privateCollections.isEmpty()) return
+        when (node) {
+            is IRLet -> {
+                updatePrivateCollection(node.name, null)
+                observeExpr(node.expr)
+            }
+            is IRSetVar -> {
+                updatePrivateCollection(node.name, null)
+                observeExpr(node.value)
+            }
+            is IRPlusAssignVar -> observeExpr(node.value)
+            is IRSet -> {
+                val target = node.target
+                if (target.base is IdentifierExpr && target.segs.size == 1) {
+                    (target.segs.single() as? AccessSeg.Dynamic)?.let { observeExpr(it.keyExpr) }
+                } else observeExpr(target)
+                observeExpr(node.value)
+            }
+            is IRPlusAssign -> { observeExpr(node.target); observeExpr(node.value) }
+            is IRModify -> { observeExpr(node.target); node.updates.forEach(::observeProperty) }
+            is IROutput -> node.fields.forEach(::observeProperty)
+            is IRExprOutput -> observeExpr(node.expr)
+            is IRExprStmt -> observeExpr(node.expr)
+            is IRReturn -> node.value?.let(::observeExpr)
+            is IRAbort -> node.value?.let(::observeExpr)
+            is IRIf -> {
+                observeExpr(node.condition)
+                node.thenBody.forEach(::invalidatePrivateCollections)
+                node.elseBody?.forEach(::invalidatePrivateCollections)
+            }
+            is IRForEach -> {
+                updatePrivateCollection(node.varName, null)
+                observeExpr(node.iterable)
+                node.where?.let(::observeExpr)
+                node.body.forEach(::invalidatePrivateCollections)
+            }
+            is IRTryCatch -> {
+                updatePrivateCollection(node.exceptionName, null)
+                observeExpr(node.tryExpr)
+                node.fallbackExpr?.let(::observeExpr)
+                node.fallbackAbort?.let(::observeExpr)
+            }
+        }
+    }
+
+    private fun observeProperty(property: Property) {
+        when (property) {
+            is LiteralProperty -> observeExpr(property.value)
+            is ComputedProperty -> { observeExpr(property.keyExpr); observeExpr(property.value) }
+        }
+    }
+
+    private fun observeExpr(expr: Expr) {
+        if (privateCollections.isEmpty()) return
+        when (expr) {
+            is IdentifierExpr -> updatePrivateCollection(expr.name, null)
+            // Even a call with no arguments may inspect/mutate a host-owned
+            // environment, and a lambda captures all current bindings.
+            is CallExpr, is InvokeExpr, is LambdaExpr, is SharedStateAwaitExpr -> clearPrivateCollections()
+            is UnaryExpr -> if (expr.token.type == TokenType.SUSPEND) clearPrivateCollections() else observeExpr(expr.expr)
+            is BinaryExpr -> { observeExpr(expr.left); observeExpr(expr.right) }
+            is AccessExpr -> {
+                observeExpr(expr.base)
+                expr.segs.forEach { if (it is AccessSeg.Dynamic) observeExpr(it.keyExpr) }
+            }
+            is ArrayExpr -> expr.elements.forEach(::observeExpr)
+            is ObjectExpr -> expr.fields.forEach(::observeProperty)
+            is ArrayCompExpr -> {
+                updatePrivateCollection(expr.varName, null)
+                observeExpr(expr.iterable)
+                expr.where?.let(::observeExpr)
+                observeExpr(expr.mapExpr)
+            }
+            is IfElseExpr -> { observeExpr(expr.condition); observeExpr(expr.thenBranch); observeExpr(expr.elseBranch) }
+            is CaseExpr -> {
+                expr.whens.forEach { observeExpr(it.condition); observeExpr(it.result) }
+                observeExpr(expr.elseBranch)
+            }
+            is TryCatchExpr -> {
+                updatePrivateCollection(expr.exceptionName, null)
+                observeExpr(expr.tryExpr)
+                observeExpr(expr.fallbackExpr)
+            }
+            is NumberLiteral, is StringExpr, is BoolExpr, is NullLiteral -> Unit
+        }
     }
 
     /**
@@ -211,7 +353,7 @@ class Compiler(
             // load container and arrange (container, value)
             emit(LOAD_VAR(root))
             emit(SWAP)
-            emit(SET_STATIC(key))
+            emit(if (root in privateCollections) PRIVATE_SET_STATIC(key) else SET_STATIC(key))
             val storeIndex = emitStoreRoot(root)
             recordPathWrite(
                 storeIndex,
@@ -280,7 +422,7 @@ class Compiler(
     private fun compilePlusAssignVar(node: IRPlusAssignVar) {
         emit(LOAD_VAR(node.name))
         compileExpr(node.value)
-        emit(PLUS_ASSIGN)
+        emit(if (privateCollections[node.name] == true) PRIVATE_ARRAY_APPEND else PLUS_ASSIGN)
         val storeIndex = emitStoreRoot(node.name)
         recordPathWrite(
             storeIndex,
@@ -361,9 +503,7 @@ class Compiler(
         addUnresolvedJump(instructions.size - 1, elseLabel, "JUMP_IF_FALSE")
 
         // Compile then block
-        for (stmt in node.thenBody) {
-            compileNode(stmt)
-        }
+        compileNodes(node.thenBody)
 
         // Jump to end to skip else block
         emit(JUMP(0))
@@ -372,9 +512,7 @@ class Compiler(
         // Else block
         setLabel(elseLabel)
         node.elseBody?.let { elseBody ->
-            for (stmt in elseBody) {
-                compileNode(stmt)
-            }
+            compileNodes(elseBody)
         }
 
         setLabel(endLabel)
@@ -401,9 +539,7 @@ class Compiler(
         }
 
         // Compile loop body
-        for (stmt in node.body) {
-            compileNode(stmt)
-        }
+        compileNodes(node.body)
 
         setLabel(loopContinue)
 
@@ -821,14 +957,14 @@ class Compiler(
 
     private fun isDynamic(seg: AccessSeg): Boolean = seg is AccessSeg.Dynamic
 
-    private fun setWithKeyAtTop(seg: AccessSeg) {
+    private fun setWithKeyAtTop(seg: AccessSeg, privateRoot: Boolean = false) {
         when (seg) {
-            is AccessSeg.Static -> emit(SET_STATIC(seg.key))
+            is AccessSeg.Static -> emit(if (privateRoot) PRIVATE_SET_STATIC(seg.key) else SET_STATIC(seg.key))
             is AccessSeg.Dynamic -> {
                 // Stack before: container, value, key (top)
                 // Need: container, key, value (value on top for SET_DYNAMIC pop order)
                 emit(SWAP)
-                emit(SET_DYNAMIC)
+                emit(if (privateRoot) PRIVATE_SET_DYNAMIC else SET_DYNAMIC)
             }
         }
     }
@@ -946,7 +1082,7 @@ class Compiler(
             emit(SWAP)
             val (seg, dyn) = segs[0]
             loadKey(seg, dyn)
-            setWithKeyAtTop(seg)
+            setWithKeyAtTop(seg, privateRoot = baseName in privateCollections)
             val storeIndex = emitStoreRoot(baseName)
             recordPathWrite(
                 storeIndex,

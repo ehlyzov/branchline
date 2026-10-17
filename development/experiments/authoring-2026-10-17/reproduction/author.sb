@@ -1,0 +1,5 @@
+(version 1)
+(allow default)
+(deny file-read* (subpath "/Users/eugene/repo/research/branchline-public") (subpath "/private/tmp/branchline-authoring-private") (subpath "/tmp/branchline-authoring-private") (subpath "/Users/eugene/.codex/sessions") (subpath "/Users/eugene/.codex/log"))
+(deny file-write* (subpath "/Users/eugene/repo/research/branchline-public") (subpath "/private/tmp/branchline-authoring-private") (subpath "/tmp/branchline-authoring-private") (subpath "/private/tmp/branchline-authoring-public") (subpath "/tmp/branchline-authoring-public"))
+(deny file-read* file-write* (subpath "/private/tmp/branchline-authoring-private-aborted-001") (subpath "/tmp/branchline-authoring-private-aborted-001"))

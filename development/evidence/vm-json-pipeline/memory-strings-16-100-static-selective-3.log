@@ -1,0 +1,19 @@
+{"engineMode":"selective","inputMiB":16,"actualInputBytes":16777216,"shape":"strings","selectedPercent":100,"accessPattern":"static","expectedTotal":16776325,"effectiveMode":"SELECTIVE","reason":"STATIC_TOP_LEVEL","selectedRootKeys":["f0","f1","f10","f11","f12","f13","f14","f15","f16","f17","f18","f19","f2","f20","f21","f22","f23","f24","f25","f26","f27","f28","f29","f3","f30","f31","f32","f33","f34","f35","f36","f37","f38","f39","f4","f40","f41","f42","f43","f44","f45","f46","f47","f48","f49","f5","f50","f51","f52","f53","f54","f55","f56","f57","f58","f59","f6","f60","f61","f62","f63","f64","f65","f66","f67","f68","f69","f7","f70","f71","f72","f73","f74","f75","f76","f77","f78","f79","f8","f80","f81","f82","f83","f84","f85","f86","f87","f88","f89","f9","f90","f91","f92","f93","f94","f95","f96","f97","f98","f99","input"],"operation":"memory","input":"/tmp/branchline-vm-json-pipeline/strings-16.json","inputSha256":"c2d15282575694bc4e4b59d9de6a10d891719cfe693bc29b16c9298ae0de6f13","heapUsedBytes":{"rawAndPreparedVm":23914728,"rawPreparedAndMaterialized":40597608,"rawPreparedAfterMaterializedRelease":40597608,"rawAndReusableVmLastEnvironment":40586408,"detachedOutputOnly":23791296},"heapDeltasBytes":{"materializedMinusBaseline":16682880,"reusableVmMinusBaseline":16671680,"releaseMaterialized":0,"releaseRawAndPipeline":16795112},"rawTextCollected":true,"pipelineCollected":true,"output":"{\"total\":16776325}","jvmArguments":["-Xms512m","-Xmx2g","-XX:+UseSerialGC"],"heapMaxBytes":2075918336}
+        0.32 real         0.43 user         0.03 sys
+           217284608  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               14455  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                   3  voluntary context switches
+                2936  involuntary context switches
+          5279663485  instructions retired
+          1818892385  cycles elapsed
+           195478464  peak memory footprint

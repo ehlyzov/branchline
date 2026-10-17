@@ -26,7 +26,7 @@ The VM consists of several key components:
 - Control flow: jumps, conditionals, FOREACH support
 - Lambda closures with captured environment and invocation
 - Debug/trace integration with the Branchline tracer and instruction counters
-- Snapshot/restore (partial): bytecode/env/stack serialized; call/try stacks not yet serialized
+- Snapshot/restore: bytecode, operand, call, try and loop stacks within the supported serializable value domain
 
 ### 3. IR-to-Bytecode Compiler (`Compiler.kt`)
 - IR node compilation for LET/SET/APPEND/APPEND VAR/MODIFY/OUTPUT/IF/FOR EACH/TRY-CATCH/RETURN/ABORT/EXPR STMT
@@ -36,8 +36,8 @@ The VM consists of several key components:
 - Notable gaps: SharedStateAwaitExpr; generic SET/APPEND/MODIFY through nested access paths
 
 ### 4. Integration Layer (`Integration.kt`)
-- VMExec: VM runner with automatic fallback to interpreter on compile/exec failure
-- VMEval: expression evaluator with interpreter fallback and trace signals (FALLBACK Call/Return)
+- VMExec: VM runner with configurable compilation-only fallback; execution failures propagate
+- VMEval: bounded implicit expression caching and explicit `prepare(expr)` handles with compilation-only fallback and per-call execution reports
 - Utilities: basic validation and performance estimation heuristics
 - Runtime/Factory: configuration and metrics (timing, compilation stats)
 
@@ -134,14 +134,14 @@ val result = vm.execute(bytecode) // Returns 30
 
 ### Integration with Existing System
 ```kotlin
-// VM-enabled executor with fallback
+// Require bytecode execution and retain evidence for this invocation.
 val vmExec = VMFactory.createExecutor(
     ir = irNodes,
-    eval = fallbackEvaluator,
-    useVM = true
+    fallbackPolicy = VMFallbackPolicy.NONE,
 )
 
 val result = vmExec.run(environment)
+val report = vmExec.lastExecution
 ```
 
 ### Performance Analysis
@@ -153,11 +153,13 @@ println("Recommendation: ${estimate.recommendation}")
 
 ## Performance Expectations
 
-Initial results demonstrate speedups on arithmetic/loop-heavy workloads. Further gains depend on completing write paths, try/catch, and enabling simple optimizations. Use `TraceReport.instructionsPerRow` and `VMUtil.estimatePerformanceBenefit` to guide adoption.
+Prepared numeric dispatch avoids bytecode hashing; function calls reuse caller state without copying unrelated environment bindings. Compiler-proven private literal accumulators use linear array/map updates; ownership scopes log only changed candidates. Nested environment enumeration uses a single iterative merge, avoiding exponential snapshot preparation. Tracing, incremental execution, custom observing environments and shared values retain copying where observation requires it. `VMEval.prepare(expr)` provides reusable execution with a captured AST and compilation authority. See `docs/vm.md` for exact preparation, invalidation and lifetime contracts.
+
+The controlled before/after evidence is recorded under `development/evidence/vm-performance/`. It measures targeted VM workloads, not an overall advantage over JSONata or Kotlin. `VMUtil.estimatePerformanceBenefit` is a heuristic, not benchmark evidence.
 
 ## Integration Strategy
 
-1. Prefer `ExecutionEngine.VM` in tests where implemented; otherwise rely on `VMExec` fallback.
+1. Prefer `ExecutionEngine.VM` in tests where implemented; use `VMFallbackPolicy.NONE` and inspect successful `VM_BYTECODE` reports to establish actual VM execution.
 2. Incrementally migrate features; keep parity with interpreter semantics and trace output.
 3. Use validation/estimation helpers to choose VM vs interpreter per path.
 
@@ -165,7 +167,7 @@ Initial results demonstrate speedups on arithmetic/loop-heavy workloads. Further
 
 Run the VM tests with:
 ```bash
-./gradlew test --tests "io.github.ehlyzov.branchline.vm.*"
+./gradlew :vm:jvmTest :vm:jsTest
 ```
 
 The test suite includes:
@@ -243,3 +245,5 @@ Options via system properties:
 - `-Dbranchline.dumpIterations=3` sets how many iterations/files to write (default 3).
 
 Each run produces files like `BranchlineDump-iter1.bc.txt`, `BranchlineDump-iter2.bc.txt` that you can diff.
+
+Fallback migration and execution report details are documented in `docs/vm.md`. Runtime errors never rerun the interpreter; `VMConfig.fallbackOnError` is unused and deprecated.

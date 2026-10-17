@@ -1,0 +1,61 @@
+> Task :cli:kmpPartiallyResolvedDependenciesChecker
+> Task :cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:compileKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmProcessResources UP-TO-DATE
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :interpreter:jvmMainClasses UP-TO-DATE
+> Task :interpreter:jvmJar UP-TO-DATE
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :cli:jvmProcessResources NO-SOURCE
+> Task :cli:processJvmMainResources SKIPPED
+> Task :interpreter-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter-benchmarks:processResources NO-SOURCE
+> Task :interpreter-benchmarks:processTestResources NO-SOURCE
+> Task :interpreter-benchmarks:processJmhResources NO-SOURCE
+> Task :vm-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm-benchmarks:processResources NO-SOURCE
+> Task :vm-benchmarks:processTestResources NO-SOURCE
+> Task :vm-benchmarks:processJmhResources NO-SOURCE
+> Task :vm:compileKotlinJvm
+> Task :vm:compileJvmMainJava NO-SOURCE
+> Task :vm:jvmMainClasses
+> Task :vm:jvmJar UP-TO-DATE
+> Task :cli:compileKotlinJvm UP-TO-DATE
+> Task :cli:compileJvmMainJava NO-SOURCE
+> Task :cli:jvmMainClasses UP-TO-DATE
+> Task :cli:jvmJar UP-TO-DATE
+> Task :interpreter-benchmarks:compileKotlin NO-SOURCE
+> Task :interpreter-benchmarks:compileJava NO-SOURCE
+> Task :interpreter-benchmarks:classes UP-TO-DATE
+> Task :interpreter-benchmarks:jar
+> Task :interpreter-benchmarks:compileTestKotlin NO-SOURCE
+> Task :interpreter-benchmarks:compileTestJava NO-SOURCE
+> Task :interpreter-benchmarks:testClasses UP-TO-DATE
+> Task :vm-benchmarks:compileKotlin NO-SOURCE
+> Task :vm-benchmarks:compileJava NO-SOURCE
+> Task :vm-benchmarks:classes UP-TO-DATE
+> Task :vm-benchmarks:jar UP-TO-DATE
+> Task :vm-benchmarks:compileTestKotlin NO-SOURCE
+> Task :vm-benchmarks:compileTestJava NO-SOURCE
+> Task :vm-benchmarks:testClasses UP-TO-DATE
+> Task :vm-benchmarks:compileJmhKotlin UP-TO-DATE
+> Task :vm-benchmarks:compileJmhJava NO-SOURCE
+> Task :vm-benchmarks:jmhClasses UP-TO-DATE
+> Task :vm-benchmarks:jmhRunBytecodeGenerator UP-TO-DATE
+> Task :vm-benchmarks:jmhCompileGeneratedClasses UP-TO-DATE
+> Task :vm-benchmarks:jmhJar UP-TO-DATE
+> Task :interpreter-benchmarks:compileJmhKotlin
+> Task :interpreter-benchmarks:compileJmhJava NO-SOURCE
+> Task :interpreter-benchmarks:jmhClasses UP-TO-DATE
+> Task :interpreter-benchmarks:jmhRunBytecodeGenerator
+> Task :interpreter-benchmarks:jmhCompileGeneratedClasses
+> Task :interpreter-benchmarks:jmhJar
+
+BUILD SUCCESSFUL in 3s
+20 actionable tasks: 9 executed, 11 up-to-date

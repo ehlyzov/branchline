@@ -1,0 +1,14 @@
+{
+  "cohort": "aborted-001",
+  "scored": false,
+  "reason": "Invalid reference syntax: IF without THEN and object-return lambda without parentheses. Whole cohort invalidated, all languages will restart.",
+  "completed_cells": 84,
+  "attempted_cells": 87,
+  "known_output_tokens": 48917,
+  "raw_private_archive": "/tmp/branchline-authoring-private-aborted-001",
+  "preserved_seal_sha256": "10edc9da49f693dab06ba3ffcaa84e7c427ea4427f4567e639b7c277e30b6775",
+  "known_total_generation_output_tokens": 50539,
+  "completed_generation_calls": 97,
+  "generation_calls_without_completed_usage": 0,
+  "known_output_tokens_note": "48917 includes completed cells only; 50539 includes all97 completed generation calls, including interrupted evaluation cells."
+}

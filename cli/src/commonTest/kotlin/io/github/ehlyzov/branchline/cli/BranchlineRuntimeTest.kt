@@ -30,7 +30,6 @@ class BranchlineRuntimeTest {
         val transform = runtime.selectTransform(null)
         val bytecode = runtime.compileBytecode(transform)
         val artifact = CompiledArtifact(
-            version = 1,
             transform = transform.name,
             script = script,
             bytecode = BytecodeIO.serializeBytecode(bytecode),

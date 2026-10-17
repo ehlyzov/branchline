@@ -1,0 +1,8 @@
+TRANSFORM Main {
+LET accumulated = []
+FOR EACH x IN input.values ?? [] {
+    accumulated += {value: x}
+}
+OUTPUT { entries: accumulated }
+
+}

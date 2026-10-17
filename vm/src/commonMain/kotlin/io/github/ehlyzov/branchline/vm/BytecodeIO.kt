@@ -78,7 +78,9 @@ object BytecodeIO {
         "f64" -> value.s!!.toDouble()
         "arr" -> value.arr!!.map { deserializeValue(it) }
         "obj" -> value.obj!!.mapValues { (_, v) -> deserializeValue(v) }
-        else -> value.s
+        else -> throw IllegalArgumentException(
+            "Unsupported bytecode value type '${value.t}'. Upgrade Branchline or recompile the script with the target CLI using blc.",
+        )
     }
 
     private fun unwrapKeyConst(key: ObjKey): Any = when (key) {
@@ -121,6 +123,17 @@ object BytecodeIO {
         Instruction.ACCESS_DYNAMIC -> SerializedInstruction("ACCESS_DYNAMIC")
         is Instruction.SET_STATIC -> SerializedInstruction("SET_STATIC", key = unwrapKeyConst(instruction.key).toString())
         Instruction.SET_DYNAMIC -> SerializedInstruction("SET_DYNAMIC")
+        is Instruction.PRIVATE_SET_STATIC -> SerializedInstruction(
+            "PRIVATE_SET_STATIC", key = unwrapKeyConst(instruction.key).toString(),
+            s = when (instruction.key) {
+                is ObjKey.Name -> "name"
+                is I32 -> "i32"
+                is I64 -> "i64"
+                is IBig -> "ibig"
+            },
+        )
+        Instruction.PRIVATE_SET_DYNAMIC -> SerializedInstruction("PRIVATE_SET_DYNAMIC")
+        Instruction.PRIVATE_ARRAY_APPEND -> SerializedInstruction("PRIVATE_ARRAY_APPEND")
         Instruction.APPEND -> SerializedInstruction("APPEND")
         Instruction.ARRAY_BUILDER_INIT -> SerializedInstruction("ARRAY_BUILDER_INIT")
         Instruction.ARRAY_BUILDER_ADD -> SerializedInstruction("ARRAY_BUILDER_ADD")
@@ -187,6 +200,14 @@ object BytecodeIO {
         "ACCESS_DYNAMIC" -> Instruction.ACCESS_DYNAMIC
         "SET_STATIC" -> Instruction.SET_STATIC(ObjKey.Name(serialized.key!!))
         "SET_DYNAMIC" -> Instruction.SET_DYNAMIC
+        "PRIVATE_SET_STATIC" -> Instruction.PRIVATE_SET_STATIC(when (serialized.s) {
+            "i32" -> I32(serialized.key!!.toInt())
+            "i64" -> I64(serialized.key!!.toLong())
+            "ibig" -> IBig(io.github.ehlyzov.branchline.runtime.bignum.blBigIntParse(serialized.key!!))
+            else -> ObjKey.Name(serialized.key!!)
+        })
+        "PRIVATE_SET_DYNAMIC" -> Instruction.PRIVATE_SET_DYNAMIC
+        "PRIVATE_ARRAY_APPEND" -> Instruction.PRIVATE_ARRAY_APPEND
         "APPEND" -> Instruction.APPEND
         "ARRAY_BUILDER_INIT" -> Instruction.ARRAY_BUILDER_INIT
         "ARRAY_BUILDER_ADD" -> Instruction.ARRAY_BUILDER_ADD
@@ -217,6 +238,8 @@ object BytecodeIO {
         "BREAKPOINT" -> Instruction.BREAKPOINT(serialized.s!!)
         "LINE" -> Instruction.LINE(serialized.i!!)
         "SUSPEND" -> Instruction.SUSPEND
-        else -> throw IllegalArgumentException("Unknown op ${serialized.op}")
+        else -> throw IllegalArgumentException(
+            "Unsupported bytecode instruction '${serialized.op}'. Upgrade Branchline or recompile the script with the target CLI using blc.",
+        )
     }
 }

@@ -1,0 +1,19 @@
+{"engine":"interpreter","effective":"interpreter","untimedDiagnostics":{"workload":"reduction","dataset":"large","sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"validatedExecutions":3,"engine":"interpreter","effective":"interpreter"},"operation":"memory","lifetime":"many","workload":"reduction","dataset":"large","executions":1000,"preparedExecutorCount":1000,"heapUsedBytes":{"fixtureOnlyAfterPriming":8213880,"fixtureExecutorsWeakReferencesAndLastOutput":10889848,"fixtureWeakReferencesAndLastOutput":8292744,"fixtureOnlyAfterRelease":8256584},"approximateHeapDeltasBytes":{"preparedAndLastOutputMinusBaseline":2675968,"afterExecutorsReleaseMinusBaseline":78864,"afterAllReleaseMinusBaseline":42704},"collectedExecutorWrappers":1000,"weakReferenceScope":"executor wrappers only; no assertion about exact reachable graphs","jvmArguments":["-Xms32m","-Xmx768m","-XX:+UseG1GC"],"heapMaxBytes":805306368,"peakRssSource":"external /usr/bin/time -l; not a heap-used or B/op value"}
+        0.27 real         0.70 user         0.03 sys
+           113377280  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                8570  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                   2  voluntary context switches
+                3334  involuntary context switches
+          8537176115  instructions retired
+          2880843285  cycles elapsed
+            91489192  peak memory footprint

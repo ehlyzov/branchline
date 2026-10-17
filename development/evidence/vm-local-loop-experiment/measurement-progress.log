@@ -1,0 +1,61 @@
+START old-baseline
+DONE old-baseline 50.0 exit 0
+START forward
+DONE forward 397.0 exit 0
+START reverse
+DONE reverse 199.0 exit 0
+START preparation
+DONE preparation 52.9 exit 0
+START fallback
+DONE fallback 26.3 exit 0
+START memory-interpreter-reuse-1
+DONE memory-interpreter-reuse-1 0.4 exit 0
+START memory-baseline-reuse-1
+DONE memory-baseline-reuse-1 0.4 exit 0
+START memory-loopBody-reuse-1
+DONE memory-loopBody-reuse-1 0.4 exit 0
+START memory-localLoop-reuse-1
+DONE memory-localLoop-reuse-1 0.4 exit 0
+START memory-interpreter-many-1
+DONE memory-interpreter-many-1 0.4 exit 0
+START memory-baseline-many-1
+DONE memory-baseline-many-1 0.5 exit 0
+START memory-loopBody-many-1
+DONE memory-loopBody-many-1 1.0 exit 0
+START memory-localLoop-many-1
+DONE memory-localLoop-many-1 0.9 exit 0
+START memory-localLoop-reuse-2
+DONE memory-localLoop-reuse-2 0.4 exit 0
+START memory-loopBody-reuse-2
+DONE memory-loopBody-reuse-2 0.4 exit 0
+START memory-baseline-reuse-2
+DONE memory-baseline-reuse-2 0.4 exit 0
+START memory-interpreter-reuse-2
+DONE memory-interpreter-reuse-2 0.4 exit 0
+START memory-localLoop-many-2
+DONE memory-localLoop-many-2 0.9 exit 0
+START memory-loopBody-many-2
+DONE memory-loopBody-many-2 1.0 exit 0
+START memory-baseline-many-2
+DONE memory-baseline-many-2 0.5 exit 0
+START memory-interpreter-many-2
+DONE memory-interpreter-many-2 0.4 exit 0
+START memory-interpreter-reuse-3
+DONE memory-interpreter-reuse-3 0.4 exit 0
+START memory-baseline-reuse-3
+DONE memory-baseline-reuse-3 0.4 exit 0
+START memory-loopBody-reuse-3
+DONE memory-loopBody-reuse-3 0.4 exit 0
+START memory-localLoop-reuse-3
+DONE memory-localLoop-reuse-3 0.4 exit 0
+START memory-interpreter-many-3
+DONE memory-interpreter-many-3 0.4 exit 0
+START memory-baseline-many-3
+DONE memory-baseline-many-3 0.5 exit 0
+START memory-loopBody-many-3
+DONE memory-loopBody-many-3 0.9 exit 0
+START memory-localLoop-many-3
+DONE memory-localLoop-many-3 0.9 exit 0
+START profile-after-localLoop
+DONE profile-after-localLoop 11.9 exit 0
+ALL MEASUREMENTS COMPLETE

@@ -1,0 +1,10 @@
+
+fun transform(input: Any?): Any? {
+val root = input as? Map<*, *> ?: emptyMap<Any?, Any?>()
+val child = root["child"] as? Map<*, *>
+val code = child?.get("code") as? String ?: "unknown"
+val values = root["values"] as? List<*> ?: emptyList<Any?>()
+val first = values.getOrNull(0)
+
+return mapOf("code" to code,"first" to first)
+}

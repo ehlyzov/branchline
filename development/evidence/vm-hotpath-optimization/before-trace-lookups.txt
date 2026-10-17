@@ -1,0 +1,10 @@
+jar=file:/private/tmp/branchline-vm-hotpath/before/vm.jar
+workload=VMTransformBenchmark.typicalTransform dataset=large executions=1 tracer=null
+method=delegating trace metadata maps count Map.get; same arrays/constants/program/input
+output={total=87250, orderCount=500}
+outputCheck=PASS expected orderCount=500 total=87250
+enterEvents.get=4014
+exitEvents.get=4014
+pathWrites.get=501
+total.get=8529
+scope=lookup counts only; wrapper overhead excludes timing/allocation conclusions

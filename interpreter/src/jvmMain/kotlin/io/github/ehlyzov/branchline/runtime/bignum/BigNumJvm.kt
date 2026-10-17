@@ -51,3 +51,8 @@ actual fun BLBigDec.ceil(): BLBigInt = this.round(
     MathContext(0, RoundingMode.CEILING)
 ).toBLBigInt()
 actual fun BLBigDec.roundHalfEven(scale: Int): BLBigDec = this.setScale(scale, RoundingMode.HALF_EVEN)
+
+actual fun BLBigInt.powNonNegative(exponent: Int): BLBigInt = this.pow(exponent)
+actual fun BLBigDec.powIntegral(exponent: Int): BLBigDec =
+    if (exponent >= 0) this.pow(exponent) else BigDecimal.ONE.divide(this.pow(-exponent), BL_MATH_CONTEXT)
+actual fun BLBigDec.sqrtDecimal(): BLBigDec = this.sqrt(BL_MATH_CONTEXT)

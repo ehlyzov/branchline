@@ -1,0 +1,13 @@
+
+fun transform(input: Any?): Any? {
+val obj=mapOf("q" to 4L,"r" to 0L)
+val m=obj.toMutableMap()
+m["z"]=3L
+m.put("w",2L)
+m.remove("r")
+val groups=mutableMapOf<String,MutableList<Long>?>()
+groups["q"]=null
+groups.getOrPut("q"){mutableListOf()}!!.add(4L)
+
+return mapOf("keys" to obj.keys.toList(),"values" to obj.values.toList(),"entries" to obj.entries.map{mapOf("key" to it.key,"value" to it.value)},"mapped" to obj.mapValues{(key,value)->value+1},"filterKeys" to obj.filterKeys{it=="q"},"filterValues" to obj.filterValues{it>0},"filter" to obj.filter{it.value>0},"mutable" to m,"groups" to groups,"distinct" to listOf(1,2,1).distinct(),"distinctBy" to listOf("a","ab","b").distinctBy{it.length},"sorted" to listOf(2,1).sorted(),"sortedDesc" to listOf(1,2).sortedDescending(),"reversed" to listOf(1,2).reversed())
+}

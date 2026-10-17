@@ -1,0 +1,5 @@
+
+TRANSFORM Main {
+
+OUTPUT {lower: LOWER("Ab"), upper: UPPER(TRIM(input.label ?? "")), trim: TRIM(" a  b "), substring: SUBSTRING("abc",1,1), contains: CONTAINS("abc","b"), split: SPLIT("a:b",":"), joined: JOIN(["a","b"],":"), replaced: REPLACE("a1b2","[0-9]","x"), match: MATCH("a1b2","[0-9]"), stringNull: STRING(NULL), number: NUMBER("3"), integer: INT("3"), digits: PARSE_INT("x3y"), precise: DEC("1.25") + DEC("1.25"), big: DEC("17"), roundedEven: ROUND(6.5,0), roundedOdd: ROUND(7.5,0), quotient: -7 // 3, remainder: -7 % 3, division: 7 / 2, abs: ABS(-3), floor: FLOOR(-1.2), ceil: CEIL(-1.2), zero: 0 ?? 9, bool: FALSE ?? TRUE, empty: "" ?? "x", arithmetic: (2 + 3) * 4 - 1, comparison: (2 < 3) && !(2 == 3), textConcat: "a" + "b", nested: [[7]]}
+}

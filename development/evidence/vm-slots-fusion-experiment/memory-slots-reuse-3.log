@@ -1,0 +1,19 @@
+{"requestedSlots":true,"requestedFusion":false,"collectDiagnostics":false,"effectiveSlots":true,"effectiveFusion":false,"fallbackReason":null,"slotReads":0,"slotWrites":0,"loopSlotWrites":0,"mirroredStoresElided":0,"fusedDispatches":0,"instructionsElided":0,"hostBarriers":0,"untimedDiagnostics":{"workload":"reduction","dataset":"large","sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"validatedExecutions":3,"requestedSlots":true,"requestedFusion":false,"collectDiagnostics":true,"effectiveSlots":true,"effectiveFusion":false,"fallbackReason":null,"slotReads":1003,"slotWrites":501,"loopSlotWrites":501,"mirroredStoresElided":501,"fusedDispatches":0,"instructionsElided":1002,"hostBarriers":1},"operation":"memory","engine":"slots","lifetime":"reuse","workload":"reduction","dataset":"large","executions":1000,"preparedExecutorCount":1,"heapUsedBytes":{"fixtureOnlyAfterPriming":8294904,"fixtureExecutorsWeakReferencesAndLastOutput":8335392,"fixtureWeakReferencesAndLastOutput":8328904,"fixtureOnlyAfterRelease":8328512},"approximateHeapDeltasBytes":{"preparedAndLastOutputMinusBaseline":40488,"afterExecutorsReleaseMinusBaseline":34000,"afterAllReleaseMinusBaseline":33608},"collectedExecutorWrappers":1,"weakReferenceScope":"executor wrappers only; no assertion about exact reachable graphs","jvmArguments":["-Xms32m","-Xmx768m","-XX:+UseG1GC"],"heapMaxBytes":805306368,"peakRssSource":"external /usr/bin/time -l; not a heap-used or B/op value"}
+        0.30 real         0.69 user         0.02 sys
+           120864768  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                8744  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                   2  voluntary context switches
+                2843  involuntary context switches
+          9651589516  instructions retired
+          2843229234  cycles elapsed
+            99042240  peak memory footprint

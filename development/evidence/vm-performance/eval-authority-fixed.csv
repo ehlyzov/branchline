@@ -1,0 +1,13 @@
+mode,adapter,unused_functions,function_ast_width,median_ns_per_eval
+vm,implicit,0,256,3264
+vm,implicit,128,256,6057
+vm,implicit,1024,256,2319
+disabled,implicit,0,256,354
+disabled,implicit,128,256,108
+disabled,implicit,1024,256,111
+vm,prepared,0,256,184
+vm,prepared,128,256,192
+vm,prepared,1024,256,197
+disabled,prepared,0,256,166
+disabled,prepared,128,256,156
+disabled,prepared,1024,256,144

@@ -1,0 +1,1 @@
+{"compile_ok":true,"cases":[{"ok":true,"actual":{"code":"q"},"error":null},{"ok":true,"actual":{"code":"q","note":null},"error":null}],"compile_seconds":3.015245458863631,"execute_seconds":0.060933584}

@@ -276,7 +276,7 @@ public object BranchlineCli {
               --shared-key MODE Key naming: relative (default), basename, or custom (resource=key=path).
               --jobs N          Fan out transforms across shared inputs with N parallel jobs.
               --summary-transform NAME Run a summary transform after fan-out, fed { reports, manifest }.
-              --trace             Emit a trace summary to stderr after execution.
+              --trace             Emit a trace summary to stderr after execution (compiled fan-out runs serially).
               --trace-format FMT  Trace output format ('text' or 'json').
               --error-format FMT  Error output format ('text' or 'json').
               --contracts MODE    (run/exec) validate contracts: off (default), warn, strict.
@@ -382,7 +382,6 @@ public object BranchlineCli {
         val contract = runtime.contractForTransform(transform)
         val bytecode = runtime.compileBytecode(transform)
         val artifact = CompiledArtifact(
-            version = 1,
             transform = transform.name,
             script = source,
             bytecode = BytecodeIO.serializeBytecode(bytecode),
@@ -402,11 +401,19 @@ public object BranchlineCli {
         return withSharedStore { store ->
             val raw = readTextFileOrThrow(options.artifactPath)
             val artifact = ArtifactCodec.decode(raw)
+            val bytecode = try {
+                BytecodeIO.deserializeBytecode(artifact.bytecode)
+            } catch (ex: IllegalArgumentException) {
+                throw CliException(ex.message ?: "Invalid compiled bytecode", kind = CliErrorKind.INPUT)
+            }
             val runtime = BranchlineProgram(artifact.script, traceSession?.tracer)
             val transformName = options.transformOverride ?: artifact.transform
             val transform = runtime.selectTransform(transformName)
-            val bytecode = BytecodeIO.deserializeBytecode(artifact.bytecode)
-            val vmExec = runtime.prepareVmExec(transform, bytecode)
+            val vmExec by lazy { runtime.prepareVmExec(transform, bytecode) }
+            // A collecting tracer owns mutable capture stacks. Keep its fan-out
+            // sequential; ordinary compiled jobs own a complete runtime per worker.
+            val traced = traceSession != null ||
+                io.github.ehlyzov.branchline.debug.Debug.tracer is CollectingTracer
             val loadedInput = loadInput(
                 options.inputPath,
                 options.inputFormat,
@@ -425,7 +432,7 @@ public object BranchlineCli {
             val summaryTransform = options.summaryTransform?.let { runtime.selectTransform(it) }
             val contractsMode = options.contractsMode
             val result = runWithFanout(
-                jobs = options.jobs,
+                jobs = if (traced) options.jobs.coerceAtMost(1) else options.jobs,
                 sharedSeed = sharedSeed,
                 baseInput = input,
                 summaryTransform = summaryTransform,
@@ -435,6 +442,23 @@ public object BranchlineCli {
                         emitContractWarnings(execResult.violations, transform.name)
                     }
                     execResult.output
+                },
+                createTransformRunner = if (traced || options.jobs <= 1) null else {
+                    {
+                        val workerRuntime = BranchlineProgram(artifact.script)
+                        val workerTransform = workerRuntime.selectTransform(transformName)
+                        val workerExec = workerRuntime.prepareVmExec(workerTransform, bytecode)
+                        val runner: (Map<String, Any?>) -> Any? = { data ->
+                            val execResult = workerRuntime.executeVmWithContracts(
+                                workerTransform, data, workerExec, contractsMode,
+                            )
+                            if (contractsMode == ContractValidationMode.WARN) {
+                                emitContractWarnings(execResult.violations, workerTransform.name)
+                            }
+                            execResult.output
+                        }
+                        runner
+                    }
                 },
                 runSummary = { data ->
                     summaryTransform?.let {
@@ -1397,6 +1421,7 @@ private fun runWithFanout(
     summaryTransform: TransformDecl?,
     runTransform: (Map<String, Any?>) -> Any?,
     runSummary: (Map<String, Any?>) -> Any?,
+    createTransformRunner: (() -> (Map<String, Any?>) -> Any?)? = null,
 ): Any? {
     if (jobs <= 0) return null
     if (sharedSeed.entries.isEmpty()) {
@@ -1409,14 +1434,19 @@ private fun runWithFanout(
     val resource = resources.first()
     val entries = sharedSeed.entriesFor(resource)
     val parallelism = jobs.coerceAtLeast(1)
-    val reports = parallelMap(parallelism, entries) { entry ->
+    val runEntry = { runner: (Map<String, Any?>) -> Any?, entry: SharedEntry ->
         val input = HashMap<String, Any?>(baseInput.size + 2).apply {
             putAll(baseInput)
             this["key"] = entry.key
             this["resource"] = entry.resource
         }
-        val result = runTransform(input)
+        val result = runner(input)
         buildFanoutEntry(entry, result)
+    }
+    val reports = if (createTransformRunner == null) {
+        parallelMap(parallelism, entries) { entry -> runEntry(runTransform, entry) }
+    } else {
+        parallelMapWithWorker(parallelism, entries, createTransformRunner, runEntry)
     }
     if (summaryTransform == null) return reports
     val summaryInput = HashMap<String, Any?>(baseInput.size + 2).apply {

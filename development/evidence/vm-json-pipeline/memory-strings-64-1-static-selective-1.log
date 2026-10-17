@@ -1,0 +1,19 @@
+{"engineMode":"selective","inputMiB":64,"actualInputBytes":67108864,"shape":"strings","selectedPercent":1,"accessPattern":"static","expectedTotal":671080,"effectiveMode":"SELECTIVE","reason":"STATIC_TOP_LEVEL","selectedRootKeys":["f0","input"],"operation":"memory","input":"/tmp/branchline-vm-json-pipeline/strings-64.json","inputSha256":"492696714095d66c44c9fd8c286ec7b29a53dec0572606f2ee4763b3899d6b78","heapUsedBytes":{"rawAndPreparedVm":73849344,"rawPreparedAndMaterialized":74532488,"rawPreparedAfterMaterializedRelease":74532488,"rawAndReusableVmLastEnvironment":74532528,"detachedOutputOnly":6746832},"heapDeltasBytes":{"materializedMinusBaseline":683144,"reusableVmMinusBaseline":683184,"releaseMaterialized":0,"releaseRawAndPipeline":67785696},"rawTextCollected":true,"pipelineCollected":true,"output":"{\"total\":671080}","jvmArguments":["-Xms512m","-Xmx2g","-XX:+UseSerialGC"],"heapMaxBytes":2075918336}
+        0.31 real         0.43 user         0.05 sys
+           296321024  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               19282  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                   2  voluntary context switches
+                2833  involuntary context switches
+          5742318373  instructions retired
+          1866198534  cycles elapsed
+           274564104  peak memory footprint

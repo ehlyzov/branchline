@@ -1,0 +1,11 @@
+
+fun transform(input: Any?): Any? {
+val root=input as Map<*, *>
+val rows = root["rows"] as? List<*> ?: emptyList<Any?>()
+val accumulated = mutableListOf<Any?>()
+for ((index, value) in rows.withIndex()) {
+    accumulated.add(mapOf("index" to index, "value" to value))
+}
+
+return mapOf("values" to accumulated)
+}

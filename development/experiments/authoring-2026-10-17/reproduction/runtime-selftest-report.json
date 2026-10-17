@@ -1,0 +1,22 @@
+{
+  "branchline": {
+    "identity_passes": 11,
+    "deliberate_mismatches": 4,
+    "compile_error_detected": true
+  },
+  "jsonata": {
+    "identity_passes": 11,
+    "deliberate_mismatches": 4,
+    "compile_error_detected": true,
+    "undefined_is_not_null": true,
+    "root_null_preserved": true
+  },
+  "kotlin": {
+    "identity_passes": 11,
+    "deliberate_mismatches": 4,
+    "compile_error_detected": true,
+    "private_siblings_repo_and_network_denied": true,
+    "copied_expected_file_deleted_before_execution": true,
+    "inherited_environment_removed": true
+  }
+}

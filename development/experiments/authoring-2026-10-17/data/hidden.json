@@ -1,0 +1,3980 @@
+{
+  "A01": [
+    {
+      "input": {
+        "id": "c0",
+        "given": "",
+        "family": ""
+      },
+      "expected": {
+        "customer": {
+          "customerId": "c0",
+          "name": {
+            "first": "",
+            "last": ""
+          },
+          "email": null
+        }
+      }
+    },
+    {
+      "input": {
+        "id": "c3",
+        "given": " A ",
+        "family": " B ",
+        "email": ""
+      },
+      "expected": {
+        "customer": {
+          "customerId": "c3",
+          "name": {
+            "first": " A ",
+            "last": " B "
+          },
+          "email": ""
+        }
+      }
+    },
+    {
+      "input": {
+        "id": "c4",
+        "given": "N",
+        "family": "M",
+        "email": null,
+        "phone": "ignored"
+      },
+      "expected": {
+        "customer": {
+          "customerId": "c4",
+          "name": {
+            "first": "N",
+            "last": "M"
+          },
+          "email": null
+        }
+      }
+    },
+    {
+      "input": {
+        "id": "c5",
+        "given": "é",
+        "family": "李",
+        "email": "e@example.test"
+      },
+      "expected": {
+        "customer": {
+          "customerId": "c5",
+          "name": {
+            "first": "é",
+            "last": "李"
+          },
+          "email": "e@example.test"
+        }
+      }
+    },
+    {
+      "input": {
+        "id": "c6",
+        "given": "A",
+        "family": "B",
+        "name": {
+          "first": "wrong"
+        }
+      },
+      "expected": {
+        "customer": {
+          "customerId": "c6",
+          "name": {
+            "first": "A",
+            "last": "B"
+          },
+          "email": null
+        }
+      }
+    },
+    {
+      "input": {
+        "id": "",
+        "given": "G",
+        "family": "F",
+        "email": " x "
+      },
+      "expected": {
+        "customer": {
+          "customerId": "",
+          "name": {
+            "first": "G",
+            "last": "F"
+          },
+          "email": " x "
+        }
+      }
+    }
+  ],
+  "A02": [
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "empty",
+            "lines": []
+          }
+        ]
+      },
+      "expected": {
+        "rows": []
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "o",
+            "lines": [
+              {
+                "sku": "a",
+                "quantity": 1
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "orderId": "o",
+            "lineNo": 1,
+            "sku": "a",
+            "quantity": 1
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "o",
+            "lines": []
+          },
+          {
+            "id": "p",
+            "lines": [
+              {
+                "sku": "z",
+                "quantity": 3
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "orderId": "p",
+            "lineNo": 1,
+            "sku": "z",
+            "quantity": 3
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "same",
+            "lines": [
+              {
+                "sku": "a",
+                "quantity": 1
+              }
+            ]
+          },
+          {
+            "id": "same",
+            "lines": [
+              {
+                "sku": "a",
+                "quantity": 2
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "orderId": "same",
+            "lineNo": 1,
+            "sku": "a",
+            "quantity": 1
+          },
+          {
+            "orderId": "same",
+            "lineNo": 1,
+            "sku": "a",
+            "quantity": 2
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "o",
+            "lines": [
+              {
+                "sku": "a",
+                "quantity": 0
+              },
+              {
+                "sku": "a",
+                "quantity": 1
+              },
+              {
+                "sku": "a",
+                "quantity": 2
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "orderId": "o",
+            "lineNo": 1,
+            "sku": "a",
+            "quantity": 0
+          },
+          {
+            "orderId": "o",
+            "lineNo": 2,
+            "sku": "a",
+            "quantity": 1
+          },
+          {
+            "orderId": "o",
+            "lineNo": 3,
+            "sku": "a",
+            "quantity": 2
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "o",
+            "lines": [
+              {
+                "sku": "",
+                "quantity": 1000000,
+                "extra": true
+              }
+            ],
+            "extra": 42
+          }
+        ]
+      },
+      "expected": {
+        "rows": [
+          {
+            "orderId": "o",
+            "lineNo": 1,
+            "sku": "",
+            "quantity": 1000000
+          }
+        ]
+      }
+    }
+  ],
+  "A03": [
+    {
+      "input": {},
+      "expected": {
+        "selected": "none",
+        "address": null
+      }
+    },
+    {
+      "input": {
+        "primary": null,
+        "backup": null
+      },
+      "expected": {
+        "selected": "none",
+        "address": null
+      }
+    },
+    {
+      "input": {
+        "primary": {
+          "city": ""
+        },
+        "backup": {
+          "city": "B",
+          "postalCode": "1"
+        }
+      },
+      "expected": {
+        "selected": "primary",
+        "address": {
+          "city": "",
+          "postalCode": null
+        }
+      }
+    },
+    {
+      "input": {
+        "backup": {
+          "city": "B",
+          "postalCode": ""
+        }
+      },
+      "expected": {
+        "selected": "backup",
+        "address": {
+          "city": "B",
+          "postalCode": ""
+        }
+      }
+    },
+    {
+      "input": {
+        "primary": {
+          "city": "A",
+          "postalCode": null,
+          "street": "ignored"
+        }
+      },
+      "expected": {
+        "selected": "primary",
+        "address": {
+          "city": "A",
+          "postalCode": null
+        }
+      }
+    },
+    {
+      "input": {
+        "backup": null,
+        "unused": {
+          "city": "wrong"
+        }
+      },
+      "expected": {
+        "selected": "none",
+        "address": null
+      }
+    }
+  ],
+  "A04": [
+    {
+      "input": {
+        "statuses": [
+          ""
+        ]
+      },
+      "expected": {
+        "statuses": [
+          {
+            "original": "",
+            "label": "unknown"
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "statuses": [
+          "   ",
+          " pending  "
+        ]
+      },
+      "expected": {
+        "statuses": [
+          {
+            "original": "   ",
+            "label": "unknown"
+          },
+          {
+            "original": " pending  ",
+            "label": "queued"
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "statuses": [
+          "DeLiVeReD",
+          "Canceled",
+          "CANCELLED"
+        ]
+      },
+      "expected": {
+        "statuses": [
+          {
+            "original": "DeLiVeReD",
+            "label": "complete"
+          },
+          {
+            "original": "Canceled",
+            "label": "cancelled"
+          },
+          {
+            "original": "CANCELLED",
+            "label": "cancelled"
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "statuses": [
+          "new\t",
+          "\tnew",
+          "NE W"
+        ]
+      },
+      "expected": {
+        "statuses": [
+          {
+            "original": "new\t",
+            "label": "unknown"
+          },
+          {
+            "original": "\tnew",
+            "label": "unknown"
+          },
+          {
+            "original": "NE W",
+            "label": "unknown"
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "statuses": [
+          "new",
+          "new",
+          " New "
+        ]
+      },
+      "expected": {
+        "statuses": [
+          {
+            "original": "new",
+            "label": "queued"
+          },
+          {
+            "original": "new",
+            "label": "queued"
+          },
+          {
+            "original": " New ",
+            "label": "queued"
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "statuses": [
+          "queued",
+          "complete",
+          "cancelled ",
+          "unknown"
+        ]
+      },
+      "expected": {
+        "statuses": [
+          {
+            "original": "queued",
+            "label": "unknown"
+          },
+          {
+            "original": "complete",
+            "label": "unknown"
+          },
+          {
+            "original": "cancelled ",
+            "label": "cancelled"
+          },
+          {
+            "original": "unknown",
+            "label": "unknown"
+          }
+        ]
+      }
+    }
+  ],
+  "A05": [
+    {
+      "input": {
+        "eventId": "a",
+        "accepted": true,
+        "ackMode": "errors"
+      },
+      "expected": {
+        "ack": null
+      }
+    },
+    {
+      "input": {
+        "eventId": "b",
+        "accepted": false,
+        "ackMode": "none",
+        "reason": "bad"
+      },
+      "expected": {
+        "ack": null
+      }
+    },
+    {
+      "input": {
+        "eventId": "c",
+        "accepted": false,
+        "ackMode": null,
+        "reason": null
+      },
+      "expected": {
+        "ack": {
+          "eventId": "c",
+          "status": "error",
+          "reason": "unspecified"
+        }
+      }
+    },
+    {
+      "input": {
+        "eventId": "d",
+        "accepted": false,
+        "reason": ""
+      },
+      "expected": {
+        "ack": {
+          "eventId": "d",
+          "status": "error",
+          "reason": ""
+        }
+      }
+    },
+    {
+      "input": {
+        "eventId": "e",
+        "accepted": true,
+        "ackMode": "all",
+        "reason": "ignored"
+      },
+      "expected": {
+        "ack": {
+          "eventId": "e",
+          "status": "ok",
+          "reason": null
+        }
+      }
+    },
+    {
+      "input": {
+        "eventId": "f",
+        "accepted": false,
+        "ackMode": "all"
+      },
+      "expected": {
+        "ack": {
+          "eventId": "f",
+          "status": "error",
+          "reason": "unspecified"
+        }
+      }
+    }
+  ],
+  "A06": [
+    {
+      "input": {},
+      "expected": {
+        "valid": false,
+        "errors": [
+          "price.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "priceCents": null
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "price.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "priceCents": -1
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "price.range"
+        ]
+      }
+    },
+    {
+      "input": {
+        "priceCents": 1000000000
+      },
+      "expected": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "priceCents": 1000000001
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "price.range"
+        ]
+      }
+    },
+    {
+      "input": {
+        "priceCents": true
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "price.integer"
+        ]
+      }
+    },
+    {
+      "input": {
+        "priceCents": 1.5
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "price.integer"
+        ]
+      }
+    },
+    {
+      "input": {
+        "priceCents": 1.0
+      },
+      "expected": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "priceCents": []
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "price.integer"
+        ]
+      }
+    },
+    {
+      "input": {
+        "priceCents": {}
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "price.integer"
+        ]
+      }
+    }
+  ],
+  "A07": [
+    {
+      "input": {
+        "customerId": null,
+        "email": false,
+        "shipTo": []
+      },
+      "expected": {
+        "errors": [
+          "customerId.required",
+          "email.type",
+          "shipTo.type"
+        ]
+      }
+    },
+    {
+      "input": {
+        "customerId": " ",
+        "email": "",
+        "shipTo": {}
+      },
+      "expected": {
+        "errors": [
+          "customerId.blank",
+          "email.blank",
+          "shipTo.city.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "customerId": 1,
+        "email": "x",
+        "shipTo": {
+          "city": null
+        }
+      },
+      "expected": {
+        "errors": [
+          "customerId.type",
+          "shipTo.city.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "customerId": "c",
+        "email": "x",
+        "shipTo": null
+      },
+      "expected": {
+        "errors": [
+          "shipTo.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "customerId": "\t",
+        "email": "nonsyntax",
+        "shipTo": {
+          "city": "\t"
+        }
+      },
+      "expected": {
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "customerId": "c",
+        "email": {},
+        "shipTo": {
+          "city": 3,
+          "postal": "ignored"
+        }
+      },
+      "expected": {
+        "errors": [
+          "email.type",
+          "shipTo.city.type"
+        ]
+      }
+    }
+  ],
+  "A08": [
+    {
+      "input": {},
+      "expected": {
+        "valid": false,
+        "errors": [
+          "lines.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "lines": null
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "lines.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "lines": {}
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "lines.array"
+        ]
+      }
+    },
+    {
+      "input": {
+        "lines": []
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "lines.nonempty"
+        ]
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          null,
+          {},
+          {
+            "quantity": null
+          },
+          {
+            "quantity": true
+          },
+          {
+            "quantity": 1001
+          }
+        ]
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "lines.0.object",
+          "lines.1.quantity.required",
+          "lines.2.quantity.required",
+          "lines.3.quantity.integer",
+          "lines.4.quantity.range"
+        ]
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "quantity": -1
+          },
+          {
+            "quantity": 1.5
+          },
+          {
+            "quantity": 1.0
+          },
+          {
+            "quantity": 999
+          }
+        ]
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "lines.0.quantity.range",
+          "lines.1.quantity.integer"
+        ]
+      }
+    }
+  ],
+  "A09": [
+    {
+      "input": {},
+      "expected": {
+        "valid": false,
+        "errors": [
+          "method.invalid"
+        ]
+      }
+    },
+    {
+      "input": {
+        "method": "PICKUP",
+        "address": {}
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "method.invalid"
+        ]
+      }
+    },
+    {
+      "input": {
+        "method": "pickup",
+        "pickupPoint": " ",
+        "address": {}
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "pickupPoint.required",
+          "address.forbidden"
+        ]
+      }
+    },
+    {
+      "input": {
+        "method": "pickup",
+        "pickupPoint": false,
+        "address": null
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "pickupPoint.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "method": "delivery",
+        "address": {
+          "city": ""
+        },
+        "pickupPoint": ""
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "address.required",
+          "pickupPoint.forbidden"
+        ]
+      }
+    },
+    {
+      "input": {
+        "method": "delivery",
+        "address": {
+          "city": " X "
+        },
+        "pickupPoint": null
+      },
+      "expected": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "method": [],
+        "pickupPoint": "P"
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "method.invalid"
+        ]
+      }
+    }
+  ],
+  "A10": [
+    {
+      "input": {},
+      "expected": {
+        "allowed": false,
+        "errors": [
+          "from.invalid",
+          "to.invalid"
+        ]
+      }
+    },
+    {
+      "input": {
+        "from": null,
+        "to": false
+      },
+      "expected": {
+        "allowed": false,
+        "errors": [
+          "from.invalid",
+          "to.invalid"
+        ]
+      }
+    },
+    {
+      "input": {
+        "from": "draft",
+        "to": "closed"
+      },
+      "expected": {
+        "allowed": false,
+        "errors": [
+          "transition.forbidden"
+        ]
+      }
+    },
+    {
+      "input": {
+        "from": "paused",
+        "to": "closed"
+      },
+      "expected": {
+        "allowed": true,
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "from": "closed",
+        "to": "closed"
+      },
+      "expected": {
+        "allowed": true,
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "from": "active",
+        "to": "draft"
+      },
+      "expected": {
+        "allowed": false,
+        "errors": [
+          "transition.forbidden"
+        ]
+      }
+    },
+    {
+      "input": {
+        "from": "ACTIVE",
+        "to": "active"
+      },
+      "expected": {
+        "allowed": false,
+        "errors": [
+          "from.invalid"
+        ]
+      }
+    },
+    {
+      "input": {
+        "from": "paused",
+        "to": "active"
+      },
+      "expected": {
+        "allowed": true,
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "from": "draft",
+        "to": "draft"
+      },
+      "expected": {
+        "allowed": true,
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "from": "draft",
+        "to": "paused"
+      },
+      "expected": {
+        "allowed": false,
+        "errors": [
+          "transition.forbidden"
+        ]
+      }
+    },
+    {
+      "input": {
+        "from": "active",
+        "to": "active"
+      },
+      "expected": {
+        "allowed": true,
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "from": "active",
+        "to": "paused"
+      },
+      "expected": {
+        "allowed": true,
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "from": "active",
+        "to": "closed"
+      },
+      "expected": {
+        "allowed": true,
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "from": "paused",
+        "to": "draft"
+      },
+      "expected": {
+        "allowed": false,
+        "errors": [
+          "transition.forbidden"
+        ]
+      }
+    },
+    {
+      "input": {
+        "from": "paused",
+        "to": "paused"
+      },
+      "expected": {
+        "allowed": true,
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "from": "closed",
+        "to": "draft"
+      },
+      "expected": {
+        "allowed": false,
+        "errors": [
+          "transition.forbidden"
+        ]
+      }
+    },
+    {
+      "input": {
+        "from": "closed",
+        "to": "paused"
+      },
+      "expected": {
+        "allowed": false,
+        "errors": [
+          "transition.forbidden"
+        ]
+      }
+    }
+  ],
+  "A11": [
+    {
+      "input": {
+        "lines": [],
+        "catalogue": []
+      },
+      "expected": {
+        "lines": []
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "sku": "a",
+            "quantity": 0
+          }
+        ],
+        "catalogue": [
+          {
+            "sku": "a",
+            "name": "first",
+            "unitCents": 0
+          },
+          {
+            "sku": "a",
+            "name": "second",
+            "unitCents": 9
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "sku": "a",
+            "quantity": 0,
+            "name": "first",
+            "unitCents": 0
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "sku": "A",
+            "quantity": 1
+          }
+        ],
+        "catalogue": [
+          {
+            "sku": "a",
+            "name": "lower",
+            "unitCents": 1
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "sku": "A",
+            "quantity": 1,
+            "name": null,
+            "unitCents": null
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "sku": "x",
+            "quantity": 1
+          },
+          {
+            "sku": "x",
+            "quantity": 2
+          }
+        ],
+        "catalogue": [
+          {
+            "sku": "x",
+            "name": "X",
+            "unitCents": 3
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "sku": "x",
+            "quantity": 1,
+            "name": "X",
+            "unitCents": 3
+          },
+          {
+            "sku": "x",
+            "quantity": 2,
+            "name": "X",
+            "unitCents": 3
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "sku": "b",
+            "quantity": 2
+          },
+          {
+            "sku": "a",
+            "quantity": 1
+          }
+        ],
+        "catalogue": [
+          {
+            "sku": "a",
+            "name": "A",
+            "unitCents": 1
+          },
+          {
+            "sku": "b",
+            "name": "B",
+            "unitCents": 2
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "sku": "b",
+            "quantity": 2,
+            "name": "B",
+            "unitCents": 2
+          },
+          {
+            "sku": "a",
+            "quantity": 1,
+            "name": "A",
+            "unitCents": 1
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "sku": "",
+            "quantity": 1
+          }
+        ],
+        "catalogue": [
+          {
+            "sku": "",
+            "name": "",
+            "unitCents": 1000000000
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "sku": "",
+            "quantity": 1,
+            "name": "",
+            "unitCents": 1000000000
+          }
+        ]
+      }
+    }
+  ],
+  "A12": [
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "o",
+            "customerId": "c"
+          }
+        ],
+        "customers": []
+      },
+      "expected": {
+        "matched": [],
+        "missing": [
+          {
+            "orderId": "o",
+            "customerId": "c"
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "o",
+            "customerId": "c"
+          }
+        ],
+        "customers": [
+          {
+            "id": "c",
+            "name": "old"
+          },
+          {
+            "id": "c",
+            "name": "new"
+          }
+        ]
+      },
+      "expected": {
+        "matched": [
+          {
+            "orderId": "o",
+            "customerName": "new"
+          }
+        ],
+        "missing": []
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "o",
+            "customerId": "c"
+          }
+        ],
+        "customers": [
+          {
+            "id": "c",
+            "name": ""
+          }
+        ]
+      },
+      "expected": {
+        "matched": [
+          {
+            "orderId": "o",
+            "customerName": ""
+          }
+        ],
+        "missing": []
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "o",
+            "customerId": "C"
+          }
+        ],
+        "customers": [
+          {
+            "id": "c",
+            "name": "C"
+          }
+        ]
+      },
+      "expected": {
+        "matched": [],
+        "missing": [
+          {
+            "orderId": "o",
+            "customerId": "C"
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "a",
+            "customerId": "x"
+          },
+          {
+            "id": "b",
+            "customerId": "c"
+          },
+          {
+            "id": "a",
+            "customerId": "x"
+          },
+          {
+            "id": "d",
+            "customerId": "c"
+          }
+        ],
+        "customers": [
+          {
+            "id": "c",
+            "name": "C"
+          }
+        ]
+      },
+      "expected": {
+        "matched": [
+          {
+            "orderId": "b",
+            "customerName": "C"
+          },
+          {
+            "orderId": "d",
+            "customerName": "C"
+          }
+        ],
+        "missing": [
+          {
+            "orderId": "a",
+            "customerId": "x"
+          },
+          {
+            "orderId": "a",
+            "customerId": "x"
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [],
+        "customers": [
+          {
+            "id": "u",
+            "name": "Unused"
+          }
+        ]
+      },
+      "expected": {
+        "matched": [],
+        "missing": []
+      }
+    }
+  ],
+  "A13": [
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "o",
+            "customerId": "c"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "customerId": "c",
+            "orderIds": [
+              "o"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "o",
+            "customerId": "c"
+          },
+          {
+            "id": "o",
+            "customerId": "c"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "customerId": "c",
+            "orderIds": [
+              "o",
+              "o"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "a",
+            "customerId": ""
+          },
+          {
+            "id": "b",
+            "customerId": ""
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "customerId": "",
+            "orderIds": [
+              "a",
+              "b"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "1",
+            "customerId": "C"
+          },
+          {
+            "id": "2",
+            "customerId": "c"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "customerId": "C",
+            "orderIds": [
+              "1"
+            ]
+          },
+          {
+            "customerId": "c",
+            "orderIds": [
+              "2"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "1",
+            "customerId": "z"
+          },
+          {
+            "id": "2",
+            "customerId": "y"
+          },
+          {
+            "id": "3",
+            "customerId": "x"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "customerId": "z",
+            "orderIds": [
+              "1"
+            ]
+          },
+          {
+            "customerId": "y",
+            "orderIds": [
+              "2"
+            ]
+          },
+          {
+            "customerId": "x",
+            "orderIds": [
+              "3"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "orders": [
+          {
+            "id": "1",
+            "customerId": "b"
+          },
+          {
+            "id": "2",
+            "customerId": "a"
+          },
+          {
+            "id": "3",
+            "customerId": "a"
+          },
+          {
+            "id": "4",
+            "customerId": "b"
+          }
+        ]
+      },
+      "expected": {
+        "groups": [
+          {
+            "customerId": "b",
+            "orderIds": [
+              "1",
+              "4"
+            ]
+          },
+          {
+            "customerId": "a",
+            "orderIds": [
+              "2",
+              "3"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "A14": [
+    {
+      "input": {
+        "records": [
+          {
+            "id": "a",
+            "revision": 0,
+            "value": null
+          }
+        ]
+      },
+      "expected": {
+        "records": [
+          {
+            "id": "a",
+            "revision": 0,
+            "value": null
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "records": [
+          {
+            "id": "a",
+            "revision": 2,
+            "value": "first"
+          },
+          {
+            "id": "a",
+            "revision": 2,
+            "value": "last"
+          }
+        ]
+      },
+      "expected": {
+        "records": [
+          {
+            "id": "a",
+            "revision": 2,
+            "value": "last"
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "records": [
+          {
+            "id": "a",
+            "revision": 4,
+            "value": [
+              1
+            ]
+          },
+          {
+            "id": "a",
+            "revision": 0,
+            "value": []
+          }
+        ]
+      },
+      "expected": {
+        "records": [
+          {
+            "id": "a",
+            "revision": 4,
+            "value": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "records": [
+          {
+            "id": "b",
+            "revision": 0,
+            "value": false
+          },
+          {
+            "id": "a",
+            "revision": 9,
+            "value": true
+          },
+          {
+            "id": "b",
+            "revision": 8,
+            "value": {
+              "x": 1
+            }
+          }
+        ]
+      },
+      "expected": {
+        "records": [
+          {
+            "id": "b",
+            "revision": 8,
+            "value": {
+              "x": 1
+            }
+          },
+          {
+            "id": "a",
+            "revision": 9,
+            "value": true
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "records": [
+          {
+            "id": "",
+            "revision": 1,
+            "value": 0
+          },
+          {
+            "id": "",
+            "revision": 2,
+            "value": ""
+          }
+        ]
+      },
+      "expected": {
+        "records": [
+          {
+            "id": "",
+            "revision": 2,
+            "value": ""
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "records": [
+          {
+            "id": "A",
+            "revision": 1,
+            "value": "upper"
+          },
+          {
+            "id": "a",
+            "revision": 1,
+            "value": "lower"
+          }
+        ]
+      },
+      "expected": {
+        "records": [
+          {
+            "id": "A",
+            "revision": 1,
+            "value": "upper"
+          },
+          {
+            "id": "a",
+            "revision": 1,
+            "value": "lower"
+          }
+        ]
+      }
+    }
+  ],
+  "A15": [
+    {
+      "input": {
+        "requests": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "quantity": 2
+          }
+        ],
+        "stock": []
+      },
+      "expected": {
+        "requests": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "requested": 2,
+            "available": 0,
+            "fulfilled": 0,
+            "shortfall": 2
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "requests": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "quantity": 5
+          }
+        ],
+        "stock": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "available": 2
+          },
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "available": 4
+          }
+        ]
+      },
+      "expected": {
+        "requests": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "requested": 5,
+            "available": 6,
+            "fulfilled": 5,
+            "shortfall": 0
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "requests": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "quantity": 2
+          }
+        ],
+        "stock": [
+          {
+            "sku": "s",
+            "warehouse": "other",
+            "available": 100
+          },
+          {
+            "sku": "other",
+            "warehouse": "w",
+            "available": 100
+          }
+        ]
+      },
+      "expected": {
+        "requests": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "requested": 2,
+            "available": 0,
+            "fulfilled": 0,
+            "shortfall": 2
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "requests": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "quantity": 0
+          }
+        ],
+        "stock": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "available": 9
+          }
+        ]
+      },
+      "expected": {
+        "requests": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "requested": 0,
+            "available": 9,
+            "fulfilled": 0,
+            "shortfall": 0
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "requests": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "quantity": 3
+          },
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "quantity": 3
+          }
+        ],
+        "stock": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "available": 4
+          }
+        ]
+      },
+      "expected": {
+        "requests": [
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "requested": 3,
+            "available": 4,
+            "fulfilled": 3,
+            "shortfall": 0
+          },
+          {
+            "sku": "s",
+            "warehouse": "w",
+            "requested": 3,
+            "available": 4,
+            "fulfilled": 3,
+            "shortfall": 0
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "requests": [
+          {
+            "sku": "a|b",
+            "warehouse": "c",
+            "quantity": 1
+          },
+          {
+            "sku": "a",
+            "warehouse": "b|c",
+            "quantity": 1
+          }
+        ],
+        "stock": [
+          {
+            "sku": "a|b",
+            "warehouse": "c",
+            "available": 2
+          }
+        ]
+      },
+      "expected": {
+        "requests": [
+          {
+            "sku": "a|b",
+            "warehouse": "c",
+            "requested": 1,
+            "available": 2,
+            "fulfilled": 1,
+            "shortfall": 0
+          },
+          {
+            "sku": "a",
+            "warehouse": "b|c",
+            "requested": 1,
+            "available": 0,
+            "fulfilled": 0,
+            "shortfall": 1
+          }
+        ]
+      }
+    }
+  ],
+  "A16": [
+    {
+      "input": {
+        "lines": [
+          {
+            "sku": "a",
+            "quantity": 0,
+            "unitCents": 999
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "sku": "a",
+            "totalCents": 0
+          }
+        ],
+        "totalCents": 0
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "sku": "a",
+            "quantity": 999,
+            "unitCents": 0
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "sku": "a",
+            "totalCents": 0
+          }
+        ],
+        "totalCents": 0
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "sku": "a",
+            "quantity": 1000000,
+            "unitCents": 1000000
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "sku": "a",
+            "totalCents": 1000000000000
+          }
+        ],
+        "totalCents": 1000000000000
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "sku": "x",
+            "quantity": 2,
+            "unitCents": 3
+          },
+          {
+            "sku": "x",
+            "quantity": 4,
+            "unitCents": 5
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "sku": "x",
+            "totalCents": 6
+          },
+          {
+            "sku": "x",
+            "totalCents": 20
+          }
+        ],
+        "totalCents": 26
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "sku": "a",
+            "quantity": 1,
+            "unitCents": 2147483648
+          },
+          {
+            "sku": "b",
+            "quantity": 1,
+            "unitCents": 1
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "sku": "a",
+            "totalCents": 2147483648
+          },
+          {
+            "sku": "b",
+            "totalCents": 1
+          }
+        ],
+        "totalCents": 2147483649
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "sku": "",
+            "quantity": 1,
+            "unitCents": 1
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "sku": "",
+            "totalCents": 1
+          }
+        ],
+        "totalCents": 1
+      }
+    }
+  ],
+  "A17": [
+    {
+      "input": {
+        "subtotalCents": 0,
+        "discountBps": 10000
+      },
+      "expected": {
+        "discountCents": 0,
+        "payableCents": 0
+      }
+    },
+    {
+      "input": {
+        "subtotalCents": 123,
+        "discountBps": 0
+      },
+      "expected": {
+        "discountCents": 0,
+        "payableCents": 123
+      }
+    },
+    {
+      "input": {
+        "subtotalCents": 123,
+        "discountBps": 10000
+      },
+      "expected": {
+        "discountCents": 123,
+        "payableCents": 0
+      }
+    },
+    {
+      "input": {
+        "subtotalCents": 1,
+        "discountBps": 4999
+      },
+      "expected": {
+        "discountCents": 0,
+        "payableCents": 1
+      }
+    },
+    {
+      "input": {
+        "subtotalCents": 1,
+        "discountBps": 5000
+      },
+      "expected": {
+        "discountCents": 1,
+        "payableCents": 0
+      }
+    },
+    {
+      "input": {
+        "subtotalCents": 1,
+        "discountBps": 5001
+      },
+      "expected": {
+        "discountCents": 1,
+        "payableCents": 0
+      }
+    },
+    {
+      "input": {
+        "subtotalCents": 1000000000,
+        "discountBps": 9999
+      },
+      "expected": {
+        "discountCents": 999900000,
+        "payableCents": 100000
+      }
+    },
+    {
+      "input": {
+        "subtotalCents": 25,
+        "discountBps": 1000
+      },
+      "expected": {
+        "discountCents": 3,
+        "payableCents": 22
+      }
+    }
+  ],
+  "A18": [
+    {
+      "input": {
+        "records": [
+          {
+            "category": "c",
+            "accepted": false
+          }
+        ]
+      },
+      "expected": {
+        "accepted": 0,
+        "rejected": 1,
+        "byCategory": [
+          {
+            "category": "c",
+            "accepted": 0,
+            "rejected": 1
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "records": [
+          {
+            "category": "c",
+            "accepted": false
+          },
+          {
+            "category": "c",
+            "accepted": false
+          }
+        ]
+      },
+      "expected": {
+        "accepted": 0,
+        "rejected": 2,
+        "byCategory": [
+          {
+            "category": "c",
+            "accepted": 0,
+            "rejected": 2
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "records": [
+          {
+            "category": "c",
+            "accepted": true
+          },
+          {
+            "category": "c",
+            "accepted": true
+          }
+        ]
+      },
+      "expected": {
+        "accepted": 2,
+        "rejected": 0,
+        "byCategory": [
+          {
+            "category": "c",
+            "accepted": 2,
+            "rejected": 0
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "records": [
+          {
+            "category": "",
+            "accepted": false
+          },
+          {
+            "category": "",
+            "accepted": true
+          }
+        ]
+      },
+      "expected": {
+        "accepted": 1,
+        "rejected": 1,
+        "byCategory": [
+          {
+            "category": "",
+            "accepted": 1,
+            "rejected": 1
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "records": [
+          {
+            "category": "A",
+            "accepted": true
+          },
+          {
+            "category": "a",
+            "accepted": false
+          }
+        ]
+      },
+      "expected": {
+        "accepted": 1,
+        "rejected": 1,
+        "byCategory": [
+          {
+            "category": "A",
+            "accepted": 1,
+            "rejected": 0
+          },
+          {
+            "category": "a",
+            "accepted": 0,
+            "rejected": 1
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "records": [
+          {
+            "category": "z",
+            "accepted": false
+          },
+          {
+            "category": "y",
+            "accepted": false
+          },
+          {
+            "category": "x",
+            "accepted": false
+          }
+        ]
+      },
+      "expected": {
+        "accepted": 0,
+        "rejected": 3,
+        "byCategory": [
+          {
+            "category": "z",
+            "accepted": 0,
+            "rejected": 1
+          },
+          {
+            "category": "y",
+            "accepted": 0,
+            "rejected": 1
+          },
+          {
+            "category": "x",
+            "accepted": 0,
+            "rejected": 1
+          }
+        ]
+      }
+    }
+  ],
+  "A19": [
+    {
+      "input": {
+        "events": [
+          {
+            "id": "a",
+            "timestamp": 0
+          }
+        ]
+      },
+      "expected": {
+        "latest": {
+          "id": "a",
+          "timestamp": 0
+        }
+      }
+    },
+    {
+      "input": {
+        "events": [
+          {
+            "id": "a",
+            "timestamp": 10
+          },
+          {
+            "id": "b",
+            "timestamp": 10
+          }
+        ]
+      },
+      "expected": {
+        "latest": {
+          "id": "b",
+          "timestamp": 10
+        }
+      }
+    },
+    {
+      "input": {
+        "events": [
+          {
+            "id": "a",
+            "timestamp": 5
+          },
+          {
+            "id": "b",
+            "timestamp": 8
+          },
+          {
+            "id": "c",
+            "timestamp": 2
+          }
+        ]
+      },
+      "expected": {
+        "latest": {
+          "id": "b",
+          "timestamp": 8
+        }
+      }
+    },
+    {
+      "input": {
+        "events": [
+          {
+            "id": "same",
+            "timestamp": 1
+          },
+          {
+            "id": "same",
+            "timestamp": 1000000000000
+          }
+        ]
+      },
+      "expected": {
+        "latest": {
+          "id": "same",
+          "timestamp": 1000000000000
+        }
+      }
+    },
+    {
+      "input": {
+        "events": [
+          {
+            "id": "z",
+            "timestamp": 2147483647
+          },
+          {
+            "id": "a",
+            "timestamp": 2147483648
+          }
+        ]
+      },
+      "expected": {
+        "latest": {
+          "id": "a",
+          "timestamp": 2147483648
+        }
+      }
+    },
+    {
+      "input": {
+        "events": [
+          {
+            "id": "a",
+            "timestamp": 8,
+            "payload": "ignore"
+          },
+          {
+            "id": "b",
+            "timestamp": 1
+          },
+          {
+            "id": "c",
+            "timestamp": 8
+          }
+        ]
+      },
+      "expected": {
+        "latest": {
+          "id": "c",
+          "timestamp": 8
+        }
+      }
+    }
+  ],
+  "A20": [
+    {
+      "input": {
+        "stock": [
+          {
+            "sku": "a",
+            "onHand": 0,
+            "reserved": 0
+          }
+        ]
+      },
+      "expected": {
+        "items": [
+          {
+            "sku": "a",
+            "onHand": 0,
+            "reserved": 0,
+            "available": 0
+          }
+        ],
+        "totals": {
+          "onHand": 0,
+          "reserved": 0,
+          "available": 0
+        }
+      }
+    },
+    {
+      "input": {
+        "stock": [
+          {
+            "sku": "a",
+            "onHand": 1,
+            "reserved": 5
+          },
+          {
+            "sku": "a",
+            "onHand": 8,
+            "reserved": 0
+          }
+        ]
+      },
+      "expected": {
+        "items": [
+          {
+            "sku": "a",
+            "onHand": 9,
+            "reserved": 5,
+            "available": 4
+          }
+        ],
+        "totals": {
+          "onHand": 9,
+          "reserved": 5,
+          "available": 4
+        }
+      }
+    },
+    {
+      "input": {
+        "stock": [
+          {
+            "sku": "a",
+            "onHand": 2,
+            "reserved": 8
+          },
+          {
+            "sku": "b",
+            "onHand": 10,
+            "reserved": 1
+          }
+        ]
+      },
+      "expected": {
+        "items": [
+          {
+            "sku": "a",
+            "onHand": 2,
+            "reserved": 8,
+            "available": 0
+          },
+          {
+            "sku": "b",
+            "onHand": 10,
+            "reserved": 1,
+            "available": 9
+          }
+        ],
+        "totals": {
+          "onHand": 12,
+          "reserved": 9,
+          "available": 9
+        }
+      }
+    },
+    {
+      "input": {
+        "stock": [
+          {
+            "sku": "z",
+            "onHand": 3,
+            "reserved": 3
+          },
+          {
+            "sku": "a",
+            "onHand": 1,
+            "reserved": 0
+          }
+        ]
+      },
+      "expected": {
+        "items": [
+          {
+            "sku": "z",
+            "onHand": 3,
+            "reserved": 3,
+            "available": 0
+          },
+          {
+            "sku": "a",
+            "onHand": 1,
+            "reserved": 0,
+            "available": 1
+          }
+        ],
+        "totals": {
+          "onHand": 4,
+          "reserved": 3,
+          "available": 1
+        }
+      }
+    },
+    {
+      "input": {
+        "stock": [
+          {
+            "sku": "",
+            "onHand": 2147483648,
+            "reserved": 1
+          },
+          {
+            "sku": "",
+            "onHand": 1,
+            "reserved": 0
+          }
+        ]
+      },
+      "expected": {
+        "items": [
+          {
+            "sku": "",
+            "onHand": 2147483649,
+            "reserved": 1,
+            "available": 2147483648
+          }
+        ],
+        "totals": {
+          "onHand": 2147483649,
+          "reserved": 1,
+          "available": 2147483648
+        }
+      }
+    },
+    {
+      "input": {
+        "stock": [
+          {
+            "sku": "A",
+            "onHand": 1,
+            "reserved": 0
+          },
+          {
+            "sku": "a",
+            "onHand": 0,
+            "reserved": 1
+          }
+        ]
+      },
+      "expected": {
+        "items": [
+          {
+            "sku": "A",
+            "onHand": 1,
+            "reserved": 0,
+            "available": 1
+          },
+          {
+            "sku": "a",
+            "onHand": 0,
+            "reserved": 1,
+            "available": 0
+          }
+        ],
+        "totals": {
+          "onHand": 1,
+          "reserved": 1,
+          "available": 1
+        }
+      }
+    }
+  ],
+  "A21": [
+    {
+      "input": {
+        "id": "a",
+        "amountCents": 0,
+        "source": null
+      },
+      "expected": {
+        "version": 2,
+        "id": "a",
+        "amountCents": 0,
+        "source": null,
+        "compatibility": "legacy"
+      }
+    },
+    {
+      "input": {
+        "id": "b",
+        "amountCents": 1,
+        "source": {
+          "system": "s"
+        }
+      },
+      "expected": {
+        "version": 2,
+        "id": "b",
+        "amountCents": 1,
+        "source": {
+          "system": "s",
+          "reference": null
+        },
+        "compatibility": "extended"
+      }
+    },
+    {
+      "input": {
+        "id": "c",
+        "amountCents": 2,
+        "source": {
+          "system": "s",
+          "reference": null
+        }
+      },
+      "expected": {
+        "version": 2,
+        "id": "c",
+        "amountCents": 2,
+        "source": {
+          "system": "s",
+          "reference": null
+        },
+        "compatibility": "extended"
+      }
+    },
+    {
+      "input": {
+        "id": "d",
+        "amountCents": 3,
+        "source": {
+          "system": "",
+          "reference": ""
+        }
+      },
+      "expected": {
+        "version": 2,
+        "id": "d",
+        "amountCents": 3,
+        "source": {
+          "system": "",
+          "reference": ""
+        },
+        "compatibility": "extended"
+      }
+    },
+    {
+      "input": {
+        "id": "e",
+        "amountCents": 2147483648,
+        "unused": "ignore"
+      },
+      "expected": {
+        "version": 2,
+        "id": "e",
+        "amountCents": 2147483648,
+        "source": null,
+        "compatibility": "legacy"
+      }
+    },
+    {
+      "input": {
+        "id": "f",
+        "amountCents": 5,
+        "source": {
+          "system": "x",
+          "reference": " y ",
+          "extra": 1
+        }
+      },
+      "expected": {
+        "version": 2,
+        "id": "f",
+        "amountCents": 5,
+        "source": {
+          "system": "x",
+          "reference": " y "
+        },
+        "compatibility": "extended"
+      }
+    }
+  ],
+  "A22": [
+    {
+      "input": {
+        "amountCents": 0
+      },
+      "expected": {
+        "ok": false,
+        "compatibility": "incompatible",
+        "record": null,
+        "errors": [
+          "accountId.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "customerId": null,
+        "accountId": null,
+        "amountCents": 1
+      },
+      "expected": {
+        "ok": false,
+        "compatibility": "incompatible",
+        "record": null,
+        "errors": [
+          "accountId.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "customerId": "x",
+        "accountId": "x",
+        "amountCents": 2
+      },
+      "expected": {
+        "ok": true,
+        "compatibility": "dual",
+        "record": {
+          "accountId": "x",
+          "amountCents": 2
+        },
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "customerId": "x",
+        "accountId": "y",
+        "amountCents": 3
+      },
+      "expected": {
+        "ok": false,
+        "compatibility": "conflict",
+        "record": null,
+        "errors": [
+          "accountId.conflict"
+        ]
+      }
+    },
+    {
+      "input": {
+        "customerId": "x",
+        "accountId": null,
+        "amountCents": 4
+      },
+      "expected": {
+        "ok": true,
+        "compatibility": "legacy",
+        "record": {
+          "accountId": "x",
+          "amountCents": 4
+        },
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "customerId": null,
+        "accountId": "y",
+        "amountCents": 5
+      },
+      "expected": {
+        "ok": true,
+        "compatibility": "current",
+        "record": {
+          "accountId": "y",
+          "amountCents": 5
+        },
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "customerId": " x ",
+        "accountId": "x",
+        "amountCents": 6
+      },
+      "expected": {
+        "ok": false,
+        "compatibility": "conflict",
+        "record": null,
+        "errors": [
+          "accountId.conflict"
+        ]
+      }
+    }
+  ],
+  "A23": [
+    {
+      "input": {
+        "id": "a",
+        "email": null
+      },
+      "expected": {
+        "ok": false,
+        "compatibility": "needs-enrichment",
+        "record": null,
+        "errors": [
+          "email.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "id": "b",
+        "email": ""
+      },
+      "expected": {
+        "ok": false,
+        "compatibility": "needs-enrichment",
+        "record": null,
+        "errors": [
+          "email.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "id": "c",
+        "email": "   "
+      },
+      "expected": {
+        "ok": false,
+        "compatibility": "needs-enrichment",
+        "record": null,
+        "errors": [
+          "email.required"
+        ]
+      }
+    },
+    {
+      "input": {
+        "id": "d",
+        "email": "A@B"
+      },
+      "expected": {
+        "ok": true,
+        "compatibility": "current",
+        "record": {
+          "id": "d",
+          "email": "A@B"
+        },
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "id": "e",
+        "email": " a b "
+      },
+      "expected": {
+        "ok": true,
+        "compatibility": "current",
+        "record": {
+          "id": "e",
+          "email": "a b"
+        },
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "id": "f",
+        "email": "\t"
+      },
+      "expected": {
+        "ok": true,
+        "compatibility": "current",
+        "record": {
+          "id": "f",
+          "email": "\t"
+        },
+        "errors": []
+      }
+    },
+    {
+      "input": {
+        "id": "g",
+        "email": "z",
+        "extra": "ignore"
+      },
+      "expected": {
+        "ok": true,
+        "compatibility": "current",
+        "record": {
+          "id": "g",
+          "email": "z"
+        },
+        "errors": []
+      }
+    }
+  ],
+  "A24": [
+    {
+      "input": {
+        "id": "a",
+        "decision": "reject"
+      },
+      "expected": {
+        "id": "a",
+        "status": "rejected",
+        "terminal": true,
+        "reason": "rejected",
+        "compatibility": "legacy"
+      }
+    },
+    {
+      "input": {
+        "id": "b",
+        "decision": "hold"
+      },
+      "expected": {
+        "id": "b",
+        "status": "deferred",
+        "terminal": false,
+        "reason": "awaiting-review",
+        "compatibility": "extended"
+      }
+    },
+    {
+      "input": {
+        "id": "c",
+        "decision": "hold",
+        "reason": null
+      },
+      "expected": {
+        "id": "c",
+        "status": "deferred",
+        "terminal": false,
+        "reason": "awaiting-review",
+        "compatibility": "extended"
+      }
+    },
+    {
+      "input": {
+        "id": "d",
+        "decision": "hold",
+        "reason": ""
+      },
+      "expected": {
+        "id": "d",
+        "status": "deferred",
+        "terminal": false,
+        "reason": "",
+        "compatibility": "extended"
+      }
+    },
+    {
+      "input": {
+        "id": "e",
+        "decision": "reject",
+        "reason": ""
+      },
+      "expected": {
+        "id": "e",
+        "status": "rejected",
+        "terminal": true,
+        "reason": "",
+        "compatibility": "legacy"
+      }
+    },
+    {
+      "input": {
+        "id": "f",
+        "decision": "accept",
+        "reason": "ignored"
+      },
+      "expected": {
+        "id": "f",
+        "status": "accepted",
+        "terminal": true,
+        "reason": null,
+        "compatibility": "legacy"
+      }
+    },
+    {
+      "input": {
+        "id": "g",
+        "decision": "reject",
+        "reason": null
+      },
+      "expected": {
+        "id": "g",
+        "status": "rejected",
+        "terminal": true,
+        "reason": "rejected",
+        "compatibility": "legacy"
+      }
+    }
+  ],
+  "A25": [
+    {
+      "input": {
+        "orderId": "a",
+        "items": []
+      },
+      "expected": {
+        "orderId": "a",
+        "lines": [],
+        "compatibility": "empty"
+      }
+    },
+    {
+      "input": {
+        "orderId": "b",
+        "items": [
+          "x"
+        ]
+      },
+      "expected": {
+        "orderId": "b",
+        "lines": [
+          {
+            "sku": "x",
+            "quantity": 1
+          }
+        ],
+        "compatibility": "legacy"
+      }
+    },
+    {
+      "input": {
+        "orderId": "c",
+        "items": [
+          {
+            "sku": "x",
+            "quantity": 0
+          }
+        ]
+      },
+      "expected": {
+        "orderId": "c",
+        "lines": [
+          {
+            "sku": "x",
+            "quantity": 0
+          }
+        ],
+        "compatibility": "current"
+      }
+    },
+    {
+      "input": {
+        "orderId": "d",
+        "items": [
+          "x",
+          {
+            "sku": "x",
+            "quantity": 3
+          },
+          "y"
+        ]
+      },
+      "expected": {
+        "orderId": "d",
+        "lines": [
+          {
+            "sku": "x",
+            "quantity": 1
+          },
+          {
+            "sku": "x",
+            "quantity": 3
+          },
+          {
+            "sku": "y",
+            "quantity": 1
+          }
+        ],
+        "compatibility": "mixed"
+      }
+    },
+    {
+      "input": {
+        "orderId": "e",
+        "items": [
+          "",
+          ""
+        ]
+      },
+      "expected": {
+        "orderId": "e",
+        "lines": [
+          {
+            "sku": "",
+            "quantity": 1
+          },
+          {
+            "sku": "",
+            "quantity": 1
+          }
+        ],
+        "compatibility": "legacy"
+      }
+    },
+    {
+      "input": {
+        "orderId": "f",
+        "items": [
+          {
+            "sku": "a",
+            "quantity": 1,
+            "oldQuantity": 99
+          },
+          {
+            "sku": "a",
+            "quantity": 2
+          }
+        ]
+      },
+      "expected": {
+        "orderId": "f",
+        "lines": [
+          {
+            "sku": "a",
+            "quantity": 1
+          },
+          {
+            "sku": "a",
+            "quantity": 2
+          }
+        ],
+        "compatibility": "current"
+      }
+    }
+  ],
+  "A26": [
+    {
+      "input": {
+        "legalName": "L",
+        "displayName": ""
+      },
+      "expected": {
+        "name": "",
+        "usedFallback": false
+      }
+    },
+    {
+      "input": {
+        "legalName": "L",
+        "displayName": " D "
+      },
+      "expected": {
+        "name": " D ",
+        "usedFallback": false
+      }
+    },
+    {
+      "input": {
+        "legalName": "",
+        "displayName": null
+      },
+      "expected": {
+        "name": null,
+        "usedFallback": false
+      }
+    },
+    {
+      "input": {
+        "legalName": "",
+        "otherName": "ignored"
+      },
+      "expected": {
+        "name": "",
+        "usedFallback": true
+      }
+    },
+    {
+      "input": {
+        "legalName": "same",
+        "displayName": "same"
+      },
+      "expected": {
+        "name": "same",
+        "usedFallback": false
+      }
+    },
+    {
+      "input": {
+        "legalName": "L",
+        "displayName": "0"
+      },
+      "expected": {
+        "name": "0",
+        "usedFallback": false
+      }
+    }
+  ],
+  "A27": [
+    {
+      "input": {
+        "batches": [
+          {
+            "batchId": "empty",
+            "entries": []
+          }
+        ]
+      },
+      "expected": {
+        "batches": [
+          {
+            "batchId": "empty",
+            "codes": []
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "batches": [
+          {
+            "batchId": "b",
+            "entries": [
+              {
+                "code": "a"
+              },
+              {
+                "code": "b"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "batches": [
+          {
+            "batchId": "b",
+            "codes": [
+              "a",
+              "b"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "batches": [
+          {
+            "batchId": "a",
+            "entries": []
+          },
+          {
+            "batchId": "b",
+            "entries": [
+              {
+                "code": "x"
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "batches": [
+          {
+            "batchId": "a",
+            "codes": []
+          },
+          {
+            "batchId": "b",
+            "codes": [
+              "x"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "batches": [
+          {
+            "batchId": "same",
+            "entries": [
+              {
+                "code": "x"
+              },
+              {
+                "code": "x"
+              }
+            ]
+          },
+          {
+            "batchId": "same",
+            "entries": []
+          }
+        ]
+      },
+      "expected": {
+        "batches": [
+          {
+            "batchId": "same",
+            "codes": [
+              "x",
+              "x"
+            ]
+          },
+          {
+            "batchId": "same",
+            "codes": []
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "batches": [
+          {
+            "batchId": "",
+            "entries": [
+              {
+                "code": ""
+              }
+            ]
+          }
+        ]
+      },
+      "expected": {
+        "batches": [
+          {
+            "batchId": "",
+            "codes": [
+              ""
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "input": {
+        "batches": [
+          {
+            "batchId": "b",
+            "entries": [
+              {
+                "code": "x",
+                "other": "ignored"
+              }
+            ],
+            "other": 1
+          }
+        ]
+      },
+      "expected": {
+        "batches": [
+          {
+            "batchId": "b",
+            "codes": [
+              "x"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "A28": [
+    {
+      "input": {
+        "lines": [
+          {
+            "id": "a",
+            "netCents": 1,
+            "rateBps": 4999
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "id": "a",
+            "taxCents": 0,
+            "grossCents": 1
+          }
+        ],
+        "netCents": 1,
+        "taxCents": 0,
+        "grossCents": 1
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "id": "a",
+            "netCents": 1,
+            "rateBps": 5000
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "id": "a",
+            "taxCents": 1,
+            "grossCents": 2
+          }
+        ],
+        "netCents": 1,
+        "taxCents": 1,
+        "grossCents": 2
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "id": "a",
+            "netCents": 1,
+            "rateBps": 5001
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "id": "a",
+            "taxCents": 1,
+            "grossCents": 2
+          }
+        ],
+        "netCents": 1,
+        "taxCents": 1,
+        "grossCents": 2
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "id": "same",
+            "netCents": 1,
+            "rateBps": 4000
+          },
+          {
+            "id": "same",
+            "netCents": 1,
+            "rateBps": 4000
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "id": "same",
+            "taxCents": 0,
+            "grossCents": 1
+          },
+          {
+            "id": "same",
+            "taxCents": 0,
+            "grossCents": 1
+          }
+        ],
+        "netCents": 2,
+        "taxCents": 0,
+        "grossCents": 2
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "id": "a",
+            "netCents": 0,
+            "rateBps": 10000
+          },
+          {
+            "id": "b",
+            "netCents": 123,
+            "rateBps": 0
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "id": "a",
+            "taxCents": 0,
+            "grossCents": 0
+          },
+          {
+            "id": "b",
+            "taxCents": 0,
+            "grossCents": 123
+          }
+        ],
+        "netCents": 123,
+        "taxCents": 0,
+        "grossCents": 123
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "id": "a",
+            "netCents": 1000000000,
+            "rateBps": 9999
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "id": "a",
+            "taxCents": 999900000,
+            "grossCents": 1999900000
+          }
+        ],
+        "netCents": 1000000000,
+        "taxCents": 999900000,
+        "grossCents": 1999900000
+      }
+    },
+    {
+      "input": {
+        "lines": [
+          {
+            "id": "a",
+            "netCents": 25,
+            "rateBps": 1000
+          }
+        ]
+      },
+      "expected": {
+        "lines": [
+          {
+            "id": "a",
+            "taxCents": 3,
+            "grossCents": 28
+          }
+        ],
+        "netCents": 25,
+        "taxCents": 3,
+        "grossCents": 28
+      }
+    }
+  ],
+  "A29": [
+    {
+      "input": {
+        "eventId": "a",
+        "revision": 0,
+        "notify": true
+      },
+      "expected": {
+        "event": {
+          "id": "a",
+          "revision": 0
+        },
+        "ack": {
+          "eventId": "a",
+          "state": "stored"
+        }
+      }
+    },
+    {
+      "input": {
+        "eventId": "b",
+        "revision": 0,
+        "notify": null
+      },
+      "expected": {
+        "event": {
+          "id": "b",
+          "revision": 0
+        },
+        "ack": {
+          "eventId": "b",
+          "state": "stored"
+        }
+      }
+    },
+    {
+      "input": {
+        "eventId": "c",
+        "revision": 0,
+        "notify": false
+      },
+      "expected": {
+        "event": {
+          "id": "c",
+          "revision": 0
+        },
+        "ack": null
+      }
+    },
+    {
+      "input": {
+        "eventId": "d",
+        "revision": 2147483648,
+        "notify": false
+      },
+      "expected": {
+        "event": {
+          "id": "d",
+          "revision": 2147483648
+        },
+        "ack": null
+      }
+    },
+    {
+      "input": {
+        "eventId": "",
+        "revision": 0
+      },
+      "expected": {
+        "event": {
+          "id": "",
+          "revision": 0
+        },
+        "ack": {
+          "eventId": "",
+          "state": "stored"
+        }
+      }
+    },
+    {
+      "input": {
+        "eventId": "e",
+        "revision": 9,
+        "notify": true,
+        "ack": false
+      },
+      "expected": {
+        "event": {
+          "id": "e",
+          "revision": 9
+        },
+        "ack": {
+          "eventId": "e",
+          "state": "stored"
+        }
+      }
+    }
+  ],
+  "A30": [
+    {
+      "input": {
+        "eventId": null,
+        "priceCents": null
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "eventId.required",
+          "price.required"
+        ],
+        "event": null
+      }
+    },
+    {
+      "input": {
+        "eventId": " ",
+        "priceCents": -1
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "eventId.blank",
+          "price.range"
+        ],
+        "event": null
+      }
+    },
+    {
+      "input": {
+        "eventId": false,
+        "priceCents": true
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "eventId.type",
+          "price.integer"
+        ],
+        "event": null
+      }
+    },
+    {
+      "input": {
+        "eventId": "e",
+        "priceCents": "1"
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "price.integer"
+        ],
+        "event": null
+      }
+    },
+    {
+      "input": {
+        "eventId": " e ",
+        "priceCents": 1000000000
+      },
+      "expected": {
+        "valid": true,
+        "errors": [],
+        "event": {
+          "type": "price.changed",
+          "id": " e ",
+          "priceCents": 1000000000
+        }
+      }
+    },
+    {
+      "input": {
+        "eventId": "e",
+        "priceCents": 1000000001
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "price.range"
+        ],
+        "event": null
+      }
+    },
+    {
+      "input": {
+        "eventId": [],
+        "priceCents": 0
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "eventId.type"
+        ],
+        "event": null
+      }
+    },
+    {
+      "input": {
+        "eventId": "e",
+        "priceCents": 1.5
+      },
+      "expected": {
+        "valid": false,
+        "errors": [
+          "price.integer"
+        ],
+        "event": null
+      }
+    },
+    {
+      "input": {
+        "eventId": "e",
+        "priceCents": 1.0
+      },
+      "expected": {
+        "valid": true,
+        "errors": [],
+        "event": {
+          "type": "price.changed",
+          "id": "e",
+          "priceCents": 1.0
+        }
+      }
+    }
+  ]
+}

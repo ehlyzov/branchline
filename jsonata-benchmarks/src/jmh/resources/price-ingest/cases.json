@@ -1,0 +1,1791 @@
+[
+  {
+    "id": "ordinary-create",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1234,
+        "currency": "USD",
+        "schemaVersion": 1
+      }
+    }
+  },
+  {
+    "id": "preserve-interior-whitespace",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "  erp   feed  ",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp   feed",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1234,
+        "currency": "USD",
+        "schemaVersion": 1
+      }
+    }
+  },
+  {
+    "id": "zero-price",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 0,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 0,
+        "currency": "USD",
+        "schemaVersion": 1
+      }
+    }
+  },
+  {
+    "id": "single-cent",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1,
+        "currency": "USD",
+        "schemaVersion": 1
+      }
+    }
+  },
+  {
+    "id": "maximum-cents",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1000000000,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1000000000,
+        "currency": "USD",
+        "schemaVersion": 1
+      }
+    }
+  },
+  {
+    "id": "integer-decimal-json",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234.0,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1234.0,
+        "currency": "USD",
+        "schemaVersion": 1
+      }
+    }
+  },
+  {
+    "id": "no-ack",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": false
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": null,
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1234,
+        "currency": "USD",
+        "schemaVersion": 1
+      }
+    }
+  },
+  {
+    "id": "default-ack",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1234,
+        "currency": "USD",
+        "schemaVersion": 1
+      }
+    }
+  },
+  {
+    "id": "trim-all-identifiers",
+    "input": {
+      "transactionId": " tx-001 ",
+      "warehouseId": " wh-1 ",
+      "skuId": " sku-1 ",
+      "source": " erp ",
+      "effectiveTime": " 2026-01-01T10:00:00Z ",
+      "storedAt": " 2026-01-01T10:00:01Z ",
+      "eventId": " evt-001 ",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1234,
+        "currency": "USD",
+        "schemaVersion": 1
+      }
+    }
+  },
+  {
+    "id": "unknown-field-ignored",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "futureField": {
+        "nested": true
+      }
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1234,
+        "currency": "USD",
+        "schemaVersion": 1
+      }
+    }
+  },
+  {
+    "id": "v2-usd-explicit",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "schemaVersion": 2,
+      "currency": "USD"
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1234,
+        "currency": "USD",
+        "schemaVersion": 2
+      }
+    }
+  },
+  {
+    "id": "v2-eur-change",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "schemaVersion": 2,
+      "currency": "EUR"
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1234,
+        "currency": "EUR",
+        "schemaVersion": 2
+      }
+    }
+  },
+  {
+    "id": "v1-currency-extension",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "schemaVersion": 1,
+      "currency": "EUR"
+    },
+    "expected": {
+      "accepted": true,
+      "errors": [],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "ACCEPTED",
+        "errors": []
+      },
+      "event": {
+        "transactionId": "tx-001",
+        "warehouseId": "wh-1",
+        "skuId": "sku-1",
+        "source": "erp",
+        "effectiveTime": "2026-01-01T10:00:00Z",
+        "storedAt": "2026-01-01T10:00:01Z",
+        "eventId": "evt-001",
+        "priceCents": 1234,
+        "currency": "EUR",
+        "schemaVersion": 1
+      }
+    }
+  },
+  {
+    "id": "transactionId-missing",
+    "input": {
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "TRANSACTIONID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "",
+        "status": "REJECTED",
+        "errors": [
+          "TRANSACTIONID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "transactionId-null",
+    "input": {
+      "transactionId": null,
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "TRANSACTIONID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "",
+        "status": "REJECTED",
+        "errors": [
+          "TRANSACTIONID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "transactionId-blank",
+    "input": {
+      "transactionId": "   ",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "TRANSACTIONID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "",
+        "status": "REJECTED",
+        "errors": [
+          "TRANSACTIONID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "warehouseId-missing",
+    "input": {
+      "transactionId": "tx-001",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "WAREHOUSEID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "WAREHOUSEID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "warehouseId-null",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": null,
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "WAREHOUSEID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "WAREHOUSEID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "warehouseId-blank",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "   ",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "WAREHOUSEID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "WAREHOUSEID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "skuId-missing",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "SKUID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "SKUID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "skuId-null",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": null,
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "SKUID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "SKUID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "skuId-blank",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "   ",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "SKUID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "SKUID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "source-missing",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "SOURCE_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "SOURCE_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "source-null",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": null,
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "SOURCE_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "SOURCE_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "source-blank",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "   ",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "SOURCE_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "SOURCE_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "effectiveTime-missing",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "EFFECTIVETIME_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "EFFECTIVETIME_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "effectiveTime-null",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": null,
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "EFFECTIVETIME_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "EFFECTIVETIME_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "effectiveTime-blank",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "   ",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "EFFECTIVETIME_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "EFFECTIVETIME_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "storedAt-missing",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "STOREDAT_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "STOREDAT_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "storedAt-null",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": null,
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "STOREDAT_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "STOREDAT_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "storedAt-blank",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "   ",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "STOREDAT_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "STOREDAT_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "eventId-missing",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "EVENTID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "EVENTID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "eventId-null",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": null,
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "EVENTID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "EVENTID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "eventId-blank",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "   ",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "EVENTID_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "EVENTID_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "price-missing",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "PRICE_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "PRICE_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "price-null",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": null,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "PRICE_REQUIRED"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "PRICE_REQUIRED"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "price-negative",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": -1,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "PRICE_NEGATIVE"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "PRICE_NEGATIVE"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "price-fractional",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 12.34,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "PRICE_FRACTIONAL"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "PRICE_FRACTIONAL"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "price-negative-fractional",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": -0.5,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "PRICE_NEGATIVE",
+        "PRICE_FRACTIONAL"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "PRICE_NEGATIVE",
+          "PRICE_FRACTIONAL"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "price-over-limit",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1000000001,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "PRICE_LIMIT"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "PRICE_LIMIT"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "needAck-null",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": null
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "NEED_ACK"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "version-unknown",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "schemaVersion": 3
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "SCHEMA_VERSION"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "SCHEMA_VERSION"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "version-fractional",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "schemaVersion": 2.5
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "SCHEMA_VERSION"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "SCHEMA_VERSION"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "version-null",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "schemaVersion": null
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "SCHEMA_VERSION"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "SCHEMA_VERSION"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "v2-currency-required",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "schemaVersion": 2
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "CURRENCY"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "CURRENCY"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "currency-null",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "currency": null
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "CURRENCY"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "CURRENCY"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "currency-unsupported",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "currency": "GBP"
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "CURRENCY"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "CURRENCY"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "currency-case-sensitive",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "currency": "usd"
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "CURRENCY"
+      ],
+      "ack": {
+        "transactionId": "tx-001",
+        "status": "REJECTED",
+        "errors": [
+          "CURRENCY"
+        ]
+      },
+      "event": null
+    }
+  },
+  {
+    "id": "multi-error-ordered",
+    "input": {
+      "transactionId": " ",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": null,
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": -0.5,
+      "needAck": null,
+      "schemaVersion": 3,
+      "currency": "GBP"
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "TRANSACTIONID_REQUIRED",
+        "SOURCE_REQUIRED",
+        "PRICE_NEGATIVE",
+        "PRICE_FRACTIONAL",
+        "NEED_ACK",
+        "SCHEMA_VERSION",
+        "CURRENCY"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "rejected-without-ack",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": -1,
+      "needAck": false
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "PRICE_NEGATIVE"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "transactionId-wrong-wire-type-int",
+    "input": {
+      "transactionId": 123,
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "priceCents-wrong-wire-type-str",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": "1234",
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "needAck-wrong-wire-type-str",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": "false"
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "schemaVersion-wrong-wire-type-str",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "schemaVersion": "2"
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "currency-wrong-wire-type-bool",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "currency": false
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "skuId-wrong-wire-type-list",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": [],
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "priceCents-wrong-wire-type-bool",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": true,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "root-null",
+    "input": null,
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "root-array",
+    "input": [],
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "root-string",
+    "input": "payload",
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "price-limit-hidden-fraction",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1000000000.00000001,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "schema-version-hidden-fraction",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1234,
+      "needAck": true,
+      "schemaVersion": 1.00000000000000001
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "price-rounded-decimal",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 0.10000000000000001,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "price-integer-outside-roundtrip",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 9007199254740993,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  },
+  {
+    "id": "price-nonfinite-double-range",
+    "input": {
+      "transactionId": "tx-001",
+      "warehouseId": "wh-1",
+      "skuId": "sku-1",
+      "source": "erp",
+      "effectiveTime": "2026-01-01T10:00:00Z",
+      "storedAt": "2026-01-01T10:00:01Z",
+      "eventId": "evt-001",
+      "priceCents": 1e400,
+      "needAck": true
+    },
+    "expected": {
+      "accepted": false,
+      "errors": [
+        "INPUT_SCHEMA"
+      ],
+      "ack": null,
+      "event": null
+    }
+  }
+]

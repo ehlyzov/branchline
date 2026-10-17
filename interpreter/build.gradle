@@ -71,9 +71,12 @@ kotlin {
     }
 }
 
-def jsProductionLibraryDir = layout.buildDirectory.dir("dist/js/productionLibrary")
+// Keep the Node producer separate: browser imports use dist/js/productionLibrary.
+// Kotlin configures both Copy tasks to the same default directory otherwise.
+def jsNodeProductionLibraryDir = layout.buildDirectory.dir("dist/js/nodeProductionLibrary")
 
-tasks.named('jsNodeProductionLibraryDistribution').configure {
+tasks.named('jsNodeProductionLibraryDistribution', Copy).configure {
+    into(jsNodeProductionLibraryDir)
     dependsOn 'jsProductionExecutableCompileSync'
 }
 
@@ -94,5 +97,5 @@ tasks.register('packageInterpreterJs', org.gradle.api.tasks.bundling.Tar) {
     archiveClassifier.set('js')
     archiveExtension.set('tgz')
     compression = org.gradle.api.tasks.bundling.Compression.GZIP
-    from(jsProductionLibraryDir)
+    from(tasks.named('jsNodeProductionLibraryDistribution'))
 }

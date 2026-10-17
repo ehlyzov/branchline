@@ -1,0 +1,10 @@
+
+TRANSFORM Main {
+LET category = CASE {
+    WHEN input.score > 10 THEN "high"
+    WHEN input.score == 10 THEN "equal"
+    ELSE "low"
+}
+
+OUTPUT {category: category}
+}

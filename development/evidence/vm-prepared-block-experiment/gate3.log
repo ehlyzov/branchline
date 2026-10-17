@@ -1,0 +1,83 @@
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:compileKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmProcessResources UP-TO-DATE
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :interpreter:jvmMainClasses UP-TO-DATE
+> Task :interpreter:jvmJar UP-TO-DATE
+> Task :test-fixtures:kmpPartiallyResolvedDependenciesChecker
+> Task :test-fixtures:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:compileKotlinJvm UP-TO-DATE
+> Task :vm:compileJvmMainJava NO-SOURCE
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :vm:jvmMainClasses UP-TO-DATE
+> Task :vm:jvmJar UP-TO-DATE
+> Task :test-fixtures:compileKotlinJvm UP-TO-DATE
+> Task :test-fixtures:compileJvmMainJava NO-SOURCE
+> Task :test-fixtures:jvmProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmMainResources SKIPPED
+> Task :test-fixtures:jvmMainClasses UP-TO-DATE
+> Task :test-fixtures:jvmJar UP-TO-DATE
+> Task :vm:jvmTestProcessResources NO-SOURCE
+> Task :vm:processJvmTestResources SKIPPED
+> Task :kotlinKotlinNpmCachesSetup
+> Task :kotlinNodeJsSetup UP-TO-DATE
+> Task :kotlinRestoreYarnLock UP-TO-DATE
+> Task :kotlinYarnSetup UP-TO-DATE
+> Task :interpreter:jsPackageJson UP-TO-DATE
+> Task :vm:jsPackageJson UP-TO-DATE
+> Task :cli:jsPackageJson UP-TO-DATE
+> Task :cli:jsTestPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPackageJson UP-TO-DATE
+> Task :vm:jsTestPackageJson UP-TO-DATE
+> Task :cli:jsPublicPackageJson UP-TO-DATE
+> Task :cli:jsTestPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPublicPackageJson UP-TO-DATE
+> Task :vm:jsPublicPackageJson UP-TO-DATE
+> Task :vm:jsTestPublicPackageJson UP-TO-DATE
+> Task :kotlinPackageJsonUmbrella UP-TO-DATE
+> Task :rootPackageJson UP-TO-DATE
+> Task :kotlinNpmInstall UP-TO-DATE
+> Task :kotlinStoreYarnLock UP-TO-DATE
+> Task :interpreter:compileKotlinJs UP-TO-DATE
+> Task :vm:compileKotlinJs UP-TO-DATE
+> Task :vm:jsProcessResources NO-SOURCE
+> Task :vm:jsMainClasses UP-TO-DATE
+> Task :vm:compileTestKotlinJs UP-TO-DATE
+> Task :vm:jsTestProcessResources NO-SOURCE
+> Task :vm:jsTestClasses UP-TO-DATE
+> Task :vm:compileTestDevelopmentExecutableKotlinJs UP-TO-DATE
+> Task :vm:jsTestTestDevelopmentExecutableCompileSync
+> Task :vm:kotlinNodeJsSetup UP-TO-DATE
+
+io.github.ehlyzov.branchline.vm.PreparedBlockPlanTest.basic_blocks_and_successors_are_precomputed_from_source_control_flow[js, node] FAILED
+    AssertionError at /Users/eugene/repo/research/branchline-public/vm/build/compileSync/js/test/testDevelopmentExecutable/kotlin/js/src/main/kotlin/kotlin/test/JsImpl.kt:23
+
+> Task :vm:jsNodeTest FAILED
+
+118 tests completed, 1 failed
+
+> Task :vm:compileTestKotlinJvm
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockPlanTest.kt:110:34 Unnecessary non-null assertion (!!) on a non-null receiver of type 'PreparedBlockInstruction'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockPlanTest.kt:111:34 Unnecessary non-null assertion (!!) on a non-null receiver of type 'PreparedBlockInstruction'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':vm:jsNodeTest'.
+> There were failing tests. See the report at: file:///Users/eugene/repo/research/branchline-public/vm/build/reports/tests/jsNodeTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 1s
+41 actionable tasks: 7 executed, 34 up-to-date

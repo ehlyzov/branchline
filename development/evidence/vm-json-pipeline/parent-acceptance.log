@@ -1,0 +1,4 @@
+javac -proc:none -cp vm-benchmarks/build/libs/vm-benchmarks-v0.11.0-SNAPSHOT-jmh.jar -d /tmp/branchline-vm-json-pipeline/acceptance development/evidence/vm-json-pipeline/PipelineAcceptance.java
+java -cp /tmp/branchline-vm-json-pipeline/acceptance:vm-benchmarks/build/libs/vm-benchmarks-v0.11.0-SNAPSHOT-jmh.jar PipelineAcceptance
+Exit 0
+PASS parent acceptance checks=63; exact eager/selected outcomes, independent expected values, plan/fallback metadata, report isolation, detached input lifetime

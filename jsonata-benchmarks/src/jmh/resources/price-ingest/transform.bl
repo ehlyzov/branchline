@@ -1,0 +1,36 @@
+TRANSFORM PriceIngest {
+    LET errors = []
+    LET transactionId = TRIM(IF GET(input, "transactionId", NULL) == NULL THEN "" ELSE input.transactionId)
+    IF LENGTH(transactionId) == 0 THEN { errors += "TRANSACTIONID_REQUIRED" } ELSE {}
+    LET warehouseId = TRIM(IF GET(input, "warehouseId", NULL) == NULL THEN "" ELSE input.warehouseId)
+    IF LENGTH(warehouseId) == 0 THEN { errors += "WAREHOUSEID_REQUIRED" } ELSE {}
+    LET skuId = TRIM(IF GET(input, "skuId", NULL) == NULL THEN "" ELSE input.skuId)
+    IF LENGTH(skuId) == 0 THEN { errors += "SKUID_REQUIRED" } ELSE {}
+    LET source = TRIM(IF GET(input, "source", NULL) == NULL THEN "" ELSE input.source)
+    IF LENGTH(source) == 0 THEN { errors += "SOURCE_REQUIRED" } ELSE {}
+    LET effectiveTime = TRIM(IF GET(input, "effectiveTime", NULL) == NULL THEN "" ELSE input.effectiveTime)
+    IF LENGTH(effectiveTime) == 0 THEN { errors += "EFFECTIVETIME_REQUIRED" } ELSE {}
+    LET storedAt = TRIM(IF GET(input, "storedAt", NULL) == NULL THEN "" ELSE input.storedAt)
+    IF LENGTH(storedAt) == 0 THEN { errors += "STOREDAT_REQUIRED" } ELSE {}
+    LET eventId = TRIM(IF GET(input, "eventId", NULL) == NULL THEN "" ELSE input.eventId)
+    IF LENGTH(eventId) == 0 THEN { errors += "EVENTID_REQUIRED" } ELSE {}
+    LET price = GET(input, "priceCents", NULL)
+    IF price == NULL THEN { errors += "PRICE_REQUIRED" } ELSE {
+        IF price < 0 THEN { errors += "PRICE_NEGATIVE" } ELSE {}
+        IF FLOOR(price) != price THEN { errors += "PRICE_FRACTIONAL" } ELSE {}
+        IF price > 1000000000 THEN { errors += "PRICE_LIMIT" } ELSE {}
+    }
+    LET needAck = GET(input, "needAck", TRUE)
+    IF needAck == NULL THEN { errors += "NEED_ACK" } ELSE {}
+    LET version = GET(input, "schemaVersion", 1)
+    IF version != 1 && version != 2 THEN { errors += "SCHEMA_VERSION" } ELSE {}
+    LET currency = GET(input, "currency", IF version == 2 THEN NULL ELSE "USD")
+    IF currency != "USD" && currency != "EUR" THEN { errors += "CURRENCY" } ELSE {}
+    LET accepted = LENGTH(errors) == 0
+    OUTPUT {
+        accepted: accepted,
+        errors: errors,
+        ack: IF needAck == TRUE THEN { transactionId: transactionId, status: IF accepted THEN "ACCEPTED" ELSE "REJECTED", errors: errors } ELSE NULL,
+        event: IF accepted THEN { transactionId: transactionId, warehouseId: warehouseId, skuId: skuId, source: source, effectiveTime: effectiveTime, storedAt: storedAt, eventId: eventId, priceCents: price, currency: currency, schemaVersion: version } ELSE NULL,
+    }
+}

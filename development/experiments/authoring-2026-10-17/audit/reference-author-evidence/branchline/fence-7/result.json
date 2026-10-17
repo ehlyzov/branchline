@@ -1,0 +1,1 @@
+{"compile_ok":true,"cases":[{"ok":true,"actual":{"grouped":{"u":[{"kind":"u","code":"a","rank":2},{"kind":"u","code":"c","rank":2}],"v":[{"kind":"v","code":"b","rank":1}]}},"error":null},{"ok":true,"actual":{"grouped":{}},"error":null}],"compile_seconds":0.064901833,"execute_seconds":0.061798625}

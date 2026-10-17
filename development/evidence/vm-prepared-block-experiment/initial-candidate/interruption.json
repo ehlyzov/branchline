@@ -1,0 +1,9 @@
+{
+  "reason": "Control runner order-of-magnitude slowdown; executeBlocks JVM method has 8935 bytecodes, investigating DontCompileHugeMethods before continuing final matrix",
+  "driverExit": 143,
+  "completedPhases": [
+    "old-baseline"
+  ],
+  "partialPhase": "forward",
+  "sourceChangesAllowed": "Only bounded JIT eligibility fix if confirmed; no new optimization patterns; rebuild acceptance and rerun full final matrix"
+}

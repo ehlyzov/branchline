@@ -1,0 +1,11 @@
+
+fun transform(input: Any?): Any? {
+val root=input as Map<*, *>
+val rows = (root["rows"] as? List<*> ?: emptyList<Any?>())
+    .map { it as Map<*, *> }
+val groups = rows.groupBy { it["kind"] as String }
+val index = rows.associateBy { it["code"] as String }
+val wanted = index["q"]
+
+return mapOf("groups" to groups,"index" to index,"wanted" to wanted)
+}

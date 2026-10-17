@@ -1,0 +1,11 @@
+
+TRANSFORM Main {
+LET xs = input.values ?? []
+LET doubled = MAP(xs, (x) -> x * 2)
+LET positive = FILTER(xs, (x) -> x > 0)
+LET total = REDUCE(xs, 0, (acc, x) -> acc + x)
+LET positions = MAP(xs, (x, i) -> ({index: i, value: x}))
+LET squares = [x * x FOR EACH x IN xs WHERE x > 0]
+
+OUTPUT {doubled: doubled, positive: positive, total: total, positions: positions, squares: squares}
+}

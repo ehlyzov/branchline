@@ -1,6 +1,12 @@
 package io.github.ehlyzov.branchline.cli
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import io.github.ehlyzov.branchline.FuncDecl
@@ -111,7 +117,12 @@ public class BranchlineProgram(
         return compiler.compile(ir)
     }
 
-    fun prepareVmExec(transform: TransformDecl, bytecode: Bytecode): VMExec {
+    fun prepareVmExec(
+        transform: TransformDecl,
+        bytecode: Bytecode,
+        fallbackPolicy: io.github.ehlyzov.branchline.vm.VMFallbackPolicy =
+            io.github.ehlyzov.branchline.vm.VMFallbackPolicy.COMPILE_FAILURE,
+    ): VMExec {
         val ir = compileIr(transform)
         return _root_ide_package_.io.github.ehlyzov.branchline.vm.VMExec(
             ir = ir,
@@ -120,6 +131,7 @@ public class BranchlineProgram(
             hostFnMeta = hostFnMeta,
             funcs = funcs,
             precompiled = bytecode,
+            fallbackPolicy = fallbackPolicy,
         )
     }
 
@@ -216,16 +228,21 @@ public data class ContractExecutionResult(
     val violations: List<ContractViolation>,
 )
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 public data class CompiledArtifact(
-    val version: Int = 1,
+    @EncodeDefault val version: Int = ArtifactCodec.CURRENT_VERSION,
     val transform: String?,
     val script: String,
     val bytecode: BytecodeIO.SerializedBytecode,
     val contract: TransformContract? = null,
+    // Required on the wire for v2: old strict readers did not enforce version.
+    @EncodeDefault val format: String = ArtifactCodec.FORMAT,
 )
 
 public object ArtifactCodec {
+    const val CURRENT_VERSION: Int = 2
+    const val FORMAT: String = "branchline-vm"
     private val prettyJson = Json { prettyPrint = true }
     private val compactJson = Json
 
@@ -240,17 +257,52 @@ public object ArtifactCodec {
     }
 
     fun encode(artifact: CompiledArtifact, pretty: Boolean = true): String {
+        validateForWriting(artifact)
         val serializer = if (pretty) prettyJson else compactJson
         return serializer.encodeToString(CompiledArtifact.serializer(), artifact)
     }
 
     fun encodeCanonical(artifact: CompiledArtifact): String {
+        validateForWriting(artifact)
         val element = compactJson.encodeToJsonElement(CompiledArtifact.serializer(), artifact)
         return io.github.ehlyzov.branchline.json.formatCanonicalJson(element)
     }
 
-    fun decode(raw: String): CompiledArtifact =
-        compactJson.decodeFromString(CompiledArtifact.serializer(), raw)
+    fun decode(raw: String): CompiledArtifact {
+        val element = compactJson.parseToJsonElement(raw) as? JsonObject
+            ?: unsupported("Compiled artifact must be a JSON object")
+        val versionElement = element["version"]
+        val version = if (versionElement == null) 1 else {
+            val primitive = versionElement as? JsonPrimitive
+            if (primitive == null || primitive.isString) unsupported("Invalid compiled artifact version")
+            primitive.intOrNull ?: unsupported("Invalid compiled artifact version")
+        }
+        if (version != 1 && version != CURRENT_VERSION) {
+            unsupported("Unsupported compiled artifact version $version; supported versions are 1 and $CURRENT_VERSION")
+        }
+        if (version == CURRENT_VERSION && element["format"] != JsonPrimitive(FORMAT)) {
+            unsupported("Compiled artifact version $version requires format '$FORMAT'")
+        }
+        if (element["format"] != null && element["format"] != JsonPrimitive(FORMAT)) {
+            unsupported("Unsupported compiled artifact format ${element["format"]}")
+        }
+        val artifact = compactJson.decodeFromJsonElement(CompiledArtifact.serializer(), element).copy(version = version)
+        if (version == 1 && artifact.bytecode.instructions.any { it.op.startsWith("PRIVATE_") }) {
+            unsupported("Compiled artifact version 1 cannot contain PRIVATE_* instructions")
+        }
+        return artifact
+    }
+
+    private fun validateForWriting(artifact: CompiledArtifact) {
+        if (artifact.version != CURRENT_VERSION || artifact.format != FORMAT) {
+            unsupported("The writer emits only compiled artifact version $CURRENT_VERSION with format '$FORMAT'")
+        }
+    }
+
+    private fun unsupported(reason: String): Nothing = throw CliException(
+        "$reason. Upgrade the Branchline CLI, or recompile the embedded script with the target CLI using blc.",
+        kind = CliErrorKind.INPUT,
+    )
 }
 
 public class CliException(

@@ -67,6 +67,9 @@ cd ktor-service
 ./gradlew -Pbranchline.useLocal=true test
 ```
 
+Reproducible synthetic pilot, stateful replay and the separate three-engine correctness
+comparison: [Local pilot guide](docs/LOCAL_PILOT.md).
+
 Manual codegen-only run:
 ```bash
 cd ktor-service

@@ -1,0 +1,1445 @@
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = loopBody, workload = paths)
+
+# Run progress: 0,00% complete, ETA 00:03:12
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"paths","dataset":"large","validatedExecutions":3,"sourceSha256":"cea0cc007936a698b09cf700a7ee55bcbaf422fd2bdf11ee661b881b067f244e","expectedOutputHash":-1988451404,"engine":"loopBody","loopBodyExecuted":false,"loopBodyEntries":0,"fallbackReason":"requires one comprehension loop","planFallbackReason":"requires one comprehension loop","eligibleLoopCount":0,"loweredLoopCount":0,"generatedClassCount":0,"bodyInstructionCount":0,"generatedBytecodeBytes":0,"boundary":"fresh-env-plus-reusable-execution"}
+0,420 us/op
+# Warmup Iteration   2: 0,411 us/op
+# Warmup Iteration   3: 0,412 us/op
+Iteration   1: 0,421 us/op
+                 ·gc.alloc.rate:      1595,793 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           10,000 counts
+                 ·gc.time:            4,000 ms
+
+Iteration   2: 0,413 us/op
+                 ·gc.alloc.rate:      1625,807 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   3: 0,407 us/op
+                 ·gc.alloc.rate:      1650,080 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            4,000 ms
+
+Iteration   4: 0,415 us/op
+                 ·gc.alloc.rate:      1616,395 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   5: 0,401 us/op
+                 ·gc.alloc.rate:      1675,451 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            4,000 ms
+
+
+# Run progress: 4,17% complete, ETA 00:03:10
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"paths","dataset":"large","validatedExecutions":3,"sourceSha256":"cea0cc007936a698b09cf700a7ee55bcbaf422fd2bdf11ee661b881b067f244e","expectedOutputHash":-1988451404,"engine":"loopBody","loopBodyExecuted":false,"loopBodyEntries":0,"fallbackReason":"requires one comprehension loop","planFallbackReason":"requires one comprehension loop","eligibleLoopCount":0,"loweredLoopCount":0,"generatedClassCount":0,"bodyInstructionCount":0,"generatedBytecodeBytes":0,"boundary":"fresh-env-plus-reusable-execution"}
+0,464 us/op
+# Warmup Iteration   2: 0,434 us/op
+# Warmup Iteration   3: 0,443 us/op
+Iteration   1: 0,443 us/op
+                 ·gc.alloc.rate:      1514,946 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           10,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   2: 0,443 us/op
+                 ·gc.alloc.rate:      1515,657 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           10,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   3: 0,433 us/op
+                 ·gc.alloc.rate:      1551,356 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   4: 0,438 us/op
+                 ·gc.alloc.rate:      1533,446 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           10,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   5: 0,442 us/op
+                 ·gc.alloc.rate:      1519,235 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           10,000 counts
+                 ·gc.time:            3,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  0,425 ±(99.9%) 0,024 us/op [Average]
+  (min, avg, max) = (0,401, 0,425, 0,443), stdev = 0,016
+  CI (99.9%): [0,401, 0,450] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  1579,817 ±(99.9%) 91,195 MB/sec [Average]
+  (min, avg, max) = (1514,946, 1579,817, 1675,451), stdev = 60,320
+  CI (99.9%): [1488,622, 1671,012] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  704,000 ±(99.9%) 0,001 B/op [Average]
+  (min, avg, max) = (704,000, 704,000, 704,000), stdev = 0,001
+  CI (99.9%): [704,000, 704,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  105,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (10,000, 10,500, 11,000), stdev = 0,527
+  CI (99.9%): [105,000, 105,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  33,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (3,000, 3,300, 4,000), stdev = 0,483
+  CI (99.9%): [33,000, 33,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = loopBody, workload = reduction)
+
+# Run progress: 8,33% complete, ETA 00:03:01
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"reduction","dataset":"large","validatedExecutions":3,"sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"engine":"loopBody","loopBodyExecuted":false,"loopBodyEntries":0,"fallbackReason":"not a compiler-shaped comprehension","planFallbackReason":"not a compiler-shaped comprehension","eligibleLoopCount":0,"loweredLoopCount":0,"generatedClassCount":0,"bodyInstructionCount":0,"generatedBytecodeBytes":0,"boundary":"fresh-env-plus-reusable-execution"}
+41,660 us/op
+# Warmup Iteration   2: 40,196 us/op
+# Warmup Iteration   3: 39,786 us/op
+Iteration   1: 39,871 us/op
+                 ·gc.alloc.rate:      207,789 MB/sec
+                 ·gc.alloc.rate.norm: 8688,016 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   2: 39,759 us/op
+                 ·gc.alloc.rate:      208,370 MB/sec
+                 ·gc.alloc.rate.norm: 8688,020 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            ≈ 0 ms
+
+Iteration   3: 39,821 us/op
+                 ·gc.alloc.rate:      208,050 MB/sec
+                 ·gc.alloc.rate.norm: 8688,016 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   4: 39,717 us/op
+                 ·gc.alloc.rate:      208,594 MB/sec
+                 ·gc.alloc.rate.norm: 8688,016 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            ≈ 0 ms
+
+Iteration   5: 40,003 us/op
+                 ·gc.alloc.rate:      207,099 MB/sec
+                 ·gc.alloc.rate.norm: 8688,016 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            1,000 ms
+
+
+# Run progress: 12,50% complete, ETA 00:02:53
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"reduction","dataset":"large","validatedExecutions":3,"sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"engine":"loopBody","loopBodyExecuted":false,"loopBodyEntries":0,"fallbackReason":"not a compiler-shaped comprehension","planFallbackReason":"not a compiler-shaped comprehension","eligibleLoopCount":0,"loweredLoopCount":0,"generatedClassCount":0,"bodyInstructionCount":0,"generatedBytecodeBytes":0,"boundary":"fresh-env-plus-reusable-execution"}
+39,844 us/op
+# Warmup Iteration   2: 38,246 us/op
+# Warmup Iteration   3: 38,040 us/op
+Iteration   1: 37,925 us/op
+                 ·gc.alloc.rate:      218,450 MB/sec
+                 ·gc.alloc.rate.norm: 8688,019 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            ≈ 0 ms
+
+Iteration   2: 38,084 us/op
+                 ·gc.alloc.rate:      217,540 MB/sec
+                 ·gc.alloc.rate.norm: 8688,015 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   3: 37,929 us/op
+                 ·gc.alloc.rate:      218,425 MB/sec
+                 ·gc.alloc.rate.norm: 8688,015 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            ≈ 0 ms
+
+Iteration   4: 37,972 us/op
+                 ·gc.alloc.rate:      218,179 MB/sec
+                 ·gc.alloc.rate.norm: 8688,015 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   5: 38,023 us/op
+                 ·gc.alloc.rate:      217,887 MB/sec
+                 ·gc.alloc.rate.norm: 8688,015 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            1,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  38,910 ±(99.9%) 1,478 us/op [Average]
+  (min, avg, max) = (37,925, 38,910, 40,003), stdev = 0,978
+  CI (99.9%): [37,432, 40,388] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  213,038 ±(99.9%) 8,091 MB/sec [Average]
+  (min, avg, max) = (207,099, 213,038, 218,450), stdev = 5,352
+  CI (99.9%): [204,947, 221,129] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  8688,017 ±(99.9%) 0,003 B/op [Average]
+  (min, avg, max) = (8688,015, 8688,017, 8688,020), stdev = 0,002
+  CI (99.9%): [8688,014, 8688,019] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  13,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (1,000, 1,300, 2,000), stdev = 0,483
+  CI (99.9%): [13,000, 13,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  8,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (≈ 0, 0,800, 2,000), stdev = 0,789
+  CI (99.9%): [8,000, 8,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = loopBody, workload = holdoutProjection)
+
+# Run progress: 16,67% complete, ETA 00:02:45
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"holdoutProjection","dataset":"large","validatedExecutions":3,"sourceSha256":"17a897157ccae94ab7d705f1d10a6bcfe80f0d8fe77a9a0bf3ec6d9ecb68b087","expectedOutputHash":78137616,"engine":"loopBody","loopBodyExecuted":true,"loopBodyEntries":1,"fallbackReason":null,"planFallbackReason":null,"eligibleLoopCount":1,"loweredLoopCount":1,"generatedClassCount":1,"bodyInstructionCount":24,"generatedBytecodeBytes":1546,"boundary":"fresh-env-plus-reusable-execution"}
+127,117 us/op
+# Warmup Iteration   2: 114,601 us/op
+# Warmup Iteration   3: 114,363 us/op
+Iteration   1: 114,779 us/op
+                 ·gc.alloc.rate:      1065,751 MB/sec
+                 ·gc.alloc.rate.norm: 128280,046 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   2: 113,664 us/op
+                 ·gc.alloc.rate:      1076,200 MB/sec
+                 ·gc.alloc.rate.norm: 128280,046 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   3: 114,954 us/op
+                 ·gc.alloc.rate:      1064,083 MB/sec
+                 ·gc.alloc.rate.norm: 128280,047 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   4: 114,110 us/op
+                 ·gc.alloc.rate:      1071,962 MB/sec
+                 ·gc.alloc.rate.norm: 128280,046 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   5: 113,956 us/op
+                 ·gc.alloc.rate:      1073,455 MB/sec
+                 ·gc.alloc.rate.norm: 128280,046 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            3,000 ms
+
+
+# Run progress: 20,83% complete, ETA 00:02:37
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"holdoutProjection","dataset":"large","validatedExecutions":3,"sourceSha256":"17a897157ccae94ab7d705f1d10a6bcfe80f0d8fe77a9a0bf3ec6d9ecb68b087","expectedOutputHash":78137616,"engine":"loopBody","loopBodyExecuted":true,"loopBodyEntries":1,"fallbackReason":null,"planFallbackReason":null,"eligibleLoopCount":1,"loweredLoopCount":1,"generatedClassCount":1,"bodyInstructionCount":24,"generatedBytecodeBytes":1546,"boundary":"fresh-env-plus-reusable-execution"}
+116,909 us/op
+# Warmup Iteration   2: 105,464 us/op
+# Warmup Iteration   3: 105,145 us/op
+Iteration   1: 105,040 us/op
+                 ·gc.alloc.rate:      1164,560 MB/sec
+                 ·gc.alloc.rate.norm: 128280,043 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   2: 105,344 us/op
+                 ·gc.alloc.rate:      1161,186 MB/sec
+                 ·gc.alloc.rate.norm: 128280,043 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   3: 104,846 us/op
+                 ·gc.alloc.rate:      1166,680 MB/sec
+                 ·gc.alloc.rate.norm: 128280,042 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            4,000 ms
+
+Iteration   4: 105,204 us/op
+                 ·gc.alloc.rate:      1162,738 MB/sec
+                 ·gc.alloc.rate.norm: 128280,042 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   5: 104,647 us/op
+                 ·gc.alloc.rate:      1168,931 MB/sec
+                 ·gc.alloc.rate.norm: 128280,043 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            3,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  109,654 ±(99.9%) 7,418 us/op [Average]
+  (min, avg, max) = (104,647, 109,654, 114,954), stdev = 4,906
+  CI (99.9%): [102,237, 117,072] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  1117,555 ±(99.9%) 75,566 MB/sec [Average]
+  (min, avg, max) = (1064,083, 1117,555, 1168,931), stdev = 49,982
+  CI (99.9%): [1041,989, 1193,121] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  128280,044 ±(99.9%) 0,003 B/op [Average]
+  (min, avg, max) = (128280,042, 128280,044, 128280,047), stdev = 0,002
+  CI (99.9%): [128280,041, 128280,047] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  75,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (7,000, 7,500, 8,000), stdev = 0,527
+  CI (99.9%): [75,000, 75,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  28,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (2,000, 2,800, 4,000), stdev = 0,632
+  CI (99.9%): [28,000, 28,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = preparedOptimized, workload = paths)
+
+# Run progress: 25,00% complete, ETA 00:02:28
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"paths","dataset":"large","validatedExecutions":3,"sourceSha256":"cea0cc007936a698b09cf700a7ee55bcbaf422fd2bdf11ee661b881b067f244e","expectedOutputHash":-1988451404,"engine":"preparedOptimized","requestedOptimized":true,"preparedExecuted":true,"optimizedExecuted":true,"fallbackReason":null,"planFallbackReason":null,"sourceInstructionCount":38,"blockCount":1,"directPathSites":4,"mirrorStoreSites":3,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+0,564 us/op
+# Warmup Iteration   2: 0,536 us/op
+# Warmup Iteration   3: 0,536 us/op
+Iteration   1: 0,535 us/op
+                 ·gc.alloc.rate:      1253,993 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   2: 0,537 us/op
+                 ·gc.alloc.rate:      1250,248 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           9,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   3: 0,531 us/op
+                 ·gc.alloc.rate:      1263,436 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   4: 0,537 us/op
+                 ·gc.alloc.rate:      1249,407 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   5: 0,539 us/op
+                 ·gc.alloc.rate:      1245,982 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           9,000 counts
+                 ·gc.time:            3,000 ms
+
+
+# Run progress: 29,17% complete, ETA 00:02:20
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"paths","dataset":"large","validatedExecutions":3,"sourceSha256":"cea0cc007936a698b09cf700a7ee55bcbaf422fd2bdf11ee661b881b067f244e","expectedOutputHash":-1988451404,"engine":"preparedOptimized","requestedOptimized":true,"preparedExecuted":true,"optimizedExecuted":true,"fallbackReason":null,"planFallbackReason":null,"sourceInstructionCount":38,"blockCount":1,"directPathSites":4,"mirrorStoreSites":3,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+0,564 us/op
+# Warmup Iteration   2: 0,557 us/op
+# Warmup Iteration   3: 0,540 us/op
+Iteration   1: 0,558 us/op
+                 ·gc.alloc.rate:      1203,794 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   2: 0,558 us/op
+                 ·gc.alloc.rate:      1202,686 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   3: 0,557 us/op
+                 ·gc.alloc.rate:      1204,342 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   4: 0,550 us/op
+                 ·gc.alloc.rate:      1220,629 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   5: 0,549 us/op
+                 ·gc.alloc.rate:      1222,801 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            2,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  0,545 ±(99.9%) 0,016 us/op [Average]
+  (min, avg, max) = (0,531, 0,545, 0,558), stdev = 0,010
+  CI (99.9%): [0,529, 0,561] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  1231,732 ±(99.9%) 35,407 MB/sec [Average]
+  (min, avg, max) = (1202,686, 1231,732, 1263,436), stdev = 23,420
+  CI (99.9%): [1196,324, 1267,139] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  704,000 ±(99.9%) 0,001 B/op [Average]
+  (min, avg, max) = (704,000, 704,000, 704,000), stdev = 0,001
+  CI (99.9%): [704,000, 704,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  82,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (8,000, 8,200, 9,000), stdev = 0,422
+  CI (99.9%): [82,000, 82,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  26,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (2,000, 2,600, 3,000), stdev = 0,516
+  CI (99.9%): [26,000, 26,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = preparedOptimized, workload = reduction)
+
+# Run progress: 33,33% complete, ETA 00:02:12
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"reduction","dataset":"large","validatedExecutions":3,"sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"engine":"preparedOptimized","requestedOptimized":true,"preparedExecuted":true,"optimizedExecuted":true,"fallbackReason":null,"planFallbackReason":null,"sourceInstructionCount":22,"blockCount":4,"directPathSites":3,"mirrorStoreSites":2,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+37,010 us/op
+# Warmup Iteration   2: 30,385 us/op
+# Warmup Iteration   3: 30,327 us/op
+Iteration   1: 30,229 us/op
+                 ·gc.alloc.rate:      273,053 MB/sec
+                 ·gc.alloc.rate.norm: 8656,015 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   2: 30,119 us/op
+                 ·gc.alloc.rate:      274,047 MB/sec
+                 ·gc.alloc.rate.norm: 8656,012 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   3: 30,283 us/op
+                 ·gc.alloc.rate:      272,563 MB/sec
+                 ·gc.alloc.rate.norm: 8656,012 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   4: 30,298 us/op
+                 ·gc.alloc.rate:      272,423 MB/sec
+                 ·gc.alloc.rate.norm: 8656,012 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   5: 30,559 us/op
+                 ·gc.alloc.rate:      270,098 MB/sec
+                 ·gc.alloc.rate.norm: 8656,012 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            2,000 ms
+
+
+# Run progress: 37,50% complete, ETA 00:02:04
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"reduction","dataset":"large","validatedExecutions":3,"sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"engine":"preparedOptimized","requestedOptimized":true,"preparedExecuted":true,"optimizedExecuted":true,"fallbackReason":null,"planFallbackReason":null,"sourceInstructionCount":22,"blockCount":4,"directPathSites":3,"mirrorStoreSites":2,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+32,309 us/op
+# Warmup Iteration   2: 27,862 us/op
+# Warmup Iteration   3: 27,509 us/op
+Iteration   1: 27,432 us/op
+                 ·gc.alloc.rate:      300,905 MB/sec
+                 ·gc.alloc.rate.norm: 8656,011 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   2: 27,593 us/op
+                 ·gc.alloc.rate:      299,140 MB/sec
+                 ·gc.alloc.rate.norm: 8656,011 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   3: 27,509 us/op
+                 ·gc.alloc.rate:      300,061 MB/sec
+                 ·gc.alloc.rate.norm: 8656,011 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   4: 27,505 us/op
+                 ·gc.alloc.rate:      300,096 MB/sec
+                 ·gc.alloc.rate.norm: 8656,011 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   5: 27,597 us/op
+                 ·gc.alloc.rate:      299,104 MB/sec
+                 ·gc.alloc.rate.norm: 8656,011 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            2,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  28,912 ±(99.9%) 2,215 us/op [Average]
+  (min, avg, max) = (27,432, 28,912, 30,559), stdev = 1,465
+  CI (99.9%): [26,697, 31,127] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  286,149 ±(99.9%) 21,914 MB/sec [Average]
+  (min, avg, max) = (270,098, 286,149, 300,905), stdev = 14,495
+  CI (99.9%): [264,234, 308,063] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  8656,012 ±(99.9%) 0,002 B/op [Average]
+  (min, avg, max) = (8656,011, 8656,012, 8656,015), stdev = 0,001
+  CI (99.9%): [8656,010, 8656,014] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  19,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (1,000, 1,900, 2,000), stdev = 0,316
+  CI (99.9%): [19,000, 19,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  22,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (1,000, 2,200, 3,000), stdev = 0,632
+  CI (99.9%): [22,000, 22,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = preparedOptimized, workload = holdoutProjection)
+
+# Run progress: 41,67% complete, ETA 00:01:55
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"holdoutProjection","dataset":"large","validatedExecutions":3,"sourceSha256":"17a897157ccae94ab7d705f1d10a6bcfe80f0d8fe77a9a0bf3ec6d9ecb68b087","expectedOutputHash":78137616,"engine":"preparedOptimized","requestedOptimized":true,"preparedExecuted":true,"optimizedExecuted":true,"fallbackReason":null,"planFallbackReason":null,"sourceInstructionCount":31,"blockCount":5,"directPathSites":6,"mirrorStoreSites":0,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+153,714 us/op
+# Warmup Iteration   2: 132,036 us/op
+# Warmup Iteration   3: 132,008 us/op
+Iteration   1: 131,669 us/op
+                 ·gc.alloc.rate:      928,806 MB/sec
+                 ·gc.alloc.rate.norm: 128248,053 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   2: 132,024 us/op
+                 ·gc.alloc.rate:      926,303 MB/sec
+                 ·gc.alloc.rate.norm: 128248,053 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            5,000 ms
+
+Iteration   3: 132,608 us/op
+                 ·gc.alloc.rate:      922,211 MB/sec
+                 ·gc.alloc.rate.norm: 128248,054 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   4: 134,269 us/op
+                 ·gc.alloc.rate:      910,824 MB/sec
+                 ·gc.alloc.rate.norm: 128248,054 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   5: 133,433 us/op
+                 ·gc.alloc.rate:      916,532 MB/sec
+                 ·gc.alloc.rate.norm: 128248,054 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            2,000 ms
+
+
+# Run progress: 45,83% complete, ETA 00:01:47
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"holdoutProjection","dataset":"large","validatedExecutions":3,"sourceSha256":"17a897157ccae94ab7d705f1d10a6bcfe80f0d8fe77a9a0bf3ec6d9ecb68b087","expectedOutputHash":78137616,"engine":"preparedOptimized","requestedOptimized":true,"preparedExecuted":true,"optimizedExecuted":true,"fallbackReason":null,"planFallbackReason":null,"sourceInstructionCount":31,"blockCount":5,"directPathSites":6,"mirrorStoreSites":0,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+142,804 us/op
+# Warmup Iteration   2: 126,940 us/op
+# Warmup Iteration   3: 124,090 us/op
+Iteration   1: 125,096 us/op
+                 ·gc.alloc.rate:      977,595 MB/sec
+                 ·gc.alloc.rate.norm: 128248,051 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   2: 124,209 us/op
+                 ·gc.alloc.rate:      984,588 MB/sec
+                 ·gc.alloc.rate.norm: 128248,050 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   3: 124,641 us/op
+                 ·gc.alloc.rate:      981,136 MB/sec
+                 ·gc.alloc.rate.norm: 128248,051 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   4: 124,277 us/op
+                 ·gc.alloc.rate:      984,058 MB/sec
+                 ·gc.alloc.rate.norm: 128248,050 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   5: 124,337 us/op
+                 ·gc.alloc.rate:      983,579 MB/sec
+                 ·gc.alloc.rate.norm: 128248,051 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            2,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  128,656 ±(99.9%) 6,700 us/op [Average]
+  (min, avg, max) = (124,209, 128,656, 134,269), stdev = 4,432
+  CI (99.9%): [121,956, 135,356] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  951,563 ±(99.9%) 49,450 MB/sec [Average]
+  (min, avg, max) = (910,824, 951,563, 984,588), stdev = 32,708
+  CI (99.9%): [902,114, 1001,013] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  128248,052 ±(99.9%) 0,003 B/op [Average]
+  (min, avg, max) = (128248,050, 128248,052, 128248,054), stdev = 0,002
+  CI (99.9%): [128248,050, 128248,055] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  64,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (6,000, 6,400, 7,000), stdev = 0,516
+  CI (99.9%): [64,000, 64,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  24,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (2,000, 2,400, 5,000), stdev = 0,966
+  CI (99.9%): [24,000, 24,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = baseline, workload = paths)
+
+# Run progress: 50,00% complete, ETA 00:01:39
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"paths","dataset":"large","validatedExecutions":3,"sourceSha256":"cea0cc007936a698b09cf700a7ee55bcbaf422fd2bdf11ee661b881b067f244e","expectedOutputHash":-1988451404,"engine":"baseline","executionApi":"VM.execute","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+0,451 us/op
+# Warmup Iteration   2: 0,437 us/op
+# Warmup Iteration   3: 0,428 us/op
+Iteration   1: 0,418 us/op
+                 ·gc.alloc.rate:      1607,577 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            4,000 ms
+
+Iteration   2: 0,422 us/op
+                 ·gc.alloc.rate:      1589,157 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           10,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   3: 0,419 us/op
+                 ·gc.alloc.rate:      1603,462 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   4: 0,418 us/op
+                 ·gc.alloc.rate:      1604,137 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           10,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   5: 0,427 us/op
+                 ·gc.alloc.rate:      1573,106 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            3,000 ms
+
+
+# Run progress: 54,17% complete, ETA 00:01:30
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"paths","dataset":"large","validatedExecutions":3,"sourceSha256":"cea0cc007936a698b09cf700a7ee55bcbaf422fd2bdf11ee661b881b067f244e","expectedOutputHash":-1988451404,"engine":"baseline","executionApi":"VM.execute","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+0,403 us/op
+# Warmup Iteration   2: 0,381 us/op
+# Warmup Iteration   3: 0,382 us/op
+Iteration   1: 0,387 us/op
+                 ·gc.alloc.rate:      1733,080 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            4,000 ms
+
+Iteration   2: 0,390 us/op
+                 ·gc.alloc.rate:      1720,470 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           12,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   3: 0,391 us/op
+                 ·gc.alloc.rate:      1718,758 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            4,000 ms
+
+Iteration   4: 0,382 us/op
+                 ·gc.alloc.rate:      1759,207 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           12,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   5: 0,384 us/op
+                 ·gc.alloc.rate:      1748,238 MB/sec
+                 ·gc.alloc.rate.norm: 704,000 B/op
+                 ·gc.count:           12,000 counts
+                 ·gc.time:            4,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  0,404 ±(99.9%) 0,028 us/op [Average]
+  (min, avg, max) = (0,382, 0,404, 0,427), stdev = 0,018
+  CI (99.9%): [0,376, 0,431] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  1665,719 ±(99.9%) 114,238 MB/sec [Average]
+  (min, avg, max) = (1573,106, 1665,719, 1759,207), stdev = 75,561
+  CI (99.9%): [1551,481, 1779,957] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  704,000 ±(99.9%) 0,001 B/op [Average]
+  (min, avg, max) = (704,000, 704,000, 704,000), stdev = 0,001
+  CI (99.9%): [704,000, 704,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  111,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (10,000, 11,100, 12,000), stdev = 0,738
+  CI (99.9%): [111,000, 111,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  34,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (3,000, 3,400, 4,000), stdev = 0,516
+  CI (99.9%): [34,000, 34,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = baseline, workload = reduction)
+
+# Run progress: 58,33% complete, ETA 00:01:22
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"reduction","dataset":"large","validatedExecutions":3,"sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"engine":"baseline","executionApi":"VM.execute","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+39,838 us/op
+# Warmup Iteration   2: 38,632 us/op
+# Warmup Iteration   3: 38,287 us/op
+Iteration   1: 38,236 us/op
+                 ·gc.alloc.rate:      216,673 MB/sec
+                 ·gc.alloc.rate.norm: 8688,019 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            ≈ 0 ms
+
+Iteration   2: 38,106 us/op
+                 ·gc.alloc.rate:      217,414 MB/sec
+                 ·gc.alloc.rate.norm: 8688,015 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   3: 38,239 us/op
+                 ·gc.alloc.rate:      216,657 MB/sec
+                 ·gc.alloc.rate.norm: 8688,015 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   4: 38,257 us/op
+                 ·gc.alloc.rate:      216,552 MB/sec
+                 ·gc.alloc.rate.norm: 8688,015 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   5: 38,207 us/op
+                 ·gc.alloc.rate:      216,835 MB/sec
+                 ·gc.alloc.rate.norm: 8688,016 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+
+# Run progress: 62,50% complete, ETA 00:01:14
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"reduction","dataset":"large","validatedExecutions":3,"sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"engine":"baseline","executionApi":"VM.execute","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+40,926 us/op
+# Warmup Iteration   2: 38,978 us/op
+# Warmup Iteration   3: 39,500 us/op
+Iteration   1: 39,016 us/op
+                 ·gc.alloc.rate:      212,341 MB/sec
+                 ·gc.alloc.rate.norm: 8688,020 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   2: 38,867 us/op
+                 ·gc.alloc.rate:      213,156 MB/sec
+                 ·gc.alloc.rate.norm: 8688,016 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            ≈ 0 ms
+
+Iteration   3: 38,725 us/op
+                 ·gc.alloc.rate:      213,939 MB/sec
+                 ·gc.alloc.rate.norm: 8688,016 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   4: 38,682 us/op
+                 ·gc.alloc.rate:      214,174 MB/sec
+                 ·gc.alloc.rate.norm: 8688,016 B/op
+                 ·gc.count:           1,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   5: 38,600 us/op
+                 ·gc.alloc.rate:      214,632 MB/sec
+                 ·gc.alloc.rate.norm: 8688,016 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  38,494 ±(99.9%) 0,486 us/op [Average]
+  (min, avg, max) = (38,106, 38,494, 39,016), stdev = 0,322
+  CI (99.9%): [38,007, 38,980] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  215,237 ±(99.9%) 2,714 MB/sec [Average]
+  (min, avg, max) = (212,341, 215,237, 217,414), stdev = 1,795
+  CI (99.9%): [212,523, 217,951] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  8688,016 ±(99.9%) 0,003 B/op [Average]
+  (min, avg, max) = (8688,015, 8688,016, 8688,020), stdev = 0,002
+  CI (99.9%): [8688,014, 8688,019] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  14,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (1,000, 1,400, 2,000), stdev = 0,516
+  CI (99.9%): [14,000, 14,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  8,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (≈ 0, 0,800, 1,000), stdev = 0,422
+  CI (99.9%): [8,000, 8,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = baseline, workload = holdoutProjection)
+
+# Run progress: 66,67% complete, ETA 00:01:06
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"holdoutProjection","dataset":"large","validatedExecutions":3,"sourceSha256":"17a897157ccae94ab7d705f1d10a6bcfe80f0d8fe77a9a0bf3ec6d9ecb68b087","expectedOutputHash":78137616,"engine":"baseline","executionApi":"VM.execute","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+130,246 us/op
+# Warmup Iteration   2: 124,968 us/op
+# Warmup Iteration   3: 124,477 us/op
+Iteration   1: 124,194 us/op
+                 ·gc.alloc.rate:      984,948 MB/sec
+                 ·gc.alloc.rate.norm: 128280,050 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   2: 124,030 us/op
+                 ·gc.alloc.rate:      986,247 MB/sec
+                 ·gc.alloc.rate.norm: 128280,050 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   3: 124,410 us/op
+                 ·gc.alloc.rate:      983,216 MB/sec
+                 ·gc.alloc.rate.norm: 128280,051 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   4: 124,418 us/op
+                 ·gc.alloc.rate:      983,173 MB/sec
+                 ·gc.alloc.rate.norm: 128280,050 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   5: 124,361 us/op
+                 ·gc.alloc.rate:      983,640 MB/sec
+                 ·gc.alloc.rate.norm: 128280,050 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            2,000 ms
+
+
+# Run progress: 70,83% complete, ETA 00:00:57
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"holdoutProjection","dataset":"large","validatedExecutions":3,"sourceSha256":"17a897157ccae94ab7d705f1d10a6bcfe80f0d8fe77a9a0bf3ec6d9ecb68b087","expectedOutputHash":78137616,"engine":"baseline","executionApi":"VM.execute","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+127,151 us/op
+# Warmup Iteration   2: 122,580 us/op
+# Warmup Iteration   3: 122,777 us/op
+Iteration   1: 123,074 us/op
+                 ·gc.alloc.rate:      993,917 MB/sec
+                 ·gc.alloc.rate.norm: 128280,050 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   2: 122,687 us/op
+                 ·gc.alloc.rate:      997,041 MB/sec
+                 ·gc.alloc.rate.norm: 128280,050 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   3: 122,365 us/op
+                 ·gc.alloc.rate:      999,646 MB/sec
+                 ·gc.alloc.rate.norm: 128280,050 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   4: 122,665 us/op
+                 ·gc.alloc.rate:      997,220 MB/sec
+                 ·gc.alloc.rate.norm: 128280,050 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   5: 122,685 us/op
+                 ·gc.alloc.rate:      997,073 MB/sec
+                 ·gc.alloc.rate.norm: 128280,050 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            3,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  123,489 ±(99.9%) 1,301 us/op [Average]
+  (min, avg, max) = (122,365, 123,489, 124,418), stdev = 0,861
+  CI (99.9%): [122,188, 124,790] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  990,612 ±(99.9%) 10,439 MB/sec [Average]
+  (min, avg, max) = (983,173, 990,612, 999,646), stdev = 6,905
+  CI (99.9%): [980,173, 1001,051] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  128280,050 ±(99.9%) 0,001 B/op [Average]
+  (min, avg, max) = (128280,050, 128280,050, 128280,051), stdev = 0,001
+  CI (99.9%): [128280,049, 128280,051] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  65,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (6,000, 6,500, 7,000), stdev = 0,527
+  CI (99.9%): [65,000, 65,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  23,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (2,000, 2,300, 3,000), stdev = 0,483
+  CI (99.9%): [23,000, 23,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = interpreter, workload = paths)
+
+# Run progress: 75,00% complete, ETA 00:00:49
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"paths","dataset":"large","validatedExecutions":3,"sourceSha256":"cea0cc007936a698b09cf700a7ee55bcbaf422fd2bdf11ee661b881b067f244e","expectedOutputHash":-1988451404,"engine":"interpreter","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+0,285 us/op
+# Warmup Iteration   2: 0,277 us/op
+# Warmup Iteration   3: 0,275 us/op
+Iteration   1: 0,275 us/op
+                 ·gc.alloc.rate:      2719,512 MB/sec
+                 ·gc.alloc.rate.norm: 784,000 B/op
+                 ·gc.count:           18,000 counts
+                 ·gc.time:            6,000 ms
+
+Iteration   2: 0,275 us/op
+                 ·gc.alloc.rate:      2718,402 MB/sec
+                 ·gc.alloc.rate.norm: 784,000 B/op
+                 ·gc.count:           18,000 counts
+                 ·gc.time:            5,000 ms
+
+Iteration   3: 0,275 us/op
+                 ·gc.alloc.rate:      2723,111 MB/sec
+                 ·gc.alloc.rate.norm: 784,000 B/op
+                 ·gc.count:           18,000 counts
+                 ·gc.time:            6,000 ms
+
+Iteration   4: 0,276 us/op
+                 ·gc.alloc.rate:      2709,793 MB/sec
+                 ·gc.alloc.rate.norm: 784,000 B/op
+                 ·gc.count:           18,000 counts
+                 ·gc.time:            5,000 ms
+
+Iteration   5: 0,275 us/op
+                 ·gc.alloc.rate:      2719,214 MB/sec
+                 ·gc.alloc.rate.norm: 784,000 B/op
+                 ·gc.count:           19,000 counts
+                 ·gc.time:            6,000 ms
+
+
+# Run progress: 79,17% complete, ETA 00:00:41
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"paths","dataset":"large","validatedExecutions":3,"sourceSha256":"cea0cc007936a698b09cf700a7ee55bcbaf422fd2bdf11ee661b881b067f244e","expectedOutputHash":-1988451404,"engine":"interpreter","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+0,288 us/op
+# Warmup Iteration   2: 0,280 us/op
+# Warmup Iteration   3: 0,280 us/op
+Iteration   1: 0,280 us/op
+                 ·gc.alloc.rate:      2671,312 MB/sec
+                 ·gc.alloc.rate.norm: 784,000 B/op
+                 ·gc.count:           17,000 counts
+                 ·gc.time:            5,000 ms
+
+Iteration   2: 0,280 us/op
+                 ·gc.alloc.rate:      2665,575 MB/sec
+                 ·gc.alloc.rate.norm: 784,000 B/op
+                 ·gc.count:           18,000 counts
+                 ·gc.time:            5,000 ms
+
+Iteration   3: 0,280 us/op
+                 ·gc.alloc.rate:      2673,831 MB/sec
+                 ·gc.alloc.rate.norm: 784,000 B/op
+                 ·gc.count:           18,000 counts
+                 ·gc.time:            5,000 ms
+
+Iteration   4: 0,279 us/op
+                 ·gc.alloc.rate:      2680,658 MB/sec
+                 ·gc.alloc.rate.norm: 784,000 B/op
+                 ·gc.count:           18,000 counts
+                 ·gc.time:            6,000 ms
+
+Iteration   5: 0,279 us/op
+                 ·gc.alloc.rate:      2676,874 MB/sec
+                 ·gc.alloc.rate.norm: 784,000 B/op
+                 ·gc.count:           17,000 counts
+                 ·gc.time:            5,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  0,277 ±(99.9%) 0,004 us/op [Average]
+  (min, avg, max) = (0,275, 0,277, 0,280), stdev = 0,002
+  CI (99.9%): [0,274, 0,281] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  2695,828 ±(99.9%) 36,152 MB/sec [Average]
+  (min, avg, max) = (2665,575, 2695,828, 2723,111), stdev = 23,913
+  CI (99.9%): [2659,676, 2731,981] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  784,000 ±(99.9%) 0,001 B/op [Average]
+  (min, avg, max) = (784,000, 784,000, 784,000), stdev = 0,001
+  CI (99.9%): [784,000, 784,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  179,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (17,000, 17,900, 19,000), stdev = 0,568
+  CI (99.9%): [179,000, 179,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  54,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (5,000, 5,400, 6,000), stdev = 0,516
+  CI (99.9%): [54,000, 54,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = interpreter, workload = reduction)
+
+# Run progress: 83,33% complete, ETA 00:00:33
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"reduction","dataset":"large","validatedExecutions":3,"sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"engine":"interpreter","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+28,756 us/op
+# Warmup Iteration   2: 27,412 us/op
+# Warmup Iteration   3: 27,379 us/op
+Iteration   1: 27,335 us/op
+                 ·gc.alloc.rate:      304,754 MB/sec
+                 ·gc.alloc.rate.norm: 8736,011 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   2: 27,358 us/op
+                 ·gc.alloc.rate:      304,495 MB/sec
+                 ·gc.alloc.rate.norm: 8736,011 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   3: 27,357 us/op
+                 ·gc.alloc.rate:      304,518 MB/sec
+                 ·gc.alloc.rate.norm: 8736,011 B/op
+                 ·gc.count:           3,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   4: 27,342 us/op
+                 ·gc.alloc.rate:      304,673 MB/sec
+                 ·gc.alloc.rate.norm: 8736,011 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   5: 27,334 us/op
+                 ·gc.alloc.rate:      304,764 MB/sec
+                 ·gc.alloc.rate.norm: 8736,011 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+
+# Run progress: 87,50% complete, ETA 00:00:24
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"reduction","dataset":"large","validatedExecutions":3,"sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"engine":"interpreter","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+29,905 us/op
+# Warmup Iteration   2: 28,937 us/op
+# Warmup Iteration   3: 28,769 us/op
+Iteration   1: 28,840 us/op
+                 ·gc.alloc.rate:      288,059 MB/sec
+                 ·gc.alloc.rate.norm: 8712,012 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   2: 28,701 us/op
+                 ·gc.alloc.rate:      289,454 MB/sec
+                 ·gc.alloc.rate.norm: 8712,012 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   3: 28,882 us/op
+                 ·gc.alloc.rate:      287,641 MB/sec
+                 ·gc.alloc.rate.norm: 8712,012 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+Iteration   4: 28,784 us/op
+                 ·gc.alloc.rate:      288,615 MB/sec
+                 ·gc.alloc.rate.norm: 8712,012 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            2,000 ms
+
+Iteration   5: 28,783 us/op
+                 ·gc.alloc.rate:      288,628 MB/sec
+                 ·gc.alloc.rate.norm: 8712,012 B/op
+                 ·gc.count:           2,000 counts
+                 ·gc.time:            1,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  28,072 ±(99.9%) 1,159 us/op [Average]
+  (min, avg, max) = (27,334, 28,072, 28,882), stdev = 0,767
+  CI (99.9%): [26,912, 29,231] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  296,560 ±(99.9%) 12,897 MB/sec [Average]
+  (min, avg, max) = (287,641, 296,560, 304,764), stdev = 8,530
+  CI (99.9%): [283,663, 309,457] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  8724,011 ±(99.9%) 19,123 B/op [Average]
+  (min, avg, max) = (8712,012, 8724,011, 8736,011), stdev = 12,649
+  CI (99.9%): [8704,888, 8743,135] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  21,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (2,000, 2,100, 3,000), stdev = 0,316
+  CI (99.9%): [21,000, 21,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  14,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (1,000, 1,400, 3,000), stdev = 0,699
+  CI (99.9%): [14,000, 14,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 5 iterations, 1 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute
+# Parameters: (dataset = large, engine = interpreter, workload = holdoutProjection)
+
+# Run progress: 91,67% complete, ETA 00:00:16
+# Fork: 1 of 2
+# Warmup Iteration   1: {"workload":"holdoutProjection","dataset":"large","validatedExecutions":3,"sourceSha256":"17a897157ccae94ab7d705f1d10a6bcfe80f0d8fe77a9a0bf3ec6d9ecb68b087","expectedOutputHash":78137616,"engine":"interpreter","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+108,401 us/op
+# Warmup Iteration   2: 104,307 us/op
+# Warmup Iteration   3: 104,205 us/op
+Iteration   1: 104,883 us/op
+                 ·gc.alloc.rate:      1756,969 MB/sec
+                 ·gc.alloc.rate.norm: 193248,043 B/op
+                 ·gc.count:           12,000 counts
+                 ·gc.time:            5,000 ms
+
+Iteration   2: 103,877 us/op
+                 ·gc.alloc.rate:      1773,977 MB/sec
+                 ·gc.alloc.rate.norm: 193248,042 B/op
+                 ·gc.count:           12,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   3: 106,678 us/op
+                 ·gc.alloc.rate:      1727,410 MB/sec
+                 ·gc.alloc.rate.norm: 193248,043 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            4,000 ms
+
+Iteration   4: 104,414 us/op
+                 ·gc.alloc.rate:      1764,824 MB/sec
+                 ·gc.alloc.rate.norm: 193248,042 B/op
+                 ·gc.count:           12,000 counts
+                 ·gc.time:            4,000 ms
+
+Iteration   5: 103,813 us/op
+                 ·gc.alloc.rate:      1775,107 MB/sec
+                 ·gc.alloc.rate.norm: 193248,042 B/op
+                 ·gc.count:           12,000 counts
+                 ·gc.time:            4,000 ms
+
+
+# Run progress: 95,83% complete, ETA 00:00:08
+# Fork: 2 of 2
+# Warmup Iteration   1: {"workload":"holdoutProjection","dataset":"large","validatedExecutions":3,"sourceSha256":"17a897157ccae94ab7d705f1d10a6bcfe80f0d8fe77a9a0bf3ec6d9ecb68b087","expectedOutputHash":78137616,"engine":"interpreter","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"loopBodyExecuted":false,"loopBodyEntries":0,"generatedClassCount":0,"boundary":"fresh-env-plus-reusable-execution"}
+120,859 us/op
+# Warmup Iteration   2: 118,182 us/op
+# Warmup Iteration   3: 117,130 us/op
+Iteration   1: 116,714 us/op
+                 ·gc.alloc.rate:      1578,870 MB/sec
+                 ·gc.alloc.rate.norm: 193248,047 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   2: 117,230 us/op
+                 ·gc.alloc.rate:      1571,935 MB/sec
+                 ·gc.alloc.rate.norm: 193248,048 B/op
+                 ·gc.count:           10,000 counts
+                 ·gc.time:            4,000 ms
+
+Iteration   3: 116,978 us/op
+                 ·gc.alloc.rate:      1575,274 MB/sec
+                 ·gc.alloc.rate.norm: 193248,047 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            3,000 ms
+
+Iteration   4: 116,733 us/op
+                 ·gc.alloc.rate:      1578,628 MB/sec
+                 ·gc.alloc.rate.norm: 193248,047 B/op
+                 ·gc.count:           10,000 counts
+                 ·gc.time:            4,000 ms
+
+Iteration   5: 116,899 us/op
+                 ·gc.alloc.rate:      1576,394 MB/sec
+                 ·gc.alloc.rate.norm: 193248,047 B/op
+                 ·gc.count:           11,000 counts
+                 ·gc.time:            3,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute":
+  110,822 ±(99.9%) 9,777 us/op [Average]
+  (min, avg, max) = (103,813, 110,822, 117,230), stdev = 6,467
+  CI (99.9%): [101,045, 120,599] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate":
+  1667,939 ±(99.9%) 147,506 MB/sec [Average]
+  (min, avg, max) = (1571,935, 1667,939, 1775,107), stdev = 97,566
+  CI (99.9%): [1520,432, 1815,445] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm":
+  193248,045 ±(99.9%) 0,004 B/op [Average]
+  (min, avg, max) = (193248,042, 193248,045, 193248,048), stdev = 0,003
+  CI (99.9%): [193248,041, 193248,049] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.count":
+  112,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (10,000, 11,200, 12,000), stdev = 0,789
+  CI (99.9%): [112,000, 112,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMLoopBodyBenchmark.execute:·gc.time":
+  37,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (3,000, 3,700, 5,000), stdev = 0,675
+  CI (99.9%): [37,000, 37,000] (assumes normal distribution)
+
+
+# Run complete. Total time: 00:03:18
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                        (dataset)           (engine)         (workload)  Mode  Cnt       Score     Error   Units
+VMLoopBodyBenchmark.execute                          large           loopBody              paths  avgt   10       0,425 ±   0,024   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large           loopBody              paths  avgt   10    1579,817 ±  91,195  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large           loopBody              paths  avgt   10     704,000 ±   0,001    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large           loopBody              paths  avgt   10     105,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large           loopBody              paths  avgt   10      33,000                ms
+VMLoopBodyBenchmark.execute                          large           loopBody          reduction  avgt   10      38,910 ±   1,478   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large           loopBody          reduction  avgt   10     213,038 ±   8,091  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large           loopBody          reduction  avgt   10    8688,017 ±   0,003    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large           loopBody          reduction  avgt   10      13,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large           loopBody          reduction  avgt   10       8,000                ms
+VMLoopBodyBenchmark.execute                          large           loopBody  holdoutProjection  avgt   10     109,654 ±   7,418   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large           loopBody  holdoutProjection  avgt   10    1117,555 ±  75,566  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large           loopBody  holdoutProjection  avgt   10  128280,044 ±   0,003    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large           loopBody  holdoutProjection  avgt   10      75,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large           loopBody  holdoutProjection  avgt   10      28,000                ms
+VMLoopBodyBenchmark.execute                          large  preparedOptimized              paths  avgt   10       0,545 ±   0,016   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large  preparedOptimized              paths  avgt   10    1231,732 ±  35,407  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large  preparedOptimized              paths  avgt   10     704,000 ±   0,001    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large  preparedOptimized              paths  avgt   10      82,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large  preparedOptimized              paths  avgt   10      26,000                ms
+VMLoopBodyBenchmark.execute                          large  preparedOptimized          reduction  avgt   10      28,912 ±   2,215   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large  preparedOptimized          reduction  avgt   10     286,149 ±  21,914  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large  preparedOptimized          reduction  avgt   10    8656,012 ±   0,002    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large  preparedOptimized          reduction  avgt   10      19,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large  preparedOptimized          reduction  avgt   10      22,000                ms
+VMLoopBodyBenchmark.execute                          large  preparedOptimized  holdoutProjection  avgt   10     128,656 ±   6,700   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large  preparedOptimized  holdoutProjection  avgt   10     951,563 ±  49,450  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large  preparedOptimized  holdoutProjection  avgt   10  128248,052 ±   0,003    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large  preparedOptimized  holdoutProjection  avgt   10      64,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large  preparedOptimized  holdoutProjection  avgt   10      24,000                ms
+VMLoopBodyBenchmark.execute                          large           baseline              paths  avgt   10       0,404 ±   0,028   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large           baseline              paths  avgt   10    1665,719 ± 114,238  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large           baseline              paths  avgt   10     704,000 ±   0,001    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large           baseline              paths  avgt   10     111,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large           baseline              paths  avgt   10      34,000                ms
+VMLoopBodyBenchmark.execute                          large           baseline          reduction  avgt   10      38,494 ±   0,486   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large           baseline          reduction  avgt   10     215,237 ±   2,714  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large           baseline          reduction  avgt   10    8688,016 ±   0,003    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large           baseline          reduction  avgt   10      14,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large           baseline          reduction  avgt   10       8,000                ms
+VMLoopBodyBenchmark.execute                          large           baseline  holdoutProjection  avgt   10     123,489 ±   1,301   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large           baseline  holdoutProjection  avgt   10     990,612 ±  10,439  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large           baseline  holdoutProjection  avgt   10  128280,050 ±   0,001    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large           baseline  holdoutProjection  avgt   10      65,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large           baseline  holdoutProjection  avgt   10      23,000                ms
+VMLoopBodyBenchmark.execute                          large        interpreter              paths  avgt   10       0,277 ±   0,004   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large        interpreter              paths  avgt   10    2695,828 ±  36,152  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large        interpreter              paths  avgt   10     784,000 ±   0,001    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large        interpreter              paths  avgt   10     179,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large        interpreter              paths  avgt   10      54,000                ms
+VMLoopBodyBenchmark.execute                          large        interpreter          reduction  avgt   10      28,072 ±   1,159   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large        interpreter          reduction  avgt   10     296,560 ±  12,897  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large        interpreter          reduction  avgt   10    8724,011 ±  19,123    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large        interpreter          reduction  avgt   10      21,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large        interpreter          reduction  avgt   10      14,000                ms
+VMLoopBodyBenchmark.execute                          large        interpreter  holdoutProjection  avgt   10     110,822 ±   9,777   us/op
+VMLoopBodyBenchmark.execute:·gc.alloc.rate           large        interpreter  holdoutProjection  avgt   10    1667,939 ± 147,506  MB/sec
+VMLoopBodyBenchmark.execute:·gc.alloc.rate.norm      large        interpreter  holdoutProjection  avgt   10  193248,045 ±   0,004    B/op
+VMLoopBodyBenchmark.execute:·gc.count                large        interpreter  holdoutProjection  avgt   10     112,000            counts
+VMLoopBodyBenchmark.execute:·gc.time                 large        interpreter  holdoutProjection  avgt   10      37,000                ms
+
+Benchmark result is saved to /Users/eugene/repo/research/branchline-public/development/evidence/vm-loop-body-experiment/reverse.json

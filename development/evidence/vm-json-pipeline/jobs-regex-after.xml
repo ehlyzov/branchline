@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.github.ehlyzov.branchline.std.RegexCacheConcurrencyTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-10-17T08:52:02.962Z" hostname="Stargate.local" time="0.131">
+  <properties/>
+  <testcase name="concurrentMatchAndReplaceChurnTheBoundedCache()[jvm]" classname="io.github.ehlyzov.branchline.std.RegexCacheConcurrencyTest" time="0.131"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

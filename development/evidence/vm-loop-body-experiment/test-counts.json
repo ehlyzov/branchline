@@ -1,0 +1,50 @@
+[
+  {
+    "module": "vm",
+    "suite": "jvmTest",
+    "tests": 208,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "vm",
+    "suite": "jsNodeTest",
+    "tests": 118,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "conformance-tests",
+    "suite": "jvmTest",
+    "tests": 359,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1
+  },
+  {
+    "module": "conformance-tests",
+    "suite": "jsNodeTest",
+    "tests": 109,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "cli",
+    "suite": "jvmTest",
+    "tests": 56,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "cli",
+    "suite": "jsNodeTest",
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+]

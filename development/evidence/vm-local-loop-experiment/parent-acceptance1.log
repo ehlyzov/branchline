@@ -1,0 +1,1 @@
+PASS parent local-loop checks=588; seeded independent outputs/interpreter, varied loop expressions, exact VM errors/env/order/snapshots, overflow/null and recovery/fallback

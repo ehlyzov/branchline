@@ -1,0 +1,4 @@
+conditional_array_accumulators,instructions,median_ns_compile,bytes_compile
+128,1794,1477666,2004896
+512,7170,8192139,25407216
+1024,14338,31402041,96971640

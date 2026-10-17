@@ -1,0 +1,5 @@
+{
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt": "456ee0f9ef50854d7ca3b709e16a3c425c32f920ef332c6ed61a6bc83609c30d",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Compiler.kt": "e1fd5dc80eef9bdff446b5f85db4ba3512c3f66cae60c1b7b6a6e35c7c479646",
+  "vm-benchmarks/build/libs/vm-benchmarks-v0.11.0-SNAPSHOT-jmh.jar": "f59b725b088c83fe84762452ef4dcd0fc86b5ba7a921dfa995b1b4023f3ea04e"
+}

@@ -1,0 +1,58 @@
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms256m -Xmx768m -XX:+UseG1GC -Xms256m -Xmx768m
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 1 s each
+# Measurement: 4 iterations, 2 s each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.VMPreparedBlockBenchmark.execute
+# Parameters: (dataset = large, engine = baseline, workload = holdoutProjection)
+
+# Run progress: 0,00% complete, ETA 00:00:11
+# Fork: 1 of 1
+# Preparing profilers: JavaFlightRecorderProfiler 
+# Warmup Iteration   1: {"workload":"holdoutProjection","dataset":"large","validatedExecutions":3,"sourceSha256":"17a897157ccae94ab7d705f1d10a6bcfe80f0d8fe77a9a0bf3ec6d9ecb68b087","expectedOutputHash":78137616,"engine":"baseline","executionApi":"VM.execute","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"boundary":"fresh-env-plus-prepared-execution"}
+129,181 us/op
+# Warmup Iteration   2: 126,862 us/op
+# Warmup Iteration   3: 126,776 us/op
+Iteration   1: 125,599 us/op
+Iteration   2: 123,627 us/op
+Iteration   3: 123,606 us/op
+Iteration   4: 123,363 us/op
+                 ·jfr: (text only)
+
+# Processing profiler results: JavaFlightRecorderProfiler 
+
+
+Result "io.github.ehlyzov.branchline.vm.VMPreparedBlockBenchmark.execute":
+  124,049 ±(99.9%) 6,724 us/op [Average]
+  (min, avg, max) = (123,363, 124,049, 125,599), stdev = 1,041
+  CI (99.9%): [117,325, 130,773] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.VMPreparedBlockBenchmark.execute:·jfr":
+JFR profiler results:
+  /Users/eugene/repo/research/branchline-public/development/evidence/vm-loop-body-experiment/jfr-before-baseline/io.github.ehlyzov.branchline.vm.VMPreparedBlockBenchmark.execute-AverageTime-dataset-large-engine-baseline-workload-holdoutProjection/profile.jfr
+
+
+# Run complete. Total time: 00:00:11
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                              (dataset)  (engine)         (workload)  Mode  Cnt    Score   Error  Units
+VMPreparedBlockBenchmark.execute           large  baseline  holdoutProjection  avgt    4  124,049 ± 6,724  us/op
+VMPreparedBlockBenchmark.execute:·jfr      large  baseline  holdoutProjection  avgt           NaN            ---
+
+Benchmark result is saved to /Users/eugene/repo/research/branchline-public/development/evidence/vm-loop-body-experiment/profile-before-baseline.json

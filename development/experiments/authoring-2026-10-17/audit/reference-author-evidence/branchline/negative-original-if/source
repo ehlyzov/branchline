@@ -1,0 +1,3 @@
+TRANSFORM Main {
+IF input.enabled { OUTPUT {value: 1} } ELSE { OUTPUT {value: 0} }
+}

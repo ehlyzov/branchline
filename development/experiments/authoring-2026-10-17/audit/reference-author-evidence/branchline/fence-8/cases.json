@@ -1,0 +1,1 @@
+[{"input": {"rows": [{"kind": "u", "code": "a", "rank": 2}, {"kind": "v", "code": "b", "rank": 1}, {"kind": "u", "code": "c", "rank": 2}]}, "expected": {"ordered": [{"kind": "v", "code": "b", "rank": 1}, {"kind": "u", "code": "a", "rank": 2}, {"kind": "u", "code": "c", "rank": 2}]}}, {"input": {}, "expected": {"ordered": []}}]

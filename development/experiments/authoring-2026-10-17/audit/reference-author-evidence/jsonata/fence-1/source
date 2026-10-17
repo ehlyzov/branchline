@@ -1,0 +1,5 @@
+(
+  $label := $lowercase($trim(label));
+  {"label": $label}
+)
+

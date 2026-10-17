@@ -1,0 +1,2 @@
+($xs := ($exists(values) and values != null) ? values : []
+; {"values":$xs})

@@ -1,0 +1,670 @@
+[
+  {
+    "method": "executeExperimental",
+    "codeLength": 3495
+  },
+  {
+    "method": "runPreparedBlocks",
+    "codeLength": 3120
+  },
+  {
+    "method": "executeOpcode",
+    "codeLength": 2606
+  },
+  {
+    "method": "executeInstruction",
+    "codeLength": 1984
+  },
+  {
+    "method": "buildSnapshotJson",
+    "codeLength": 1483
+  },
+  {
+    "method": "snapshotJson",
+    "codeLength": 1480
+  },
+  {
+    "method": "callFunction",
+    "codeLength": 653
+  },
+  {
+    "method": "run",
+    "codeLength": 580
+  },
+  {
+    "method": "setDynamic",
+    "codeLength": 497
+  },
+  {
+    "method": "executeLoopBodies",
+    "codeLength": 488
+  },
+  {
+    "method": "executeExperimental$observerReason",
+    "codeLength": 470
+  },
+  {
+    "method": "callHost",
+    "codeLength": 432
+  },
+  {
+    "method": "executeBlocks",
+    "codeLength": 410
+  },
+  {
+    "method": "execute",
+    "codeLength": 394
+  },
+  {
+    "method": "normalizeListIndex",
+    "codeLength": 368
+  },
+  {
+    "method": "step",
+    "codeLength": 366
+  },
+  {
+    "method": "setStatic",
+    "codeLength": 357
+  },
+  {
+    "method": "handleException",
+    "codeLength": 320
+  },
+  {
+    "method": "resolvePath",
+    "codeLength": 316
+  },
+  {
+    "method": "invokeLambda",
+    "codeLength": 304
+  },
+  {
+    "method": "executeExperimental$load",
+    "codeLength": 303
+  },
+  {
+    "method": "accessDynamic",
+    "codeLength": 301
+  },
+  {
+    "method": "prepareExperimental",
+    "codeLength": 289
+  },
+  {
+    "method": "asBool",
+    "codeLength": 233
+  },
+  {
+    "method": "startFunctionCall",
+    "codeLength": 230
+  },
+  {
+    "method": "handleCatch",
+    "codeLength": 229
+  },
+  {
+    "method": "modifyObject",
+    "codeLength": 228
+  },
+  {
+    "method": "<init>",
+    "codeLength": 224
+  },
+  {
+    "method": "tracedCall",
+    "codeLength": 209
+  },
+  {
+    "method": "readPreparedBlockValue",
+    "codeLength": 209
+  },
+  {
+    "method": "returnFromFunction",
+    "codeLength": 205
+  },
+  {
+    "method": "initForEach",
+    "codeLength": 205
+  },
+  {
+    "method": "normalizeMapKey",
+    "codeLength": 195
+  },
+  {
+    "method": "executeExperimental$mirror",
+    "codeLength": 193
+  },
+  {
+    "method": "childValue",
+    "codeLength": 184
+  },
+  {
+    "method": "emitPathWriteIfNeeded",
+    "codeLength": 180
+  },
+  {
+    "method": "prepareProgram",
+    "codeLength": 178
+  },
+  {
+    "method": "staticIndex",
+    "codeLength": 172
+  },
+  {
+    "method": "callUserFunction",
+    "codeLength": 165
+  },
+  {
+    "method": "accessStatic",
+    "codeLength": 163
+  },
+  {
+    "method": "arrayBuilderAdd",
+    "codeLength": 161
+  },
+  {
+    "method": "callLambda",
+    "codeLength": 156
+  },
+  {
+    "method": "nextForEach",
+    "codeLength": 155
+  },
+  {
+    "method": "finishPreparedBlocks",
+    "codeLength": 154
+  },
+  {
+    "method": "readPreparedBlockStatic",
+    "codeLength": 149
+  },
+  {
+    "method": "binaryNumeric",
+    "codeLength": 149
+  },
+  {
+    "method": "updateListElement",
+    "codeLength": 139
+  },
+  {
+    "method": "begin",
+    "codeLength": 136
+  },
+  {
+    "method": "plusAssign",
+    "codeLength": 134
+  },
+  {
+    "method": "executeExperimental$ordinaryContainer",
+    "codeLength": 131
+  },
+  {
+    "method": "compileFunctionBytecode",
+    "codeLength": 107
+  },
+  {
+    "method": "appendToArray",
+    "codeLength": 101
+  },
+  {
+    "method": "preparedBlockScalar",
+    "codeLength": 100
+  },
+  {
+    "method": "emitEnterEventsAt",
+    "codeLength": 99
+  },
+  {
+    "method": "emitExitEventsAt",
+    "codeLength": 99
+  },
+  {
+    "method": "createOutput2",
+    "codeLength": 96
+  },
+  {
+    "method": "executeExperimental$materializeAliases",
+    "codeLength": 95
+  },
+  {
+    "method": "concatenateArrays",
+    "codeLength": 93
+  },
+  {
+    "method": "materializePreparedBlockLocals",
+    "codeLength": 90
+  },
+  {
+    "method": "emitCallError",
+    "codeLength": 90
+  },
+  {
+    "method": "createOutput",
+    "codeLength": 89
+  },
+  {
+    "method": "makeArray",
+    "codeLength": 86
+  },
+  {
+    "method": "unwrapKey",
+    "codeLength": 85
+  },
+  {
+    "method": "createCallEnvironment",
+    "codeLength": 81
+  },
+  {
+    "method": "executeExperimental$scalar",
+    "codeLength": 80
+  },
+  {
+    "method": "storeVar",
+    "codeLength": 74
+  },
+  {
+    "method": "emitVarRead",
+    "codeLength": 72
+  },
+  {
+    "method": "emitVarWrite",
+    "codeLength": 72
+  },
+  {
+    "method": "arrayBuilderFinish",
+    "codeLength": 71
+  },
+  {
+    "method": "addNumbers$vm",
+    "codeLength": 68
+  },
+  {
+    "method": "unwindLoops",
+    "codeLength": 68
+  },
+  {
+    "method": "negateNumber",
+    "codeLength": 66
+  },
+  {
+    "method": "makeObject",
+    "codeLength": 65
+  },
+  {
+    "method": "deoptPreparedBlocks",
+    "codeLength": 63
+  },
+  {
+    "method": "createOutput1",
+    "codeLength": 63
+  },
+  {
+    "method": "ensureLocals",
+    "codeLength": 61
+  },
+  {
+    "method": "preparedBlockTruthSafe",
+    "codeLength": 54
+  },
+  {
+    "method": "normalizeOutputs",
+    "codeLength": 54
+  },
+  {
+    "method": "suspendedSnapshotOrNull",
+    "codeLength": 54
+  },
+  {
+    "method": "readAtPath",
+    "codeLength": 53
+  },
+  {
+    "method": "resultOrNull",
+    "codeLength": 52
+  },
+  {
+    "method": "startTry",
+    "codeLength": 46
+  },
+  {
+    "method": "subtractNumbers$vm",
+    "codeLength": 40
+  },
+  {
+    "method": "multiplyNumbers$vm",
+    "codeLength": 40
+  },
+  {
+    "method": "divideNumbers$vm",
+    "codeLength": 40
+  },
+  {
+    "method": "moduloNumbers",
+    "codeLength": 40
+  },
+  {
+    "method": "<init>",
+    "codeLength": 39
+  },
+  {
+    "method": "preparedBlockKeysSafe",
+    "codeLength": 39
+  },
+  {
+    "method": "loadVariable",
+    "codeLength": 39
+  },
+  {
+    "method": "executeExperimental$storeLocal",
+    "codeLength": 39
+  },
+  {
+    "method": "preparedBlockPairSafe",
+    "codeLength": 38
+  },
+  {
+    "method": "compareValues$vm",
+    "codeLength": 36
+  },
+  {
+    "method": "loadTraceMetadata",
+    "codeLength": 35
+  },
+  {
+    "method": "setEnvironment",
+    "codeLength": 33
+  },
+  {
+    "method": "endTry",
+    "codeLength": 32
+  },
+  {
+    "method": "executeExperimental$stop",
+    "codeLength": 31
+  },
+  {
+    "method": "push",
+    "codeLength": 30
+  },
+  {
+    "method": "equalsValues$vm",
+    "codeLength": 30
+  },
+  {
+    "method": "prepareRootProgram",
+    "codeLength": 30
+  },
+  {
+    "method": "emitOutputEvent",
+    "codeLength": 29
+  },
+  {
+    "method": "prepareExperimental$default",
+    "codeLength": 27
+  },
+  {
+    "method": "binaryComparison",
+    "codeLength": 27
+  },
+  {
+    "method": "pop",
+    "codeLength": 26
+  },
+  {
+    "method": "peek",
+    "codeLength": 26
+  },
+  {
+    "method": "run$default",
+    "codeLength": 25
+  },
+  {
+    "method": "execute$default",
+    "codeLength": 24
+  },
+  {
+    "method": "executeExperimental$default",
+    "codeLength": 24
+  },
+  {
+    "method": "executeBlocks$default",
+    "codeLength": 24
+  },
+  {
+    "method": "executeLoopBodies$default",
+    "codeLength": 24
+  },
+  {
+    "method": "begin$default",
+    "codeLength": 24
+  },
+  {
+    "method": "peekOrNull",
+    "codeLength": 22
+  },
+  {
+    "method": "isHostFailure$vm",
+    "codeLength": 20
+  },
+  {
+    "method": "unaryArithmetic",
+    "codeLength": 19
+  },
+  {
+    "method": "createCallEnvironment$default",
+    "codeLength": 19
+  },
+  {
+    "method": "<clinit>",
+    "codeLength": 18
+  },
+  {
+    "method": "callFunction$lambda$2$0$0",
+    "codeLength": 17
+  },
+  {
+    "method": "callHost$lambda$1$0",
+    "codeLength": 17
+  },
+  {
+    "method": "currentTracer",
+    "codeLength": 16
+  },
+  {
+    "method": "prepareBlocks",
+    "codeLength": 16
+  },
+  {
+    "method": "step$default",
+    "codeLength": 16
+  },
+  {
+    "method": "prepareBlocks$default",
+    "codeLength": 15
+  },
+  {
+    "method": "setStatic$default",
+    "codeLength": 15
+  },
+  {
+    "method": "setDynamic$default",
+    "codeLength": 14
+  },
+  {
+    "method": "arrayBuilderAdd$default",
+    "codeLength": 14
+  },
+  {
+    "method": "initArrayBuilder",
+    "codeLength": 12
+  },
+  {
+    "method": "<init>",
+    "codeLength": 11
+  },
+  {
+    "method": "handleReturn",
+    "codeLength": 9
+  },
+  {
+    "method": "resume",
+    "codeLength": 8
+  },
+  {
+    "method": "access$emitVarRead",
+    "codeLength": 7
+  },
+  {
+    "method": "access$nextForEach",
+    "codeLength": 7
+  },
+  {
+    "method": "access$setPc$p",
+    "codeLength": 6
+  },
+  {
+    "method": "access$setActivePc$p",
+    "codeLength": 6
+  },
+  {
+    "method": "access$emitExitEventsAt",
+    "codeLength": 6
+  },
+  {
+    "method": "access$setLoopBodyFallbackReason$p",
+    "codeLength": 6
+  },
+  {
+    "method": "access$push",
+    "codeLength": 6
+  },
+  {
+    "method": "access$loadVariable",
+    "codeLength": 6
+  },
+  {
+    "method": "access$accessStatic",
+    "codeLength": 6
+  },
+  {
+    "method": "access$binaryNumeric",
+    "codeLength": 6
+  },
+  {
+    "method": "access$negateNumber",
+    "codeLength": 6
+  },
+  {
+    "method": "access$asBool",
+    "codeLength": 6
+  },
+  {
+    "method": "access$makeObject",
+    "codeLength": 6
+  },
+  {
+    "method": "access$makeArray",
+    "codeLength": 6
+  },
+  {
+    "method": "access$setLocals$p",
+    "codeLength": 6
+  },
+  {
+    "method": "access$ensureLocals",
+    "codeLength": 6
+  },
+  {
+    "method": "access$prepareProgram",
+    "codeLength": 6
+  },
+  {
+    "method": "getExperimentalReport",
+    "codeLength": 5
+  },
+  {
+    "method": "getPreparedBlockExecuted",
+    "codeLength": 5
+  },
+  {
+    "method": "getPreparedBlockOptimized",
+    "codeLength": 5
+  },
+  {
+    "method": "getPreparedBlockFallbackReason",
+    "codeLength": 5
+  },
+  {
+    "method": "getLoopBodyExecuted",
+    "codeLength": 5
+  },
+  {
+    "method": "getLoopBodyEntries",
+    "codeLength": 5
+  },
+  {
+    "method": "getLoopBodyFallbackReason",
+    "codeLength": 5
+  },
+  {
+    "method": "isNumeric",
+    "codeLength": 5
+  },
+  {
+    "method": "access$currentTracer",
+    "codeLength": 5
+  },
+  {
+    "method": "access$peek",
+    "codeLength": 5
+  },
+  {
+    "method": "access$pop",
+    "codeLength": 5
+  },
+  {
+    "method": "access$getEnvironment$p",
+    "codeLength": 5
+  },
+  {
+    "method": "access$getLocals$p",
+    "codeLength": 5
+  },
+  {
+    "method": "access$accessDynamic",
+    "codeLength": 5
+  },
+  {
+    "method": "access$getPc$p",
+    "codeLength": 5
+  },
+  {
+    "method": "access$getStack$p",
+    "codeLength": 5
+  },
+  {
+    "method": "access$getCallStack$p",
+    "codeLength": 5
+  },
+  {
+    "method": "access$getTryStack$p",
+    "codeLength": 5
+  },
+  {
+    "method": "access$getLoopStack$p",
+    "codeLength": 5
+  },
+  {
+    "method": "emitTrace",
+    "codeLength": 1
+  },
+  {
+    "method": "emitBreakpoint",
+    "codeLength": 1
+  },
+  {
+    "method": "emitLineNumber",
+    "codeLength": 1
+  }
+]

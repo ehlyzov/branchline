@@ -1,0 +1,8 @@
+{
+  "head": "ce58599df24a16cb7ffd1f5d4165bdbf84d90ad0",
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "hardware": "Apple M4 Pro\n51539607552\n",
+  "java": "openjdk version \"21.0.11\" 2026-04-21 LTS\nOpenJDK Runtime Environment Temurin-21.0.11+10 (build 21.0.11+10-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.11+10 (build 21.0.11+10-LTS, mixed mode, sharing)\n",
+  "beforeJarSha256": "df7f05ae276081ed3751dca83e53ce90d3a502193f9211aa76f079052becb028",
+  "finalJarSha256": "5d305548b688ee305c7b28e7cb2d2aac82e88150d1c3d7198f992626a64a0416"
+}

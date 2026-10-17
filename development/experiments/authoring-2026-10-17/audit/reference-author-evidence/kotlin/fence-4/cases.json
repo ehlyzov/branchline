@@ -1,0 +1,1 @@
+[{"input": {"score": 9, "enabled": false}, "expected": {"category": "low", "label": "off"}}, {"input": {"score": 10, "enabled": true}, "expected": {"category": "equal", "label": "on"}}, {"input": {"score": 11, "enabled": true}, "expected": {"category": "high", "label": "on"}}]

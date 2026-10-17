@@ -1,0 +1,6 @@
+
+fun transform(input: Any?): Any? {
+val text=" a  b "
+val value:Any?=null
+return mapOf("trim" to text.trim(),"lower" to "Ab".lowercase(),"upper" to "Ab".uppercase(),"contains" to text.contains("a"),"starts" to text.startsWith(" "),"ends" to text.endsWith(" "),"substring" to "abc".substring(1,2),"split" to "a:b".split(":"),"join" to listOf("a","b").joinToString(":"),"literalReplace" to "aba".replace("a","x"),"regexReplace" to "a1b2".replace(Regex("[0-9]"),"x"),"nullString" to value.toString(),"longParse" to "3".toLongOrNull(),"badParse" to "x".toLongOrNull(),"doubleParse" to "3.5".toDoubleOrNull(),"quotient" to (-7L/3L),"remainder" to (-7L%3L),"division" to (7.0/3.0),"floor" to floor(-1.2),"ceil" to ceil(-1.2),"abs" to abs(-3L),"roundEven" to round(6.5),"roundOdd" to round(7.5),"roundToLong" to 6.5.roundToLong(),"decimal" to BigDecimal("6.5").setScale(0,RoundingMode.HALF_EVEN),"bigInteger" to BigInteger("17"),"compareDecimal" to BigDecimal("1.0").compareTo(BigDecimal("1.00")),"decimalEquals" to BigDecimal("1.0").equals(BigDecimal("1.00")),"power" to 2.0.pow(3),"sqrt" to sqrt(4.0))
+}

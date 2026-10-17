@@ -1,0 +1,462 @@
+{
+  "after-localLoop": {
+    "totalEvents": 502,
+    "workerSamples": 499,
+    "leaf": [
+      {
+        "method": "java.lang.String.equals",
+        "samples": 155,
+        "percent": 31.062124248496993
+      },
+      {
+        "method": "java.util.HashMap.getNode",
+        "samples": 106,
+        "percent": 21.24248496993988
+      },
+      {
+        "method": "java.util.HashMap.putVal",
+        "samples": 38,
+        "percent": 7.615230460921843
+      },
+      {
+        "method": "java.util.LinkedHashMap.linkNodeAtEnd",
+        "samples": 23,
+        "percent": 4.609218436873747
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.generated.CompiledLocalComprehension.run",
+        "samples": 16,
+        "percent": 3.2064128256513027
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.LocalLoopSupport.readStatic",
+        "samples": 15,
+        "percent": 3.006012024048096
+      },
+      {
+        "method": "java.lang.String.hashCode",
+        "samples": 14,
+        "percent": 2.80561122244489
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.LocalLoopSupport.safeStatic",
+        "samples": 14,
+        "percent": 2.80561122244489
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.key",
+        "samples": 12,
+        "percent": 2.404809619238477
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.hasVariable",
+        "samples": 12,
+        "percent": 2.404809619238477
+      },
+      {
+        "method": "kotlin.collections.ArrayDeque.ensureCapacity",
+        "samples": 10,
+        "percent": 2.004008016032064
+      },
+      {
+        "method": "java.util.HashMap$Node.<init>",
+        "samples": 9,
+        "percent": 1.8036072144288577
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.constant",
+        "samples": 9,
+        "percent": 1.8036072144288577
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.variable",
+        "samples": 9,
+        "percent": 1.8036072144288577
+      },
+      {
+        "method": "java.util.HashMap.hash",
+        "samples": 9,
+        "percent": 1.8036072144288577
+      },
+      {
+        "method": "java.util.HashMap.resize",
+        "samples": 7,
+        "percent": 1.402805611222445
+      },
+      {
+        "method": "java.util.ArrayList.add",
+        "samples": 4,
+        "percent": 0.8016032064128257
+      },
+      {
+        "method": "java.util.LinkedHashMap.get",
+        "samples": 4,
+        "percent": 0.8016032064128257
+      },
+      {
+        "method": "java.util.LinkedHashMap$Entry.<init>",
+        "samples": 3,
+        "percent": 0.6012024048096193
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM.nextForEach",
+        "samples": 3,
+        "percent": 0.6012024048096193
+      },
+      {
+        "method": "kotlin.collections.ArrayDeque.firstOrNull",
+        "samples": 3,
+        "percent": 0.6012024048096193
+      },
+      {
+        "method": "java.lang.Integer.intValue",
+        "samples": 3,
+        "percent": 0.6012024048096193
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM.currentTracer",
+        "samples": 2,
+        "percent": 0.40080160320641284
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.next",
+        "samples": 2,
+        "percent": 0.40080160320641284
+      },
+      {
+        "method": "kotlin.collections.ArrayDeque.getSize",
+        "samples": 2,
+        "percent": 0.40080160320641284
+      },
+      {
+        "method": "kotlin.collections.ArrayDeque.addFirst",
+        "samples": 2,
+        "percent": 0.40080160320641284
+      },
+      {
+        "method": "kotlin.collections.ArrayDeque.removeFirst",
+        "samples": 2,
+        "percent": 0.40080160320641284
+      },
+      {
+        "method": "java.util.ArrayList.elementData",
+        "samples": 2,
+        "percent": 0.40080160320641284
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM.arrayBuilderAdd",
+        "samples": 1,
+        "percent": 0.20040080160320642
+      },
+      {
+        "method": "java.util.HashMap.get",
+        "samples": 1,
+        "percent": 0.20040080160320642
+      }
+    ],
+    "inclusive": [
+      {
+        "method": "io.github.ehlyzov.branchline.vm.generated.CompiledLocalComprehension.run",
+        "samples": 437,
+        "percent": 87.57515030060121
+      },
+      {
+        "method": "java.util.HashMap.getNode",
+        "samples": 270,
+        "percent": 54.10821643286573
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM.executeLocalLoops",
+        "samples": 253,
+        "percent": 50.701402805611224
+      },
+      {
+        "method": "java.lang.String.equals",
+        "samples": 155,
+        "percent": 31.062124248496993
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.GeneratedLocalLoopMachine.execute",
+        "samples": 137,
+        "percent": 27.45490981963928
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.LocalLoopSupport.readStatic",
+        "samples": 127,
+        "percent": 25.450901803607213
+      },
+      {
+        "method": "java.util.LinkedHashMap.get",
+        "samples": 110,
+        "percent": 22.044088176352705
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.hasVariable",
+        "samples": 99,
+        "percent": 19.839679358717436
+      },
+      {
+        "method": "java.util.HashMap.put",
+        "samples": 95,
+        "percent": 19.03807615230461
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VMLocalLoopBenchmark.execute",
+        "samples": 91,
+        "percent": 18.236472945891784
+      },
+      {
+        "method": "java.util.HashMap.putVal",
+        "samples": 87,
+        "percent": 17.43486973947896
+      },
+      {
+        "method": "java.util.HashMap.containsKey",
+        "samples": 87,
+        "percent": 17.43486973947896
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.variable",
+        "samples": 87,
+        "percent": 17.43486973947896
+      },
+      {
+        "method": "java.util.HashMap.get",
+        "samples": 78,
+        "percent": 15.6312625250501
+      },
+      {
+        "method": "java.util.LinkedHashMap.newNode",
+        "samples": 27,
+        "percent": 5.410821643286573
+      },
+      {
+        "method": "java.util.LinkedHashMap.linkNodeAtEnd",
+        "samples": 23,
+        "percent": 4.609218436873747
+      },
+      {
+        "method": "java.util.HashMap.hash",
+        "samples": 23,
+        "percent": 4.609218436873747
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.next",
+        "samples": 22,
+        "percent": 4.408817635270541
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM.nextForEach",
+        "samples": 21,
+        "percent": 4.208416833667335
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.jmh_generated.VMLocalLoopBenchmark_execute_jmhTest.execute_avgt_jmhStub",
+        "samples": 18,
+        "percent": 3.6072144288577155
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM.access$nextForEach",
+        "samples": 18,
+        "percent": 3.6072144288577155
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.LocalLoopSupport.safeStatic",
+        "samples": 16,
+        "percent": 3.2064128256513027
+      },
+      {
+        "method": "java.lang.String.hashCode",
+        "samples": 14,
+        "percent": 2.80561122244489
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.key",
+        "samples": 13,
+        "percent": 2.6052104208416833
+      },
+      {
+        "method": "kotlin.collections.ArrayDeque.addFirst",
+        "samples": 12,
+        "percent": 2.404809619238477
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.ExtensionsKt.push",
+        "samples": 12,
+        "percent": 2.404809619238477
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM.push",
+        "samples": 12,
+        "percent": 2.404809619238477
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM.arrayBuilderAdd",
+        "samples": 12,
+        "percent": 2.404809619238477
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM.access$push",
+        "samples": 11,
+        "percent": 2.2044088176352705
+      },
+      {
+        "method": "kotlin.collections.ArrayDeque.ensureCapacity",
+        "samples": 10,
+        "percent": 2.004008016032064
+      }
+    ],
+    "leafLines": [
+      {
+        "method": "java.lang.String.equals",
+        "line": 1852,
+        "samples": 107,
+        "percent": 21.442885771543086
+      },
+      {
+        "method": "java.lang.String.equals",
+        "line": 1850,
+        "samples": 45,
+        "percent": 9.01803607214429
+      },
+      {
+        "method": "java.util.HashMap.getNode",
+        "line": 576,
+        "samples": 25,
+        "percent": 5.01002004008016
+      },
+      {
+        "method": "java.util.HashMap.getNode",
+        "line": 577,
+        "samples": 23,
+        "percent": 4.609218436873747
+      },
+      {
+        "method": "java.util.HashMap.getNode",
+        "line": 585,
+        "samples": 18,
+        "percent": 3.6072144288577155
+      },
+      {
+        "method": "java.util.LinkedHashMap.linkNodeAtEnd",
+        "line": 248,
+        "samples": 17,
+        "percent": 3.406813627254509
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.generated.CompiledLocalComprehension.run",
+        "line": -1,
+        "samples": 16,
+        "percent": 3.2064128256513027
+      },
+      {
+        "method": "java.util.HashMap.getNode",
+        "line": 575,
+        "samples": 14,
+        "percent": 2.80561122244489
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.key",
+        "line": 960,
+        "samples": 12,
+        "percent": 2.404809619238477
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.hasVariable",
+        "line": 961,
+        "samples": 12,
+        "percent": 2.404809619238477
+      },
+      {
+        "method": "java.util.HashMap.getNode",
+        "line": 584,
+        "samples": 12,
+        "percent": 2.404809619238477
+      },
+      {
+        "method": "java.lang.String.hashCode",
+        "line": 2356,
+        "samples": 9,
+        "percent": 1.8036072144288577
+      },
+      {
+        "method": "java.util.HashMap.putVal",
+        "line": 634,
+        "samples": 9,
+        "percent": 1.8036072144288577
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.constant",
+        "line": 959,
+        "samples": 9,
+        "percent": 1.8036072144288577
+      },
+      {
+        "method": "java.util.HashMap.hash",
+        "line": 338,
+        "samples": 9,
+        "percent": 1.8036072144288577
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.LocalLoopSupport.readStatic",
+        "line": 22,
+        "samples": 8,
+        "percent": 1.6032064128256514
+      },
+      {
+        "method": "java.util.HashMap.putVal",
+        "line": 636,
+        "samples": 8,
+        "percent": 1.6032064128256514
+      },
+      {
+        "method": "java.util.HashMap.putVal",
+        "line": 637,
+        "samples": 8,
+        "percent": 1.6032064128256514
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.VM$LocalContext.variable",
+        "line": 962,
+        "samples": 7,
+        "percent": 1.402805611222445
+      },
+      {
+        "method": "java.util.HashMap.getNode",
+        "line": 578,
+        "samples": 7,
+        "percent": 1.402805611222445
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.LocalLoopSupport.safeStatic",
+        "line": 13,
+        "samples": 6,
+        "percent": 1.2024048096192386
+      },
+      {
+        "method": "io.github.ehlyzov.branchline.vm.LocalLoopSupport.readStatic",
+        "line": 23,
+        "samples": 6,
+        "percent": 1.2024048096192386
+      },
+      {
+        "method": "java.util.HashMap.resize",
+        "line": 711,
+        "samples": 6,
+        "percent": 1.2024048096192386
+      },
+      {
+        "method": "java.util.HashMap$Node.<init>",
+        "line": 289,
+        "samples": 5,
+        "percent": 1.002004008016032
+      },
+      {
+        "method": "kotlin.collections.ArrayDeque.ensureCapacity",
+        "line": 59,
+        "samples": 5,
+        "percent": 1.002004008016032
+      }
+    ]
+  }
+}

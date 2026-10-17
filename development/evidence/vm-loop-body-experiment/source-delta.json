@@ -1,0 +1,15 @@
+{
+  "changed": [
+    "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt",
+    "vm/build.gradle"
+  ],
+  "added": [
+    "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/LoopBodyPlan.kt",
+    "vm/src/jvmMain/kotlin/io/github/ehlyzov/branchline/vm/JvmLoopCompiler.kt",
+    "vm/src/jvmTest/kotlin/io/github/ehlyzov/branchline/vm/LoopBodyObservationTest.kt",
+    "vm/src/jvmTest/kotlin/io/github/ehlyzov/branchline/vm/LoopBodyPlanTest.kt",
+    "vm/src/jvmTest/kotlin/io/github/ehlyzov/branchline/vm/LoopBodyRuntimeTest.kt",
+    "vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/VMLoopBodyBenchmark.kt",
+    "vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/VMLoopBodyProbe.kt"
+  ]
+}

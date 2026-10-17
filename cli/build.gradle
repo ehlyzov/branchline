@@ -4,6 +4,24 @@ plugins {
     id 'maven-publish'
 }
 
+// A shared generated source keeps JVM and Node --version aligned with packages.
+def generateCliVersion = tasks.register('generateCliVersion') {
+    def generatedDir = layout.buildDirectory.dir('generated/sources/cliVersion/commonMain')
+    def releaseVersion = project.version.toString()
+    inputs.property('releaseVersion', releaseVersion)
+    outputs.dir(generatedDir)
+    doLast {
+        def target = generatedDir.get().file('io/github/ehlyzov/branchline/cli/GeneratedCliVersion.kt').asFile
+        target.parentFile.mkdirs()
+        target.text = """package io.github.ehlyzov.branchline.cli
+
+internal object GeneratedCliVersion {
+    const val CURRENT = "v${releaseVersion}"
+}
+"""
+    }
+}
+
 kotlin {
     jvm {
         compilations.all { comp ->
@@ -23,6 +41,7 @@ kotlin {
 
     sourceSets {
         commonMain {
+            kotlin.srcDir(generateCliVersion)
             dependencies {
                 implementation project(':interpreter')
                 implementation project(':vm')
@@ -103,6 +122,10 @@ tasks.register('prepareJsCliPackage') {
     group = 'build'
     description = 'Assemble the Node.js Branchline CLI bundle contents.'
     dependsOn 'jsProductionExecutableCompileSync'
+    inputs.dir(jsProductionKotlinDir)
+    inputs.files('js-package/bin/bl.cjs', 'js-package/package.json.tpl', 'js-package/package-lock.json.tpl')
+    inputs.property('releaseVersion', projectVersion)
+    outputs.dir(jsCliPackageDir)
     doLast {
         def targetRoot = jsCliPackageDir.get().asFile
         fsOps.delete {
@@ -173,6 +196,7 @@ tasks.register('blShadowJar', com.github.jengelman.gradle.plugins.shadow.tasks.S
 
 tasks.named('jvmTest') {
     dependsOn 'prepareJsCliPackage'
+    systemProperty 'branchline.expectedVersion', project.version.toString()
 }
 
 tasks.named('assemble') {

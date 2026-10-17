@@ -4,8 +4,28 @@ depends_on: []
 blocks: []
 supersedes: ['planning/current-research-tasks']
 superseded_by: []
-last_updated: 2026-06-11
+last_updated: 2026-10-17
 changelog:
+  - date: 2026-10-17
+    change: "Completed profiled JVM loop-body compilation: projection time improved 11–16% versus VM, no proven interpreter win, preparation and plan memory increased; keep opt-in."
+  - date: 2026-10-17
+    change: "Completed compiler-prepared VM experiment: large reduction time improved 26%, interpreter remains faster, projection/paths gate failed and prepared memory grew; keep opt-in."
+  - date: 2026-10-17
+    change: "Completed factorial VM slots/fusion experiment: correctness accepted, longer JMH found no repeatable speed win and memory increased; default enablement rejected."
+  - date: 2026-10-17
+    change: "Completed VM jobs isolation and opt-in selective JSON prototype: sparse full-pipeline gains confirmed, dense 1 MiB regression blocks default enablement; independent JVM/Node and memory acceptance recorded."
+  - date: 2026-10-17
+    change: "Completed VM trace hot-path optimization: 14–27% less time on confirmed native large workloads; JVM/Node correctness gates passed, interpreter advantage remains."
+  - date: 2026-10-17
+    change: "Completed existing native VM/interpreter JMH pairs and supplemental scaling: interpreter faster on native pairs; VM reduces comprehension allocation and wins dynamic SET."
+  - date: 2026-10-17
+    change: "Completed second VM speed/memory audit: fixed exponential overlay enumeration and quadratic ownership-scope copying; paired probes and independent acceptance passed."
+  - date: 2026-10-17
+    change: "Completed VM performance goal: linear private accumulation, prepared runtime/evaluation, bounded pinned-root cache; independent audit found no remaining confirmed P0/P1 in scope."
+  - date: 2026-10-17
+    change: "Completed controlled 30-task/270-session authoring experiment; Branchline 90/90, JSONata JVM 87/90, Kotlin 90/90; general advantage not established."
+  - date: 2026-10-17
+    change: "Delivered and accepted next-stage local P0/P1 core hardening, price-ingest pilot and three-engine comparison; external P2 gates remain open."
   - date: 2026-06-10
     change: "Completed Branchline DX T9-T18 after benchmark hardening; final playground/docs/test/contour verification passed."
   - date: 2026-06-11
@@ -173,6 +193,13 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Input-Type-Seeded Output Inference](planning/input-type-seeded-output-inference.md) -- hybrid plan to infer output from flow while seeding inference with declared input types when output is wildcard.
 
 ### In Progress
+- [VM Jobs and JSON Pipeline](planning/vm-json-pipeline.md) -- worker isolation, opt-in JSON prototype and measured sparse/dense acceptance.
+- [VM Memory Model Validation](planning/vm-memory-model-validation.md) -- separate design assessment of selective JSON, insertion costs, addressing and parallelism.
+- [VM Hot-Path Optimization](planning/vm-hotpath-optimization.md) -- completed; [accepted fix and native JMH measurements](evidence/vm-hotpath-optimization/README.md).
+- [VM/Interpreter Comparison](planning/vm-interpreter-comparison.md) -- completed; [native JMH results and supplemental scaling](evidence/vm-interpreter-comparison/README.md).
+- [Second VM Speed/Memory Audit](planning/vm-performance-audit2.md) -- implemented; [measurements](evidence/vm-performance-audit2/README.md), [independent acceptance](evidence/vm-performance-audit2/independent-audit.md).
+- [VM Performance Goal](planning/vm-performance-goal.md) -- implemented; [measurements and reproduction](evidence/vm-performance/README.md), [independent acceptance](evidence/vm-performance/independent-audit.md).
+- [Branchline Next Stage](planning/branchline-next-stage.md) -- prioritized core guarantees, local price-ingest pilot, fair JSONata/Kotlin comparison and external adoption gates.
 - [Docs Refresh](docs/docs-refresh.md) -- draft content and structure.
 - [Multiplatform Migration](architecture/multiplatform-migration.md) -- JS VM parity gaps.
 - [Module Responsibilities](architecture/module-responsibilities.md) -- platform/language split clean-up.
@@ -184,6 +211,8 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Interpreter Performance Tasks](perf/interpreter-performance-tasks.md) -- perf task backlog.
 
 ### Implemented
+- [Controlled Authoring Experiment](experiments/authoring-2026-10-17/REPORT.md) -- 30 tasks, 270 GPT-6.1 Sol sessions, hidden-test results, independent audit and no established general advantage.
+- [Branchline Local Price Pilot Evidence](evidence/branchline-price-pilot.md) -- three-engine functional comparison, adversarial precision checks and Ktor replay; external adoption/authoring gates remain open.
 - [Service Knowledge Contour Bootstrap](docs/service-knowledge-contour-bootstrap.md) -- minimal repository contour and lifecycle scripts.
 - [Branchline Benchmark Readiness Plan](planning/branchline-benchmark-readiness-plan.md) -- benchmark-first gate completed as Ready with caveats; DX T9-T18 may resume while public speed claims remain gated.
 - [Branchline Benchmark Hardening Plan](planning/branchline-benchmark-hardening-plan.md) -- row-state and credibility guard completed before Branchline DX T9-T18 resumes.
@@ -250,3 +279,17 @@ This index is the canonical entry point for the /development knowledge base. All
 - **Runtime**: `runtime/*`
 - **Tooling**: `tooling/*`
 - **Planning (legacy)**: `planning/*`
+
+- [VM Slots and Fusion Experiment](planning/vm-slots-fusion-experiment.md) -- implemented; [final report](evidence/vm-slots-fusion-experiment/README.md), [measurements](evidence/vm-slots-fusion-experiment/TABLES.md), [fusion preparation design](experiments/vm-fusion-plan.md). Correctness accepted; no repeatable speed/memory advantage, default enablement rejected.
+- [Compiler-Prepared Block Experiment](planning/vm-prepared-block-experiment.md) -- completed four-engine experiment: reduction gain, failed joint promotion gate, correctness and memory evidence.
+
+- [Whole-Loop-Body Experiment](planning/vm-loop-body-experiment.md) -- completed JVM code-generation experiment, projection gain and preparation/memory tradeoffs; no proven interpreter advantage.
+
+- [JVM-Local Loop Experiment](planning/vm-local-loop-experiment.md) -- completed; projection gain over interpreter, preparation/memory tradeoffs and evidence-based next-release scope.
+
+- [Next Release Scope](planning/next-release-scope.md) -- selected Alpha/preview contents and original release gates; execution in the alpha.1 release plan.
+
+- [v0.11.0-alpha.1 Release](planning/release-0.11.0-alpha.1.md) -- authorized release hardening, publication and independent public playground acceptance.
+- [Compiled Artifact Compatibility](evidence/release-0.11.0-alpha.1/compatibility.md) -- format 2 gate, previous-writer fixture, migration policy and JVM/Node checks.
+
+- [Alpha.1 Release Acceptance](evidence/release-0.11.0-alpha.1/README.md) -- parent package/browser/compiler checks, compatibility fixtures and release workflow evidence.

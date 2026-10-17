@@ -1,0 +1,9 @@
+FUNC Next(x) = x + 1
+FUNC BlockNext(x) { RETURN x + 1 }
+TRANSFORM Main {
+LET choice = ""
+IF input.enabled THEN { SET choice = "on" } ELSE { SET choice = "off" }
+LET objects = MAP([{field: "q"}], (x) -> ({field: x.field}))
+LET blockObjects = MAP([{field: "q"}], (x) -> { RETURN {field: x.field} })
+OUTPUT {choice: choice, objects: objects, blockObjects: blockObjects, next: Next(4), blockNext: BlockNext(4), recovered: TRY INT("x") CATCH(err) => 7}
+}

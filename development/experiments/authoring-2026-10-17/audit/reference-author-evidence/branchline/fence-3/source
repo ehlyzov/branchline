@@ -1,0 +1,8 @@
+
+TRANSFORM Main {
+LET isText = TRY LENGTH(TRIM(input.value)) >= 0 CATCH(err) => FALSE
+LET isList = TRY LENGTH(MAP(input.value, (v) -> v)) >= 0 CATCH(err) => FALSE
+LET isNumeric = TRY SUM([input.value]) != NULL CATCH(err) => FALSE
+
+OUTPUT {text: isText, list: isList, number: isNumeric}
+}

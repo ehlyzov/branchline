@@ -1,0 +1,6 @@
+{
+  "head": "ce58599df24a16cb7ffd1f5d4165bdbf84d90ad0",
+  "jarSha256": "5d305548b688ee305c7b28e7cb2d2aac82e88150d1c3d7198f992626a64a0416",
+  "baselineJar": "/tmp/branchline-vm-prepared/before.jar",
+  "note": "Dirty working-tree baseline from prior completed slots/fusion experiment; all prior changes preserved"
+}

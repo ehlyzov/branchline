@@ -421,183 +421,287 @@ private fun analyzeAiSubset(
     program: Program,
     transforms: List<TransformDecl>,
 ): List<BranchlineDiagnostic> {
-    val diagnostics = mutableListOf<BranchlineDiagnostic>()
-    program.decls.filterIsInstance<SharedDecl>().forEach { shared ->
-        diagnostics += unsupportedSubsetDiagnostic(
-            token = shared.token,
-            feature = "SHARED",
-            details = "SHARED resources depend on external runtime state and are outside the AI canonical subset MVP.",
-        )
-    }
-    transforms.forEach { transform ->
-        if (transform.body is GraphBody) {
-            diagnostics += unsupportedSubsetDiagnostic(
-                token = transform.token,
-                feature = "GRAPH",
-                details = "Graph/orchestration transforms are outside the AI canonical subset MVP.",
-            )
+    return AiSubsetAnalyzer(program).analyze(transforms)
+}
+
+/** Mirrors host-first direct-call dispatch; named functions are followed once, including cycles. */
+private class AiSubsetAnalyzer(program: Program) {
+    private val functions = program.decls.filterIsInstance<FuncDecl>().associateBy { it.name }
+    private val sharedDeclarations = program.decls.filterIsInstance<SharedDecl>()
+    private val visitedFunctions = mutableSetOf<String>()
+    private var bindings: Set<String> = emptySet()
+    private var reassignedNames = mutableSetOf<String>()
+    private val writesByBody = mutableMapOf<Ast, Set<String>>()
+    private var collectingWrites = false
+
+    fun analyze(transforms: List<TransformDecl>): List<BranchlineDiagnostic> {
+        val diagnostics = mutableListOf<BranchlineDiagnostic>()
+        // A mutable local can stop being callable, causing direct calls to fall back to FUNC.
+        // Discover writes first; uncertain mutable shadows are checked conservatively.
+        collectingWrites = true
+        functions.values.forEach {
+            reassignedNames = mutableSetOf()
+            collectSubsetFuncBodyDiagnostics(it.body, diagnostics)
+            writesByBody[it.body] = reassignedNames.toSet()
         }
-        transform.options.shared.forEach { shared ->
+        transforms.forEach {
+            reassignedNames = mutableSetOf()
+            collectSubsetStmtDiagnostics(it.body, diagnostics)
+            writesByBody[it.body] = reassignedNames.toSet()
+        }
+        collectingWrites = false
+        diagnostics.clear()
+        visitedFunctions.clear()
+        bindings = emptySet()
+        sharedDeclarations.forEach { shared ->
             diagnostics += unsupportedSubsetDiagnostic(
                 token = shared.token,
                 feature = "SHARED",
-                details = "Transform-level SHARED declarations are outside the AI canonical subset MVP.",
+                details = "SHARED resources depend on external runtime state and are outside the AI canonical subset MVP.",
             )
         }
-        collectSubsetStmtDiagnostics(transform.body, diagnostics)
-    }
-    return diagnostics
-}
-
-private fun collectSubsetStmtDiagnostics(
-    body: TransformBody,
-    diagnostics: MutableList<BranchlineDiagnostic>,
-) {
-    body.statements.forEach { stmt ->
-        when (stmt) {
-            is SharedWriteStmt -> diagnostics += unsupportedSubsetDiagnostic(
-                token = stmt.token,
-                feature = "SHARED_WRITE",
-                details = "Shared-state writes are outside the AI canonical subset MVP.",
-            )
-            is NodeDecl -> diagnostics += unsupportedSubsetDiagnostic(
-                token = stmt.token,
-                feature = "GRAPH_NODE",
-                details = "Graph nodes are outside the AI canonical subset MVP.",
-            )
-            is Connection -> diagnostics += unsupportedSubsetDiagnostic(
-                token = stmt.token,
-                feature = "GRAPH_CONNECTION",
-                details = "Graph connections are outside the AI canonical subset MVP.",
-            )
-            is GraphOutput -> diagnostics += unsupportedSubsetDiagnostic(
-                token = stmt.token,
-                feature = "GRAPH_OUTPUT",
-                details = "Graph outputs are outside the AI canonical subset MVP.",
-            )
-            is CodeBlock -> collectSubsetStmtDiagnostics(stmt, diagnostics)
-            is IfStmt -> {
-                collectSubsetExprDiagnostics(stmt.condition, diagnostics)
-                collectSubsetStmtDiagnostics(stmt.thenBlock, diagnostics)
-                stmt.elseBlock?.let { collectSubsetStmtDiagnostics(it, diagnostics) }
-            }
-            is ForEachStmt -> {
-                collectSubsetExprDiagnostics(stmt.iterable, diagnostics)
-                stmt.where?.let { collectSubsetExprDiagnostics(it, diagnostics) }
-                collectSubsetStmtDiagnostics(stmt.body, diagnostics)
-            }
-            is TryCatchStmt -> {
-                collectSubsetExprDiagnostics(stmt.tryExpr, diagnostics)
-                stmt.fallbackExpr?.let { collectSubsetExprDiagnostics(it, diagnostics) }
-                stmt.fallbackAbort?.let { collectSubsetStmtDiagnostics(CodeBlock(listOf(it), it.token), diagnostics) }
-            }
-            is LetStmt -> collectSubsetExprDiagnostics(stmt.expr, diagnostics)
-            is SetStmt -> {
-                collectSubsetExprDiagnostics(stmt.target, diagnostics)
-                collectSubsetExprDiagnostics(stmt.value, diagnostics)
-            }
-            is SetVarStmt -> collectSubsetExprDiagnostics(stmt.value, diagnostics)
-            is PlusAssignStmt -> {
-                collectSubsetExprDiagnostics(stmt.target, diagnostics)
-                collectSubsetExprDiagnostics(stmt.value, diagnostics)
-            }
-            is PlusAssignVarStmt -> {
-                collectSubsetExprDiagnostics(stmt.value, diagnostics)
-            }
-            is ModifyStmt -> {
-                collectSubsetExprDiagnostics(stmt.target, diagnostics)
-                stmt.updates.forEach { collectSubsetPropertyDiagnostics(it, diagnostics) }
-            }
-            is OutputStmt -> collectSubsetExprDiagnostics(stmt.template, diagnostics)
-            is ReturnStmt -> stmt.value?.let { collectSubsetExprDiagnostics(it, diagnostics) }
-            is AbortStmt -> stmt.value?.let { collectSubsetExprDiagnostics(it, diagnostics) }
-            is ExprStmt -> collectSubsetExprDiagnostics(stmt.expr, diagnostics)
-        }
-    }
-}
-
-private fun collectSubsetPropertyDiagnostics(
-    property: Property,
-    diagnostics: MutableList<BranchlineDiagnostic>,
-) {
-    when (property) {
-        is LiteralProperty -> collectSubsetExprDiagnostics(property.value, diagnostics)
-        is ComputedProperty -> {
-            collectSubsetExprDiagnostics(property.keyExpr, diagnostics)
-            collectSubsetExprDiagnostics(property.value, diagnostics)
-        }
-    }
-}
-
-private fun collectSubsetExprDiagnostics(
-    expr: Expr,
-    diagnostics: MutableList<BranchlineDiagnostic>,
-) {
-    when (expr) {
-        is IdentifierExpr -> Unit
-        is StringExpr -> Unit
-        is NumberLiteral -> Unit
-        is NullLiteral -> Unit
-        is BoolExpr -> Unit
-        is AccessExpr -> collectSubsetExprDiagnostics(expr.base, diagnostics)
-        is ObjectExpr -> expr.fields.forEach { collectSubsetPropertyDiagnostics(it, diagnostics) }
-        is CallExpr -> expr.args.forEach { collectSubsetExprDiagnostics(it, diagnostics) }
-        is InvokeExpr -> {
-            collectSubsetExprDiagnostics(expr.target, diagnostics)
-            expr.args.forEach { collectSubsetExprDiagnostics(it, diagnostics) }
-        }
-        is BinaryExpr -> {
-            collectSubsetExprDiagnostics(expr.left, diagnostics)
-            collectSubsetExprDiagnostics(expr.right, diagnostics)
-        }
-        is UnaryExpr -> {
-            if (expr.token.type == TokenType.SUSPEND) {
+        transforms.forEach { transform ->
+            if (transform.body is GraphBody) {
                 diagnostics += unsupportedSubsetDiagnostic(
-                    token = expr.token,
-                    feature = "SUSPEND",
-                    details = "Suspension semantics are outside the AI canonical subset MVP.",
+                    token = transform.token,
+                    feature = "GRAPH",
+                    details = "Graph/orchestration transforms are outside the AI canonical subset MVP.",
                 )
             }
-            collectSubsetExprDiagnostics(expr.expr, diagnostics)
-        }
-        is LambdaExpr -> collectSubsetFuncBodyDiagnostics(expr.body, diagnostics)
-        is ArrayExpr -> expr.elements.forEach { collectSubsetExprDiagnostics(it, diagnostics) }
-        is ArrayCompExpr -> {
-            collectSubsetExprDiagnostics(expr.iterable, diagnostics)
-            collectSubsetExprDiagnostics(expr.mapExpr, diagnostics)
-            expr.where?.let { collectSubsetExprDiagnostics(it, diagnostics) }
-        }
-        is IfElseExpr -> {
-            collectSubsetExprDiagnostics(expr.condition, diagnostics)
-            collectSubsetExprDiagnostics(expr.thenBranch, diagnostics)
-            collectSubsetExprDiagnostics(expr.elseBranch, diagnostics)
-        }
-        is TryCatchExpr -> {
-            collectSubsetExprDiagnostics(expr.tryExpr, diagnostics)
-            collectSubsetExprDiagnostics(expr.fallbackExpr, diagnostics)
-        }
-        is CaseExpr -> {
-            expr.whens.forEach { branch ->
-                collectSubsetExprDiagnostics(branch.condition, diagnostics)
-                collectSubsetExprDiagnostics(branch.result, diagnostics)
+            transform.options.shared.forEach { shared ->
+                diagnostics += unsupportedSubsetDiagnostic(
+                    token = shared.token,
+                    feature = "SHARED",
+                    details = "Transform-level SHARED declarations are outside the AI canonical subset MVP.",
+                )
             }
-            collectSubsetExprDiagnostics(expr.elseBranch, diagnostics)
+            reassignedNames = writesByBody.getValue(transform.body).toMutableSet()
+            withBindings(emptyList(), transform.params) { collectSubsetStmtDiagnostics(transform.body, diagnostics) }
         }
-        is SharedStateAwaitExpr -> diagnostics += unsupportedSubsetDiagnostic(
-            token = expr.token,
-            feature = "AWAIT",
-            details = "AWAIT on shared state is outside the AI canonical subset MVP.",
-        )
+        return diagnostics
     }
-}
 
-private fun collectSubsetFuncBodyDiagnostics(
-    body: FuncBody,
-    diagnostics: MutableList<BranchlineDiagnostic>,
-) {
-    when (body) {
-        is ExprBody -> collectSubsetExprDiagnostics(body.expr, diagnostics)
-        is BlockBody -> collectSubsetStmtDiagnostics(body.block, diagnostics)
+    private fun collectSubsetStmtDiagnostics(
+        body: TransformBody,
+        diagnostics: MutableList<BranchlineDiagnostic>,
+    ) {
+        withBindings(emptyList()) {
+            body.statements.forEach { stmt ->
+                when (stmt) {
+                    is SharedWriteStmt -> diagnostics += unsupportedSubsetDiagnostic(
+                        token = stmt.token,
+                        feature = "SHARED_WRITE",
+                        details = "Shared-state writes are outside the AI canonical subset MVP.",
+                    )
+                    is NodeDecl -> diagnostics += unsupportedSubsetDiagnostic(
+                        token = stmt.token,
+                        feature = "GRAPH_NODE",
+                        details = "Graph nodes are outside the AI canonical subset MVP.",
+                    )
+                    is Connection -> diagnostics += unsupportedSubsetDiagnostic(
+                        token = stmt.token,
+                        feature = "GRAPH_CONNECTION",
+                        details = "Graph connections are outside the AI canonical subset MVP.",
+                    )
+                    is GraphOutput -> diagnostics += unsupportedSubsetDiagnostic(
+                        token = stmt.token,
+                        feature = "GRAPH_OUTPUT",
+                        details = "Graph outputs are outside the AI canonical subset MVP.",
+                    )
+                    is CodeBlock -> collectSubsetStmtDiagnostics(stmt, diagnostics)
+                    is IfStmt -> {
+                        collectSubsetExprDiagnostics(stmt.condition, diagnostics)
+                        collectSubsetStmtDiagnostics(stmt.thenBlock, diagnostics)
+                        stmt.elseBlock?.let { collectSubsetStmtDiagnostics(it, diagnostics) }
+                    }
+                    is ForEachStmt -> {
+                        collectSubsetExprDiagnostics(stmt.iterable, diagnostics)
+                        withBindings(emptyList(), listOf(stmt.varName)) {
+                            stmt.where?.let { collectSubsetExprDiagnostics(it, diagnostics) }
+                            collectSubsetStmtDiagnostics(stmt.body, diagnostics)
+                        }
+                    }
+                    is TryCatchStmt -> {
+                        collectSubsetExprDiagnostics(stmt.tryExpr, diagnostics)
+                        withBindings(emptyList(), listOf(stmt.exceptionName)) {
+                            stmt.fallbackExpr?.let { collectSubsetExprDiagnostics(it, diagnostics) }
+                            stmt.fallbackAbort?.let { collectSubsetStmtDiagnostics(CodeBlock(listOf(it), it.token), diagnostics) }
+                        }
+                    }
+                    is LetStmt -> {
+                        collectSubsetExprDiagnostics(stmt.expr, diagnostics)
+                        bindings = if (stmt.name !in reassignedNames && isKnownCallable(stmt.expr)) {
+                            bindings + stmt.name
+                        } else bindings - stmt.name
+                    }
+                    is SetStmt -> {
+                        collectSubsetExprDiagnostics(stmt.target, diagnostics)
+                        collectSubsetExprDiagnostics(stmt.value, diagnostics)
+                    }
+                    is SetVarStmt -> {
+                        reassignedNames += stmt.name
+                        collectSubsetExprDiagnostics(stmt.value, diagnostics)
+                        bindings = bindings - stmt.name
+                    }
+                    is PlusAssignStmt -> {
+                        collectSubsetExprDiagnostics(stmt.target, diagnostics)
+                        collectSubsetExprDiagnostics(stmt.value, diagnostics)
+                    }
+                    is PlusAssignVarStmt -> {
+                        reassignedNames += stmt.name
+                        collectSubsetExprDiagnostics(stmt.value, diagnostics)
+                    }
+                    is ModifyStmt -> {
+                        collectSubsetExprDiagnostics(stmt.target, diagnostics)
+                        stmt.updates.forEach { collectSubsetPropertyDiagnostics(it, diagnostics) }
+                    }
+                    is OutputStmt -> collectSubsetExprDiagnostics(stmt.template, diagnostics)
+                    is ReturnStmt -> stmt.value?.let { collectSubsetExprDiagnostics(it, diagnostics) }
+                    is AbortStmt -> stmt.value?.let { collectSubsetExprDiagnostics(it, diagnostics) }
+                    is ExprStmt -> collectSubsetExprDiagnostics(stmt.expr, diagnostics)
+                }
+            }
+        }
+    }
+
+    private fun collectSubsetPropertyDiagnostics(
+        property: Property,
+        diagnostics: MutableList<BranchlineDiagnostic>,
+    ) {
+        when (property) {
+            is LiteralProperty -> collectSubsetExprDiagnostics(property.value, diagnostics)
+            is ComputedProperty -> {
+                collectSubsetExprDiagnostics(property.keyExpr, diagnostics)
+                collectSubsetExprDiagnostics(property.value, diagnostics)
+            }
+        }
+    }
+
+    private fun collectSubsetExprDiagnostics(
+        expr: Expr,
+        diagnostics: MutableList<BranchlineDiagnostic>,
+    ) {
+        when (expr) {
+            is IdentifierExpr -> Unit
+            is StringExpr -> Unit
+            is NumberLiteral -> Unit
+            is NullLiteral -> Unit
+            is BoolExpr -> Unit
+            is AccessExpr -> {
+                collectSubsetExprDiagnostics(expr.base, diagnostics)
+                expr.segs.filterIsInstance<AccessSeg.Dynamic>().forEach {
+                    collectSubsetExprDiagnostics(it.keyExpr, diagnostics)
+                }
+            }
+            is ObjectExpr -> expr.fields.forEach { collectSubsetPropertyDiagnostics(it, diagnostics) }
+            is CallExpr -> {
+                // Exec resolves registered host functions before locals or FUNC declarations.
+                val name = expr.callee.name
+                if (name == "NOW" || name == "RANDOM") {
+                    diagnostics += unsupportedSubsetDiagnostic(
+                        token = expr.callee.token,
+                        feature = name,
+                        details = "Ambient clock/randomness is non-deterministic; supply the value through input.",
+                    )
+                } else if (!collectingWrites && name !in bindings && name !in StdLib.fns) {
+                    functions[name]?.let { function ->
+                        val functionWrites = writesByBody.getValue(function.body)
+                        val callableParams = function.params.filterIndexed { index, parameter ->
+                            parameter !in functionWrites && expr.args.getOrNull(index)?.let(::isKnownCallable) == true
+                        }.toSet()
+                        val visitKey = name + ":" + function.params.map { it in callableParams }.joinToString()
+                        if (visitedFunctions.add(visitKey)) {
+                            val callerBindings = bindings
+                            val callerWrites = reassignedNames
+                            bindings = callableParams
+                            reassignedNames = functionWrites.toMutableSet()
+                            try {
+                                collectSubsetFuncBodyDiagnostics(function.body, diagnostics)
+                            } finally {
+                                bindings = callerBindings
+                                reassignedNames = callerWrites
+                            }
+                        }
+                    }
+                }
+                expr.args.forEach { collectSubsetExprDiagnostics(it, diagnostics) }
+            }
+            is InvokeExpr -> {
+                collectSubsetExprDiagnostics(expr.target, diagnostics)
+                expr.args.forEach { collectSubsetExprDiagnostics(it, diagnostics) }
+            }
+            is BinaryExpr -> {
+                collectSubsetExprDiagnostics(expr.left, diagnostics)
+                collectSubsetExprDiagnostics(expr.right, diagnostics)
+            }
+            is UnaryExpr -> {
+                if (expr.token.type == TokenType.SUSPEND) {
+                    diagnostics += unsupportedSubsetDiagnostic(
+                        token = expr.token,
+                        feature = "SUSPEND",
+                        details = "Suspension semantics are outside the AI canonical subset MVP.",
+                    )
+                }
+                collectSubsetExprDiagnostics(expr.expr, diagnostics)
+            }
+            is LambdaExpr -> withBindings(emptyList(), expr.params) {
+                collectSubsetFuncBodyDiagnostics(expr.body, diagnostics)
+            }
+            is ArrayExpr -> expr.elements.forEach { collectSubsetExprDiagnostics(it, diagnostics) }
+            is ArrayCompExpr -> {
+                collectSubsetExprDiagnostics(expr.iterable, diagnostics)
+                withBindings(emptyList(), listOf(expr.varName)) {
+                    collectSubsetExprDiagnostics(expr.mapExpr, diagnostics)
+                    expr.where?.let { collectSubsetExprDiagnostics(it, diagnostics) }
+                }
+            }
+            is IfElseExpr -> {
+                collectSubsetExprDiagnostics(expr.condition, diagnostics)
+                collectSubsetExprDiagnostics(expr.thenBranch, diagnostics)
+                collectSubsetExprDiagnostics(expr.elseBranch, diagnostics)
+            }
+            is TryCatchExpr -> {
+                collectSubsetExprDiagnostics(expr.tryExpr, diagnostics)
+                withBindings(emptyList(), listOf(expr.exceptionName)) {
+                    collectSubsetExprDiagnostics(expr.fallbackExpr, diagnostics)
+                }
+            }
+            is CaseExpr -> {
+                expr.whens.forEach { branch ->
+                    collectSubsetExprDiagnostics(branch.condition, diagnostics)
+                    collectSubsetExprDiagnostics(branch.result, diagnostics)
+                }
+                collectSubsetExprDiagnostics(expr.elseBranch, diagnostics)
+            }
+            is SharedStateAwaitExpr -> diagnostics += unsupportedSubsetDiagnostic(
+                token = expr.token,
+                feature = "AWAIT",
+                details = "AWAIT on shared state is outside the AI canonical subset MVP.",
+            )
+        }
+    }
+
+    private fun collectSubsetFuncBodyDiagnostics(
+        body: FuncBody,
+        diagnostics: MutableList<BranchlineDiagnostic>,
+    ) {
+        when (body) {
+            is ExprBody -> collectSubsetExprDiagnostics(body.expr, diagnostics)
+            is BlockBody -> collectSubsetStmtDiagnostics(body.block, diagnostics)
+        }
+    }
+
+    private fun isKnownCallable(expr: Expr): Boolean =
+        expr is LambdaExpr || (expr is IdentifierExpr && expr.name in bindings && expr.name !in reassignedNames)
+
+    private inline fun <T> withBindings(
+        names: List<String>,
+        hiddenNames: List<String> = emptyList(),
+        action: () -> T,
+    ): T {
+        val previous = bindings
+        bindings = (bindings - hiddenNames.toSet()) + names
+        return try { action() } finally { bindings = previous }
     }
 }
 

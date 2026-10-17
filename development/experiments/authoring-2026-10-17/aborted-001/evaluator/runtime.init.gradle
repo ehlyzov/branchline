@@ -1,0 +1,24 @@
+// Read-only project integration; all generated artifacts go outside the checkout.
+gradle.projectsEvaluated {
+    def interpreter = gradle.rootProject.project(':interpreter')
+    def extras = gradle.rootProject.configurations.detachedConfiguration(
+        gradle.rootProject.dependencies.create('com.fasterxml.jackson.core:jackson-databind:2.20.1'),
+        gradle.rootProject.dependencies.create('com.dashjoin:jsonata:0.9.10'))
+    def compiler = gradle.rootProject.configurations.detachedConfiguration(
+        gradle.rootProject.dependencies.create('org.jetbrains.kotlin:kotlin-compiler-embeddable:2.3.0'))
+    gradle.rootProject.tasks.register('authoringEvaluatorRuntime') {
+        dependsOn interpreter.tasks.named('jvmJar')
+        doLast {
+            def payload = [
+                classpath: (interpreter.configurations.jvmRuntimeClasspath.files +
+                    interpreter.tasks.named('jvmJar').get().archiveFile.get().asFile + extras.files)
+                    .collect { it.absolutePath }.unique(),
+                compiler_classpath: compiler.files.collect { it.absolutePath },
+                java: new File(System.getProperty('java.home'), 'bin/java').absolutePath,
+                kotlin_version: '2.3.0', jsonata_version: '0.9.10', jackson_version: '2.20.1'
+            ]
+            new File(gradle.rootProject.property('authoringRuntimeOutput').toString()).text =
+                groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(payload))
+        }
+    }
+}

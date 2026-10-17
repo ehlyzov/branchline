@@ -1,0 +1,5 @@
+Final jar: see final-jar.sha256.
+java -cp /tmp/branchline-vm-json-pipeline/acceptance:vm-benchmarks/build/libs/vm-benchmarks-v0.11.0-SNAPSHOT-jmh.jar SuspendAcceptance
+Exit 0
+PASS parent suspension acceptance: 2 sources, exact snapshot parity, full environment, EAGER plan
+PipelineAcceptance rerun against final jar: Exit 0, PASS 63 checks.

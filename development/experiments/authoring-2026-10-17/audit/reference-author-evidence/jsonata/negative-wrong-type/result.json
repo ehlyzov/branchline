@@ -1,0 +1,1 @@
+{"compile_ok":true,"cases":[{"ok":false,"actual":null,"error":"NumberFormatException: For input string: \"x\""}],"compile_seconds":0.051509375,"execute_seconds":0.051612375}

@@ -189,3 +189,16 @@ tasks.register('runJsonataMain', JavaExec) {
     mainClass = 'io.github.ehlyzov.branchline.benchmarks.jsonata.test.MainKt'
     classpath = sourceSets.jmh.runtimeClasspath
 }
+
+// A correctness gate, deliberately separate from JMH and optional local engines.
+configurations { priceIngestJsonata }
+dependencies { priceIngestJsonata 'com.dashjoin:jsonata:0.9.10' }
+
+tasks.register('priceIngestComparison', JavaExec) {
+    group = 'verification'
+    description = 'Check independent price-ingest fixtures with Branchline JVM, Dashjoin JSONata and Kotlin.'
+    dependsOn tasks.named('jmhClasses')
+    mainClass = 'io.github.ehlyzov.branchline.benchmarks.jsonata.PriceIngestComparisonKt'
+    classpath = files(sourceSets.jmh.output, configurations.priceIngestJsonata, sourceSets.main.runtimeClasspath)
+    systemProperty 'priceIngest.corruptEngine', providers.gradleProperty('priceIngestCorruptEngine').getOrElse('')
+}

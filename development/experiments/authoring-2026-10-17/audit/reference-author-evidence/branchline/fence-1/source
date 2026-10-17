@@ -1,0 +1,5 @@
+TRANSFORM Main {
+    LET label = LOWER(TRIM(input.label ?? ""))
+    OUTPUT { label: label }
+}
+

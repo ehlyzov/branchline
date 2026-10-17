@@ -1,1 +1,111 @@
-gaps: []
+gaps:
+  - id: legacy-experimental-bignum-observers
+    status: resolved
+    resolved_on: 2026-10-17
+    recorded_on: 2026-10-17
+    scope: Earlier opt-in executeExperimental slots/fusion prototype, not the new prepared-block runner
+    fact: "Source review during prepared-block acceptance found that the earlier prototype accepts BigInteger/BigDecimal subclasses through broad scalar guards and has no corresponding logical-subclass observation guard. JVM subclasses can override numeric/truth methods and observe deferred state. This residual risk was not executed or repaired in the bounded prepared-block slice; the new runner has exact-class guards and passing subclass regressions."
+    evidence:
+      - development/evidence/vm-prepared-block-experiment/independent-review.md
+      - vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt
+      - vm/src/jvmTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockBigNumberObservationTest.kt
+    next_action: "Reproduced and fixed for the alpha release with exact-class numeric/truth guards and static-key fallback. New JVM tests and the independent Java probe pass; retain regression coverage. See development/evidence/release-0.11.0-alpha.1/experimental.md and README.md."
+  - id: experimental-vm-runner-overhead
+    status: open
+    recorded_on: 2026-10-17
+    scope: Remaining costs, cold reuse and release boundary after slots/fusion, prepared blocks and JVM local lowering
+    fact: "The opt-in slots/fusion prototype passed bounded correctness acceptance but showed no repeatable speed win over current VM in longer native JMH, and increased allocation/prepared-executor memory. An apparent short-run reduction gain disappeared. A subsequent same-runner controlled prepared-block experiment improved large reduction time about 26% versus ordinary VM but remained about 10% slower than interpreter, failed the projection/paths gate, and increased prepared-executor memory. Its huge-method JIT eligibility defect was directly diagnosed and repaired before final timing. A subsequent JVM whole-loop backend removed body opcode dispatch, improving projection time 11–16% versus ordinary VM but showing no proven interpreter advantage; its >=15% target did not repeat and preparation/plan memory grew. JFR now attributes material leaf samples to ArrayDeque, comparison/numeric helpers and PC stores. Sample shares are not exact removable costs or assembly-level attribution; The subsequent local/typed JVM backend passed 1155 tests plus 588 parent comparisons and reduced fixed large projection time 31–34% versus prior generated loop and 37–40% versus interpreter in two orders; allocations fell 6.1% versus VM, but preparation and prepared-plan heap/Metaspace increased. Default promotion remains unproven; cold amortization and broader workloads are still unmeasured."
+    evidence:
+      - development/planning/vm-slots-fusion-experiment.md
+      - development/evidence/vm-slots-fusion-experiment/README.md
+      - development/evidence/vm-slots-fusion-experiment/confirmation.json
+      - development/evidence/vm-slots-fusion-experiment/memory-summary.csv
+      - development/evidence/vm-prepared-block-experiment/README.md
+      - development/evidence/vm-prepared-block-experiment/effects.csv
+      - development/evidence/vm-prepared-block-experiment/memory-summary.csv
+      - development/evidence/vm-loop-body-experiment/README.md
+      - development/evidence/vm-loop-body-experiment/PROFILE.md
+      - development/evidence/vm-loop-body-experiment/effects.csv
+      - development/evidence/vm-local-loop-experiment/README.md
+      - development/evidence/vm-local-loop-experiment/effects.csv
+      - development/evidence/vm-local-loop-experiment/memory-summary.csv
+    next_action: "Keep the new local backend opt-in. Before production/default promotion, validate real transforms and cold/JIT amortization, choose code/last-state lifetime policy and isolate or explicitly label the experimental API/dependency surface. Field lookup/map construction now dominates sampled profiles; source/profile evidence does not by itself justify further rewrites."
+  - id: js-exact-number-parity
+    status: open
+    recorded_on: 2026-10-17
+    scope: JVM/JS numeric guarantees
+    fact: "JS BigInt is Long-backed and BigDec is Double-backed; arbitrary-precision equivalence with JVM is not implemented."
+    evidence:
+      - interpreter/src/jsMain/kotlin/io/github/ehlyzov/branchline/runtime/bignum/BigNumJs.kt
+      - docs/language/numeric.md
+    next_action: "Choose a precise JS representation or retain an explicitly restricted numeric profile; require exact-value and overflow assertions before broad parity claims."
+  - id: untrusted-program-execution-boundary
+    status: open
+    recorded_on: 2026-10-17
+    scope: Embedding arbitrary externally supplied programs
+    fact: "AI-subset inspection is not a security sandbox or an execution resource budget. The local pilot executes repository-controlled transforms."
+    next_action: "Specify host capabilities, cancellation, memory/step limits and process isolation before accepting untrusted programs."
+  - id: external-pilot-and-authoring-advantage
+    status: open
+    recorded_on: 2026-10-17
+    scope: Product and production-readiness claims
+    fact: "Local functional equivalence cannot establish independent adoption, operational reliability or lower authoring effort versus JSONata/Kotlin."
+    evidence:
+      - development/planning/branchline-next-stage.md
+      - docs/guides/release-readiness.md
+    next_action: "Complete the two-integrator operational pilot. The 30-task/270-session authoring experiment is complete and did not establish general superiority (development/experiments/authoring-2026-10-17/REPORT.md); any new blind productivity claim needs new held-out tasks rather than replaying now-public holdouts."
+  - id: vm-snapshot-value-domain
+    status: open
+    recorded_on: 2026-10-17
+    scope: VM pause/resume and persisted snapshots
+    fact: "Existing BytecodeIO value serialization does not preserve executable LambdaValue/LambdaTemplate values stored in environments. Performance acceptance covers the supported serializable payload domain, not arbitrary closure snapshots or old-schema migration."
+    evidence:
+      - vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/BytecodeIO.kt
+      - docs/vm.md
+    next_action: "Specify closure/environment identity encoding and snapshot schema compatibility before claiming arbitrary program persistence. This is an existing correctness/domain limitation, not a newly measured speed P0/P1."
+  - id: compiled-cli-vm-fanout-isolation
+    status: resolved
+    recorded_on: 2026-10-17
+    resolved_on: 2026-10-17
+    scope: JVM compiled-artifact CLI fan-out with jobs greater than one
+    fact: "Coordinated old-code execution reproduced cross-job corruption: the a.json report received b.json's key/value. Compiled workers now own complete BranchlineProgram/VMExec contexts, created serially and reused per worker. Ordered joins complete before shared-store teardown, including interruption; collecting traces dispatch serially and the JVM regex cache is synchronized."
+    evidence:
+      - cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/BranchlineCli.kt
+      - cli/src/jvmMain/kotlin/io/github/ehlyzov/branchline/cli/JvmPlatform.kt
+      - cli/src/jvmTest/kotlin/io/github/ehlyzov/branchline/cli/CompiledFanoutIsolationTest.kt
+      - cli/src/jvmTest/kotlin/io/github/ehlyzov/branchline/cli/ParallelWorkerJvmTest.kt
+      - development/evidence/vm-json-pipeline/jobs-before.xml
+      - development/evidence/vm-json-pipeline/jobs-after.xml
+      - development/evidence/vm-json-pipeline/jobs-workers-after.xml
+      - development/evidence/vm-json-pipeline/jobs-isolation.md
+      - development/evidence/vm-json-pipeline/independent-review.md
+    next_action: "Keep the overlap/order/error/interruption regressions when changing fan-out ownership. This resolution does not cover simultaneous independent CLI invocations using the process-global provider, arbitrary custom-tracer thread safety, or exact concurrent VMFactory.Metrics counters."
+  - id: experimental-selective-json-pipeline-performance
+    status: resolved
+    recorded_on: 2026-10-17
+    created_on: 2026-10-17
+    resolved_on: 2026-10-17
+    owner: vm-json-pipeline parent independent acceptance
+    scope: Experimental selected JSON full-pipeline performance and memory eligibility
+    fact: "Independent full-pipeline JMH, 65 parent acceptance checks, final JVM/Node gates and fresh-process memory probes are recorded. Sparse 16/64 MiB strings gain about 4x speed with 99% fewer allocated bytes at 1% access; sparse records gain about 5x with 48% fewer allocated bytes. Dense 1 MiB regresses 44-56%, so only explicit experimental sparse-use eligibility is accepted; default enablement is rejected."
+    promotion_target: development/planning/vm-json-pipeline.md
+    evidence:
+      - cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/ExperimentalJsonPipeline.kt
+      - vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/SelectiveJsonPipelineBenchmark.kt
+      - vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/SelectiveJsonPipelineProbe.kt
+      - development/evidence/vm-json-pipeline/pipeline-harness.md
+      - development/planning/vm-json-pipeline.md
+    next_action: "Before default enablement, profile the confirmed dense regression and validate selection policy against independent real transforms/output sizes. Post-GC process heap-used is an observational proxy, not exact retained graph size; no JVM-to-JS or multicore throughput generalization is established."
+
+  - id: next-release-artifact-alignment
+    status: resolved
+    resolved_on: 2026-10-17
+    recorded_on: 2026-10-17
+    scope: Next Alpha/preview release artifacts and compatibility claims
+    fact: "Built JVM and Node launchers both report v0.10.0 while project/package metadata is v0.11.0-SNAPSHOT. JVM entrypoint class major65 confirms Java21 while install.md advertises Java17+. Experimental compilers and ASM are physically present in the ordinary JVM fat jar. Current-format cross-runtime smoke passes; old-version PRIVATE_* reader compatibility is unverified."
+    evidence:
+      - development/planning/next-release-scope.md
+      - development/evidence/vm-local-loop-experiment/artifact-oracles.log
+      - development/evidence/vm-local-loop-experiment/release-inventory.md
+      - development/evidence/vm-local-loop-experiment/packaging-protocol.md
+    next_action: "Local alignment gate passed for 0.11.0-alpha.1: generated CLI version, Java21 docs, explicit experimental VM opt-in/ASM disclosure, honest old-writer fixture and mandatory v2 marker, strict workflow source/tag/version checks. See development/evidence/release-0.11.0-alpha.1/README.md. Actual publication/public-browser acceptance is a separate gate recorded on the release."

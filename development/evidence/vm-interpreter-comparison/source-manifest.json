@@ -1,0 +1,9 @@
+{
+  "development/evidence/vm-interpreter-comparison/EngineComparisonBench.java": "8c1089c46149811bfae59fc50e247736753fc32276b02ab043cf1cfdca39531b",
+  "development/evidence/vm-interpreter-comparison/NativePairValidation.java": "00e7d437f10a4d9269fee14095ff2e822b7e6b36b29d8e03d135ba51890e53d7",
+  "development/evidence/vm-interpreter-comparison/run.py": "b0917aae4480858bd8ad5efa3ae093324cce75b9cf7ed1e728dc758d3ec0e4fe",
+  "development/evidence/vm-interpreter-comparison/run_native.py": "fa70a3b885550ac1f5e2a0511ce4937154f688c2b9008cf46ad2e8f6d88814cf",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt": "456ee0f9ef50854d7ca3b709e16a3c425c32f920ef332c6ed61a6bc83609c30d",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Compiler.kt": "e1fd5dc80eef9bdff446b5f85db4ba3512c3f66cae60c1b7b6a6e35c7c479646",
+  "interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/ir/Exec.kt": "b2e0b88836b92d9382016a5f5a923c70ab00cf5d78d528e0fcb09704d419cf6e"
+}

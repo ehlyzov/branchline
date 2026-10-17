@@ -1,0 +1,59 @@
+> Task :cli:kmpPartiallyResolvedDependenciesChecker
+> Task :cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:compileKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmProcessResources UP-TO-DATE
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :interpreter:jvmMainClasses UP-TO-DATE
+> Task :interpreter:jvmJar UP-TO-DATE
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:compileKotlinJvm UP-TO-DATE
+> Task :vm:compileJvmMainJava NO-SOURCE
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :vm:jvmMainClasses UP-TO-DATE
+> Task :vm:jvmJar UP-TO-DATE
+> Task :cli:compileKotlinJvm UP-TO-DATE
+> Task :cli:compileJvmMainJava NO-SOURCE
+> Task :cli:jvmProcessResources NO-SOURCE
+> Task :cli:processJvmMainResources SKIPPED
+> Task :cli:jvmMainClasses UP-TO-DATE
+> Task :cli:jvmJar UP-TO-DATE
+> Task :cli:jvmTestProcessResources UP-TO-DATE
+> Task :cli:processJvmTestResources SKIPPED
+> Task :interpreter:compileKotlinJs UP-TO-DATE
+> Task :vm:compileKotlinJs UP-TO-DATE
+> Task :cli:compileKotlinJs UP-TO-DATE
+> Task :cli:jsProcessResources NO-SOURCE
+> Task :cli:jsMainClasses UP-TO-DATE
+> Task :cli:compileProductionExecutableKotlinJs UP-TO-DATE
+> Task :cli:jsProductionExecutableCompileSync UP-TO-DATE
+> Task :cli:compileTestKotlinJvm
+
+> Task :cli:prepareJsCliPackage
+
+added 2 packages in 130ms
+
+> Task :cli:compileJvmTestJava NO-SOURCE
+> Task :cli:jvmTestClasses
+> Task :cli:jvmTest
+> Task :test-fixtures:kmpPartiallyResolvedDependenciesChecker
+> Task :test-fixtures:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :test-fixtures:compileKotlinJvm UP-TO-DATE
+> Task :test-fixtures:compileJvmMainJava NO-SOURCE
+> Task :test-fixtures:jvmProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmMainResources SKIPPED
+> Task :test-fixtures:jvmMainClasses UP-TO-DATE
+> Task :test-fixtures:jvmJar UP-TO-DATE
+> Task :interpreter:compileTestKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmTestJava NO-SOURCE
+> Task :interpreter:jvmTestProcessResources UP-TO-DATE
+> Task :interpreter:processJvmTestResources SKIPPED
+> Task :interpreter:jvmTestClasses UP-TO-DATE
+> Task :interpreter:jvmTest UP-TO-DATE
+
+BUILD SUCCESSFUL in 1s
+25 actionable tasks: 7 executed, 18 up-to-date

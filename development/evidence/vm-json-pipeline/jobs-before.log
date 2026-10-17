@@ -1,0 +1,60 @@
+> Task :cli:kmpPartiallyResolvedDependenciesChecker
+> Task :cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:compileKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmProcessResources UP-TO-DATE
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :interpreter:jvmMainClasses UP-TO-DATE
+> Task :interpreter:jvmJar UP-TO-DATE
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:compileKotlinJvm UP-TO-DATE
+> Task :vm:compileJvmMainJava NO-SOURCE
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :vm:jvmMainClasses UP-TO-DATE
+> Task :vm:jvmJar UP-TO-DATE
+> Task :cli:compileKotlinJvm UP-TO-DATE
+> Task :cli:compileJvmMainJava NO-SOURCE
+> Task :cli:jvmProcessResources NO-SOURCE
+> Task :cli:processJvmMainResources SKIPPED
+> Task :cli:jvmMainClasses UP-TO-DATE
+> Task :cli:jvmJar UP-TO-DATE
+> Task :cli:jvmTestProcessResources UP-TO-DATE
+> Task :cli:processJvmTestResources SKIPPED
+> Task :interpreter:compileKotlinJs UP-TO-DATE
+> Task :vm:compileKotlinJs UP-TO-DATE
+> Task :cli:compileKotlinJs UP-TO-DATE
+> Task :cli:jsProcessResources NO-SOURCE
+> Task :cli:jsMainClasses UP-TO-DATE
+> Task :cli:compileProductionExecutableKotlinJs UP-TO-DATE
+> Task :cli:jsProductionExecutableCompileSync UP-TO-DATE
+> Task :cli:compileTestKotlinJvm
+
+> Task :cli:prepareJsCliPackage
+
+added 2 packages in 120ms
+
+> Task :cli:compileJvmTestJava NO-SOURCE
+> Task :cli:jvmTestClasses
+
+> Task :cli:jvmTest FAILED
+
+CompiledFanoutIsolationTest[jvm] > overlappingCompiledWorkersKeepTheirOwnEnvironmentAndStack()[jvm] FAILED
+    org.opentest4j.AssertionFailedError at CompiledFanoutIsolationTest.kt:58
+
+1 test completed, 1 failed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':cli:jvmTest'.
+> There were failing tests. See the report at: file:///Users/eugene/repo/research/branchline-public/cli/build/reports/tests/jvmTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 1s
+19 actionable tasks: 6 executed, 13 up-to-date

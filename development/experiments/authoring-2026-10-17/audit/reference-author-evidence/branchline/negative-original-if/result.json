@@ -1,0 +1,1 @@
+{"compile_ok":false,"cases":[],"compile_seconds":0.056766208,"execute_seconds":0.0,"error":"ParseException: [2:18] Expect THEN after IF condition near '{'\nExpect THEN after IF condition\nTRANSFORM Main {\nIF input.enabled { OUTPUT {value: 1} } ELSE { OUTPUT {value: 0} }\n                 ^\n}\n"}

@@ -1,0 +1,114 @@
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:compileKotlinJs UP-TO-DATE
+> Task :interpreter:jsProcessResources NO-SOURCE
+> Task :interpreter:jsMainClasses UP-TO-DATE
+> Task :interpreter:compileProductionExecutableKotlinJs UP-TO-DATE
+> Task :interpreter:jsProductionExecutableCompileSync
+> Task :interpreter:compileProductionLibraryKotlinJs UP-TO-DATE
+> Task :interpreter:jsProductionLibraryCompileSync
+> Task :kotlinKotlinNpmCachesSetup
+> Task :interpreter:jsPackageJson
+> Task :interpreter:jsPublicPackageJson
+> Task :interpreter:jsBrowserProductionLibraryDistribution UP-TO-DATE
+> Task :playgroundBuildAssets UP-TO-DATE
+
+> Task :docsGenerate
+Using v5.36.6 version
+Prepare build input
+Prepare build runtime
+Collect project files info
+PROC toc.yaml
+Sync project data
+Process project files
+PROC index.md
+PROC language/index.md
+PROC language/lexical.md
+PROC language/declarations.md
+PROC language/statements.md
+PROC language/expressions.md
+PROC language/numeric.md
+PROC language/io-contracts.md
+PROC language/ai-canonical-subset.md
+PROC language/grammar.md
+PROC language/std-agg.md
+PROC language/std-arrays.md
+PROC language/std-core.md
+PROC language/std-debug.md
+PROC language/std-hof.md
+PROC language/std-strings.md
+PROC language/std-time.md
+PROC learn/index.md
+PROC learn/hello-transform.md
+PROC learn/paths-and-reshaping.md
+PROC learn/control-flow.md
+PROC learn/error-handling.md
+PROC learn/recipes.md
+PROC guides/index.md
+PROC guides/first-steps.md
+PROC guides/install.md
+PROC guides/getting-started.md
+PROC guides/examples.md
+PROC guides/cli.md
+PROC guides/for-each.md
+PROC guides/array-comprehension.md
+PROC guides/try-catch.md
+PROC guides/production-use.md
+PROC guides/migrations.md
+PROC guides/release-readiness.md
+PROC vm.md
+PROC benchmarks.md
+PROC benchmarks/releases/index.md
+PROC benchmarks/jsonata.md
+PROC benchmarks/jsonata/releases/index.md
+PROC playground.md
+WARN vm.md: 20: YFM001 / inline-code-length Inline code length [Expected: 100; Actual: 124] [Context: "compileStream(..., engine = ExecutionEngine.VM, vmFallbackPolicy = VMFallbackPolicy.NONE, onVMExecution = { report -> ... })"]
+INFO 0.316: Processing finished: index.md
+INFO 0.314: Processing finished: language/expressions.md
+INFO 0.314: Processing finished: language/lexical.md
+INFO 0.314: Processing finished: language/numeric.md
+INFO 0.314: Processing finished: language/grammar.md
+INFO 0.314: Processing finished: language/ai-canonical-subset.md
+INFO 0.314: Processing finished: language/std-agg.md
+INFO 0.314: Processing finished: language/std-arrays.md
+INFO 0.314: Processing finished: language/io-contracts.md
+INFO 0.314: Processing finished: language/declarations.md
+INFO 0.314: Processing finished: language/std-core.md
+INFO 0.314: Processing finished: language/index.md
+INFO 0.314: Processing finished: language/std-strings.md
+INFO 0.314: Processing finished: language/std-debug.md
+INFO 0.314: Processing finished: language/std-hof.md
+INFO 0.314: Processing finished: language/std-time.md
+INFO 0.314: Processing finished: learn/hello-transform.md
+INFO 0.313: Processing finished: learn/error-handling.md
+INFO 0.313: Processing finished: learn/control-flow.md
+INFO 0.315: Processing finished: learn/index.md
+INFO 0.314: Processing finished: learn/paths-and-reshaping.md
+INFO 0.314: Processing finished: guides/index.md
+INFO 0.314: Processing finished: guides/first-steps.md
+INFO 0.314: Processing finished: guides/install.md
+INFO 0.314: Processing finished: learn/recipes.md
+INFO 0.314: Processing finished: guides/examples.md
+INFO 0.314: Processing finished: guides/getting-started.md
+INFO 0.315: Processing finished: language/statements.md
+INFO 0.314: Processing finished: guides/array-comprehension.md
+INFO 0.314: Processing finished: guides/production-use.md
+INFO 0.314: Processing finished: guides/for-each.md
+INFO 0.314: Processing finished: guides/migrations.md
+INFO 0.314: Processing finished: guides/release-readiness.md
+INFO 0.314: Processing finished: benchmarks.md
+INFO 0.314: Processing finished: guides/try-catch.md
+INFO 0.314: Processing finished: benchmarks/releases/index.md
+INFO 0.314: Processing finished: benchmarks/jsonata.md
+INFO 0.315: Processing finished: benchmarks/jsonata/releases/index.md
+INFO 0.315: Processing finished: guides/cli.md
+INFO 0.315: Processing finished: playground.md
+INFO 0.315: Processing finished: vm.md
+Aggregate build artifacts
+Cleanup build results
+Build time: 425.289ms
+
+> Task :docsBuild
+
+BUILD SUCCESSFUL in 4s
+12 actionable tasks: 7 executed, 5 up-to-date

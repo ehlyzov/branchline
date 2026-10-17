@@ -1,0 +1,3 @@
+ordinary: result=[7, 11], observed=[7], x=11
+experimental: result=[7, 11], observed=[7], x=11
+exit=0; independent Java probe against cli/build/libs/branchline-cli-0.11.0-alpha.1-all.jar

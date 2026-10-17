@@ -1,0 +1,10 @@
+($rows := rows; (
+  $indexed := $map($rows, function($r,$i){ {"row":$r,"index":$i} });
+  $ordered := $sort($indexed, function($l,$r){
+    $l.row.rank = $r.row.rank
+      ? $l.index > $r.index
+      : $l.row.rank > $r.row.rank
+  });
+  [$map($ordered, function($entry){$entry.row})]
+)
+)

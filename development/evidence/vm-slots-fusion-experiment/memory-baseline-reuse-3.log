@@ -1,0 +1,19 @@
+{"engine":"baseline","executionApi":"VM.execute","requestedSlots":false,"requestedFusion":false,"collectDiagnostics":false,"effectiveSlots":false,"effectiveFusion":false,"fallbackReason":null,"slotReads":0,"slotWrites":0,"loopSlotWrites":0,"mirroredStoresElided":0,"fusedDispatches":0,"instructionsElided":0,"hostBarriers":0,"untimedDiagnostics":{"workload":"reduction","dataset":"large","sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"validatedExecutions":3,"engine":"baseline","executionApi":"VM.execute","requestedSlots":false,"requestedFusion":false,"collectDiagnostics":false,"effectiveSlots":false,"effectiveFusion":false,"fallbackReason":null,"slotReads":0,"slotWrites":0,"loopSlotWrites":0,"mirroredStoresElided":0,"fusedDispatches":0,"instructionsElided":0,"hostBarriers":0},"operation":"memory","lifetime":"reuse","workload":"reduction","dataset":"large","executions":1000,"preparedExecutorCount":1,"heapUsedBytes":{"fixtureOnlyAfterPriming":8305272,"fixtureExecutorsWeakReferencesAndLastOutput":8345024,"fixtureWeakReferencesAndLastOutput":8338928,"fixtureOnlyAfterRelease":8338536},"approximateHeapDeltasBytes":{"preparedAndLastOutputMinusBaseline":39752,"afterExecutorsReleaseMinusBaseline":33656,"afterAllReleaseMinusBaseline":33264},"collectedExecutorWrappers":1,"weakReferenceScope":"executor wrappers only; no assertion about exact reachable graphs","jvmArguments":["-Xms32m","-Xmx768m","-XX:+UseG1GC"],"heapMaxBytes":805306368,"peakRssSource":"external /usr/bin/time -l; not a heap-used or B/op value"}
+        0.25 real         0.52 user         0.03 sys
+           117211136  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                8519  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                   3  voluntary context switches
+                2891  involuntary context switches
+          6902019982  instructions retired
+          2159094855  cycles elapsed
+            95306592  peak memory footprint

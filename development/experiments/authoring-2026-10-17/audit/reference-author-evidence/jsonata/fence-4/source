@@ -1,0 +1,6 @@
+($rows := rows; $reduce($rows, function($acc,$row){(
+  $k := $row.kind;
+  $old := $lookup($acc,$k);
+  $merge([$acc, {$k: $append($exists($old) ? $old : [], [$row])}])
+)}, {})
+)

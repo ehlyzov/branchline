@@ -27,7 +27,7 @@ Rules:
   - `BD` → **BD**
   - `F` → **BD** using the platform’s deterministic double→decimal conversion.
 
-> **Tip:** prefer `DEC("0.1")` for human-authored precise values.
+> **Tip:** on JVM, prefer `DEC("0.1")` for human-authored precise values. JS BigDec remains Double-backed; `DEC` does not recover decimal precision there.
 
 Notes:
 - Large integer literals may parse as **BI**.
@@ -73,13 +73,52 @@ This same `BD`/`F` mixing rule applies to comparisons and equality.
   - `BD` if `x` is `BD`
   - `F` if `x` is `I`, `BI`, or `F`
 
+## Powers and square roots (`POWER`, `SQRT`)
+
+Both functions check arity and return `NULL` when an argument is `NULL`. Unsupported types,
+non-finite ordinary numbers, invalid real domains, and floating result overflow are errors.
+
+- With ordinary numbers, `POWER(base, exponent)` and `SQRT(number)` return **F**, including
+  integer inputs. Results are approximate Double arithmetic; underflow may produce zero.
+- `POWER(0, 0)` is `1`. A zero base with a negative exponent is an error. Negative bases
+  require integer exponents. `SQRT` requires a non-negative input.
+- If either `POWER` argument is **BI** or **BD**, the exponent must be an integer between
+  `-999999999` and `999999999`, inclusive. Float mixing is rejected; opt in with `DEC`.
+  JS classifies integral JS numbers as **I**, consistent with the existing arithmetic rules.
+- In that explicit domain, an integer base with non-negative exponent returns **BI**;
+  a **BD** base returns **BD**. On JVM these positive powers are exact. Negative powers
+  return **BD**, using the reciprocal of the exact positive power, rounded to 34 significant
+  digits with `HALF_UP`, matching existing decimal division.
+- `SQRT(BI|BD)` returns **BD**. On JVM it uses 34 significant digits and `HALF_UP`,
+  including irrational roots. It never converts an explicit JVM value to Double first.
+- On JS, explicit integer `POWER` rejects results outside signed 64-bit range. Explicit
+  decimal powers and roots use Double arithmetic, reject non-finite inputs/results, and
+  remain approximate. This differs from JVM exact powers and decimal rounding.
+
+Examples: `POWER(2, -2)` is floating `0.25`; `POWER(DEC(3), 20)` is integer
+`3486784401`; `SQRT(DEC("2.25"))` is decimal `1.5`. On JVM,
+`SQRT(DEC(2))` is `1.414213562373095048801688724209698`.
+
+Try the [Powers and square roots example](../playground.md?example=numeric-powers-roots)
+for values supported on both JVM and JS.
+
+The exponent bound defines supported syntax values, not a memory or execution-time limit.
+Very large exact powers can allocate very large numbers. Use trusted transforms or separate
+host resource limits.
+
 ## JavaScript notes
 
 - The `I` kind is restricted to the JS safe-integer range (±(2^53 − 1)).
 - When integer operations exceed the safe range, results promote to `BI`.
-- On JS, `BI` is **64-bit** (Long-backed), not arbitrary precision.
-- `BD` uses the platform BigDec implementation (Double-backed in JS); use `DEC("...")` for explicit
-  precision and to avoid float rounding surprises.
+- On JS, `BI` is **64-bit** (Long-backed), not arbitrary precision. Parsing outside that range
+  fails; existing general integer arithmetic may wrap on Long overflow. The new `POWER`
+  integer path explicitly checks overflow.
+- JS `BI` retains `DEC("9007199254740993")` exactly, but its conversion to `BD` can round.
+- `BD` is Double-backed on JS. `DEC("0.1") + DEC("0.2")` has numeric value
+  `0.30000000000000004`; `DEC("9007199254740993.0")` rounds to `9007199254740992`.
+  `DEC` chooses the explicit numeric domain; it does not provide arbitrary precision on JS.
+- Use JVM for exact decimal or arbitrary-precision workloads. For interoperable money,
+  constrain integer cents to supported ranges and validate bounds explicitly.
 
 Try it in the playground: [Numeric precision example](../playground.md?example=stdlib-numeric-precision).
 
@@ -87,7 +126,7 @@ Try it in the playground: [Numeric precision example](../playground.md?example=s
 
 Branchline treats JSON numeric interoperability separately from in-language arithmetic:
 
-- **Safe mode (default)** preserves precision by parsing large integers as `BigInt` and high-precision decimals as `BigDec`.
+- **Safe mode (default)** parses large integers as `BigInt` and high-precision decimals as `BigDec`, within the runtime storage limits described above.
   When emitting JSON, `BigInt` and `BigDec` are encoded as JSON strings to avoid silent precision loss.
 - **Strict mode** rejects numbers outside the safe JSON numeric range.
 - **Extended mode** emits large numbers as numeric literals for systems that can handle them.

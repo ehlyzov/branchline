@@ -1,0 +1,10 @@
+
+fun transform(input: Any?): Any? {
+val xs = listOf(2L, 5L, 8L)
+val doubled = xs.map { x -> x * 2L }
+val positive = xs.filter { x -> x > 0L }
+val total = xs.fold(0L) { acc, x -> acc + x }
+val indexed = xs.mapIndexed { i, x -> mapOf("index" to i, "value" to x) }
+
+return mapOf("doubled" to doubled,"positive" to positive,"total" to total,"indexed" to indexed)
+}

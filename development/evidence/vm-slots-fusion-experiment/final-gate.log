@@ -1,0 +1,116 @@
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:compileKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmProcessResources UP-TO-DATE
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :interpreter:jvmMainClasses UP-TO-DATE
+> Task :interpreter:jvmJar UP-TO-DATE
+> Task :test-fixtures:kmpPartiallyResolvedDependenciesChecker
+> Task :test-fixtures:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :test-fixtures:jvmProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmMainResources SKIPPED
+> Task :vm:jvmTestProcessResources NO-SOURCE
+> Task :vm:processJvmTestResources SKIPPED
+> Task :kotlinKotlinNpmCachesSetup
+> Task :kotlinNodeJsSetup UP-TO-DATE
+> Task :kotlinRestoreYarnLock UP-TO-DATE
+> Task :kotlinYarnSetup UP-TO-DATE
+> Task :interpreter:jsPackageJson UP-TO-DATE
+> Task :vm:jsPackageJson UP-TO-DATE
+> Task :cli:jsPackageJson UP-TO-DATE
+> Task :cli:jsTestPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPackageJson UP-TO-DATE
+> Task :vm:jsTestPackageJson UP-TO-DATE
+> Task :cli:jsPublicPackageJson UP-TO-DATE
+> Task :cli:jsTestPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPublicPackageJson UP-TO-DATE
+> Task :vm:jsPublicPackageJson UP-TO-DATE
+> Task :vm:jsTestPublicPackageJson UP-TO-DATE
+> Task :kotlinPackageJsonUmbrella UP-TO-DATE
+> Task :rootPackageJson UP-TO-DATE
+> Task :kotlinNpmInstall UP-TO-DATE
+> Task :kotlinStoreYarnLock UP-TO-DATE
+> Task :interpreter:compileKotlinJs UP-TO-DATE
+> Task :vm:jsProcessResources NO-SOURCE
+> Task :vm:jsTestProcessResources NO-SOURCE
+> Task :vm:kotlinNodeJsSetup UP-TO-DATE
+> Task :cli:kmpPartiallyResolvedDependenciesChecker
+> Task :cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cli:jvmProcessResources NO-SOURCE
+> Task :cli:processJvmMainResources SKIPPED
+> Task :conformance-tests:kmpPartiallyResolvedDependenciesChecker
+> Task :conformance-tests:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :conformance-tests:compileKotlinJvm NO-SOURCE
+> Task :conformance-tests:compileJvmMainJava NO-SOURCE
+> Task :conformance-tests:jvmProcessResources NO-SOURCE
+> Task :conformance-tests:processJvmMainResources SKIPPED
+> Task :conformance-tests:jvmMainClasses UP-TO-DATE
+> Task :conformance-tests:jvmJar UP-TO-DATE
+> Task :conformance-tests:jvmTestProcessResources NO-SOURCE
+> Task :conformance-tests:processJvmTestResources SKIPPED
+> Task :conformance-tests:compileKotlinJs NO-SOURCE
+> Task :conformance-tests:jsProcessResources NO-SOURCE
+> Task :conformance-tests:jsMainClasses UP-TO-DATE
+> Task :conformance-tests:jsTestProcessResources NO-SOURCE
+> Task :conformance-tests:kotlinNodeJsSetup UP-TO-DATE
+> Task :cli:jvmTestProcessResources UP-TO-DATE
+> Task :cli:processJvmTestResources SKIPPED
+> Task :cli:jsProcessResources NO-SOURCE
+> Task :cli:jsTestProcessResources NO-SOURCE
+> Task :cli:kotlinNodeJsSetup UP-TO-DATE
+> Task :vm-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm-benchmarks:processResources NO-SOURCE
+> Task :vm-benchmarks:processTestResources NO-SOURCE
+> Task :vm-benchmarks:processJmhResources NO-SOURCE
+
+> Task :vm:compileKotlinJs
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:227:37 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:236:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:312:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:313:36 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:339:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:350:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:356:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+
+> Task :vm:jsMainClasses
+
+> Task :vm:compileTestKotlinJs FAILED
+e: file:///Users/eugene/repo/research/branchline-public/vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/ExperimentalRuntimeStateTest.kt:101:17 Type inference failed. The value of the type parameter 'T' must be mentioned in input types (argument types, receiver type, or expected type). Try to specify it explicitly.
+
+> Task :vm:compileKotlinJvm
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:227:37 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:236:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:312:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:313:36 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:339:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:350:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:356:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+
+> Task :cli:compileKotlinJs
+w: file:///Users/eugene/repo/research/branchline-public/cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/BranchlineCli.kt:1843:5 Redundant creation of Json format. Creating instances for each usage can be slow.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':vm:compileTestKotlinJs'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1s
+41 actionable tasks: 10 executed, 31 up-to-date

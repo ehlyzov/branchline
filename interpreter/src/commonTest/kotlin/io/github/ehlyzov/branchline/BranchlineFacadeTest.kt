@@ -8,6 +8,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.test.Test
+import kotlin.test.assertFails
+import io.github.ehlyzov.branchline.ir.buildRunnerFromProgramMP
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -277,4 +279,111 @@ public class BranchlineFacadeTest {
             contract["payload"]?.jsonObject?.get("actual")?.jsonObject?.get("kind")?.jsonPrimitive?.content,
         )
     }
+    @Test
+    public fun inspectRejectsAmbientCallsThroughFunctionWrappersAndDynamicKeys() {
+        val examples = listOf(
+            "TRANSFORM Main { OUTPUT { value: NOW() } }" to "NOW",
+            "TRANSFORM Main { OUTPUT { value: RANDOM() } }" to "RANDOM",
+            "FUNC clock() = NOW(); FUNC wrapped() = clock(); TRANSFORM Main { OUTPUT { value: wrapped() } }" to "NOW",
+            "FUNC roll() { RETURN RANDOM(); } TRANSFORM Main { OUTPUT { value: roll() } }" to "RANDOM",
+            "TRANSFORM Main { LET f = () -> RANDOM(); OUTPUT { value: f() } }" to "RANDOM",
+            "TRANSFORM Main { OUTPUT { value: input[NOW()] } }" to "NOW",
+        )
+        for ((source, feature) in examples) {
+            val result = BranchlineFacade.inspect(BranchlineInspectRequest(source, includeNormalizedSource = true))
+            assertTrue(result.success, result.diagnostics.toString())
+            assertEquals(BranchlineSubsetCompatibility.INCOMPATIBLE, result.subsetCompatibility, source)
+            assertNull(result.normalizedSource)
+            val blocker = result.diagnostics.single { it.code == "unsupported_in_ai_subset" }
+            assertEquals(feature, blocker.payload?.actualKind)
+            assertEquals("ai-subset-check", blocker.payload?.operation)
+            assertEquals(BranchlineDiagnosticCategory.UNSUPPORTED_SUBSET, blocker.category)
+            assertNotNull(blocker.span)
+        }
+    }
+
+    @Test
+    public fun inspectAllowsPureShadowsAndUnreachableAmbientFunctions() {
+        val source = """
+            FUNC impure() = NOW();
+            FUNC unused() { LET impure = 0; SET impure = 1; RETURN impure; }
+            FUNC pure(impure) = impure();
+            TRANSFORM Main {
+                LET NOW = () -> 7;
+                LET object = { RANDOM: () -> 9 };
+                OUTPUT { first: pure(NOW), second: object.RANDOM() }
+            }
+        """.trimIndent()
+        val result = BranchlineFacade.inspect(BranchlineInspectRequest(source))
+        assertTrue(result.success, result.diagnostics.toString())
+        assertEquals(BranchlineSubsetCompatibility.COMPATIBLE, result.subsetCompatibility)
+        assertEquals(mapOf("first" to 7, "second" to 9), buildRunnerFromProgramMP(source)(emptyMap()))
+    }
+
+    @Test
+    public fun inspectDoesNotTreatBareDeclaredOrHostNamesAsFunctionValues() {
+        // Named FUNC and host names use direct-call dispatch; identifier evaluation only reads locals.
+        for (body in listOf(
+            "LET f = stamp; OUTPUT { value: f() }",
+            "OUTPUT { value: MAP([1], stamp) }",
+            "LET f = NOW; OUTPUT { value: f() }",
+            "OUTPUT { value: MAP([1], RANDOM) }",
+        )) {
+            val source = "FUNC stamp() = NOW(); TRANSFORM Main { $body }"
+            val result = BranchlineFacade.inspect(BranchlineInspectRequest(source))
+            assertTrue(result.success, result.diagnostics.toString())
+            assertEquals(BranchlineSubsetCompatibility.COMPATIBLE, result.subsetCompatibility)
+            assertFails { buildRunnerFromProgramMP(source)(emptyMap()) }
+        }
+        val closure = "FUNC stamp() = NOW(); TRANSFORM Main { OUTPUT { value: MAP([1], (x) -> stamp()) } }"
+        val result = BranchlineFacade.inspect(BranchlineInspectRequest(closure))
+        assertTrue(result.success, result.diagnostics.toString())
+        assertEquals(BranchlineSubsetCompatibility.INCOMPATIBLE, result.subsetCompatibility)
+    }
+
+    @Test
+    public fun inspectDirectAmbientCallsFollowHostFirstRuntimeResolution() {
+        for (declaration in listOf("FUNC NOW() = 7;", "")) {
+            val source = "$declaration TRANSFORM Main { LET NOW = () -> 8; OUTPUT { value: NOW() } }"
+            val result = BranchlineFacade.inspect(BranchlineInspectRequest(source))
+            assertTrue(result.success, result.diagnostics.toString())
+            assertEquals(BranchlineSubsetCompatibility.INCOMPATIBLE, result.subsetCompatibility)
+            assertEquals("NOW", result.diagnostics.single { it.code == "unsupported_in_ai_subset" }.payload?.actualKind)
+            val output = buildRunnerFromProgramMP(source)(emptyMap()) as Map<*, *>
+            assertTrue(output["value"] is String)
+        }
+    }
+
+    @Test
+    public fun inspectChecksFunctionFallbackForScalarAndMutableShadows() {
+        val programs = listOf(
+            "FUNC roll() = RANDOM(); TRANSFORM Main { LET roll = 0; OUTPUT { value: roll() } }",
+            "FUNC roll() = RANDOM(); TRANSFORM Main { LET roll = () -> 7; IF TRUE THEN { SET roll = 0; } OUTPUT { value: roll() } }",
+            "FUNC impure() = NOW(); TRANSFORM Main { LET impure = 0; SET impure = () -> 7; IF TRUE THEN { SET impure = 0; } ELSE {} OUTPUT { value: impure() } }",
+            "FUNC roll() = RANDOM(); FUNC invoke(roll) = roll(); TRANSFORM Main { LET first = invoke(() -> 7); OUTPUT { value: invoke(0) } }",
+        )
+        for (source in programs) {
+            val result = BranchlineFacade.inspect(BranchlineInspectRequest(source))
+            assertTrue(result.success, result.diagnostics.toString())
+            assertEquals(BranchlineSubsetCompatibility.INCOMPATIBLE, result.subsetCompatibility)
+            val output = buildRunnerFromProgramMP(source)(emptyMap()) as Map<*, *>
+            assertTrue(output["value"] is Number || output["value"] is String)
+        }
+    }
+
+    @Test
+    public fun inspectTraversesRecursiveFunctionsOnceAndHonorsTransformSelection() {
+        val source = """
+            FUNC recurse(x) = IF x THEN recurse(FALSE) ELSE RANDOM();
+            TRANSFORM Pure { OUTPUT { value: input.value } }
+            TRANSFORM Impure { OUTPUT { value: recurse(TRUE) } }
+        """.trimIndent()
+        val pure = BranchlineFacade.inspect(BranchlineInspectRequest(source, transformName = "Pure"))
+        assertTrue(pure.success, pure.diagnostics.toString())
+        assertEquals(BranchlineSubsetCompatibility.COMPATIBLE, pure.subsetCompatibility)
+        val impure = BranchlineFacade.inspect(BranchlineInspectRequest(source, transformName = "Impure"))
+        assertTrue(impure.success, impure.diagnostics.toString())
+        assertEquals(1, impure.diagnostics.count { it.code == "unsupported_in_ai_subset" })
+    }
+
 }

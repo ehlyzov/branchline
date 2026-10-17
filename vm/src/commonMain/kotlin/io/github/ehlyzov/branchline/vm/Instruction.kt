@@ -79,7 +79,10 @@ object InstructionTable {
         arrayOf(OperandType.STRING), // BREAKPOINT
         arrayOf(OperandType.INT), // LINE
         emptyArray(), // NOP
-        emptyArray() // SUSPEND
+        emptyArray(), // SUSPEND
+        arrayOf(OperandType.OBJ_KEY), // PRIVATE_SET_STATIC
+        emptyArray(), // PRIVATE_SET_DYNAMIC
+        emptyArray() // PRIVATE_ARRAY_APPEND
     )
 }
 
@@ -200,6 +203,11 @@ sealed class Instruction {
 
     /** Set object property or array element (dynamic key from stack) */
     object SET_DYNAMIC : Instruction()
+
+    /** Compiler-proven fresh root; traced execution retains copy semantics. */
+    data class PRIVATE_SET_STATIC(val key: ObjKey) : Instruction()
+    object PRIVATE_SET_DYNAMIC : Instruction()
+    object PRIVATE_ARRAY_APPEND : Instruction()
 
     /** Append value to array/list */
     object APPEND : Instruction()
@@ -388,6 +396,9 @@ data class Bytecode(
             Opcode.ACCESS_DYNAMIC -> Instruction.ACCESS_DYNAMIC
             Opcode.SET_STATIC -> Instruction.SET_STATIC(getObjKeyOperand(pc))
             Opcode.SET_DYNAMIC -> Instruction.SET_DYNAMIC
+            Opcode.PRIVATE_SET_STATIC -> Instruction.PRIVATE_SET_STATIC(getObjKeyOperand(pc))
+            Opcode.PRIVATE_SET_DYNAMIC -> Instruction.PRIVATE_SET_DYNAMIC
+            Opcode.PRIVATE_ARRAY_APPEND -> Instruction.PRIVATE_ARRAY_APPEND
             Opcode.APPEND -> Instruction.APPEND
             Opcode.ARRAY_BUILDER_INIT -> Instruction.ARRAY_BUILDER_INIT
             Opcode.ARRAY_BUILDER_ADD -> Instruction.ARRAY_BUILDER_ADD
@@ -527,6 +538,9 @@ data class Bytecode(
                     Instruction.ACCESS_DYNAMIC -> Opcode.ACCESS_DYNAMIC.ordinal
                     is Instruction.SET_STATIC -> Opcode.SET_STATIC.ordinal
                     Instruction.SET_DYNAMIC -> Opcode.SET_DYNAMIC.ordinal
+                    is Instruction.PRIVATE_SET_STATIC -> Opcode.PRIVATE_SET_STATIC.ordinal
+                    Instruction.PRIVATE_SET_DYNAMIC -> Opcode.PRIVATE_SET_DYNAMIC.ordinal
+                    Instruction.PRIVATE_ARRAY_APPEND -> Opcode.PRIVATE_ARRAY_APPEND.ordinal
                     Instruction.APPEND -> Opcode.APPEND.ordinal
                     Instruction.ARRAY_BUILDER_INIT -> Opcode.ARRAY_BUILDER_INIT.ordinal
                     Instruction.ARRAY_BUILDER_ADD -> Opcode.ARRAY_BUILDER_ADD.ordinal
@@ -579,6 +593,7 @@ data class Bytecode(
                     is Instruction.MAKE_ARRAY -> intList.add(ins.elementCount)
                     is Instruction.ACCESS_STATIC -> keyList.add(ins.key)
                     is Instruction.SET_STATIC -> keyList.add(ins.key)
+                    is Instruction.PRIVATE_SET_STATIC -> keyList.add(ins.key)
                     is Instruction.JUMP -> intList.add(ins.address)
                     is Instruction.JUMP_IF_TRUE -> intList.add(ins.address)
                     is Instruction.JUMP_IF_FALSE -> intList.add(ins.address)

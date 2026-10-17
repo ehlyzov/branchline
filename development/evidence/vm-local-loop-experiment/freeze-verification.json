@@ -1,0 +1,19 @@
+{
+  "unchangedKotlinFiles": 250,
+  "sourceMismatches": [],
+  "buildFileMismatches": [],
+  "jarMatches": true,
+  "commands": 30,
+  "allCommandExitsZero": true,
+  "jmhStateCounts": {
+    "old-baseline": 3,
+    "forward": 24,
+    "reverse": 12,
+    "preparation": 8,
+    "fallback": 4,
+    "profile-after-localLoop": 1
+  },
+  "validatedMainTrialForks": 72,
+  "memoryProcesses": 24,
+  "validatedLocalProjectionTrialForks": 6
+}

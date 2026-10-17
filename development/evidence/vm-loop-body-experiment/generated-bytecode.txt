@@ -1,0 +1,265 @@
+public final class io.github.ehlyzov.branchline.vm.generated.CompiledComprehension implements io.github.ehlyzov.branchline.vm.LoopBodyKernel {
+  public io.github.ehlyzov.branchline.vm.generated.CompiledComprehension();
+    Code:
+       0: aload_0
+       1: invokespecial #10                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public void run(io.github.ehlyzov.branchline.vm.LoopBodyContext);
+    Code:
+       0: aload_1
+       1: ldc           #13                 // int 5
+       3: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+       8: aload_1
+       9: ldc           #21                 // String o
+      11: invokeinterface #25,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.loadVariable:(Ljava/lang/String;)V
+      16: aload_1
+      17: ldc           #26                 // int 6
+      19: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+      24: ifeq          28
+      27: return
+      28: aload_1
+      29: ldc           #26                 // int 6
+      31: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+      36: aload_1
+      37: ldc           #26                 // int 6
+      39: invokeinterface #33,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.accessStatic:(I)V
+      44: aload_1
+      45: ldc           #34                 // int 7
+      47: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+      52: ifeq          56
+      55: return
+      56: aload_1
+      57: ldc           #34                 // int 7
+      59: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+      64: aload_1
+      65: ldc           #34                 // int 7
+      67: invokeinterface #37,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.pushConstant:(I)V
+      72: aload_1
+      73: ldc           #38                 // int 8
+      75: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+      80: aload_1
+      81: invokeinterface #41,  1           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.gt:()V
+      86: aload_1
+      87: ldc           #42                 // int 9
+      89: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+      94: ifeq          98
+      97: return
+      98: aload_1
+      99: ldc           #42                 // int 9
+     101: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     106: aload_1
+     107: invokeinterface #46,  1           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.popTruth:()Z
+     112: istore_2
+     113: iload_2
+     114: ifne          132
+     117: aload_1
+     118: ldc           #47                 // int 28
+     120: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     125: ifeq          129
+     128: return
+     129: goto          594
+     132: aload_1
+     133: ldc           #48                 // int 10
+     135: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     140: ifeq          144
+     143: return
+     144: aload_1
+     145: ldc           #48                 // int 10
+     147: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     152: aload_1
+     153: ldc           #21                 // String o
+     155: invokeinterface #25,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.loadVariable:(Ljava/lang/String;)V
+     160: aload_1
+     161: ldc           #49                 // int 11
+     163: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     168: ifeq          172
+     171: return
+     172: aload_1
+     173: ldc           #49                 // int 11
+     175: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     180: aload_1
+     181: ldc           #49                 // int 11
+     183: invokeinterface #33,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.accessStatic:(I)V
+     188: aload_1
+     189: ldc           #50                 // int 12
+     191: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     196: ifeq          200
+     199: return
+     200: aload_1
+     201: ldc           #50                 // int 12
+     203: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     208: aload_1
+     209: ldc           #50                 // int 12
+     211: invokeinterface #33,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.accessStatic:(I)V
+     216: aload_1
+     217: ldc           #51                 // int 13
+     219: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     224: ifeq          228
+     227: return
+     228: aload_1
+     229: ldc           #51                 // int 13
+     231: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     236: aload_1
+     237: ldc           #51                 // int 13
+     239: invokeinterface #33,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.accessStatic:(I)V
+     244: aload_1
+     245: ldc           #52                 // int 14
+     247: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     252: ifeq          256
+     255: return
+     256: aload_1
+     257: ldc           #52                 // int 14
+     259: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     264: aload_1
+     265: ldc           #52                 // int 14
+     267: invokeinterface #37,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.pushConstant:(I)V
+     272: aload_1
+     273: ldc           #53                 // int 15
+     275: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     280: aload_1
+     281: ldc           #21                 // String o
+     283: invokeinterface #25,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.loadVariable:(Ljava/lang/String;)V
+     288: aload_1
+     289: ldc           #54                 // int 16
+     291: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     296: ifeq          300
+     299: return
+     300: aload_1
+     301: ldc           #54                 // int 16
+     303: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     308: aload_1
+     309: ldc           #54                 // int 16
+     311: invokeinterface #33,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.accessStatic:(I)V
+     316: aload_1
+     317: ldc           #55                 // int 17
+     319: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     324: ifeq          328
+     327: return
+     328: aload_1
+     329: ldc           #55                 // int 17
+     331: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     336: aload_1
+     337: ldc           #55                 // int 17
+     339: invokeinterface #37,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.pushConstant:(I)V
+     344: aload_1
+     345: ldc           #56                 // int 18
+     347: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     352: aload_1
+     353: invokeinterface #59,  1           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mul:()V
+     358: aload_1
+     359: ldc           #60                 // int 19
+     361: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     366: ifeq          370
+     369: return
+     370: aload_1
+     371: ldc           #60                 // int 19
+     373: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     378: aload_1
+     379: ldc           #21                 // String o
+     381: invokeinterface #25,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.loadVariable:(Ljava/lang/String;)V
+     386: aload_1
+     387: ldc           #61                 // int 20
+     389: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     394: ifeq          398
+     397: return
+     398: aload_1
+     399: ldc           #61                 // int 20
+     401: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     406: aload_1
+     407: ldc           #61                 // int 20
+     409: invokeinterface #33,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.accessStatic:(I)V
+     414: aload_1
+     415: ldc           #62                 // int 21
+     417: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     422: ifeq          426
+     425: return
+     426: aload_1
+     427: ldc           #62                 // int 21
+     429: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     434: aload_1
+     435: invokeinterface #65,  1           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.add:()V
+     440: aload_1
+     441: ldc           #66                 // int 22
+     443: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     448: ifeq          452
+     451: return
+     452: aload_1
+     453: ldc           #66                 // int 22
+     455: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     460: aload_1
+     461: ldc           #66                 // int 22
+     463: invokeinterface #37,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.pushConstant:(I)V
+     468: aload_1
+     469: ldc           #67                 // int 23
+     471: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     476: aload_1
+     477: ldc           #21                 // String o
+     479: invokeinterface #25,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.loadVariable:(Ljava/lang/String;)V
+     484: aload_1
+     485: ldc           #68                 // int 24
+     487: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     492: ifeq          496
+     495: return
+     496: aload_1
+     497: ldc           #68                 // int 24
+     499: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     504: aload_1
+     505: ldc           #68                 // int 24
+     507: invokeinterface #33,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.accessStatic:(I)V
+     512: aload_1
+     513: ldc           #69                 // int 25
+     515: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     520: ifeq          524
+     523: return
+     524: aload_1
+     525: ldc           #69                 // int 25
+     527: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     532: aload_1
+     533: ldc           #69                 // int 25
+     535: invokeinterface #37,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.pushConstant:(I)V
+     540: aload_1
+     541: ldc           #70                 // int 26
+     543: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     548: aload_1
+     549: ldc           #71                 // int 3
+     551: invokeinterface #74,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.makeObject:(I)V
+     556: aload_1
+     557: ldc           #75                 // int 27
+     559: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     564: ifeq          568
+     567: return
+     568: aload_1
+     569: ldc           #75                 // int 27
+     571: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     576: aload_1
+     577: invokeinterface #78,  1           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.arrayBuilderAdd:()V
+     582: aload_1
+     583: ldc           #47                 // int 28
+     585: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     590: ifeq          594
+     593: return
+     594: aload_1
+     595: ldc           #47                 // int 28
+     597: invokeinterface #19,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.mark:(I)V
+     602: aload_1
+     603: ldc           #13                 // int 5
+     605: ldc           #79                 // int 29
+     607: invokeinterface #83,  3           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.nextForeach:(II)Z
+     612: istore_2
+     613: iload_2
+     614: ifeq          632
+     617: aload_1
+     618: ldc           #13                 // int 5
+     620: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     625: ifeq          629
+     628: return
+     629: goto          0
+     632: aload_1
+     633: ldc           #79                 // int 29
+     635: invokeinterface #30,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LoopBodyContext.after:(I)Z
+     640: ifeq          644
+     643: return
+     644: return
+     645: athrow
+}

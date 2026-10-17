@@ -1,0 +1,8 @@
+
+fun transform(input: Any?): Any? {
+val root = input as Map<*, *>
+val out = linkedMapOf<String, Any?>("code" to "q")
+if (root.containsKey("note")) out["note"] = root["note"]
+
+return out
+}

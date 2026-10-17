@@ -1,0 +1,140 @@
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:compileKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmProcessResources UP-TO-DATE
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :interpreter:jvmMainClasses UP-TO-DATE
+> Task :interpreter:jvmJar UP-TO-DATE
+> Task :test-fixtures:kmpPartiallyResolvedDependenciesChecker
+> Task :test-fixtures:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:compileKotlinJvm UP-TO-DATE
+> Task :vm:compileJvmMainJava NO-SOURCE
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :vm:jvmMainClasses UP-TO-DATE
+> Task :vm:jvmJar UP-TO-DATE
+> Task :test-fixtures:compileKotlinJvm UP-TO-DATE
+> Task :test-fixtures:compileJvmMainJava NO-SOURCE
+> Task :test-fixtures:jvmProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmMainResources SKIPPED
+> Task :test-fixtures:jvmMainClasses UP-TO-DATE
+> Task :test-fixtures:jvmJar UP-TO-DATE
+> Task :vm:jvmTestProcessResources NO-SOURCE
+> Task :vm:processJvmTestResources SKIPPED
+> Task :kotlinKotlinNpmCachesSetup
+> Task :kotlinNodeJsSetup UP-TO-DATE
+> Task :kotlinRestoreYarnLock UP-TO-DATE
+> Task :kotlinYarnSetup UP-TO-DATE
+> Task :interpreter:jsPackageJson UP-TO-DATE
+> Task :vm:jsPackageJson UP-TO-DATE
+> Task :cli:jsPackageJson UP-TO-DATE
+> Task :cli:jsTestPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPackageJson UP-TO-DATE
+> Task :vm:jsTestPackageJson UP-TO-DATE
+> Task :cli:jsPublicPackageJson UP-TO-DATE
+> Task :cli:jsTestPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPublicPackageJson UP-TO-DATE
+> Task :vm:jsPublicPackageJson UP-TO-DATE
+> Task :vm:jsTestPublicPackageJson UP-TO-DATE
+> Task :kotlinPackageJsonUmbrella UP-TO-DATE
+> Task :rootPackageJson UP-TO-DATE
+> Task :kotlinNpmInstall UP-TO-DATE
+> Task :kotlinStoreYarnLock UP-TO-DATE
+> Task :interpreter:compileKotlinJs UP-TO-DATE
+> Task :vm:compileKotlinJs UP-TO-DATE
+> Task :vm:jsProcessResources NO-SOURCE
+> Task :vm:jsMainClasses UP-TO-DATE
+> Task :vm:jsTestProcessResources NO-SOURCE
+> Task :vm:kotlinNodeJsSetup UP-TO-DATE
+> Task :cli:kmpPartiallyResolvedDependenciesChecker
+> Task :cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cli:compileKotlinJvm UP-TO-DATE
+> Task :cli:compileJvmMainJava NO-SOURCE
+> Task :cli:jvmProcessResources NO-SOURCE
+> Task :cli:processJvmMainResources SKIPPED
+> Task :cli:jvmMainClasses UP-TO-DATE
+> Task :cli:jvmJar UP-TO-DATE
+> Task :conformance-tests:kmpPartiallyResolvedDependenciesChecker
+> Task :conformance-tests:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :conformance-tests:compileKotlinJvm NO-SOURCE
+> Task :conformance-tests:compileJvmMainJava NO-SOURCE
+> Task :conformance-tests:jvmProcessResources NO-SOURCE
+> Task :conformance-tests:processJvmMainResources SKIPPED
+> Task :conformance-tests:jvmMainClasses UP-TO-DATE
+> Task :conformance-tests:jvmJar UP-TO-DATE
+> Task :conformance-tests:compileTestKotlinJvm UP-TO-DATE
+> Task :conformance-tests:compileJvmTestJava NO-SOURCE
+> Task :conformance-tests:jvmTestProcessResources NO-SOURCE
+> Task :conformance-tests:processJvmTestResources SKIPPED
+> Task :conformance-tests:jvmTestClasses UP-TO-DATE
+> Task :conformance-tests:jvmTest UP-TO-DATE
+> Task :cli:compileKotlinJs UP-TO-DATE
+> Task :conformance-tests:compileKotlinJs NO-SOURCE
+> Task :conformance-tests:jsProcessResources NO-SOURCE
+> Task :conformance-tests:jsMainClasses UP-TO-DATE
+> Task :conformance-tests:compileTestKotlinJs UP-TO-DATE
+> Task :conformance-tests:jsTestProcessResources NO-SOURCE
+> Task :conformance-tests:jsTestClasses UP-TO-DATE
+> Task :conformance-tests:kotlinNodeJsSetup UP-TO-DATE
+> Task :cli:compileTestKotlinJvm UP-TO-DATE
+> Task :cli:compileJvmTestJava NO-SOURCE
+> Task :cli:jvmTestProcessResources UP-TO-DATE
+> Task :cli:processJvmTestResources SKIPPED
+> Task :cli:jvmTestClasses UP-TO-DATE
+> Task :cli:jsProcessResources NO-SOURCE
+> Task :cli:jsMainClasses UP-TO-DATE
+> Task :cli:compileProductionExecutableKotlinJs UP-TO-DATE
+> Task :cli:jsProductionExecutableCompileSync
+> Task :conformance-tests:compileTestDevelopmentExecutableKotlinJs
+> Task :vm:compileTestKotlinJs
+
+> Task :cli:prepareJsCliPackage
+
+added 2 packages in 290ms
+
+> Task :vm:jsTestClasses
+> Task :conformance-tests:jsTestTestDevelopmentExecutableCompileSync
+> Task :vm:compileTestKotlinJvm
+> Task :conformance-tests:jsNodeTest
+> Task :vm:compileJvmTestJava NO-SOURCE
+> Task :vm:jvmTestClasses
+> Task :vm:compileTestDevelopmentExecutableKotlinJs
+> Task :vm:jvmTest
+> Task :vm:jsTestTestDevelopmentExecutableCompileSync
+> Task :vm:jsNodeTest
+> Task :cli:jvmTest
+> Task :cli:compileTestKotlinJs UP-TO-DATE
+> Task :cli:jsTestProcessResources NO-SOURCE
+> Task :cli:jsTestClasses UP-TO-DATE
+> Task :cli:compileTestDevelopmentExecutableKotlinJs UP-TO-DATE
+> Task :cli:jsTestTestDevelopmentExecutableCompileSync
+> Task :cli:kotlinNodeJsSetup UP-TO-DATE
+> Task :cli:jsNodeTest
+> Task :vm-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm-benchmarks:compileKotlin NO-SOURCE
+> Task :vm-benchmarks:compileJava NO-SOURCE
+> Task :vm-benchmarks:processResources NO-SOURCE
+> Task :vm-benchmarks:classes UP-TO-DATE
+> Task :vm-benchmarks:jar UP-TO-DATE
+> Task :vm-benchmarks:compileTestKotlin NO-SOURCE
+> Task :vm-benchmarks:compileTestJava NO-SOURCE
+> Task :vm-benchmarks:processTestResources NO-SOURCE
+> Task :vm-benchmarks:testClasses UP-TO-DATE
+> Task :vm-benchmarks:compileJmhKotlin UP-TO-DATE
+> Task :vm-benchmarks:compileJmhJava NO-SOURCE
+> Task :vm-benchmarks:processJmhResources NO-SOURCE
+> Task :vm-benchmarks:jmhClasses UP-TO-DATE
+> Task :vm-benchmarks:jmhRunBytecodeGenerator
+> Task :vm-benchmarks:jmhCompileGeneratedClasses UP-TO-DATE
+> Task :vm-benchmarks:jmhJar
+
+BUILD SUCCESSFUL in 8s
+71 actionable tasks: 22 executed, 49 up-to-date

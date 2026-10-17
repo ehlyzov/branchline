@@ -9,6 +9,9 @@ plugins {
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JavaToolchainService
 
+// Canonical SemVer; release tags and displayed CLI versions add the v prefix.
+version = '0.11.0-alpha.1'
+
 def npmCommand = org.gradle.internal.os.OperatingSystem.current().isWindows() ? 'npm.cmd' : 'npm'
 
 allprojects {
@@ -23,7 +26,7 @@ subprojects {
     apply plugin: 'jacoco'
 
     group = 'io.github.ehlyzov.branchline'
-    version = 'v0.11.0-SNAPSHOT'
+    version = rootProject.version
 
     detekt {
         config = files("$rootDir/detekt.yml")
@@ -155,7 +158,12 @@ tasks.register('playgroundBuildAssets', Exec) {
     dependsOn ':interpreter:jsBrowserProductionLibraryDistribution'
     workingDir "$projectDir/playground"
     commandLine npmCommand, 'run', 'build'
-    inputs.dir("$projectDir/playground/src")
+    // worker.ts imports the generated browser runtime by URL; changes must rebuild assets.
+    inputs.dir("$projectDir/interpreter/build/dist/js/productionLibrary")
+    inputs.files(fileTree("$projectDir/playground") {
+        include 'src/**', 'examples/**', 'scripts/**', 'public/**'
+        include '*.json', '*.html', 'vite.config.*'
+    })
     outputs.dir("$projectDir/docs/assets")
 }
 
@@ -175,4 +183,12 @@ tasks.register('docsBuild') {
     group = 'documentation'
     description = 'Builds playground assets and compiles the documentation site'
     dependsOn 'docsGenerate'
+}
+
+// Machine-readable input for release and Pages workflows; no duplicated version literal.
+tasks.register('printReleaseVersion') {
+    group = 'help'
+    description = 'Print the canonical package version for release automation.'
+    def releaseVersion = project.version.toString()
+    doLast { println(releaseVersion) }
 }

@@ -1,0 +1,1 @@
+[{"input": {"values": [-2, 0, 3]}, "expected": {"doubled": [-4, 0, 6], "positive": [3], "total": 1, "positions": [{"index": 0, "value": -2}, {"index": 1, "value": 0}, {"index": 2, "value": 3}], "squares": [9]}}, {"input": {}, "expected": {"doubled": [], "positive": [], "total": 0, "positions": [], "squares": []}}]

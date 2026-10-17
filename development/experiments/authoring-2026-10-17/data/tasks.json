@@ -1,0 +1,1260 @@
+[
+  {
+    "id": "A01",
+    "category": "API mapping",
+    "title": "Rename and nest customer fields",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input has required string id, given, family; email may be absent, null, or a string. Return {customer:{customerId:id,name:{first:given,last:family},email:E}}, where E is null for absent/null email, otherwise the original email string. Empty strings are valid.",
+    "public": [
+      {
+        "input": {
+          "id": "c1",
+          "given": "Ada",
+          "family": "Lovelace",
+          "email": "ada@example.test"
+        },
+        "expected": {
+          "customer": {
+            "customerId": "c1",
+            "name": {
+              "first": "Ada",
+              "last": "Lovelace"
+            },
+            "email": "ada@example.test"
+          }
+        }
+      },
+      {
+        "input": {
+          "id": "c2",
+          "given": "Li",
+          "family": "",
+          "email": null
+        },
+        "expected": {
+          "customer": {
+            "customerId": "c2",
+            "name": {
+              "first": "Li",
+              "last": ""
+            },
+            "email": null
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "A02",
+    "category": "API mapping",
+    "title": "Flatten order lines",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {orders:[{id:string,lines:[{sku:string,quantity:integer >=0}]}]}. Return {rows:[{orderId,lineNo,sku,quantity}]}, one row per line in order order, then line order. lineNo is 1-based within each order, restarting for every order. Orders with no lines produce no rows. Repeated order IDs and SKUs are retained.",
+    "public": [
+      {
+        "input": {
+          "orders": [
+            {
+              "id": "o1",
+              "lines": [
+                {
+                  "sku": "a",
+                  "quantity": 2
+                },
+                {
+                  "sku": "b",
+                  "quantity": 0
+                }
+              ]
+            }
+          ]
+        },
+        "expected": {
+          "rows": [
+            {
+              "orderId": "o1",
+              "lineNo": 1,
+              "sku": "a",
+              "quantity": 2
+            },
+            {
+              "orderId": "o1",
+              "lineNo": 2,
+              "sku": "b",
+              "quantity": 0
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "orders": []
+        },
+        "expected": {
+          "rows": []
+        }
+      }
+    ]
+  },
+  {
+    "id": "A03",
+    "category": "API mapping",
+    "title": "Select an optional address",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input primary and backup are each absent, null, or an address object with required string city and optional null/string postalCode. Choose primary if it is an object; otherwise backup if it is an object; otherwise no address. An empty city or postalCode does not disqualify an address. Return {selected:\"primary\"|\"backup\"|\"none\",address:null|{city,postalCode}}, always including postalCode (null if absent/null).",
+    "public": [
+      {
+        "input": {
+          "primary": {
+            "city": "Paris",
+            "postalCode": "75001"
+          },
+          "backup": {
+            "city": "Lyon"
+          }
+        },
+        "expected": {
+          "selected": "primary",
+          "address": {
+            "city": "Paris",
+            "postalCode": "75001"
+          }
+        }
+      },
+      {
+        "input": {
+          "primary": null,
+          "backup": {
+            "city": "Lyon"
+          }
+        },
+        "expected": {
+          "selected": "backup",
+          "address": {
+            "city": "Lyon",
+            "postalCode": null
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "A04",
+    "category": "API mapping",
+    "title": "Normalize enum labels",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {statuses:[ASCII strings]}. For each string, remove only leading/trailing ASCII spaces (U+0020), then uppercase ASCII letters. NEW/PENDING map to queued; SENT/DELIVERED to complete; CANCELED/CANCELLED to cancelled; everything else, including empty text and strings containing tabs, maps to unknown. Return {statuses:[{original:unmodified input string,label}]} in input order.",
+    "public": [
+      {
+        "input": {
+          "statuses": [
+            " new ",
+            "SENT",
+            "cancelled",
+            "???"
+          ]
+        },
+        "expected": {
+          "statuses": [
+            {
+              "original": " new ",
+              "label": "queued"
+            },
+            {
+              "original": "SENT",
+              "label": "complete"
+            },
+            {
+              "original": "cancelled",
+              "label": "cancelled"
+            },
+            {
+              "original": "???",
+              "label": "unknown"
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "statuses": []
+        },
+        "expected": {
+          "statuses": []
+        }
+      }
+    ]
+  },
+  {
+    "id": "A05",
+    "category": "API mapping",
+    "title": "Build an outbound acknowledgement",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input has eventId:string, accepted:boolean, optional ackMode:null|\"all\"|\"errors\"|\"none\", and optional reason:null|string. Missing/null ackMode defaults to all. all emits an ack; none emits none; errors emits only when accepted=false. Return {ack:null} if none, otherwise {ack:{eventId,status:\"ok\" when accepted else \"error\",reason:R}}. R is always null when accepted; otherwise the provided non-null reason (including empty string), or \"unspecified\".",
+    "public": [
+      {
+        "input": {
+          "eventId": "e1",
+          "accepted": true
+        },
+        "expected": {
+          "ack": {
+            "eventId": "e1",
+            "status": "ok",
+            "reason": null
+          }
+        }
+      },
+      {
+        "input": {
+          "eventId": "e2",
+          "accepted": false,
+          "ackMode": "errors",
+          "reason": "bad"
+        },
+        "expected": {
+          "ack": {
+            "eventId": "e2",
+            "status": "error",
+            "reason": "bad"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "A06",
+    "category": "Validation",
+    "title": "Validate integer price cents",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input is any JSON object; priceCents may have any JSON kind or be absent. Validate without coercion. Absent/null yields price.required; otherwise a value that is not a mathematically integral JSON number yields price.integer (booleans are not numbers); otherwise outside inclusive [0,1000000000] yields price.range. Numeric 1.0 is integral. Apply only the first applicable error. Return {valid:boolean,errors:[error string]}, with [] on success.",
+    "public": [
+      {
+        "input": {
+          "priceCents": 0
+        },
+        "expected": {
+          "valid": true,
+          "errors": []
+        }
+      },
+      {
+        "input": {
+          "priceCents": "100"
+        },
+        "expected": {
+          "valid": false,
+          "errors": [
+            "price.integer"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "A07",
+    "category": "Validation",
+    "title": "Collect all required-field errors",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input is any JSON object. Validate customerId, email, then shipTo.city in this order. For customerId/email, absent/null -> <field>.required; other non-string -> <field>.type; string empty after trimming only ASCII spaces -> <field>.blank; otherwise valid. No email syntax check. For shipTo: absent/null -> shipTo.required; non-object -> shipTo.type; otherwise validate city with the same string rules and path shipTo.city. Do not emit child errors when the shipTo object itself fails. Return {errors:[all errors in the stated order]}.",
+    "public": [
+      {
+        "input": {
+          "customerId": "c",
+          "email": "a@b",
+          "shipTo": {
+            "city": "X"
+          }
+        },
+        "expected": {
+          "errors": []
+        }
+      },
+      {
+        "input": {},
+        "expected": {
+          "errors": [
+            "customerId.required",
+            "email.required",
+            "shipTo.required"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "A08",
+    "category": "Validation",
+    "title": "Constrain line quantity bounds",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input is any JSON object. lines absent/null -> lines.required; non-array -> lines.array; empty array -> lines.nonempty. In these cases stop child validation. Otherwise inspect each element by zero-based index i in order: non-object -> lines.i.object; else quantity absent/null -> lines.i.quantity.required; else not mathematically integral JSON number (including booleans) -> lines.i.quantity.integer; else outside inclusive [1,1000] -> lines.i.quantity.range. Emit at most one error per element, in array order. Numeric 1.0 is integral. Return {valid:errors is empty,errors:[strings]}.",
+    "public": [
+      {
+        "input": {
+          "lines": [
+            {
+              "quantity": 1
+            },
+            {
+              "quantity": 1000
+            }
+          ]
+        },
+        "expected": {
+          "valid": true,
+          "errors": []
+        }
+      },
+      {
+        "input": {
+          "lines": [
+            {
+              "quantity": 0
+            },
+            {
+              "quantity": "2"
+            }
+          ]
+        },
+        "expected": {
+          "valid": false,
+          "errors": [
+            "lines.0.quantity.range",
+            "lines.1.quantity.integer"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "A09",
+    "category": "Validation",
+    "title": "Validate dependent delivery fields",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input is any JSON object. method must be exactly string pickup or delivery; otherwise emit only method.invalid. For pickup, pickupPoint must be a string nonempty after trimming ASCII spaces (otherwise pickupPoint.required), and address must be absent/null (otherwise address.forbidden). For delivery, address must be an object whose city is a string nonempty after trimming ASCII spaces (otherwise one address.required), and pickupPoint must be absent/null (otherwise pickupPoint.forbidden). Required errors precede forbidden errors. An empty string is a present non-null value for the forbidden-field checks. Return {valid:errors is empty,errors:[strings]}.",
+    "public": [
+      {
+        "input": {
+          "method": "pickup",
+          "pickupPoint": "P",
+          "address": null
+        },
+        "expected": {
+          "valid": true,
+          "errors": []
+        }
+      },
+      {
+        "input": {
+          "method": "delivery",
+          "address": {
+            "city": "X"
+          },
+          "pickupPoint": "P"
+        },
+        "expected": {
+          "valid": false,
+          "errors": [
+            "pickupPoint.forbidden"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "A10",
+    "category": "Validation",
+    "title": "Reject invalid enum transitions",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input is any JSON object. from and to must each be exactly one of draft, active, paused, closed. Emit from.invalid then to.invalid for invalid/missing/null fields and skip transition checking if either fails. Valid transitions are every self-transition plus draft->active, active->paused, active->closed, paused->active, paused->closed. All other pairs yield the single error transition.forbidden. Return {allowed:errors is empty,errors:[strings]}.",
+    "public": [
+      {
+        "input": {
+          "from": "draft",
+          "to": "active"
+        },
+        "expected": {
+          "allowed": true,
+          "errors": []
+        }
+      },
+      {
+        "input": {
+          "from": "closed",
+          "to": "active"
+        },
+        "expected": {
+          "allowed": false,
+          "errors": [
+            "transition.forbidden"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "A11",
+    "category": "Lookup and grouping",
+    "title": "Enrich SKU from a catalogue",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {lines:[{sku:string,quantity:integer >=0}],catalogue:[{sku:string,name:string,unitCents:integer >=0}]}. For each line find the FIRST catalogue entry with equal sku, case-sensitive. Return {lines:[{sku,quantity,name,unitCents}]}; a missing match has explicit null name and unitCents. Preserve all lines, their order and repetitions; ignore unused catalogue entries.",
+    "public": [
+      {
+        "input": {
+          "lines": [
+            {
+              "sku": "a",
+              "quantity": 2
+            }
+          ],
+          "catalogue": [
+            {
+              "sku": "a",
+              "name": "Apple",
+              "unitCents": 25
+            }
+          ]
+        },
+        "expected": {
+          "lines": [
+            {
+              "sku": "a",
+              "quantity": 2,
+              "name": "Apple",
+              "unitCents": 25
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "lines": [
+            {
+              "sku": "missing",
+              "quantity": 1
+            }
+          ],
+          "catalogue": []
+        },
+        "expected": {
+          "lines": [
+            {
+              "sku": "missing",
+              "quantity": 1,
+              "name": null,
+              "unitCents": null
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "A12",
+    "category": "Lookup and grouping",
+    "title": "Retain missing customer lookups explicitly",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {orders:[{id:string,customerId:string}],customers:[{id:string,name:string}]}. For each order use the LAST customer entry with matching id, case-sensitive. Return {matched:[{orderId,customerName}],missing:[{orderId,customerId}]}. Every order appears exactly once, in its matching partition; preserve relative input order within each partition and retain duplicate orders. Empty customer names are successful matches.",
+    "public": [
+      {
+        "input": {
+          "orders": [
+            {
+              "id": "o1",
+              "customerId": "c"
+            },
+            {
+              "id": "o2",
+              "customerId": "z"
+            }
+          ],
+          "customers": [
+            {
+              "id": "c",
+              "name": "C"
+            }
+          ]
+        },
+        "expected": {
+          "matched": [
+            {
+              "orderId": "o1",
+              "customerName": "C"
+            }
+          ],
+          "missing": [
+            {
+              "orderId": "o2",
+              "customerId": "z"
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "orders": [],
+          "customers": []
+        },
+        "expected": {
+          "matched": [],
+          "missing": []
+        }
+      }
+    ]
+  },
+  {
+    "id": "A13",
+    "category": "Lookup and grouping",
+    "title": "Group orders by customer",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {orders:[{id:string,customerId:string}]}. Return {groups:[{customerId,orderIds:[strings]}]}. Group by exact customerId. Groups occur in order of first appearance of that customerId; orderIds retain input order within the group, including duplicates. Produce no groups for customers absent from orders; an empty orders list gives groups:[]. Empty IDs are valid.",
+    "public": [
+      {
+        "input": {
+          "orders": [
+            {
+              "id": "o1",
+              "customerId": "b"
+            },
+            {
+              "id": "o2",
+              "customerId": "a"
+            },
+            {
+              "id": "o3",
+              "customerId": "b"
+            }
+          ]
+        },
+        "expected": {
+          "groups": [
+            {
+              "customerId": "b",
+              "orderIds": [
+                "o1",
+                "o3"
+              ]
+            },
+            {
+              "customerId": "a",
+              "orderIds": [
+                "o2"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "orders": []
+        },
+        "expected": {
+          "groups": []
+        }
+      }
+    ]
+  },
+  {
+    "id": "A14",
+    "category": "Lookup and grouping",
+    "title": "Deduplicate by supplied revision",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {records:[{id:string,revision:integer >=0,value:any JSON value}]}. For each exact id keep the record with greatest revision; tied greatest revisions choose the LAST occurrence in the input. Return {records:[{id,revision,value}]} in order of FIRST appearance of each id (not winner position or revision order). Copy the winning value including null/arrays/objects. Ignore other record keys.",
+    "public": [
+      {
+        "input": {
+          "records": [
+            {
+              "id": "a",
+              "revision": 1,
+              "value": "old"
+            },
+            {
+              "id": "b",
+              "revision": 3,
+              "value": 0
+            },
+            {
+              "id": "a",
+              "revision": 2,
+              "value": "new"
+            }
+          ]
+        },
+        "expected": {
+          "records": [
+            {
+              "id": "a",
+              "revision": 2,
+              "value": "new"
+            },
+            {
+              "id": "b",
+              "revision": 3,
+              "value": 0
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "records": []
+        },
+        "expected": {
+          "records": []
+        }
+      }
+    ]
+  },
+  {
+    "id": "A15",
+    "category": "Lookup and grouping",
+    "title": "Join warehouse availability",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {requests:[{sku:string,warehouse:string,quantity:integer >=0}],stock:[{sku:string,warehouse:string,available:integer >=0}]}. For each request independently sum available from ALL stock entries matching BOTH sku and warehouse exactly. Missing matches sum to 0. Return {requests:[{sku,warehouse,requested:quantity,available:sum,fulfilled:min(quantity,sum),shortfall:max(0,quantity-sum)}]} in request order. Requests do not consume stock; repeated requests get the same availability.",
+    "public": [
+      {
+        "input": {
+          "requests": [
+            {
+              "sku": "s",
+              "warehouse": "w",
+              "quantity": 5
+            }
+          ],
+          "stock": [
+            {
+              "sku": "s",
+              "warehouse": "w",
+              "available": 3
+            }
+          ]
+        },
+        "expected": {
+          "requests": [
+            {
+              "sku": "s",
+              "warehouse": "w",
+              "requested": 5,
+              "available": 3,
+              "fulfilled": 3,
+              "shortfall": 2
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "requests": [],
+          "stock": []
+        },
+        "expected": {
+          "requests": []
+        }
+      }
+    ]
+  },
+  {
+    "id": "A16",
+    "category": "Aggregation",
+    "title": "Compute line totals in cents",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {lines:[{sku:string,quantity:integer >=0,unitCents:integer >=0}]}. Each line product and the sum of all products are <=1000000000000. Return {lines:[{sku,totalCents:quantity*unitCents}],totalCents:sum of line totals}. Preserve input order and repeated SKUs; perform exact integer arithmetic with no rounding. Empty input has lines:[] and totalCents:0.",
+    "public": [
+      {
+        "input": {
+          "lines": [
+            {
+              "sku": "a",
+              "quantity": 3,
+              "unitCents": 125
+            },
+            {
+              "sku": "b",
+              "quantity": 2,
+              "unitCents": 50
+            }
+          ]
+        },
+        "expected": {
+          "lines": [
+            {
+              "sku": "a",
+              "totalCents": 375
+            },
+            {
+              "sku": "b",
+              "totalCents": 100
+            }
+          ],
+          "totalCents": 475
+        }
+      },
+      {
+        "input": {
+          "lines": []
+        },
+        "expected": {
+          "lines": [],
+          "totalCents": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "A17",
+    "category": "Aggregation",
+    "title": "Apply a discount with half-up rounding",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {subtotalCents:integer in [0,1000000000],discountBps:integer in [0,10000]}. Compute exact rational discount=subtotalCents*discountBps/10000 and round it to the nearest integer cent; an exact half cent rounds upward (half-up for these nonnegative values). Return {discountCents:rounded discount,payableCents:subtotalCents-discountCents}. Round the discount once, not the payable amount separately.",
+    "public": [
+      {
+        "input": {
+          "subtotalCents": 999,
+          "discountBps": 1500
+        },
+        "expected": {
+          "discountCents": 150,
+          "payableCents": 849
+        }
+      },
+      {
+        "input": {
+          "subtotalCents": 5,
+          "discountBps": 1000
+        },
+        "expected": {
+          "discountCents": 1,
+          "payableCents": 4
+        }
+      }
+    ]
+  },
+  {
+    "id": "A18",
+    "category": "Aggregation",
+    "title": "Count accepted and rejected records",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {records:[{category:string,accepted:boolean}]}. Return {accepted:total true count,rejected:total false count,byCategory:[{category,accepted:true count,rejected:false count}]}. Categories use exact string equality and appear in order of first occurrence. Include both counts even when zero. Count every record, including duplicates. Empty input produces zero totals and byCategory:[].",
+    "public": [
+      {
+        "input": {
+          "records": [
+            {
+              "category": "b",
+              "accepted": false
+            },
+            {
+              "category": "a",
+              "accepted": true
+            },
+            {
+              "category": "b",
+              "accepted": true
+            }
+          ]
+        },
+        "expected": {
+          "accepted": 2,
+          "rejected": 1,
+          "byCategory": [
+            {
+              "category": "b",
+              "accepted": 1,
+              "rejected": 1
+            },
+            {
+              "category": "a",
+              "accepted": 1,
+              "rejected": 0
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "records": []
+        },
+        "expected": {
+          "accepted": 0,
+          "rejected": 0,
+          "byCategory": []
+        }
+      }
+    ]
+  },
+  {
+    "id": "A19",
+    "category": "Aggregation",
+    "title": "Choose the latest supplied timestamp",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {events:[{id:string,timestamp:integer in [0,1000000000000]}]}; timestamp is a supplied epoch-second number, not a date string. Choose the greatest timestamp, breaking ties by LAST input occurrence. Return {latest:{id,timestamp}} containing only these two winner fields, or {latest:null} for no events. IDs do not influence selection.",
+    "public": [
+      {
+        "input": {
+          "events": [
+            {
+              "id": "a",
+              "timestamp": 20
+            },
+            {
+              "id": "b",
+              "timestamp": 10
+            }
+          ]
+        },
+        "expected": {
+          "latest": {
+            "id": "a",
+            "timestamp": 20
+          }
+        }
+      },
+      {
+        "input": {
+          "events": []
+        },
+        "expected": {
+          "latest": null
+        }
+      }
+    ]
+  },
+  {
+    "id": "A20",
+    "category": "Aggregation",
+    "title": "Build stock summaries",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {stock:[{sku:string,onHand:integer >=0,reserved:integer >=0}]}; all aggregate counts are <=1000000000000. Group by exact sku in first-occurrence order. For each group SUM onHand and reserved separately, then available=max(0,summed onHand-summed reserved). Return {items:[{sku,onHand,reserved,available}],totals:{onHand,reserved,available}}, where each total is the sum of that field across items. Clamp after grouping; total available is the sum of per-SKU clamped values. Empty input has [] and all totals 0.",
+    "public": [
+      {
+        "input": {
+          "stock": [
+            {
+              "sku": "a",
+              "onHand": 5,
+              "reserved": 2
+            },
+            {
+              "sku": "a",
+              "onHand": 3,
+              "reserved": 1
+            },
+            {
+              "sku": "b",
+              "onHand": 1,
+              "reserved": 4
+            }
+          ]
+        },
+        "expected": {
+          "items": [
+            {
+              "sku": "a",
+              "onHand": 8,
+              "reserved": 3,
+              "available": 5
+            },
+            {
+              "sku": "b",
+              "onHand": 1,
+              "reserved": 4,
+              "available": 0
+            }
+          ],
+          "totals": {
+            "onHand": 9,
+            "reserved": 7,
+            "available": 5
+          }
+        }
+      },
+      {
+        "input": {
+          "stock": []
+        },
+        "expected": {
+          "items": [],
+          "totals": {
+            "onHand": 0,
+            "reserved": 0,
+            "available": 0
+          }
+        }
+      }
+    ]
+  },
+  {
+    "id": "A21",
+    "category": "Contract changes",
+    "title": "Add optional source metadata",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Old business input/output contained {id:string,amountCents:integer >=0}. New input keeps those required fields and adds optional source:null|{system:string,reference?:null|string}. Accept both schemas. Return the NEW guaranteed shape {version:2,id,amountCents,source,compatibility}. Missing/null source normalizes to source:null and compatibility:\"legacy\". An object source normalizes to {system,reference}, with explicit null for missing/null reference, and compatibility:\"extended\". Empty strings are valid. No output key may be omitted.",
+    "public": [
+      {
+        "input": {
+          "id": "e1",
+          "amountCents": 100
+        },
+        "expected": {
+          "version": 2,
+          "id": "e1",
+          "amountCents": 100,
+          "source": null,
+          "compatibility": "legacy"
+        }
+      },
+      {
+        "input": {
+          "id": "e2",
+          "amountCents": 0,
+          "source": {
+            "system": "erp",
+            "reference": "r1"
+          }
+        },
+        "expected": {
+          "version": 2,
+          "id": "e2",
+          "amountCents": 0,
+          "source": {
+            "system": "erp",
+            "reference": "r1"
+          },
+          "compatibility": "extended"
+        }
+      }
+    ]
+  },
+  {
+    "id": "A22",
+    "category": "Contract changes",
+    "title": "Rename a required identifier with compatibility",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Old business records required customerId; new records require accountId. Input has required amountCents:integer >=0 and each identifier is absent, null, or a string nonempty after trimming ASCII spaces. Do not trim valid identifiers. Treat null identifiers as absent. Neither non-null -> {ok:false,compatibility:\"incompatible\",record:null,errors:[\"accountId.required\"]}. Both non-null unequal -> same rejection shape with compatibility:\"conflict\" and errors:[\"accountId.conflict\"]. Otherwise return {ok:true,compatibility:C,record:{accountId:I,amountCents},errors:[]}. I is accountId if non-null, otherwise customerId. C is dual if both non-null and equal, current if only accountId, legacy if only customerId. The new output record never contains customerId.",
+    "public": [
+      {
+        "input": {
+          "customerId": "c",
+          "amountCents": 1
+        },
+        "expected": {
+          "ok": true,
+          "compatibility": "legacy",
+          "record": {
+            "accountId": "c",
+            "amountCents": 1
+          },
+          "errors": []
+        }
+      },
+      {
+        "input": {
+          "accountId": "a",
+          "amountCents": 2
+        },
+        "expected": {
+          "ok": true,
+          "compatibility": "current",
+          "record": {
+            "accountId": "a",
+            "amountCents": 2
+          },
+          "errors": []
+        }
+      }
+    ]
+  },
+  {
+    "id": "A23",
+    "category": "Contract changes",
+    "title": "Make optional email required",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Old schema accepted {id:string,email?:null|string}. New schema requires a nonblank email string, and migration MUST NOT invent one. Input follows the old schema. An absent/null email, or an email empty after trimming only ASCII spaces, returns {ok:false,compatibility:\"needs-enrichment\",record:null,errors:[\"email.required\"]}. Otherwise return {ok:true,compatibility:\"current\",record:{id,email:email with leading/trailing ASCII spaces removed},errors:[]}. No email syntax check, case conversion, or internal-space removal. This returned record is the new downstream schema guarantee.",
+    "public": [
+      {
+        "input": {
+          "id": "a",
+          "email": " x@example.test "
+        },
+        "expected": {
+          "ok": true,
+          "compatibility": "current",
+          "record": {
+            "id": "a",
+            "email": "x@example.test"
+          },
+          "errors": []
+        }
+      },
+      {
+        "input": {
+          "id": "b"
+        },
+        "expected": {
+          "ok": false,
+          "compatibility": "needs-enrichment",
+          "record": null,
+          "errors": [
+            "email.required"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "A24",
+    "category": "Contract changes",
+    "title": "Extend an output enum with deferred",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Old input had {id:string,decision:\"accept\"|\"reject\",reason?:null|string}; old output status was accepted/rejected. New input also permits decision:\"hold\", and the new downstream shape is {id,status,terminal,reason,compatibility}. accept -> status accepted, terminal true, reason null regardless of input; reject -> status rejected, terminal true, reason supplied non-null string or default \"rejected\"; hold -> status deferred, terminal false, reason supplied non-null string or default \"awaiting-review\". Empty reason strings are retained. compatibility is extended for hold, legacy otherwise. Accept both old and new decisions.",
+    "public": [
+      {
+        "input": {
+          "id": "a",
+          "decision": "accept"
+        },
+        "expected": {
+          "id": "a",
+          "status": "accepted",
+          "terminal": true,
+          "reason": null,
+          "compatibility": "legacy"
+        }
+      },
+      {
+        "input": {
+          "id": "b",
+          "decision": "hold",
+          "reason": "manual"
+        },
+        "expected": {
+          "id": "b",
+          "status": "deferred",
+          "terminal": false,
+          "reason": "manual",
+          "compatibility": "extended"
+        }
+      }
+    ]
+  },
+  {
+    "id": "A25",
+    "category": "Contract changes",
+    "title": "Change nested list element shape",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Old input {orderId:string,items:[SKU strings]}; new items use {sku:string,quantity:integer >=0}. The migration accepts old, new, or mixed element arrays; items is always an array and each element is either a string or the specified object. Return {orderId,lines:[{sku,quantity}],compatibility}. A legacy string becomes {sku:that string,quantity:1}; an object copies only sku and quantity, including zero. Preserve order/repetitions and do not merge SKUs. compatibility is empty for no items, legacy if all elements are strings, current if all are objects, mixed otherwise. lines is always an array, including zero/one elements.",
+    "public": [
+      {
+        "input": {
+          "orderId": "o1",
+          "items": [
+            "a",
+            "b"
+          ]
+        },
+        "expected": {
+          "orderId": "o1",
+          "lines": [
+            {
+              "sku": "a",
+              "quantity": 1
+            },
+            {
+              "sku": "b",
+              "quantity": 1
+            }
+          ],
+          "compatibility": "legacy"
+        }
+      },
+      {
+        "input": {
+          "orderId": "o2",
+          "items": [
+            {
+              "sku": "x",
+              "quantity": 2
+            }
+          ]
+        },
+        "expected": {
+          "orderId": "o2",
+          "lines": [
+            {
+              "sku": "x",
+              "quantity": 2
+            }
+          ],
+          "compatibility": "current"
+        }
+      }
+    ]
+  },
+  {
+    "id": "A26",
+    "category": "Maintenance and repair",
+    "title": "Repair absent versus null fallback",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {legalName:string,displayName?:null|string}. Existing flawed algorithm: choose legalName whenever displayName is absent OR null, and report usedFallback=true in either case. Requested correction: fallback ONLY when the displayName key is absent. An explicit null must remain null, and an empty string must remain empty. Return {name:chosen value,usedFallback:boolean}. Preserve all other original behavior: strings copied exactly, no trimming and no other output keys.",
+    "public": [
+      {
+        "input": {
+          "legalName": "Legal"
+        },
+        "expected": {
+          "name": "Legal",
+          "usedFallback": true
+        }
+      },
+      {
+        "input": {
+          "legalName": "Legal",
+          "displayName": null
+        },
+        "expected": {
+          "name": null,
+          "usedFallback": false
+        }
+      }
+    ]
+  },
+  {
+    "id": "A27",
+    "category": "Maintenance and repair",
+    "title": "Repair singleton list collapse",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {batches:[{batchId:string,entries:[{code:string}]}]}. Existing flawed algorithm maps entries to codes, but returns a scalar string for one entry, omits codes for no entries, and collapses batches to a single object when there is one batch. Requested correction: return {batches:[{batchId,codes:[strings]}]} with BOTH batches and codes always arrays, including empty/singleton cases. Preserve batch order and entry order, duplicate IDs/codes and string contents. Every input batch appears even if entries is empty; ignore extra keys.",
+    "public": [
+      {
+        "input": {
+          "batches": [
+            {
+              "batchId": "b",
+              "entries": [
+                {
+                  "code": "x"
+                }
+              ]
+            }
+          ]
+        },
+        "expected": {
+          "batches": [
+            {
+              "batchId": "b",
+              "codes": [
+                "x"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "input": {
+          "batches": []
+        },
+        "expected": {
+          "batches": []
+        }
+      }
+    ]
+  },
+  {
+    "id": "A28",
+    "category": "Maintenance and repair",
+    "title": "Repair tax rounding per line",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {lines:[{id:string,netCents:integer in [0,1000000000],rateBps:integer in [0,10000]}]}; sum of net amounts is <=1000000000000. Existing flawed algorithm truncates each exact line tax netCents*rateBps/10000 downward to whole cents before adding it to net. Requested correction: round EACH line tax to nearest integer cent, exact half upward, then sum the already rounded line taxes. Do not round an invoice-wide exact tax sum. Return {lines:[{id,taxCents,grossCents:netCents+rounded tax}],netCents:sum of nets,taxCents:sum of rounded line taxes,grossCents:sum of nets+sum of rounded taxes}. Preserve line order and duplicate IDs, with zero totals and [] for no lines.",
+    "public": [
+      {
+        "input": {
+          "lines": [
+            {
+              "id": "a",
+              "netCents": 5,
+              "rateBps": 1000
+            },
+            {
+              "id": "b",
+              "netCents": 5,
+              "rateBps": 1000
+            }
+          ]
+        },
+        "expected": {
+          "lines": [
+            {
+              "id": "a",
+              "taxCents": 1,
+              "grossCents": 6
+            },
+            {
+              "id": "b",
+              "taxCents": 1,
+              "grossCents": 6
+            }
+          ],
+          "netCents": 10,
+          "taxCents": 2,
+          "grossCents": 12
+        }
+      },
+      {
+        "input": {
+          "lines": []
+        },
+        "expected": {
+          "lines": [],
+          "netCents": 0,
+          "taxCents": 0,
+          "grossCents": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "A29",
+    "category": "Maintenance and repair",
+    "title": "Add an acknowledgement opt-out",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input {eventId:string,revision:integer >=0,notify?:null|boolean}. Baseline always emits both a stored event and an acknowledgement. Existing attempted change is flawed: it defaults notify to true using a rule that treats false as missing, so false still emits an ack. Requested correction: ONLY explicit notify:false suppresses the ack; absent, null and true retain the baseline ack. Always return {event:{id:eventId,revision},ack:A}, where A is null when suppressed, otherwise {eventId,state:\"stored\"}. The event is always emitted, with revision preserved including zero. No validation/coercion or event suppression.",
+    "public": [
+      {
+        "input": {
+          "eventId": "e",
+          "revision": 1
+        },
+        "expected": {
+          "event": {
+            "id": "e",
+            "revision": 1
+          },
+          "ack": {
+            "eventId": "e",
+            "state": "stored"
+          }
+        }
+      },
+      {
+        "input": {
+          "eventId": "e",
+          "revision": 1,
+          "notify": false
+        },
+        "expected": {
+          "event": {
+            "id": "e",
+            "revision": 1
+          },
+          "ack": null
+        }
+      }
+    ]
+  },
+  {
+    "id": "A30",
+    "category": "Maintenance and repair",
+    "title": "Validate before composing an event",
+    "spec": "Input and output are JSON. Produce exactly the stated output keys; ignore all unmentioned input keys. Object key order is irrelevant; array order and empty arrays are significant. Unless this task explicitly validates arbitrary JSON kinds, assume input obeys its stated domain. A string is preserved exactly unless a normalization rule is stated; comparisons are case-sensitive. Missing means a key is absent, distinct from an explicit JSON null. All integers and all intermediate arithmetic in permitted inputs have absolute value below 2^53; money is integer cents. No clock, randomness, external state, or external lookup is used. Input is any JSON object. Existing flawed algorithm first builds an event, substituting empty ID and zero price for absent/null values, then validates that event and may return the event even on validation failure. Requested correction: validate ORIGINAL input first and compose only if all checks pass. Validate eventId then priceCents, collecting up to one error for each in that order. eventId absent/null -> eventId.required; non-string -> eventId.type; empty after trimming ASCII spaces -> eventId.blank. Valid eventId is copied untrimmed. priceCents absent/null -> price.required; not mathematically integral JSON number (booleans excluded) -> price.integer; outside inclusive [0,1000000000] -> price.range. Numeric 1.0 is integral. Return {valid:boolean,errors:[strings],event:null} on ANY error, otherwise {valid:true,errors:[],event:{type:\"price.changed\",id:eventId,priceCents}}. No default values, partial events, or other output keys.",
+    "public": [
+      {
+        "input": {
+          "eventId": "e",
+          "priceCents": 0
+        },
+        "expected": {
+          "valid": true,
+          "errors": [],
+          "event": {
+            "type": "price.changed",
+            "id": "e",
+            "priceCents": 0
+          }
+        }
+      },
+      {
+        "input": {},
+        "expected": {
+          "valid": false,
+          "errors": [
+            "eventId.required",
+            "price.required"
+          ],
+          "event": null
+        }
+      }
+    ]
+  }
+]

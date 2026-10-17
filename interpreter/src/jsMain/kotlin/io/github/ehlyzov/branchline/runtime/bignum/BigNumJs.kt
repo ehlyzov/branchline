@@ -2,6 +2,8 @@ package io.github.ehlyzov.branchline.runtime.bignum
 
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 actual class BLBigInt internal constructor(internal val v: Long) {
     override fun toString(): String = v.toString()
@@ -76,3 +78,35 @@ actual fun BLBigDec.floor(): BLBigInt = BLBigInt(floor(this.v).toLong())
 actual fun BLBigDec.ceil(): BLBigInt = BLBigInt(ceil(this.v).toLong())
 actual fun BLBigDec.roundHalfEven(scale: Int): BLBigDec =
     BLBigDec(roundHalfEvenDouble(this.v, scale))
+
+// POWER must not turn an explicit integer into a wrapped Long on JS.
+actual fun BLBigInt.powNonNegative(exponent: Int): BLBigInt {
+    require(exponent >= 0) { "POWER: exponent must be non-negative" }
+    fun multiply(a: Long, b: Long): Long {
+        val result = a * b
+        require(!(a == Long.MIN_VALUE && b == -1L) &&
+            !(b == Long.MIN_VALUE && a == -1L) && (b == 0L || result / b == a)) {
+            "POWER: integer result exceeds JavaScript signed 64-bit range"
+        }
+        return result
+    }
+    var result = 1L
+    var base = v
+    var remaining = exponent
+    while (remaining != 0) {
+        if (remaining and 1 != 0) result = multiply(result, base)
+        remaining = remaining ushr 1
+        if (remaining != 0) base = multiply(base, base)
+    }
+    return blBigIntOfLong(result)
+}
+actual fun BLBigDec.powIntegral(exponent: Int): BLBigDec {
+    require(v.isFinite()) { "POWER: base must be finite" }
+    return blBigDecOfDouble(v.pow(exponent.toDouble())).also {
+        require(it.v.isFinite()) { "POWER: result must be finite" }
+    }
+}
+actual fun BLBigDec.sqrtDecimal(): BLBigDec =
+    blBigDecOfDouble(sqrt(v)).also {
+        require(it.v.isFinite()) { "SQRT: result must be finite" }
+    }

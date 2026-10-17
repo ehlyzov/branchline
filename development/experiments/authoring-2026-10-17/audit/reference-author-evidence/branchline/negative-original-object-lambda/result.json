@@ -1,0 +1,1 @@
+{"compile_ok":false,"cases":[],"compile_seconds":0.066567583,"execute_seconds":0.0,"error":"ParseException: [2:48] Expect ';' or newline between statements near ':'\nExpect ';' or newline between statements\nTRANSFORM Main {\nOUTPUT {rows: MAP([{field: \"q\"}], (x) -> {field: x.field})}\n                                               ^\n}\n"}

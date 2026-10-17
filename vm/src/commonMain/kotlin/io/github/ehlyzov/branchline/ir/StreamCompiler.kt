@@ -9,6 +9,8 @@ import io.github.ehlyzov.branchline.std.SharedResourceHandle
 import io.github.ehlyzov.branchline.std.SharedResourceKind
 import io.github.ehlyzov.branchline.std.SharedStoreProvider
 import io.github.ehlyzov.branchline.vm.VMExec
+import io.github.ehlyzov.branchline.vm.VMExecutionReport
+import io.github.ehlyzov.branchline.vm.VMFallbackPolicy
 
 private fun dumpIR(nodes: List<IRNode>, indent: String = "") {
     for (n in nodes) {
@@ -54,6 +56,8 @@ fun compileStream(
     hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
     transforms: Map<String, TransformDescriptor> = emptyMap(), // обязателен!
     engine: ExecutionEngine = ExecutionEngine.INTERPRETER,
+    vmFallbackPolicy: VMFallbackPolicy = VMFallbackPolicy.COMPILE_FAILURE,
+    onVMExecution: ((VMExecutionReport) -> Unit)? = null,
 ): (Map<String, Any?>) -> Any? {
     val sharedDecls = t.options.shared
     SharedStoreProvider.store?.let { store ->
@@ -85,6 +89,8 @@ fun compileStream(
             hostFns = hostFns,
             hostFnMeta = hostFnMeta,
             funcs = funcs,
+            fallbackPolicy = vmFallbackPolicy,
+            onExecution = onVMExecution,
         )
         return { input: Map<String, Any?> ->
             val env = HashMap<String, Any?>().apply {

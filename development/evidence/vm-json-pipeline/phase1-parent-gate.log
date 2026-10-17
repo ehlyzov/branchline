@@ -1,0 +1,99 @@
+> Task :cli:kmpPartiallyResolvedDependenciesChecker
+> Task :cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:compileKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmProcessResources UP-TO-DATE
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :interpreter:jvmMainClasses UP-TO-DATE
+> Task :interpreter:jvmJar UP-TO-DATE
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:compileKotlinJvm UP-TO-DATE
+> Task :vm:compileJvmMainJava NO-SOURCE
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :vm:jvmMainClasses UP-TO-DATE
+> Task :vm:jvmJar UP-TO-DATE
+> Task :cli:compileKotlinJvm UP-TO-DATE
+> Task :cli:compileJvmMainJava NO-SOURCE
+> Task :cli:jvmProcessResources NO-SOURCE
+> Task :cli:processJvmMainResources SKIPPED
+> Task :cli:jvmMainClasses UP-TO-DATE
+> Task :cli:jvmJar UP-TO-DATE
+> Task :cli:compileTestKotlinJvm UP-TO-DATE
+> Task :cli:compileJvmTestJava NO-SOURCE
+> Task :cli:jvmTestProcessResources UP-TO-DATE
+> Task :cli:processJvmTestResources SKIPPED
+> Task :cli:jvmTestClasses UP-TO-DATE
+> Task :interpreter:compileKotlinJs UP-TO-DATE
+> Task :vm:compileKotlinJs UP-TO-DATE
+> Task :cli:compileKotlinJs UP-TO-DATE
+> Task :cli:jsProcessResources NO-SOURCE
+> Task :cli:jsMainClasses UP-TO-DATE
+> Task :cli:compileProductionExecutableKotlinJs UP-TO-DATE
+> Task :cli:jsProductionExecutableCompileSync UP-TO-DATE
+
+> Task :cli:prepareJsCliPackage
+
+added 2 packages in 253ms
+
+> Task :cli:jvmTest
+> Task :kotlinKotlinNpmCachesSetup
+> Task :kotlinNodeJsSetup UP-TO-DATE
+> Task :kotlinRestoreYarnLock UP-TO-DATE
+> Task :kotlinYarnSetup UP-TO-DATE
+> Task :interpreter:jsPackageJson UP-TO-DATE
+> Task :vm:jsPackageJson UP-TO-DATE
+> Task :cli:jsPackageJson UP-TO-DATE
+> Task :cli:jsTestPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPackageJson UP-TO-DATE
+> Task :vm:jsTestPackageJson UP-TO-DATE
+> Task :cli:jsPublicPackageJson UP-TO-DATE
+> Task :cli:jsTestPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPublicPackageJson UP-TO-DATE
+> Task :vm:jsPublicPackageJson UP-TO-DATE
+> Task :vm:jsTestPublicPackageJson UP-TO-DATE
+> Task :kotlinPackageJsonUmbrella UP-TO-DATE
+> Task :rootPackageJson UP-TO-DATE
+> Task :kotlinNpmInstall UP-TO-DATE
+> Task :kotlinStoreYarnLock UP-TO-DATE
+> Task :cli:jsTestProcessResources NO-SOURCE
+> Task :cli:kotlinNodeJsSetup UP-TO-DATE
+> Task :test-fixtures:kmpPartiallyResolvedDependenciesChecker
+> Task :test-fixtures:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :test-fixtures:compileKotlinJvm UP-TO-DATE
+> Task :test-fixtures:compileJvmMainJava NO-SOURCE
+> Task :test-fixtures:jvmProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmMainResources SKIPPED
+> Task :test-fixtures:jvmMainClasses UP-TO-DATE
+> Task :test-fixtures:jvmJar UP-TO-DATE
+> Task :interpreter:compileTestKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmTestJava NO-SOURCE
+> Task :interpreter:jvmTestProcessResources UP-TO-DATE
+> Task :interpreter:processJvmTestResources SKIPPED
+> Task :interpreter:jvmTestClasses UP-TO-DATE
+> Task :cli:compileTestKotlinJs
+> Task :interpreter:jvmTest
+> Task :cli:jsTestClasses
+> Task :interpreter:jsProcessResources NO-SOURCE
+> Task :interpreter:jsMainClasses UP-TO-DATE
+> Task :interpreter:jsTestProcessResources NO-SOURCE
+> Task :interpreter:kotlinNodeJsSetup UP-TO-DATE
+> Task :interpreter:compileTestKotlinJs
+> Task :interpreter:jsTestClasses
+> Task :interpreter:compileTestDevelopmentExecutableKotlinJs
+> Task :interpreter:jsTestTestDevelopmentExecutableCompileSync
+> Task :cli:compileTestDevelopmentExecutableKotlinJs
+> Task :interpreter:jsNodeTest
+> Task :cli:jsTestTestDevelopmentExecutableCompileSync
+> Task :cli:jsNodeTest
+
+BUILD SUCCESSFUL in 6s
+58 actionable tasks: 16 executed, 42 up-to-date

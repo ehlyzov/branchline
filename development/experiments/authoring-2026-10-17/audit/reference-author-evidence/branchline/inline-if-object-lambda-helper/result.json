@@ -1,0 +1,1 @@
+{"compile_ok":true,"cases":[{"ok":true,"actual":{"choice":"on","objects":[{"field":"q"}],"blockObjects":[{"field":"q"}],"next":5,"blockNext":5,"recovered":7},"error":null},{"ok":true,"actual":{"choice":"off","objects":[{"field":"q"}],"blockObjects":[{"field":"q"}],"next":5,"blockNext":5,"recovered":7},"error":null}],"compile_seconds":0.068904208,"execute_seconds":0.083955375}

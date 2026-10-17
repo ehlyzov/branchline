@@ -33,6 +33,11 @@ kotlin {
                 implementation 'org.jetbrains.kotlin:kotlin-test'
             }
         }
+        jvmMain {
+            dependencies {
+                implementation 'org.ow2.asm:asm:9.9'
+            }
+        }
         jvmTest {
             dependencies {
                 implementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2"

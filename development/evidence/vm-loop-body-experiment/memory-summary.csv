@@ -1,0 +1,9 @@
+engine,lifetime,repeats,preparedUnexecutedMinusFixture,executedMinusFixture,executedMinusPreparedUnexecuted,afterExecutorsReleaseMinusFixture,afterAllReleaseMinusFixture,peakRssBytes,metaspacePreparedDelta,metaspaceExecutedDelta,metaspaceAfterReleaseDelta,metaspaceCommittedPreparedDelta,classSpacePreparedDelta,generatedClasses,generatedClassfileBytes,classesUnloadedAfterExecutorRelease,collectedWrappers
+baseline,many,3,6363584,122794032,116429992,167472,15624,274169856,280432,310424,310816,327680,520,0,0,0,1000
+baseline,reuse,3,6568,125560,118992,118696,2808,167804928,2128,25168,25360,0,0,0,0,0,1
+interpreter,many,3,3365120,3865360,500232,162472,9976,200032256,133248,195680,196072,131072,0,0,0,0,1000
+interpreter,reuse,3,3608,120400,116792,116848,312,169558016,1592,45016,45064,0,0,0,0,0,1
+loopBody,many,3,9928272,126371912,116446496,219256,67112,319045632,3675672,3823008,711008,6750208,545928,1000,1546000,1000,1000
+loopBody,reuse,3,9848,128400,118464,118248,2008,171720704,27384,132176,122416,0,544,1,1546,1,1
+preparedOptimized,many,3,9588904,126334760,116746024,166496,14648,320536576,343664,380400,380792,262144,0,0,0,0,1000
+preparedOptimized,reuse,3,9824,127856,118032,117448,1560,119734272,2552,31192,31288,0,0,0,0,0,1

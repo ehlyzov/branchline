@@ -7,7 +7,7 @@ title: Install Branchline
 Install and verify Branchline from GitHub Releases.
 
 ## Prerequisites
-- Java 17+ (for JVM CLI)
+- Java 21+ (for JVM CLI; release jars target class-file version 65)
 - Node 18+ (for Node CLI)
 
 ## JVM CLI (recommended for JVM users)

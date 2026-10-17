@@ -160,3 +160,44 @@ public actual fun <T, R> parallelMap(limit: Int, items: List<T>, block: (T) -> R
         pool.shutdown()
     }
 }
+
+internal actual fun <T, W, R> parallelMapWithWorker(
+    limit: Int,
+    items: List<T>,
+    createWorker: () -> W,
+    block: (W, T) -> R,
+): List<R> {
+    if (items.isEmpty()) return emptyList()
+    val workers = List(limit.coerceAtLeast(1).coerceAtMost(items.size)) { createWorker() }
+    if (workers.size == 1) return items.map { block(workers.single(), it) }
+    val nextWorker = java.util.concurrent.atomic.AtomicInteger()
+    val local = ThreadLocal.withInitial { workers[nextWorker.getAndIncrement()] }
+    val pool = Executors.newFixedThreadPool(workers.size)
+    var interrupted = false
+    try {
+        val futures = items.map { item -> pool.submit(Callable { block(local.get(), item) }) }
+        // Join every task before the caller restores its shared-store context. Preserve
+        // input order and the first failure in that order, including its JVM wrapper.
+        val results = futures.map { future ->
+            var interruption: InterruptedException? = null
+            var result: Result<R>? = null
+            while (result == null) {
+                try {
+                    val value = future.get()
+                    result = interruption?.let { Result.failure(it) } ?: Result.success(value)
+                } catch (ex: InterruptedException) {
+                    interrupted = true
+                    if (interruption == null) interruption = ex
+                    // Keep joining: workers still use the caller's shared store.
+                } catch (ex: Exception) {
+                    result = Result.failure(interruption ?: ex)
+                }
+            }
+            result
+        }
+        return results.map { it.getOrThrow() }
+    } finally {
+        pool.shutdown()
+        if (interrupted) Thread.currentThread().interrupt()
+    }
+}

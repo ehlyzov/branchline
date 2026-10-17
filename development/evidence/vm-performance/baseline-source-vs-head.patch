@@ -1,0 +1,442 @@
+--- a/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt
++++ b/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt
+@@ -92,6 +92,10 @@
+     // Exception handling
+     private val tryStack = ArrayDeque<TryFrame>()
+     private var lastException: Throwable? = null
++    // Sequential invocation metadata, used only by language adapters. Keep host
++    // exceptions unchanged even when a host deliberately throws a VMException.
++    private var lastHostFailure: Throwable? = null
++    internal fun isHostFailure(failure: Throwable): Boolean = lastHostFailure === failure
+ 
+     // Loop handling
+     private val loopStack = ArrayDeque<LoopState>()
+@@ -112,6 +116,7 @@
+             if (t?.opts?.includeCalls == true) t.on(TraceEvent.Return(kind, name, r))
+             r
+         } catch (ex: Throwable) {
++            if (kind == "HOST") lastHostFailure = ex
+             t?.on(TraceEvent.Error("call $kind ${name ?: "<lambda>"}", ex))
+             throw ex
+         }
+@@ -128,12 +133,6 @@
+     /**
+      * Execute bytecode with the given environment
+      */
+-    init {
+-        for ((name, decl) in funcs) {
+-            funcBytecode[name] = compileFunctionBytecode(decl)
+-        }
+-    }
+-
+     fun execute(bytecode: Bytecode, env: MutableMap<String, Any?> = mutableMapOf()): Any? {
+         this.bytecode = bytecode
+         this.environment = env
+@@ -144,6 +143,7 @@
+         callStack.clear()
+         tryStack.clear()
+         lastSuspension = null
++        lastHostFailure = null
+         locals = arrayOf()
+         initHostIndexTable()
+         outputs.clear()
+@@ -261,9 +261,11 @@
+             }
+ 
+             pc++
+-            if (pc >= bytecode.size() && callStack.isNotEmpty()) {
++            while (pc >= bytecode.size() && callStack.isNotEmpty()) {
+                 returnFromFunction(null)
+-                continue
++                // Explicit RETURN resumes through this loop's pc++ above. An
++                // implicit return occurs after it, so advance the restored pc too.
++                pc++
+             }
+             if (targetCallDepth >= 0 && callStack.size <= targetCallDepth) {
+                 break
+@@ -302,8 +304,7 @@
+ 
+             // Variable Operations
+             is Instruction.LOAD_VAR -> {
+-                val value = environment[instruction.name]
+-                    ?: throw VMException.VariableNotFound(instruction.name)
++                val value = loadVariable(instruction.name)
+                 push(value)
+                 emitVarRead(instruction.name, value)
+             }
+@@ -451,7 +452,7 @@
+             // Variable Operations
+             Opcode.LOAD_VAR -> {
+                 val name = bytecode.getStringOperand(pc)
+-                val value = environment[name] ?: throw VMException.VariableNotFound(name)
++                val value = loadVariable(name)
+                 push(value)
+                 emitVarRead(name, value)
+             }
+@@ -932,6 +933,12 @@
+         out.addAll(right)
+         push(out)
+     }
++    private fun loadVariable(name: String): Any? {
++        val value = environment[name]
++        if (value == null && !environment.containsKey(name)) throw VMException.VariableNotFound(name)
++        return value
++    }
++
+     private enum class CallMode { SCHEDULED, IMMEDIATE }
+ 
+     private fun compileFunctionBytecode(func: FuncDecl): Bytecode {
+@@ -1104,7 +1111,8 @@
+                 return combined.entries
+             }
+         override fun put(key: String, value: Any?): Any? = locals.put(key, value)
+-        override fun get(key: String): Any? = locals[key] ?: parent[key]
++        override fun containsKey(key: String): Boolean = locals.containsKey(key) || parent.containsKey(key)
++        override fun get(key: String): Any? = if (locals.containsKey(key)) locals[key] else parent[key]
+     }
+ 
+     private fun invokeLambda(lambda: LambdaValue, args: List<Any?>): Any? {
+--- a/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Integration.kt
++++ b/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Integration.kt
+@@ -1,7 +1,5 @@
+ package io.github.ehlyzov.branchline.vm
+ 
+-import net.codinux.log.Logger
+-import net.codinux.log.LoggerFactory
+ import io.github.ehlyzov.branchline.Expr
+ import io.github.ehlyzov.branchline.FuncDecl
+ import io.github.ehlyzov.branchline.debug.TraceEvent
+@@ -14,19 +12,78 @@
+ import io.github.ehlyzov.branchline.std.HostFnMetadata
+ import io.github.ehlyzov.branchline.std.SharedStoreProvider
+ import kotlin.concurrent.Volatile
+-import kotlin.time.ExperimentalTime
+ import kotlin.time.measureTimedValue
+ 
+-/**
+- * Integration layer that provides compatibility between the VM and
+- * existing eval system
+- *
+- * This layer allows for gradual migration to the VM while maintaining
+- * compatibility with existing code that expects the current evaluation
+- * interface.
+- */
+-
+-/** VM-based executor that can replace the current Exec class */
++/** Fallback is only safe before VM execution has begun. */
++enum class VMFallbackPolicy {
++    COMPILE_FAILURE,
++    NONE,
++}
++
++enum class VMExecutionPath {
++    VM_BYTECODE,
++    INTERPRETER_COMPILE_FALLBACK,
++    INTERPRETER_DISABLED,
++    COMPILATION_REJECTED,
++}
++
++/** Terminal evidence for one invocation; a VM path does not imply successful execution. */
++data class VMExecutionReport(
++    val path: VMExecutionPath,
++    val succeeded: Boolean,
++    val compilationFailure: Throwable? = null,
++    val failure: Throwable? = null,
++)
++
++private fun compileForVM(compile: () -> Bytecode): Result<Bytecode> = try {
++    val timed = measureTimedValue(compile)
++    VMFactory.Metrics.onCompileNanos(timed.duration.inWholeNanoseconds)
++    Result.success(timed.value)
++} catch (failure: NotImplementedError) {
++    VMFactory.Metrics.onCompileFailed()
++    Result.failure(failure)
++} catch (failure: Exception) {
++    VMFactory.Metrics.onCompileFailed()
++    Result.failure(failure)
++}
++
++/** Preserve language-facing exception categories without replaying execution. */
++private fun VM.executeForLanguage(bytecode: Bytecode, env: MutableMap<String, Any?>): Any? = try {
++    execute(bytecode, env)
++} catch (failure: VMException) {
++    if (isHostFailure(failure)) throw failure
++    throw when (failure) {
++        is VMException.IndexOutOfBounds -> IllegalArgumentException(failure.message, failure)
++        is VMException.VariableNotFound, is VMException.TypeMismatch -> IllegalStateException(failure.message, failure)
++        else -> failure
++    }
++}
++
++private class ExecutionTracker(private val observer: ((VMExecutionReport) -> Unit)?) {
++    var lastExecution: VMExecutionReport? = null
++        private set
++
++    fun run(path: VMExecutionPath, compilationFailure: Throwable? = null, execute: () -> Any?): Any? {
++        // Notify outside the execution catch: observer errors must never trigger replay
++        // or be misreported as failures in the engine itself.
++        val result = try {
++            Result.success(execute())
++        } catch (failure: Throwable) {
++            Result.failure(failure)
++        }
++        val report = VMExecutionReport(path, result.isSuccess, compilationFailure, result.exceptionOrNull())
++        lastExecution = report
++        try {
++            observer?.invoke(report)
++        } catch (observerFailure: Throwable) {
++            val executionFailure = result.exceptionOrNull() ?: throw observerFailure
++            if (observerFailure !== executionFailure) executionFailure.addSuppressed(observerFailure)
++        }
++        return result.getOrThrow()
++    }
++}
++
++/** VM adapter with optional compilation fallback. Runtime failures always propagate. */
+ class VMExec(
+     private val ir: List<IRNode>,
+     private val tracer: Tracer? = null,
+@@ -34,133 +91,96 @@
+     private val hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
+     private val funcs: Map<String, FuncDecl> = emptyMap(),
+     private val precompiled: Bytecode? = null,
++    private val fallbackPolicy: VMFallbackPolicy = VMFallbackPolicy.COMPILE_FAILURE,
++    private val useVM: Boolean = true,
++    onExecution: ((VMExecutionReport) -> Unit)? = null,
+ ) {
+-    companion object {
+-        private val logger: Logger = LoggerFactory.getLogger(VMExec::class)
+-    }
+-    private val compiler = Compiler(funcs, hostFns)
+     private val vm = VM(hostFns, funcs, tracer)
+-
+-    // Lazily compile IR once and cache bytecode. If compilation fails, we keep null
+-    // and always fall back to the interpreter.
+-    @OptIn(ExperimentalTime::class)
+-    private val bytecode: Bytecode? =
+-        precompiled ?: try {
+-            val bcTimed = measureTimedValue {
+-                compiler.compile(ir)
+-            }
+-            VMFactory.Metrics.onCompileNanos(bcTimed.duration.inWholeNanoseconds)
+-            bcTimed.value
+-        } catch (e: NotImplementedError) {
+-            VMFactory.Metrics.onCompileFailed()
+-            logger.warn("Falling back to interpreter: ${e.message}")
+-            tracer?.on(TraceEvent.Error("VM fallback due to unimplemented feature: ${e.message}", e))
+-            null
+-        } catch (e: Exception) {
+-            VMFactory.Metrics.onCompileFailed()
+-            logger.warn("Falling back to interpreter: ${e.message}")
+-            tracer?.on(TraceEvent.Error("VM compilation failed: ${e.message}", e))
+-            null
+-        }
+-
+-    // Interpreter fallback is created lazily to avoid work when VM executes successfully
++    private val tracker = ExecutionTracker(onExecution)
++    val lastExecution: VMExecutionReport? get() = tracker.lastExecution
++
++    // Compile once before execution, without touching the caller's environment.
++    private val compilation: Result<Bytecode> by lazy {
++        precompiled?.let { Result.success(it) } ?: compileForVM { Compiler(funcs, hostFns).compile(ir) }
++    }
++
+     private val interpreter: Exec by lazy {
+-        Exec(
+-            ir = ir,
+-            hostFns = hostFns,
+-            hostFnMeta = hostFnMeta,
+-            funcs = funcs,
+-            tracer = tracer,
+-            sharedStore = SharedStoreProvider.store,
+-        )
+-    }
+-
+-    /**
+-     * Execute IR using VM with fallback to interpreter for unsupported
+-     * features
+-     */
++        Exec(ir, tracer = tracer, hostFns = hostFns, hostFnMeta = hostFnMeta,
++            funcs = funcs, sharedStore = SharedStoreProvider.store)
++    }
++
+     fun run(env: MutableMap<String, Any?>, stringifyKeys: Boolean = false): Any? {
+-        val compiled = bytecode
+-        if (compiled != null) {
+-            return try {
+-                val resultTimed = measureTimedValue {
+-                    vm.execute(compiled, env)
+-                }
+-                VMFactory.Metrics.onExecuteNanos(resultTimed.duration.inWholeNanoseconds)
+-                if (stringifyKeys) stringifyKeys(resultTimed.value) else resultTimed.value
+-            } catch (e: Exception) {
+-                logger.warn("Falling back to interpreter: ${e.message}")
+-                tracer?.on(TraceEvent.Error("VM execution failed: ${e.message}", e))
++        if (!useVM) {
++            return tracker.run(VMExecutionPath.INTERPRETER_DISABLED) { interpreter.run(env, stringifyKeys) }
++        }
++        val compiled = compilation
++        val failure = compiled.exceptionOrNull()
++        if (failure != null) {
++            if (fallbackPolicy == VMFallbackPolicy.NONE) {
++                return tracker.run(VMExecutionPath.COMPILATION_REJECTED, failure) { throw failure }
++            }
++            tracer?.on(TraceEvent.Error("VM compilation failed; using interpreter: ${failure.message}", failure))
++            return tracker.run(VMExecutionPath.INTERPRETER_COMPILE_FALLBACK, failure) {
+                 interpreter.run(env, stringifyKeys)
+             }
+         }
+-
+-        // Compilation failed, fall back to interpreter
+-        return interpreter.run(env, stringifyKeys)
++        return tracker.run(VMExecutionPath.VM_BYTECODE) {
++            val timed = measureTimedValue { vm.executeForLanguage(compiled.getOrThrow(), env) }
++            VMFactory.Metrics.onExecuteNanos(timed.duration.inWholeNanoseconds)
++            if (stringifyKeys) stringifyKeys(timed.value) else timed.value
++        }
+     }
+ 
+     private fun stringifyKeys(value: Any?): Any? = when (value) {
+         null -> null
+         is Map<*, *> -> LinkedHashMap<String, Any?>().apply {
+-            for ((k, v) in value) {
+-                put(k.toString(), stringifyKeys(v))
+-            }
+-        }
+-
++            for ((k, v) in value) put(k.toString(), stringifyKeys(v))
++        }
+         is List<*> -> value.map { stringifyKeys(it) }
+         else -> value
+     }
+ }
+ 
+-/** VM-compatible evaluator that can handle expressions */
++/** Expression adapter with the same compilation-only fallback contract as VMExec. */
+ class VMEval(
+     private val funcs: Map<String, FuncDecl> = emptyMap(),
+     private val hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
+     private val hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
+     private val tracer: Tracer? = null,
++    private val fallbackPolicy: VMFallbackPolicy = VMFallbackPolicy.COMPILE_FAILURE,
++    private val useVM: Boolean = true,
++    onExecution: ((VMExecutionReport) -> Unit)? = null,
+ ) {
+     private val compiler = Compiler(funcs, hostFns)
+     private val vm = VM(hostFns, funcs, tracer)
++    private val tracker = ExecutionTracker(onExecution)
++    val lastExecution: VMExecutionReport? get() = tracker.lastExecution
+     private val fallbackExec: Exec by lazy {
+-        Exec(
+-            ir = emptyList(),
+-            hostFns = hostFns,
+-            hostFnMeta = hostFnMeta,
+-            funcs = funcs,
+-            tracer = tracer,
+-            sharedStore = SharedStoreProvider.store,
+-        )
+-    }
+-    // We'll need to implement a fallback evaluator or use the existing one
+-    // For now, we'll create a simple fallback that handles basic cases
+-
+-    /** Evaluate an expression using VM compilation or fallback to interpreter */
++        Exec(ir = emptyList(), hostFns = hostFns, hostFnMeta = hostFnMeta,
++            funcs = funcs, tracer = tracer, sharedStore = SharedStoreProvider.store)
++    }
++
+     fun eval(expr: Expr, env: MutableMap<String, Any?>): Any? {
+-        return try {
+-            // Create a simple IR structure for the expression
+-            val exprStmt = IRExprOutput(expr)
+-            val bytecodeTimed = measureTimedValue {
+-                compiler.compile(listOf(exprStmt))
+-            }
+-            val bytecode = bytecodeTimed.value
+-            VMFactory.Metrics.onCompileNanos(bytecodeTimed.duration.inWholeNanoseconds)
+-            val out = vm.execute(bytecode, env)
+-            VMFactory.Metrics.onExecuteNanos(0) // expression-only; negligible
+-            out
+-        } catch (e: NotImplementedError) {
+-            // Fallback to interpreter for unimplemented features
+-            VMFactory.Metrics.onCompileFailed()
+-            tracer?.on(io.github.ehlyzov.branchline.debug.TraceEvent.Call("FALLBACK", "Interpreter", listOf(expr::class.simpleName)))
+-            val out = fallbackExec.eval(expr, env)
+-            tracer?.on(io.github.ehlyzov.branchline.debug.TraceEvent.Return("FALLBACK", "Interpreter", out))
+-            out
+-        } catch (e: Exception) {
+-            // Log and fallback
+-            tracer?.on(io.github.ehlyzov.branchline.debug.TraceEvent.Error("VM expression evaluation failed: ${e.message}", e))
+-            tracer?.on(io.github.ehlyzov.branchline.debug.TraceEvent.Call("FALLBACK", "Interpreter", listOf(expr::class.simpleName)))
+-            val out = try { fallbackExec.eval(expr, env) } catch (_: Exception) { null }
+-            tracer?.on(io.github.ehlyzov.branchline.debug.TraceEvent.Return("FALLBACK", "Interpreter", out))
+-            out
++        if (!useVM) {
++            return tracker.run(VMExecutionPath.INTERPRETER_DISABLED) { fallbackExec.eval(expr, env) }
++        }
++        val compilation = compileForVM { compiler.compile(listOf(IRExprOutput(expr))) }
++        val failure = compilation.exceptionOrNull()
++        if (failure != null) {
++            if (fallbackPolicy == VMFallbackPolicy.NONE) {
++                return tracker.run(VMExecutionPath.COMPILATION_REJECTED, failure) { throw failure }
++            }
++            return tracker.run(VMExecutionPath.INTERPRETER_COMPILE_FALLBACK, failure) {
++                tracer?.on(TraceEvent.Call("FALLBACK", "Interpreter", listOf(expr::class.simpleName)))
++                val out = fallbackExec.eval(expr, env)
++                tracer?.on(TraceEvent.Return("FALLBACK", "Interpreter", out))
++                out
++            }
++        }
++        return tracker.run(VMExecutionPath.VM_BYTECODE) {
++            val timed = measureTimedValue { vm.executeForLanguage(compilation.getOrThrow(), env) }
++            VMFactory.Metrics.onExecuteNanos(timed.duration.inWholeNanoseconds)
++            timed.value
+         }
+     }
+ }
+@@ -168,7 +188,7 @@
+ /** Factory for creating VM-enabled components */
+ object VMFactory {
+ 
+-    /** Create a VM-enabled executor with fallback capability */
++    /** Create an executor with explicit compilation fallback and execution evidence. */
+     fun createExecutor(
+         ir: List<IRNode>,
+         tracer: Tracer? = null,
+@@ -176,19 +196,24 @@
+         hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
+         funcs: Map<String, FuncDecl> = emptyMap(),
+         useVM: Boolean = true,
++        fallbackPolicy: VMFallbackPolicy = VMFallbackPolicy.COMPILE_FAILURE,
++        onExecution: ((VMExecutionReport) -> Unit)? = null,
+     ): VMExec {
+-        return VMExec(ir, tracer, hostFns, hostFnMeta, funcs)
+-    }
+-
+-    /** Create a VM-enabled evaluator with fallback capability */
++        return VMExec(ir, tracer, hostFns, hostFnMeta, funcs,
++            fallbackPolicy = fallbackPolicy, useVM = useVM, onExecution = onExecution)
++    }
++
++    /** Create an evaluator with explicit compilation fallback and execution evidence. */
+     fun createEvaluator(
+         funcs: Map<String, FuncDecl> = emptyMap(),
+         hostFns: Map<String, (List<Any?>) -> Any?> = emptyMap(),
+         hostFnMeta: Map<String, HostFnMetadata> = emptyMap(),
+         tracer: Tracer? = null,
+         useVM: Boolean = true,
++        fallbackPolicy: VMFallbackPolicy = VMFallbackPolicy.COMPILE_FAILURE,
++        onExecution: ((VMExecutionReport) -> Unit)? = null,
+     ): VMEval {
+-        return VMEval(funcs, hostFns, hostFnMeta, tracer)
++        return VMEval(funcs, hostFns, hostFnMeta, tracer, fallbackPolicy, useVM, onExecution)
+     }
+ 
+     /** Get VM compilation statistics for performance monitoring */
+@@ -237,6 +262,7 @@
+ /** Configuration for VM behavior */
+ data class VMConfig(
+     val enableVM: Boolean = true,
++    @Deprecated("Unused legacy option. Configure VMExec/VMEval with VMFallbackPolicy; runtime errors never fall back.")
+     val fallbackOnError: Boolean = true,
+     val enableOptimizations: Boolean = true,
+     val maxStackSize: Int = 10000,

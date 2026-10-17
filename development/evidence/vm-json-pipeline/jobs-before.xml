@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.github.ehlyzov.branchline.cli.CompiledFanoutIsolationTest" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-10-17T08:49:10.242Z" hostname="Stargate.local" time="0.245">
+  <properties/>
+  <testcase name="overlappingCompiledWorkersKeepTheirOwnEnvironmentAndStack()[jvm]" classname="io.github.ehlyzov.branchline.cli.CompiledFanoutIsolationTest" time="0.245">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;[{&quot;path&quot;:&quot;a.json&quot;,&quot;resource&quot;:&quot;items&quot;,&quot;value&quot;:11,&quot;key&quot;:&quot;a.json&quot;},{&quot;path&quot;:&quot;b.json&quot;,&quot;resource&quot;:&quot;items&quot;,&quot;value&quot;:22,&quot;key&quot;:&quot;b.json&quot;}]&#10;&gt; but was: &lt;[{&quot;path&quot;:&quot;a.json&quot;,&quot;resource&quot;:&quot;items&quot;,&quot;value&quot;:22,&quot;key&quot;:&quot;b.json&quot;},{&quot;path&quot;:&quot;b.json&quot;,&quot;resource&quot;:&quot;items&quot;,&quot;value&quot;:22,&quot;key&quot;:&quot;b.json&quot;}]&#10;&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;[{&quot;path&quot;:&quot;a.json&quot;,&quot;resource&quot;:&quot;items&quot;,&quot;value&quot;:11,&quot;key&quot;:&quot;a.json&quot;},{&quot;path&quot;:&quot;b.json&quot;,&quot;resource&quot;:&quot;items&quot;,&quot;value&quot;:22,&quot;key&quot;:&quot;b.json&quot;}]
+&gt; but was: &lt;[{&quot;path&quot;:&quot;a.json&quot;,&quot;resource&quot;:&quot;items&quot;,&quot;value&quot;:22,&quot;key&quot;:&quot;b.json&quot;},{&quot;path&quot;:&quot;b.json&quot;,&quot;resource&quot;:&quot;items&quot;,&quot;value&quot;:22,&quot;key&quot;:&quot;b.json&quot;}]
+&gt;
+	at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at app//org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+	at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:182)
+	at app//org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1156)
+	at app//kotlin.test.junit5.JUnit5Asserter.assertEquals(JUnitSupport.kt:32)
+	at app//kotlin.test.AssertionsKt__AssertionsKt.assertEquals(Assertions.kt:63)
+	at app//kotlin.test.AssertionsKt.assertEquals(Unknown Source)
+	at app//kotlin.test.AssertionsKt__AssertionsKt.assertEquals$default(Assertions.kt:62)
+	at app//kotlin.test.AssertionsKt.assertEquals$default(Unknown Source)
+	at app//io.github.ehlyzov.branchline.cli.CompiledFanoutIsolationTest.overlappingCompiledWorkersKeepTheirOwnEnvironmentAndStack(CompiledFanoutIsolationTest.kt:58)
+	at java.base@21.0.11/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base@21.0.11/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base@21.0.11/java.util.ArrayList.forEach(ArrayList.java:1596)
+</failure>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

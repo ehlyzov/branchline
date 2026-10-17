@@ -1,0 +1,6 @@
+fun transform(input: Any?): Any? {
+    val root = input as? Map<*, *> ?: emptyMap<Any?, Any?>()
+    val label = (root["label"] as? String ?: "").trim().lowercase()
+    return mapOf("label" to label)
+}
+

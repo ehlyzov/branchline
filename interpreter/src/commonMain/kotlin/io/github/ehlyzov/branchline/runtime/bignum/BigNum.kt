@@ -22,6 +22,7 @@ expect fun BLBigInt.toInt(): Int
 expect fun BLBigInt.toLong(): Long
 expect fun BLBigInt.bitLength(): Int
 expect fun BLBigInt.toBLBigDec(): BLBigDec
+expect fun BLBigInt.powNonNegative(exponent: Int): BLBigInt
 
 // --- BLBigDec ---
 expect fun blBigDecOfLong(v: Long): BLBigDec
@@ -41,6 +42,8 @@ expect fun BLBigDec.signum(): Int
 expect fun BLBigDec.floor(): BLBigInt
 expect fun BLBigDec.ceil(): BLBigInt
 expect fun BLBigDec.roundHalfEven(scale: Int): BLBigDec
+expect fun BLBigDec.powIntegral(exponent: Int): BLBigDec
+expect fun BLBigDec.sqrtDecimal(): BLBigDec
 
 
 // Shared constants to avoid allocations in hot paths

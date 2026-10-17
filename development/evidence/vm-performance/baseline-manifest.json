@@ -1,0 +1,7 @@
+{
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt": "12feb2aa02dcf75ce3a0eaa6bdda6db63dd672996d53d27c252f97e33f0d5344",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Compiler.kt": "bc81d81b309e243a15f81df29b5dc148218bcd39350a6b4a1165e8938980fe56",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Integration.kt": "78e22abcdd11bbde952725b6c785a02c1f82a748e47604ddf26ac8e8e3eb2e06",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Instruction.kt": "9bc426e0435693816b2f440af95f8e9ba8e9fe0418ae45c59bfef9c9cb749fa4",
+  "vm-benchmarks/build/libs/vm-benchmarks-v0.11.0-SNAPSHOT-jmh.jar": "31d309fe21ca080b092fbc9534bf63d9b2a348ca7485b309343a2877ab03e637"
+}

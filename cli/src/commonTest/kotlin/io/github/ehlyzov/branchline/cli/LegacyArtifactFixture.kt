@@ -1,0 +1,7 @@
+package io.github.ehlyzov.branchline.cli
+
+// Exact output of the ce58599 old CLI writer; duplicated for common JVM/Node tests.
+// Source and original bytes: jvmTest/resources/fixtures/compatibility/legacy-hello.{bl,blc}.
+internal object LegacyArtifactFixture {
+    const val JSON: String = "{\"transform\":\"LegacyHello\",\"script\":\"TRANSFORM LegacyHello {\\n    OUTPUT { greeting: \\\"Hello, \\\" + input.name }\\n}\\n\",\"bytecode\":{\"instructions\":[{\"op\":\"PUSH\",\"value\":{\"t\":\"str\",\"s\":\"greeting\"}},{\"op\":\"PUSH\",\"value\":{\"t\":\"str\",\"s\":\"Hello, \"}},{\"op\":\"LOAD_VAR\",\"s\":\"input\"},{\"op\":\"ACCESS_STATIC\",\"key\":\"name\"},{\"op\":\"ADD\"},{\"op\":\"OUTPUT_1\"}]},\"contract\":{\"input\":{\"root\":{\"required\":true,\"kind\":\"OBJECT\",\"children\":{\"name\":{\"required\":false,\"kind\":\"ANY\"}}},\"obligations\":[],\"opaqueRegions\":[]},\"output\":{\"root\":{\"required\":true,\"kind\":\"OBJECT\",\"children\":{\"greeting\":{\"required\":true,\"kind\":\"TEXT\",\"origin\":\"OUTPUT\"}},\"origin\":\"OUTPUT\"},\"obligations\":[],\"mayEmitNull\":false,\"opaqueRegions\":[]},\"source\":\"INFERRED\",\"metadata\":{\"satisfiability\":{\"checked\":true}}}}"
+}

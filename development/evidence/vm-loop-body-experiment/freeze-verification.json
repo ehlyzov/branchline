@@ -1,0 +1,19 @@
+{
+  "sourceFilesChecked": 77,
+  "changedSourceFiles": [],
+  "jarHashMatches": true,
+  "stateCounts": {
+    "old-baseline": 3,
+    "forward": 24,
+    "reverse": 12,
+    "preparation": 8,
+    "fallback": 4,
+    "profile-after-loopBody": 1
+  },
+  "validatedPrimaryForks": {
+    "forward": 48,
+    "reverse": 24
+  },
+  "successfulSerialCommands": 30,
+  "memoryProcesses": 24
+}

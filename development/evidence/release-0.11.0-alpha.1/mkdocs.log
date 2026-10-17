@@ -1,0 +1,10 @@
+INFO    -  Cleaning site directory
+INFO    -  Building documentation to directory: /Users/eugene/repo/research/branchline-public/site
+INFO    -  The following pages exist in the docs directory, but are not included in the "nav" configuration:
+  - benchmarks/jsonata/latest.md
+  - benchmarks/jsonata/releases/list.md
+  - language/ai-canonical-subset.md
+  - language/io-contracts.md
+INFO    -  Doc file 'benchmarks.md' contains an unrecognized relative link 'releases/', it was left as is. Did you mean 'benchmarks/releases/index.md'?
+INFO    -  Doc file 'benchmarks/jsonata.md' contains an unrecognized relative link 'releases/', it was left as is. Did you mean 'releases/index.md'?
+INFO    -  Documentation built in 0.46 seconds

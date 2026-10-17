@@ -8,10 +8,20 @@ on:
         required: false
         type: string
         default: ''
+      expected_version:
+        description: 'Optional canonical package version required at the selected ref'
+        required: false
+        type: string
+        default: ''
   workflow_call:
     inputs:
       ref:
         description: 'Git ref (branch, tag, or SHA) to deploy'
+        required: false
+        type: string
+        default: ''
+      expected_version:
+        description: 'Optional canonical package version required at the selected ref'
         required: false
         type: string
         default: ''
@@ -34,13 +44,6 @@ jobs:
         with:
           ref: ${{ inputs.ref || github.sha }}
 
-      - name: Debug - Event context
-        run: |
-          echo "event_name=${{ github.event_name }}"
-          echo "ref=${{ github.ref }}"
-          echo "sha=${{ github.sha }}"
-          echo "ref_input=${{ inputs.ref }}"
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -49,6 +52,34 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
+
+      - name: Bind deployment metadata to checkout
+        shell: bash
+        env:
+          REQUESTED_REF: ${{ inputs.ref }}
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
+        run: |
+          set -euo pipefail
+          build_sha=$(git rev-parse HEAD)
+          package_version=$(./gradlew --no-daemon -q printReleaseVersion)
+          [[ "$package_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "Invalid canonical version" >&2; exit 1; }
+          if [[ "$REQUESTED_REF" =~ ^[0-9a-f]{40}$ && "$REQUESTED_REF" != "$build_sha" ]]; then
+            echo "Deployment checkout differs from requested build SHA" >&2; exit 1
+          fi
+          if [[ -n "$EXPECTED_VERSION" && "$EXPECTED_VERSION" != "$package_version" ]]; then
+            echo "Deployment version $package_version differs from release $EXPECTED_VERSION" >&2; exit 1
+          fi
+          echo "BUILD_SHA=$build_sha" >> "$GITHUB_ENV"
+          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
+          {
+            echo '# Deployed build'
+            echo
+            echo "Version: v$package_version"
+            echo
+            echo "Source commit: [$build_sha](https://github.com/$GITHUB_REPOSITORY/commit/$build_sha)"
+            echo
+            echo "Workflow: [run $GITHUB_RUN_ID](https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)"
+          } > docs/build-info.md
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -193,6 +224,15 @@ jobs:
 
       - name: Build documentation with MkDocs
         run: mkdocs build --site-dir site
+
+      - name: Write public deployment metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -n --arg version "$PACKAGE_VERSION" --arg sha "$BUILD_SHA" --arg run "$GITHUB_RUN_ID" \
+            '{version:$version,sha:$sha,workflow_run:$run}' > site/release-metadata.json
+          test -s site/build-info/index.html
+          echo "Deployed version v$PACKAGE_VERSION from $BUILD_SHA" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

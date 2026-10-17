@@ -1,0 +1,3 @@
+TRANSFORM Main {
+OUTPUT {rows: MAP([{field: "q"}], (x) -> {field: x.field})}
+}

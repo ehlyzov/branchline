@@ -1,0 +1,22 @@
+{
+  "sourceFilesChecked": 68,
+  "changedSourceFiles": [],
+  "jarHashMatches": true,
+  "jmhStateCounts": {
+    "old-baseline": 3,
+    "forward": 24,
+    "reverse": 12,
+    "preparation": 8,
+    "fallback": 4
+  },
+  "validatedPrimaryForks": {
+    "forward": 48,
+    "reverse": 24
+  },
+  "successfulSerialCommands": 29,
+  "memoryProcesses": 24,
+  "additionalBaselineDiagnostic": {
+    "baseline-check-current": 1,
+    "baseline-check-before": 4
+  }
+}

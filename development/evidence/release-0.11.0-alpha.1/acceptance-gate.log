@@ -1,0 +1,551 @@
+> Task :assemble UP-TO-DATE
+> Task :check UP-TO-DATE
+> Task :build UP-TO-DATE
+> Task :cli:kmpPartiallyResolvedDependenciesChecker
+> Task :cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cli:generateCliVersion UP-TO-DATE
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:transformCommonMainDependenciesMetadata UP-TO-DATE
+> Task :interpreter:compileCommonMainKotlinMetadata UP-TO-DATE
+> Task :interpreter:generateProjectStructureMetadata UP-TO-DATE
+> Task :interpreter:metadataCommonMainProcessResources NO-SOURCE
+> Task :interpreter:metadataCommonMainClasses UP-TO-DATE
+> Task :interpreter:allMetadataJar UP-TO-DATE
+> Task :interpreter:exportCommonSourceSetsMetadataLocationsForMetadataApiElements UP-TO-DATE
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:transformCommonMainDependenciesMetadata UP-TO-DATE
+> Task :vm:compileCommonMainKotlinMetadata UP-TO-DATE
+> Task :interpreter:exportRootPublicationCoordinatesForMetadataApiElements UP-TO-DATE
+> Task :vm:generateProjectStructureMetadata UP-TO-DATE
+> Task :vm:metadataCommonMainProcessResources NO-SOURCE
+> Task :vm:metadataCommonMainClasses UP-TO-DATE
+> Task :vm:allMetadataJar UP-TO-DATE
+> Task :vm:exportCommonSourceSetsMetadataLocationsForMetadataApiElements UP-TO-DATE
+> Task :cli:transformCommonMainDependenciesMetadata UP-TO-DATE
+> Task :cli:compileCommonMainKotlinMetadata UP-TO-DATE
+> Task :vm:exportRootPublicationCoordinatesForMetadataApiElements UP-TO-DATE
+> Task :cli:generateProjectStructureMetadata UP-TO-DATE
+> Task :cli:metadataCommonMainProcessResources NO-SOURCE
+> Task :cli:metadataCommonMainClasses UP-TO-DATE
+> Task :cli:allMetadataJar UP-TO-DATE
+> Task :interpreter:compileKotlinJs UP-TO-DATE
+> Task :vm:compileKotlinJs UP-TO-DATE
+> Task :cli:compileKotlinJs UP-TO-DATE
+> Task :cli:jsProcessResources NO-SOURCE
+> Task :cli:jsMainClasses UP-TO-DATE
+> Task :cli:compileProductionExecutableKotlinJs UP-TO-DATE
+> Task :kotlinKotlinNpmCachesSetup
+> Task :interpreter:jsPackageJson UP-TO-DATE
+> Task :vm:jsPackageJson UP-TO-DATE
+> Task :cli:jsPackageJson UP-TO-DATE
+> Task :cli:jsPublicPackageJson UP-TO-DATE
+> Task :cli:jsJar UP-TO-DATE
+> Task :cli:jsProductionExecutableCompileSync UP-TO-DATE
+> Task :interpreter:compileKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmProcessResources UP-TO-DATE
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :interpreter:jvmMainClasses UP-TO-DATE
+> Task :interpreter:jvmJar UP-TO-DATE
+> Task :vm:compileKotlinJvm UP-TO-DATE
+> Task :vm:compileJvmMainJava NO-SOURCE
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :vm:jvmMainClasses UP-TO-DATE
+> Task :vm:jvmJar UP-TO-DATE
+> Task :cli:compileKotlinJvm UP-TO-DATE
+> Task :cli:compileJvmMainJava NO-SOURCE
+> Task :cli:jvmProcessResources NO-SOURCE
+> Task :cli:processJvmMainResources SKIPPED
+> Task :cli:jvmMainClasses UP-TO-DATE
+> Task :cli:jvmJar UP-TO-DATE
+> Task :cli:prepareJsCliPackage UP-TO-DATE
+> Task :cli:packageJsCli UP-TO-DATE
+> Task :cli:assemble UP-TO-DATE
+> Task :kotlinNodeJsSetup UP-TO-DATE
+> Task :kotlinRestoreYarnLock
+> Task :kotlinYarnSetup UP-TO-DATE
+> Task :cli:jsTestPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPackageJson UP-TO-DATE
+> Task :vm:jsTestPackageJson UP-TO-DATE
+> Task :cli:jsTestPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPublicPackageJson UP-TO-DATE
+> Task :vm:jsPublicPackageJson UP-TO-DATE
+> Task :vm:jsTestPublicPackageJson UP-TO-DATE
+> Task :kotlinPackageJsonUmbrella UP-TO-DATE
+> Task :rootPackageJson UP-TO-DATE
+> Task :kotlinNpmInstall UP-TO-DATE
+> Task :kotlinStoreYarnLock
+> Task :cli:compileTestKotlinJs UP-TO-DATE
+> Task :cli:jsTestProcessResources NO-SOURCE
+> Task :cli:jsTestClasses UP-TO-DATE
+> Task :cli:compileTestDevelopmentExecutableKotlinJs UP-TO-DATE
+> Task :cli:jsTestTestDevelopmentExecutableCompileSync UP-TO-DATE
+> Task :cli:kotlinNodeJsSetup UP-TO-DATE
+> Task :cli:jsNodeTest
+> Task :cli:jsTest
+> Task :cli:compileTestKotlinJvm UP-TO-DATE
+> Task :cli:compileJvmTestJava NO-SOURCE
+> Task :cli:jvmTestProcessResources UP-TO-DATE
+> Task :cli:processJvmTestResources SKIPPED
+> Task :cli:jvmTestClasses UP-TO-DATE
+> Task :cli:jvmTest UP-TO-DATE
+> Task :cli:allTests
+> Task :cli:detekt NO-SOURCE
+> Task :cli:jvmTestJacocoCoverageVerification UP-TO-DATE
+> Task :cli:check
+> Task :cli:build
+> Task :conformance-tests:kmpPartiallyResolvedDependenciesChecker
+> Task :conformance-tests:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :conformance-tests:transformCommonMainDependenciesMetadata UP-TO-DATE
+> Task :conformance-tests:compileCommonMainKotlinMetadata NO-SOURCE
+> Task :conformance-tests:generateProjectStructureMetadata UP-TO-DATE
+> Task :conformance-tests:metadataCommonMainProcessResources NO-SOURCE
+> Task :conformance-tests:metadataCommonMainClasses UP-TO-DATE
+> Task :conformance-tests:allMetadataJar UP-TO-DATE
+> Task :conformance-tests:compileKotlinJs NO-SOURCE
+> Task :conformance-tests:jsProcessResources NO-SOURCE
+> Task :conformance-tests:jsMainClasses UP-TO-DATE
+> Task :conformance-tests:jsJar UP-TO-DATE
+> Task :conformance-tests:compileKotlinJvm NO-SOURCE
+> Task :conformance-tests:compileJvmMainJava NO-SOURCE
+> Task :conformance-tests:jvmProcessResources NO-SOURCE
+> Task :conformance-tests:processJvmMainResources SKIPPED
+> Task :conformance-tests:jvmMainClasses UP-TO-DATE
+> Task :conformance-tests:jvmJar UP-TO-DATE
+> Task :conformance-tests:assemble UP-TO-DATE
+> Task :conformance-tests:compileTestKotlinJs UP-TO-DATE
+> Task :conformance-tests:jsTestProcessResources NO-SOURCE
+> Task :conformance-tests:jsTestClasses UP-TO-DATE
+> Task :conformance-tests:compileTestDevelopmentExecutableKotlinJs UP-TO-DATE
+> Task :conformance-tests:jsTestTestDevelopmentExecutableCompileSync UP-TO-DATE
+> Task :conformance-tests:kotlinNodeJsSetup UP-TO-DATE
+> Task :conformance-tests:jsNodeTest
+> Task :conformance-tests:jsTest
+> Task :test-fixtures:kmpPartiallyResolvedDependenciesChecker
+> Task :test-fixtures:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :test-fixtures:compileKotlinJvm UP-TO-DATE
+> Task :test-fixtures:compileJvmMainJava NO-SOURCE
+> Task :test-fixtures:jvmProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmMainResources SKIPPED
+> Task :test-fixtures:jvmMainClasses UP-TO-DATE
+> Task :test-fixtures:jvmJar UP-TO-DATE
+> Task :conformance-tests:compileTestKotlinJvm UP-TO-DATE
+> Task :conformance-tests:compileJvmTestJava NO-SOURCE
+> Task :conformance-tests:jvmTestProcessResources NO-SOURCE
+> Task :conformance-tests:processJvmTestResources SKIPPED
+> Task :conformance-tests:jvmTestClasses UP-TO-DATE
+> Task :conformance-tests:jvmTest UP-TO-DATE
+> Task :conformance-tests:allTests
+> Task :conformance-tests:detekt NO-SOURCE
+> Task :conformance-tests:jvmTestJacocoCoverageVerification SKIPPED
+> Task :conformance-tests:check
+> Task :conformance-tests:build
+> Task :examples:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :examples:compileKotlin UP-TO-DATE
+> Task :examples:compileJava NO-SOURCE
+> Task :examples:processResources NO-SOURCE
+> Task :examples:classes UP-TO-DATE
+> Task :examples:jar UP-TO-DATE
+> Task :examples:assemble UP-TO-DATE
+> Task :examples:detekt UP-TO-DATE
+> Task :examples:compileTestKotlin NO-SOURCE
+> Task :examples:compileTestJava NO-SOURCE
+> Task :examples:processTestResources NO-SOURCE
+> Task :examples:testClasses UP-TO-DATE
+> Task :examples:test NO-SOURCE
+> Task :examples:testJacocoCoverageVerification SKIPPED
+> Task :examples:check UP-TO-DATE
+> Task :examples:build UP-TO-DATE
+> Task :interpreter:jsProcessResources NO-SOURCE
+> Task :interpreter:jsMainClasses UP-TO-DATE
+> Task :interpreter:compileProductionExecutableKotlinJs UP-TO-DATE
+> Task :interpreter:compileProductionLibraryKotlinJs UP-TO-DATE
+> Task :interpreter:jsProductionLibraryCompileSync
+> Task :interpreter:jsProductionExecutableCompileSync
+
+> Task :interpreter:jsBrowserProductionWebpack
+asset size limit: The following asset(s) exceed the recommended size limit (244 KiB).
+This can impact web performance.
+Assets: 
+  interpreter.js (818 KiB)
+entrypoint size limit: The following entrypoint(s) combined asset size exceeds the recommended limit (244 KiB). This can impact web performance.
+Entrypoints:
+  main (818 KiB)
+      interpreter.js
+webpack performance recommendations: 
+You can limit the size of your bundles by using import() or require.ensure to lazy load some parts of your application.
+For more info visit https://webpack.js.org/guides/code-splitting/
+asset interpreter.js 818 KiB [emitted] [minimized] [big] (name: main) 1 related asset
+./kotlin/branchline-interpreter.js 1.54 MiB [built] [code generated] [30 warnings]
+./kotlin/kotlin-kotlin-stdlib.js 550 KiB [built] [code generated] [164 warnings]
+./kotlin/kotlinx-serialization-kotlinx-serialization-core.js 233 KiB [built] [code generated] [64 warnings]
+./kotlin/kotlinx-serialization-kotlinx-serialization-json.js 196 KiB [built] [code generated] [51 warnings]
+./kotlin/Kotlin-Immutable-Collections-kotlinx-collections-immutable.js 47 KiB [built] [code generated] [20 warnings]
+./kotlin/kotlinx-coroutines-core.js 154 KiB [built] [code generated] [56 warnings]
+./kotlin/kotlinx-atomicfu.js 9.44 KiB [built] [code generated] [4 warnings]
+webpack 5.101.3 compiled with 3 warnings in 9140 ms
+
+> Task :interpreter:jsBrowserDistribution
+> Task :interpreter:jsBrowserProductionLibraryDistribution UP-TO-DATE
+> Task :interpreter:jsJar UP-TO-DATE
+> Task :interpreter:jsNodeProductionLibraryDistribution UP-TO-DATE
+> Task :interpreter:assemble
+> Task :interpreter:compileTestKotlinJs UP-TO-DATE
+> Task :interpreter:jsTestProcessResources NO-SOURCE
+> Task :interpreter:jsTestClasses UP-TO-DATE
+> Task :interpreter:compileTestDevelopmentExecutableKotlinJs UP-TO-DATE
+> Task :interpreter:jsTestTestDevelopmentExecutableCompileSync UP-TO-DATE
+> Task :interpreter:kotlinNodeJsSetup UP-TO-DATE
+
+> Task :interpreter:jsBrowserTest
+> Task :interpreter:jsNodeTest
+> Task :interpreter:jsTest
+> Task :interpreter:compileTestKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmTestJava NO-SOURCE
+> Task :interpreter:jvmTestProcessResources UP-TO-DATE
+> Task :interpreter:processJvmTestResources SKIPPED
+> Task :interpreter:jvmTestClasses UP-TO-DATE
+> Task :interpreter:jvmTest UP-TO-DATE
+> Task :interpreter:allTests
+> Task :interpreter:detekt NO-SOURCE
+> Task :interpreter:jvmTestJacocoCoverageVerification UP-TO-DATE
+> Task :interpreter:check
+> Task :interpreter:build
+> Task :interpreter-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter-benchmarks:compileKotlin NO-SOURCE
+> Task :interpreter-benchmarks:compileJava NO-SOURCE
+> Task :interpreter-benchmarks:processResources NO-SOURCE
+> Task :interpreter-benchmarks:classes UP-TO-DATE
+> Task :interpreter-benchmarks:jar UP-TO-DATE
+> Task :interpreter-benchmarks:assemble UP-TO-DATE
+> Task :interpreter-benchmarks:detekt NO-SOURCE
+> Task :interpreter-benchmarks:compileTestKotlin NO-SOURCE
+> Task :interpreter-benchmarks:compileTestJava NO-SOURCE
+> Task :interpreter-benchmarks:processTestResources NO-SOURCE
+> Task :interpreter-benchmarks:testClasses UP-TO-DATE
+> Task :interpreter-benchmarks:test NO-SOURCE
+> Task :interpreter-benchmarks:testJacocoCoverageVerification SKIPPED
+> Task :interpreter-benchmarks:check UP-TO-DATE
+> Task :interpreter-benchmarks:build UP-TO-DATE
+> Task :jsonata-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :jsonata-benchmarks:compileKotlin NO-SOURCE
+> Task :jsonata-benchmarks:compileJava NO-SOURCE
+> Task :jsonata-benchmarks:processResources NO-SOURCE
+> Task :jsonata-benchmarks:classes UP-TO-DATE
+> Task :jsonata-benchmarks:jar UP-TO-DATE
+> Task :jsonata-benchmarks:assemble UP-TO-DATE
+> Task :jsonata-benchmarks:detekt NO-SOURCE
+> Task :jsonata-benchmarks:compileTestKotlin NO-SOURCE
+> Task :jsonata-benchmarks:compileTestJava NO-SOURCE
+> Task :jsonata-benchmarks:processTestResources NO-SOURCE
+> Task :jsonata-benchmarks:testClasses UP-TO-DATE
+> Task :jsonata-benchmarks:test NO-SOURCE
+> Task :jsonata-benchmarks:testJacocoCoverageVerification SKIPPED
+> Task :jsonata-benchmarks:check UP-TO-DATE
+> Task :jsonata-benchmarks:build UP-TO-DATE
+> Task :test-fixtures:generateProjectStructureMetadata UP-TO-DATE
+> Task :test-fixtures:allMetadataJar UP-TO-DATE
+> Task :test-fixtures:assemble UP-TO-DATE
+> Task :test-fixtures:compileTestKotlinJvm NO-SOURCE
+> Task :test-fixtures:compileJvmTestJava NO-SOURCE
+> Task :test-fixtures:jvmTestProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmTestResources SKIPPED
+> Task :test-fixtures:jvmTestClasses UP-TO-DATE
+> Task :test-fixtures:jvmTest NO-SOURCE
+> Task :test-fixtures:allTests NO-SOURCE
+> Task :test-fixtures:detekt NO-SOURCE
+> Task :test-fixtures:jvmTestJacocoCoverageVerification SKIPPED
+> Task :test-fixtures:check UP-TO-DATE
+> Task :test-fixtures:build UP-TO-DATE
+> Task :vm:jsProcessResources NO-SOURCE
+> Task :vm:jsMainClasses UP-TO-DATE
+> Task :vm:compileProductionLibraryKotlinJs UP-TO-DATE
+> Task :vm:jsProductionLibraryCompileSync UP-TO-DATE
+> Task :vm:jsJar UP-TO-DATE
+> Task :vm:jsNodeProductionLibraryDistribution UP-TO-DATE
+> Task :vm:assemble UP-TO-DATE
+> Task :vm:compileTestKotlinJs UP-TO-DATE
+> Task :vm:jsTestProcessResources NO-SOURCE
+> Task :vm:jsTestClasses UP-TO-DATE
+> Task :vm:compileTestDevelopmentExecutableKotlinJs UP-TO-DATE
+> Task :vm:jsTestTestDevelopmentExecutableCompileSync UP-TO-DATE
+> Task :vm:kotlinNodeJsSetup UP-TO-DATE
+> Task :vm:jsNodeTest
+> Task :vm:jsTest
+> Task :vm:compileTestKotlinJvm UP-TO-DATE
+> Task :vm:compileJvmTestJava NO-SOURCE
+> Task :vm:jvmTestProcessResources NO-SOURCE
+> Task :vm:processJvmTestResources SKIPPED
+> Task :vm:jvmTestClasses UP-TO-DATE
+> Task :vm:jvmTest UP-TO-DATE
+> Task :vm:allTests
+> Task :vm:detekt NO-SOURCE
+> Task :vm:jvmTestJacocoCoverageVerification UP-TO-DATE
+> Task :vm:check
+> Task :vm:build
+> Task :vm-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm-benchmarks:compileKotlin NO-SOURCE
+> Task :vm-benchmarks:compileJava NO-SOURCE
+> Task :vm-benchmarks:processResources NO-SOURCE
+> Task :vm-benchmarks:classes UP-TO-DATE
+> Task :vm-benchmarks:jar UP-TO-DATE
+> Task :vm-benchmarks:assemble UP-TO-DATE
+> Task :vm-benchmarks:detekt NO-SOURCE
+> Task :vm-benchmarks:compileTestKotlin NO-SOURCE
+> Task :vm-benchmarks:compileTestJava NO-SOURCE
+> Task :vm-benchmarks:processTestResources NO-SOURCE
+> Task :vm-benchmarks:testClasses UP-TO-DATE
+> Task :vm-benchmarks:compileJmhKotlin UP-TO-DATE
+> Task :vm-benchmarks:compileJmhJava NO-SOURCE
+> Task :vm-benchmarks:processJmhResources NO-SOURCE
+> Task :vm-benchmarks:jmhClasses UP-TO-DATE
+> Task :vm-benchmarks:jmhRunBytecodeGenerator UP-TO-DATE
+> Task :vm-benchmarks:jmhCompileGeneratedClasses UP-TO-DATE
+> Task :vm-benchmarks:jmhJar UP-TO-DATE
+> Task :vm-benchmarks:test NO-SOURCE
+> Task :vm-benchmarks:testJacocoCoverageVerification SKIPPED
+> Task :vm-benchmarks:check UP-TO-DATE
+> Task :vm-benchmarks:build UP-TO-DATE
+> Task :cli:blShadowJar UP-TO-DATE
+> Task :interpreter:packageInterpreterJs UP-TO-DATE
+
+> Task :playgroundBuildAssets
+
+> branchline-playground@0.1.0 prebuild
+> npm run test
+
+
+> branchline-playground@0.1.0 test
+> npm run test:worker-deps && npm run test:catalog
+
+
+> branchline-playground@0.1.0 test:worker-deps
+> node scripts/check-worker-deps.mjs
+
+
+> branchline-playground@0.1.0 test:catalog
+> node scripts/test-catalog-metadata.mjs
+
+
+> branchline-playground@0.1.0 build
+> vite build
+
+vite v5.4.19 building for production...
+transforming...
+✓ 1030 modules transformed.
+rendering chunks...
+computing gzip size...
+../docs/assets/kotlinx-atomicfu-BSNc5mN0.js                                                9.71 kB
+../docs/assets/worker-DOf-Pqko.js                                                         33.88 kB
+../docs/assets/Kotlin-Immutable-Collections-kotlinx-collections-immutable-BglXLCZ8.js     48.23 kB
+../docs/assets/codicon-BuT2v_Yt.ttf                                                       73.62 kB
+../docs/assets/kotlinx-coroutines-core-CQ0gz9rD.js                                       157.91 kB
+../docs/assets/kotlinx-serialization-kotlinx-serialization-json-DP9Nqa6o.js              200.66 kB
+../docs/assets/editor.worker-C4qD9iaR.js                                                 206.03 kB
+../docs/assets/kotlinx-serialization-kotlinx-serialization-core-D6yhGdgs.js              238.74 kB
+../docs/assets/json.worker-C_HCpiFT.js                                                   334.64 kB
+../docs/assets/kotlin-kotlin-stdlib-DfKXMCa-.js                                          563.20 kB
+../docs/assets/html.worker-_U-CPHQH.js                                                   639.94 kB
+../docs/assets/css.worker-CDSyweY2.js                                                    979.63 kB
+../docs/assets/branchline-interpreter-B5vFnEe3.js                                      1,610.60 kB
+../docs/assets/ts.worker-CL8b2J3x.js                                                   4,843.29 kB
+../docs/assets/playground.css                                                            122.57 kB │ gzip:  20.36 kB
+../docs/assets/azcli-Cm1gPPnX.js                                                           1.09 kB │ gzip:   0.46 kB
+../docs/assets/javascript-6r-zMatO.js                                                      1.18 kB │ gzip:   0.62 kB
+../docs/assets/ini-B719tGyG.js                                                             1.35 kB │ gzip:   0.68 kB
+../docs/assets/csp-B5IIhv8k.js                                                             1.67 kB │ gzip:   0.67 kB
+../docs/assets/pla-bF30Iapc.js                                                             1.93 kB │ gzip:   0.79 kB
+../docs/assets/scheme-BHt3MzEA.js                                                          2.01 kB │ gzip:   0.95 kB
+../docs/assets/flow9-AEQshvhh.js                                                           2.06 kB │ gzip:   0.99 kB
+../docs/assets/sb-CV1PWFlv.js                                                              2.08 kB │ gzip:   0.97 kB
+../docs/assets/bat-BYw6E0Ua.js                                                             2.09 kB │ gzip:   1.00 kB
+../docs/assets/dockerfile-CvV0JpdB.js                                                      2.12 kB │ gzip:   0.81 kB
+../docs/assets/pascaligo-DPq2B53E.js                                                       2.25 kB │ gzip:   1.05 kB
+
+../docs/assets/lua-BUg8PE89.js                                                             2.37 kB │ gzip:   1.06 kB
+(!) Some chunks are larger than 500 kB after minification. Consider:
+../docs/assets/cameligo-CYYdQlmW.js                                                        2.43 kB │ gzip:   1.10 kB
+- Using dynamic import() to code-split the application
+../docs/assets/graphql-39dqmx7o.js                                                         2.51 kB │ gzip:   1.16 kB
+../docs/assets/objective-c-nNA-GR0f.js                                                     2.65 kB │ gzip:   1.20 kB
+../docs/assets/xml-cqcF-WsF.js                                                             2.67 kB │ gzip:   1.10 kB
+../docs/assets/lexon-8mPwc9k2.js                                                           2.68 kB │ gzip:   1.07 kB
+../docs/assets/bicep-B_uW6Jv_.js                                                           2.78 kB │ gzip:   1.10 kB
+../docs/assets/sparql-CXJ5el1F.js                                                          2.80 kB │ gzip:   1.30 kB
+../docs/assets/mips-D2YrU1Sw.js                                                            2.83 kB │ gzip:   1.22 kB
+../docs/assets/go-CRwsPLcw.js                                                              2.90 kB │ gzip:   1.28 kB
+../docs/assets/sophia-B_FgZ0zH.js                                                          3.01 kB │ gzip:   1.34 kB
+../docs/assets/m3-CZYtcnYp.js                                                              3.06 kB │ gzip:   1.44 kB
+../docs/assets/qsharp-DObvcX4m.js                                                          3.18 kB │ gzip:   1.50 kB
+../docs/assets/fsharp-DzYUAVqN.js                                                          3.23 kB │ gzip:   1.46 kB
+../docs/assets/pascal-DKQTL77L.js                                                          3.24 kB │ gzip:   1.54 kB
+../docs/assets/shell-DlLZ5zny.js                                                           3.32 kB │ gzip:   1.35 kB
+../docs/assets/r-Ck_113CT.js                                                               3.38 kB │ gzip:   1.42 kB
+../docs/assets/java-h4tgSL4W.js                                                            3.47 kB │ gzip:   1.53 kB
+../docs/assets/powershell-Ce3rdjqq.js                                                      3.52 kB │ gzip:   1.51 kB
+../docs/assets/cypher-gxnwWazi.js                                                          3.63 kB │ gzip:   1.57 kB
+../docs/assets/kotlin-DfB4DWQy.js                                                          3.69 kB │ gzip:   1.61 kB
+../docs/assets/redis-Bcy2QCB7.js                                                           3.80 kB │ gzip:   1.62 kB
+../docs/assets/tcl-DaFCtE6u.js                                                             3.82 kB │ gzip:   1.50 kB
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+../docs/assets/coffee-Nf_h4bgT.js                                                          3.84 kB │ gzip:   1.45 kB
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+../docs/assets/hcl-Bahnh6Ro.js                                                             3.84 kB │ gzip:   1.62 kB
+../docs/assets/python-DrAdUI6V.js                                                          3.87 kB │ gzip:   1.72 kB
+../docs/assets/markdown-D3LZWhl1.js                                                        4.03 kB │ gzip:   1.52 kB
+../docs/assets/restructuredtext-CTfnBOLZ.js                                                4.14 kB │ gzip:   1.50 kB
+../docs/assets/less-BCn7-ZAZ.js                                                            4.14 kB │ gzip:   1.56 kB
+../docs/assets/apex-BdL6uPZq.js                                                            4.20 kB │ gzip:   1.90 kB
+../docs/assets/liquid-Ch3dxqm3.js                                                          4.21 kB │ gzip:   1.79 kB
+../docs/assets/yaml-BBz00lE7.js                                                            4.27 kB │ gzip:   1.64 kB
+../docs/assets/rust-CPu19iYF.js                                                            4.41 kB │ gzip:   1.96 kB
+../docs/assets/dart-D70jtXxv.js                                                            4.50 kB │ gzip:   1.78 kB
+../docs/assets/css-BU6h9q-I.js                                                             4.76 kB │ gzip:   1.52 kB
+../docs/assets/csharp-lP2xI47p.js                                                          4.77 kB │ gzip:   1.87 kB
+../docs/assets/pug-BctDudvM.js                                                             5.07 kB │ gzip:   1.78 kB
+../docs/assets/mdx-D-4MIWmh.js                                                             5.11 kB │ gzip:   1.58 kB
+../docs/assets/msdax-BdnSHm0N.js                                                           5.16 kB │ gzip:   2.10 kB
+../docs/assets/html-CX1lr-G0.js                                                            5.27 kB │ gzip:   1.52 kB
+../docs/assets/swift-Bkdre9ZU.js                                                           5.42 kB │ gzip:   2.21 kB
+../docs/assets/ecl-Mac8YBii.js                                                             5.59 kB │ gzip:   2.38 kB
+../docs/assets/typescript-CrNmJvjz.js                                                      5.66 kB │ gzip:   2.29 kB
+../docs/assets/cpp-BZTdQgcG.js                                                             5.72 kB │ gzip:   2.27 kB
+../docs/assets/vb-CpgKpByg.js                                                              6.04 kB │ gzip:   2.20 kB
+../docs/assets/twig-CmQ3H7X9.js                                                            6.22 kB │ gzip:   1.66 kB
+../docs/assets/scss-Bxf_hv0P.js                                                            6.66 kB │ gzip:   1.89 kB
+../docs/assets/handlebars-ChBGGrHu.js                                                      7.03 kB │ gzip:   1.74 kB
+../docs/assets/julia-NIkhCqHP.js                                                           7.34 kB │ gzip:   2.77 kB
+../docs/assets/scala-BWiz8_fP.js                                                           7.56 kB │ gzip:   2.23 kB
+../docs/assets/wgsl-BncoTIJu.js                                                            7.59 kB │ gzip:   2.90 kB
+../docs/assets/st-R6o8Ii4T.js                                                              7.64 kB │ gzip:   2.38 kB
+../docs/assets/systemverilog-DpL83YaQ.js                                                   7.85 kB │ gzip:   2.89 kB
+../docs/assets/postiats-tzaDkRC3.js                                                        8.10 kB │ gzip:   2.55 kB
+../docs/assets/php-wgVsjtMJ.js                                                             8.27 kB │ gzip:   2.20 kB
+../docs/assets/perl-C4hcZ3jH.js                                                            8.50 kB │ gzip:   3.24 kB
+../docs/assets/ruby-BbyVPY4Q.js                                                            8.75 kB │ gzip:   2.70 kB
+../docs/assets/razor-Ijp0Wsif.js                                                           9.03 kB │ gzip:   2.41 kB
+../docs/assets/protobuf-C6WFC_rq.js                                                        9.29 kB │ gzip:   2.20 kB
+../docs/assets/clojure-CWbhoo3z.js                                                         9.89 kB │ gzip:   3.74 kB
+../docs/assets/elixir-Dj_L2TzJ.js                                                         10.50 kB │ gzip:   2.65 kB
+../docs/assets/sql-CoxBcn1I.js                                                            10.54 kB │ gzip:   3.98 kB
+../docs/assets/mysql-Cc2briKk.js                                                          11.52 kB │ gzip:   4.20 kB
+../docs/assets/redshift-B5Zrd44R.js                                                       12.05 kB │ gzip:   4.46 kB
+../docs/assets/pgsql-mu-LnBwU.js                                                          13.71 kB │ gzip:   4.63 kB
+../docs/assets/abap-C4BJbVd8.js                                                           14.41 kB │ gzip:   5.47 kB
+../docs/assets/freemarker2-BKqoGJOZ.js                                                    16.35 kB │ gzip:   4.25 kB
+../docs/assets/powerquery-usc1X0mj.js                                                     17.19 kB │ gzip:   5.01 kB
+../docs/assets/solidity-Dr1_1gRD.js                                                       18.84 kB │ gzip:   4.58 kB
+../docs/assets/tsMode-BQcUB5oE.js                                                         23.18 kB │ gzip:   6.67 kB
+../docs/assets/cssMode-sACmp3Uq.js                                                        33.69 kB │ gzip:   8.91 kB
+../docs/assets/htmlMode-DUlbfBIn.js                                                       34.24 kB │ gzip:   9.03 kB
+../docs/assets/jsonMode-hQr9d7QC.js                                                       39.72 kB │ gzip:  11.06 kB
+../docs/assets/playground.js                                                           3,345.99 kB │ gzip: 864.19 kB
+✓ built in 14.85s
+
+> Task :docsGenerate
+Using v5.36.6 version
+Prepare build input
+Prepare build runtime
+Collect project files info
+PROC toc.yaml
+Sync project data
+Process project files
+PROC index.md
+PROC language/index.md
+PROC language/lexical.md
+PROC language/declarations.md
+PROC language/statements.md
+PROC language/expressions.md
+PROC language/numeric.md
+PROC language/io-contracts.md
+PROC language/ai-canonical-subset.md
+PROC language/grammar.md
+PROC language/std-agg.md
+PROC language/std-arrays.md
+PROC language/std-core.md
+PROC language/std-debug.md
+PROC language/std-hof.md
+PROC language/std-strings.md
+PROC language/std-time.md
+PROC learn/index.md
+PROC learn/hello-transform.md
+PROC learn/paths-and-reshaping.md
+PROC learn/control-flow.md
+PROC learn/error-handling.md
+PROC learn/recipes.md
+PROC guides/index.md
+PROC guides/first-steps.md
+PROC guides/install.md
+PROC guides/getting-started.md
+PROC guides/examples.md
+PROC guides/cli.md
+PROC guides/for-each.md
+PROC guides/array-comprehension.md
+PROC guides/try-catch.md
+PROC guides/production-use.md
+PROC guides/migrations.md
+PROC guides/release-readiness.md
+PROC vm.md
+PROC benchmarks.md
+PROC benchmarks/releases/index.md
+PROC benchmarks/jsonata.md
+PROC benchmarks/jsonata/releases/index.md
+PROC playground.md
+WARN vm.md: 20: YFM001 / inline-code-length Inline code length [Expected: 100; Actual: 124] [Context: "compileStream(..., engine = ExecutionEngine.VM, vmFallbackPolicy = VMFallbackPolicy.NONE, onVMExecution = { report -> ... })"]
+INFO 0.374: Processing finished: language/index.md
+INFO 0.376: Processing finished: index.md
+INFO 0.374: Processing finished: language/declarations.md
+INFO 0.375: Processing finished: language/numeric.md
+INFO 0.375: Processing finished: language/lexical.md
+INFO 0.375: Processing finished: language/statements.md
+INFO 0.374: Processing finished: language/ai-canonical-subset.md
+INFO 0.374: Processing finished: language/io-contracts.md
+INFO 0.374: Processing finished: language/grammar.md
+INFO 0.375: Processing finished: language/expressions.md
+INFO 0.374: Processing finished: language/std-arrays.md
+INFO 0.375: Processing finished: language/std-agg.md
+INFO 0.375: Processing finished: language/std-hof.md
+INFO 0.375: Processing finished: language/std-time.md
+INFO 0.375: Processing finished: language/std-debug.md
+INFO 0.375: Processing finished: language/std-strings.md
+INFO 0.375: Processing finished: learn/index.md
+INFO 0.375: Processing finished: learn/control-flow.md
+INFO 0.375: Processing finished: language/std-core.md
+INFO 0.375: Processing finished: learn/hello-transform.md
+INFO 0.375: Processing finished: learn/recipes.md
+INFO 0.375: Processing finished: learn/paths-and-reshaping.md
+INFO 0.375: Processing finished: learn/error-handling.md
+INFO 0.375: Processing finished: guides/install.md
+INFO 0.374: Processing finished: guides/try-catch.md
+INFO 0.376: Processing finished: guides/first-steps.md
+INFO 0.376: Processing finished: guides/index.md
+INFO 0.376: Processing finished: guides/examples.md
+INFO 0.376: Processing finished: guides/getting-started.md
+INFO 0.375: Processing finished: guides/cli.md
+INFO 0.375: Processing finished: guides/for-each.md
+INFO 0.375: Processing finished: guides/production-use.md
+INFO 0.375: Processing finished: guides/array-comprehension.md
+INFO 0.375: Processing finished: guides/migrations.md
+INFO 0.375: Processing finished: guides/release-readiness.md
+INFO 0.375: Processing finished: benchmarks/releases/index.md
+INFO 0.375: Processing finished: benchmarks/jsonata/releases/index.md
+INFO 0.375: Processing finished: benchmarks.md
+INFO 0.375: Processing finished: vm.md
+INFO 0.375: Processing finished: playground.md
+INFO 0.375: Processing finished: benchmarks/jsonata.md
+Aggregate build artifacts
+Cleanup build results
+Build time: 536.095ms
+
+> Task :docsBuild
+
+BUILD SUCCESSFUL in 36s
+138 actionable tasks: 27 executed, 111 up-to-date

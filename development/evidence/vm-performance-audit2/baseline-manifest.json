@@ -1,0 +1,15 @@
+{
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/TraceMetadata.kt": "e2b2c22cb0755c2ea51a2aa4ec1d4292dd76e7a207ebf1edddbc8d0e6c9be8f9",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/BytecodeIO.kt": "7547a2935ceb83a9be4fee4d0e94c689562c8c48da00747972629b05df0cb0b6",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Integration.kt": "fc924adc2745866ebb59ed2227a6e5b8cd6dac8e93bebe876f9e907a7f2567a0",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VMLoop.kt": "01404a959af7e3aef55a68356ea5125e36ae8e7d80ec8e88f1b31b32433adc8f",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/ExpressionSnapshot.kt": "5e8ffe8cd8d222b5354775372c2172cf1d6e7ad0c08e8b9a614e55cce4c05b5f",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Instruction.kt": "5468137afb0f429e5cadcc43d2e49e82a8343094160e4ecf584a9c5f26a9c55b",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Compiler.kt": "772c8155a60f8e7bbeda65d938806bb512ca3ad57f7c38958f3b004a5af8522d",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Opcode.kt": "335c1b07a66108b9f4a11cb8c84ad7353d6182e35a8c28f091143ce196e14402",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VMException.kt": "74c5430bcbfcc45cc4659f6053b47693c19abeefdd36d65543fbfadc7bfb2111",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/BytecodeFormatter.kt": "503d7cde80ec47a914a3354ccf4b7b5955521ff0aa5ae08efb8cc8b89e211ab2",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Lambda.kt": "36280aa8728bffa39a7e32a3eb63c42769d51cfc4b4fcb590dd1193be9696076",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt": "70a84c36f3fa477a8326e5bd1df201c7f1fc7f75c82d1a101876afbe4c5aa0b0",
+  "vm-benchmarks/build/libs/vm-benchmarks-v0.11.0-SNAPSHOT-jmh.jar": "091c49ce7278eb5209ca157908bd6fa08ca525a476c59cb85486034771213c02"
+}

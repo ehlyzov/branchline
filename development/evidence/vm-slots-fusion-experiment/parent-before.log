@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.AssertionError: Snapshot VMExperimentalOptions(slots=true, fusion=false, collectDiagnostics=false) TRANSFORM T { LET acc = 0; FOR EACH r IN input.rows { SET acc = acc + r.v; } OUTPUT {value: acc} }
+	at FactorialAcceptance.check(FactorialAcceptance.java:22)
+	at FactorialAcceptance.main(FactorialAcceptance.java:34)

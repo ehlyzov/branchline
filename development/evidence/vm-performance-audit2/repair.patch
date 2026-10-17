@@ -1,0 +1,169 @@
+--- before/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt
++++ after/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt
+@@ -1150,9 +1150,19 @@
+         private val locals = HashMap<String, Any?>()
+         override val entries: MutableSet<MutableMap.MutableEntry<String, Any?>>
+             get() {
+-                val combined = LinkedHashMap<String, Any?>(parent.size + locals.size)
+-                combined.putAll(parent)
+-                combined.putAll(locals)
++                // Enumerating an overlay through size/putAll recursively
++                // materializes its ancestors multiple times at every level.
++                val layers = ArrayList<OverlayEnv>()
++                var base: Map<String, Any?> = this
++                while (base is OverlayEnv) {
++                    layers.add(base)
++                    base = base.parent
++                }
++                val combined = LinkedHashMap<String, Any?>()
++                combined.putAll(base)
++                for (index in layers.lastIndex downTo 0) {
++                    combined.putAll(layers[index].locals)
++                }
+                 return combined.entries
+             }
+         override fun put(key: String, value: Any?): Any? = locals.put(key, value)
+--- before/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Compiler.kt
++++ after/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/Compiler.kt
+@@ -63,6 +63,30 @@
+     // Roots created here and not yet observed outside compiler-proven writes.
+     // true denotes an array (also eligible for PRIVATE_ARRAY_APPEND).
+     private val privateCollections = mutableMapOf<String, Boolean>()
++    private data class PrivateCollectionChange(val name: String, val previous: Boolean?)
++    private val privateCollectionChanges = ArrayList<PrivateCollectionChange>()
++
++    private fun updatePrivateCollection(name: String, kind: Boolean?) {
++        val previous = privateCollections[name]
++        if (previous == kind) return
++        privateCollectionChanges.add(PrivateCollectionChange(name, previous))
++        if (kind == null) privateCollections.remove(name) else privateCollections[name] = kind
++    }
++
++    private fun clearPrivateCollections() {
++        for ((name, kind) in privateCollections) {
++            privateCollectionChanges.add(PrivateCollectionChange(name, kind))
++        }
++        privateCollections.clear()
++    }
++
++    private fun restorePrivateCollections(checkpoint: Int) {
++        while (privateCollectionChanges.size > checkpoint) {
++            val change = privateCollectionChanges.removeAt(privateCollectionChanges.lastIndex)
++            if (change.previous == null) privateCollections.remove(change.name)
++            else privateCollections[change.name] = change.previous
++        }
++    }
+ 
+     private data class UnresolvedJump(
+         val instructionIndex: Int,
+@@ -85,6 +109,7 @@
+         localIndexByName.clear()
+         hostNameToIndex.clear()
+         privateCollections.clear()
++        privateCollectionChanges.clear()
+ 
+         // Compile all IR nodes
+         compileNodes(irNodes)
+@@ -116,30 +141,35 @@
+      * Nested/path updates keep their ordinary copy semantics.
+      */
+     private fun compileNodes(nodes: List<IRNode>) {
+-        val outer = privateCollections.toMap()
+-        for (node in nodes) {
+-            invalidatePrivateCollections(node)
+-            compileNode(node)
+-            if (node is IRLet) {
+-                when (node.expr) {
+-                    is ArrayExpr -> privateCollections[node.name] = true
+-                    is ObjectExpr -> privateCollections[node.name] = false
+-                    else -> Unit
+-                }
+-            }
+-        }
+-        privateCollections.clear()
+-        privateCollections.putAll(outer)
++        // A scope restores only eligibility bindings that actually changed;
++        // unrelated private roots cost nothing when entering another branch.
++        val checkpoint = privateCollectionChanges.size
++        try {
++            for (node in nodes) {
++                invalidatePrivateCollections(node)
++                compileNode(node)
++                if (node is IRLet) {
++                    when (node.expr) {
++                        is ArrayExpr -> updatePrivateCollection(node.name, true)
++                        is ObjectExpr -> updatePrivateCollection(node.name, false)
++                        else -> Unit
++                    }
++                }
++            }
++        } finally {
++            restorePrivateCollections(checkpoint)
++        }
+     }
+ 
+     private fun invalidatePrivateCollections(node: IRNode) {
++        if (privateCollections.isEmpty()) return
+         when (node) {
+             is IRLet -> {
+-                privateCollections.remove(node.name)
++                updatePrivateCollection(node.name, null)
+                 observeExpr(node.expr)
+             }
+             is IRSetVar -> {
+-                privateCollections.remove(node.name)
++                updatePrivateCollection(node.name, null)
+                 observeExpr(node.value)
+             }
+             is IRPlusAssignVar -> observeExpr(node.value)
+@@ -163,13 +193,13 @@
+                 node.elseBody?.forEach(::invalidatePrivateCollections)
+             }
+             is IRForEach -> {
+-                privateCollections.remove(node.varName)
++                updatePrivateCollection(node.varName, null)
+                 observeExpr(node.iterable)
+                 node.where?.let(::observeExpr)
+                 node.body.forEach(::invalidatePrivateCollections)
+             }
+             is IRTryCatch -> {
+-                privateCollections.remove(node.exceptionName)
++                updatePrivateCollection(node.exceptionName, null)
+                 observeExpr(node.tryExpr)
+                 node.fallbackExpr?.let(::observeExpr)
+                 node.fallbackAbort?.let(::observeExpr)
+@@ -185,12 +215,13 @@
+     }
+ 
+     private fun observeExpr(expr: Expr) {
++        if (privateCollections.isEmpty()) return
+         when (expr) {
+-            is IdentifierExpr -> privateCollections.remove(expr.name)
++            is IdentifierExpr -> updatePrivateCollection(expr.name, null)
+             // Even a call with no arguments may inspect/mutate a host-owned
+             // environment, and a lambda captures all current bindings.
+-            is CallExpr, is InvokeExpr, is LambdaExpr, is SharedStateAwaitExpr -> privateCollections.clear()
+-            is UnaryExpr -> if (expr.token.type == TokenType.SUSPEND) privateCollections.clear() else observeExpr(expr.expr)
++            is CallExpr, is InvokeExpr, is LambdaExpr, is SharedStateAwaitExpr -> clearPrivateCollections()
++            is UnaryExpr -> if (expr.token.type == TokenType.SUSPEND) clearPrivateCollections() else observeExpr(expr.expr)
+             is BinaryExpr -> { observeExpr(expr.left); observeExpr(expr.right) }
+             is AccessExpr -> {
+                 observeExpr(expr.base)
+@@ -199,7 +230,7 @@
+             is ArrayExpr -> expr.elements.forEach(::observeExpr)
+             is ObjectExpr -> expr.fields.forEach(::observeProperty)
+             is ArrayCompExpr -> {
+-                privateCollections.remove(expr.varName)
++                updatePrivateCollection(expr.varName, null)
+                 observeExpr(expr.iterable)
+                 expr.where?.let(::observeExpr)
+                 observeExpr(expr.mapExpr)
+@@ -210,7 +241,7 @@
+                 observeExpr(expr.elseBranch)
+             }
+             is TryCatchExpr -> {
+-                privateCollections.remove(expr.exceptionName)
++                updatePrivateCollection(expr.exceptionName, null)
+                 observeExpr(expr.tryExpr)
+                 observeExpr(expr.fallbackExpr)
+             }

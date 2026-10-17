@@ -1,0 +1,89 @@
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:compileKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmProcessResources UP-TO-DATE
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :interpreter:jvmMainClasses UP-TO-DATE
+> Task :interpreter:jvmJar UP-TO-DATE
+> Task :test-fixtures:kmpPartiallyResolvedDependenciesChecker
+> Task :test-fixtures:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :test-fixtures:jvmProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmMainResources SKIPPED
+> Task :vm:jvmTestProcessResources NO-SOURCE
+> Task :vm:processJvmTestResources SKIPPED
+> Task :cli:kmpPartiallyResolvedDependenciesChecker
+> Task :cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cli:jvmProcessResources NO-SOURCE
+> Task :cli:processJvmMainResources SKIPPED
+> Task :vm-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm-benchmarks:processResources NO-SOURCE
+> Task :vm-benchmarks:processTestResources NO-SOURCE
+> Task :vm-benchmarks:processJmhResources NO-SOURCE
+
+> Task :vm:compileKotlinJvm
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:230:37 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:239:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:315:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:316:36 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:342:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:353:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:359:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+
+> Task :vm:compileJvmMainJava NO-SOURCE
+> Task :vm:jvmMainClasses
+> Task :vm:jvmJar
+> Task :test-fixtures:compileKotlinJvm
+> Task :test-fixtures:compileJvmMainJava NO-SOURCE
+> Task :test-fixtures:jvmMainClasses
+> Task :test-fixtures:jvmJar UP-TO-DATE
+> Task :cli:compileKotlinJvm
+> Task :cli:compileJvmMainJava NO-SOURCE
+> Task :cli:jvmMainClasses
+> Task :cli:jvmJar UP-TO-DATE
+> Task :vm-benchmarks:compileKotlin NO-SOURCE
+> Task :vm-benchmarks:compileJava NO-SOURCE
+> Task :vm-benchmarks:classes UP-TO-DATE
+> Task :vm-benchmarks:jar UP-TO-DATE
+> Task :vm-benchmarks:compileTestKotlin NO-SOURCE
+> Task :vm-benchmarks:compileTestJava NO-SOURCE
+> Task :vm-benchmarks:testClasses UP-TO-DATE
+
+> Task :vm-benchmarks:compileJmhKotlin
+w: file:///Users/eugene/repo/research/branchline-public/vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/VMLocalLoopProbe.kt:119:41 'static fun runFinalization(): Unit' is deprecated. Deprecated in Java.
+
+> Task :vm-benchmarks:compileJmhJava NO-SOURCE
+> Task :vm-benchmarks:jmhClasses UP-TO-DATE
+> Task :vm-benchmarks:jmhRunBytecodeGenerator
+> Task :vm-benchmarks:jmhCompileGeneratedClasses
+
+> Task :vm:compileTestKotlinJvm
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockPlanTest.kt:110:34 Unnecessary non-null assertion (!!) on a non-null receiver of type 'PreparedBlockInstruction'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockPlanTest.kt:111:34 Unnecessary non-null assertion (!!) on a non-null receiver of type 'PreparedBlockInstruction'.
+
+> Task :vm-benchmarks:jmhJar
+> Task :vm:compileJvmTestJava NO-SOURCE
+> Task :vm:jvmTestClasses
+
+> Task :vm:jvmTest FAILED
+
+LocalLoopObservationTest[jvm] > unsafe_primitive_magnitude_after_a_completed_row_resumes_current_arithmetic_once()[jvm] FAILED
+    org.opentest4j.AssertionFailedError at LocalLoopObservationTest.kt:176
+
+17 tests completed, 1 failed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':vm:jvmTest'.
+> There were failing tests. See the report at: file:///Users/eugene/repo/research/branchline-public/vm/build/reports/tests/jvmTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 6s
+20 actionable tasks: 14 executed, 6 up-to-date

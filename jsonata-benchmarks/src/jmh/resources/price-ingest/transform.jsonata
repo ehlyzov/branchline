@@ -1,0 +1,37 @@
+(
+  $trimEnds := function($s) { $replace($s, /^\s+|\s+$/, "") };
+  $transactionId := $exists(transactionId) and transactionId != null ? $trimEnds(transactionId) : "";
+  $warehouseId := $exists(warehouseId) and warehouseId != null ? $trimEnds(warehouseId) : "";
+  $skuId := $exists(skuId) and skuId != null ? $trimEnds(skuId) : "";
+  $source := $exists(source) and source != null ? $trimEnds(source) : "";
+  $effectiveTime := $exists(effectiveTime) and effectiveTime != null ? $trimEnds(effectiveTime) : "";
+  $storedAt := $exists(storedAt) and storedAt != null ? $trimEnds(storedAt) : "";
+  $eventId := $exists(eventId) and eventId != null ? $trimEnds(eventId) : "";
+  $price := priceCents;
+  $needAck := $exists(needAck) ? needAck : true;
+  $version := $exists(schemaVersion) ? schemaVersion : 1;
+  $currency := $exists(currency) ? currency : ($version = 2 ? null : "USD");
+  $errors := $append([], [
+    $transactionId = "" ? "TRANSACTIONID_REQUIRED",
+    $warehouseId = "" ? "WAREHOUSEID_REQUIRED",
+    $skuId = "" ? "SKUID_REQUIRED",
+    $source = "" ? "SOURCE_REQUIRED",
+    $effectiveTime = "" ? "EFFECTIVETIME_REQUIRED",
+    $storedAt = "" ? "STOREDAT_REQUIRED",
+    $eventId = "" ? "EVENTID_REQUIRED",
+    ($not($exists($price)) or $price = null) ? "PRICE_REQUIRED",
+    $exists($price) and $price != null and $price < 0 ? "PRICE_NEGATIVE",
+    $exists($price) and $price != null and $floor($price) != $price ? "PRICE_FRACTIONAL",
+    $exists($price) and $price != null and $price > 1000000000 ? "PRICE_LIMIT",
+    $needAck = null ? "NEED_ACK",
+    $version != 1 and $version != 2 ? "SCHEMA_VERSION",
+    $currency != "USD" and $currency != "EUR" ? "CURRENCY"
+  ]);
+  $accepted := $count($errors) = 0;
+  {
+    "accepted": $accepted,
+    "errors": $errors,
+    "ack": $needAck = true ? {"transactionId": $transactionId, "status": $accepted ? "ACCEPTED" : "REJECTED", "errors": $errors} : null,
+    "event": $accepted ? {"transactionId": $transactionId, "warehouseId": $warehouseId, "skuId": $skuId, "source": $source, "effectiveTime": $effectiveTime, "storedAt": $storedAt, "eventId": $eventId, "priceCents": $price, "currency": $currency, "schemaVersion": $version} : null
+  }
+)

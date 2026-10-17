@@ -27,6 +27,29 @@ public fun parseJsonObjectInput(text: String, options: JsonParseOptions = JsonPa
     return result
 }
 
+/**
+ * Experimental unchecked projection: validates all JSON, but returns only the selected root keys.
+ * Callers must prove that omitted keys cannot be observed. Prefer a program-derived access plan.
+ * Selected values are complete, detached trees; nested numeric-key conversion matches eager input.
+ */
+public fun parseJsonObjectInputSelected(
+    text: String,
+    selectedRootKeys: Set<String>,
+    options: JsonParseOptions = JsonParseOptions(),
+): Map<String, Any?> {
+    if (text.isBlank()) return emptyMap()
+    val value = JsonInputParser(text, options).parseRootValue(selectedRootKeys.toSet())
+    if (value !is Map<*, *>) {
+        throw JsonInputException("Input JSON must be an object at the top level.")
+    }
+    val result = LinkedHashMap<String, Any?>(value.size)
+    for ((key, entry) in value) {
+        if (key !is String) throw JsonInputException("Input JSON keys must be strings")
+        result[key] = if (options.keyMode == JsonKeyMode.NUMERIC) convertNumericKeys(entry) else entry
+    }
+    return result
+}
+
 private class JsonInputParser(
     private val text: String,
     private val options: JsonParseOptions,
@@ -36,10 +59,12 @@ private class JsonInputParser(
 
     private val numberMode = options.numberMode
 
-    fun parseRootValue(): Any? {
+    fun parseRootValue(selectedRootKeys: Set<String>? = null): Any? {
         skipWhitespace()
         if (index >= length) return null
-        val value = readValue()
+        val value = if (selectedRootKeys != null && peekChar() == '{') {
+            readSelectedObject(selectedRootKeys)
+        } else readValue()
         skipWhitespace()
         if (index < length) {
             error("Unexpected trailing content")
@@ -142,6 +167,118 @@ private class JsonInputParser(
         }
     }
 
+    private fun readSelectedObject(keys: Set<String>): Map<String, Any?> {
+        expectChar('{')
+        skipWhitespace()
+        val content = LinkedHashMap<String, Any?>()
+        val seen = HashSet<String>()
+        if (peekChar() == '}') {
+            index += 1
+            return content
+        }
+        while (true) {
+            skipWhitespace()
+            if (peekChar() != '"') error("Expected object key")
+            val key = readString()
+            skipWhitespace()
+            expectChar(':')
+            val selected = key in keys
+            val value = if (selected) readValue() else { skipValue(); null }
+            // Eager parsing validates the duplicate value before reporting its duplicate key.
+            if (!seen.add(key)) throw JsonInputException("Duplicate JSON object key '$key'")
+            if (selected) content[key] = value
+            skipWhitespace()
+            when (peekChar() ?: error("Unterminated object")) {
+                ',' -> {
+                    index += 1
+                    skipWhitespace()
+                    if (peekChar() == '}') error("Trailing comma in object")
+                }
+                '}' -> { index += 1; return content }
+                else -> error("Expected ',' or '}'")
+            }
+        }
+    }
+
+    private fun skipValue() {
+        skipWhitespace()
+        when (val ch = peekChar() ?: error("Unexpected end of input")) {
+            '{' -> skipObject()
+            '[' -> skipArray()
+            '"' -> skipString()
+            't' -> readLiteral("true")
+            'f' -> readLiteral("false")
+            'n' -> readLiteral("null")
+            // Conversion also validates precision/range and platform numeric support.
+            '-', in '0'..'9' -> { readNumber() }
+            else -> error("Unexpected character '$ch'")
+        }
+    }
+
+    private fun skipObject() {
+        expectChar('{')
+        skipWhitespace()
+        val seen = HashSet<String>()
+        if (peekChar() == '}') { index += 1; return }
+        while (true) {
+            skipWhitespace()
+            if (peekChar() != '"') error("Expected object key")
+            val key = readString()
+            skipWhitespace()
+            expectChar(':')
+            skipValue()
+            if (!seen.add(key)) throw JsonInputException("Duplicate JSON object key '$key'")
+            skipWhitespace()
+            when (peekChar() ?: error("Unterminated object")) {
+                ',' -> {
+                    index += 1
+                    skipWhitespace()
+                    if (peekChar() == '}') error("Trailing comma in object")
+                }
+                '}' -> { index += 1; return }
+                else -> error("Expected ',' or '}'")
+            }
+        }
+    }
+
+    private fun skipArray() {
+        expectChar('[')
+        skipWhitespace()
+        if (peekChar() == ']') { index += 1; return }
+        while (true) {
+            skipValue()
+            skipWhitespace()
+            when (peekChar() ?: error("Unterminated array")) {
+                ',' -> {
+                    index += 1
+                    skipWhitespace()
+                    if (peekChar() == ']') error("Trailing comma in array")
+                }
+                ']' -> { index += 1; return }
+                else -> error("Expected ',' or ']'")
+            }
+        }
+    }
+
+    private fun skipString() {
+        expectChar('"')
+        while (true) {
+            if (index >= length) error("Unterminated string")
+            when (val ch = text[index++]) {
+                '"' -> return
+                '\\' -> {
+                    if (index >= length) error("Unterminated escape sequence")
+                    when (val escaped = text[index++]) {
+                        '"', '\\', '/', 'b', 'f', 'n', 'r', 't' -> Unit
+                        'u' -> { readUnicodeEscape() }
+                        else -> error("Invalid escape sequence '\\$escaped'")
+                    }
+                }
+                else -> if (ch < ' ') error("Unescaped control character in string")
+            }
+        }
+    }
+
     private fun readString(): String {
         expectChar('"')
         val builder = StringBuilder()
@@ -181,6 +318,10 @@ private class JsonInputParser(
     }
 
     private fun appendUnicodeEscape(builder: StringBuilder) {
+        appendCodePoint(builder, readUnicodeEscape())
+    }
+
+    private fun readUnicodeEscape(): Int {
         val codePoint = readUnicodeCodePoint()
         if (codePoint in 0xD800..0xDBFF) {
             val high = codePoint
@@ -192,9 +333,9 @@ private class JsonInputParser(
             if (low !in 0xDC00..0xDFFF) {
                 error("Invalid unicode surrogate pair")
             }
-            appendCodePoint(builder, ((high - 0xD800) shl 10) + (low - 0xDC00) + 0x10000)
+            return ((high - 0xD800) shl 10) + (low - 0xDC00) + 0x10000
         } else {
-            appendCodePoint(builder, codePoint)
+            return codePoint
         }
     }
 

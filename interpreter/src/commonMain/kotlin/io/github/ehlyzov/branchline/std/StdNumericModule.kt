@@ -16,6 +16,9 @@ import io.github.ehlyzov.branchline.runtime.bignum.div
 import io.github.ehlyzov.branchline.runtime.bignum.floor
 import io.github.ehlyzov.branchline.runtime.bignum.minus
 import io.github.ehlyzov.branchline.runtime.bignum.plus
+import io.github.ehlyzov.branchline.runtime.bignum.powIntegral
+import io.github.ehlyzov.branchline.runtime.bignum.powNonNegative
+import io.github.ehlyzov.branchline.runtime.bignum.sqrtDecimal
 import io.github.ehlyzov.branchline.runtime.bignum.rem
 import io.github.ehlyzov.branchline.runtime.bignum.roundHalfEven
 import io.github.ehlyzov.branchline.runtime.bignum.roundHalfEvenDouble
@@ -28,9 +31,13 @@ import io.github.ehlyzov.branchline.runtime.bignum.toInt
 import io.github.ehlyzov.branchline.runtime.bignum.toLong
 import io.github.ehlyzov.branchline.runtime.bignum.unaryMinus
 import io.github.ehlyzov.branchline.runtime.isPlatformIntegerNumber
+import io.github.ehlyzov.branchline.runtime.numericKindOf
+import io.github.ehlyzov.branchline.runtime.NumericKind
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class StdNumericModule : StdModule {
     override fun register(r: StdRegistry) {
@@ -296,13 +303,74 @@ private fun fnPOWER(args: List<Any?>): Any? {
     val b = args[0] ?: return null
     val e = args[1] ?: return null
 
-    TODO()
+    if (b is BLBigInt || b is BLBigDec || e is BLBigInt || e is BLBigDec) {
+        require(numericKindOf(b) != NumericKind.F && numericKindOf(e) != NumericKind.F) {
+            "POWER: cannot mix precise numbers with floats; use DEC(...) explicitly"
+        }
+        val exponent = powerExponent(e)
+        if (b !is BLBigDec && exponent >= 0) {
+            val integer = when (b) {
+                is BLBigInt -> b
+                is Long -> blBigIntOfLong(b)
+                is Int -> blBigIntOfLong(b.toLong())
+                is Short -> blBigIntOfLong(b.toLong())
+                is Byte -> blBigIntOfLong(b.toLong())
+                is Number -> blBigIntOfLong(b.toLong())
+                else -> error("POWER: args must be numeric")
+            }
+            return integer.powNonNegative(exponent)
+        }
+        val base = preciseBase(b)
+        require(base.signum() != 0 || exponent >= 0) { "POWER: zero base with negative exponent" }
+        return base.powIntegral(exponent)
+    }
+    val base = finiteNumber(b, "POWER")
+    val exponent = finiteNumber(e, "POWER")
+    require(base >= 0 || exponent == floor(exponent)) { "POWER: negative base requires integer exponent" }
+    require(base != 0.0 || exponent >= 0) { "POWER: zero base with negative exponent" }
+    return base.pow(exponent).also { require(it.isFinite()) { "POWER: result must be finite" } }
+}
+
+private fun powerExponent(value: Any): Int {
+    val decimal = preciseBase(value)
+    val integer = decimal.toBLBigInt()
+    require(integer.toBLBigDec().compareTo(decimal) == 0) { "POWER: precise exponent must be integer" }
+    val limit = blBigIntOfLong(999999999)
+    require(integer >= -limit && integer <= limit) { "POWER: precise exponent out of bounds" }
+    return integer.toInt()
+}
+
+private fun preciseBase(value: Any): BLBigDec = when (value) {
+    is BLBigDec -> value
+    is BLBigInt -> value.toBLBigDec()
+    is Long -> blBigIntOfLong(value).toBLBigDec()
+    is Int -> blBigIntOfLong(value.toLong()).toBLBigDec()
+    is Short -> blBigIntOfLong(value.toLong()).toBLBigDec()
+    is Byte -> blBigIntOfLong(value.toLong()).toBLBigDec()
+    is Number -> {
+        require(isPlatformIntegerNumber(value)) { "POWER: precise exponent must be integer" }
+        blBigIntOfLong(value.toLong()).toBLBigDec()
+    }
+    else -> error("POWER: args must be numeric")
+}
+
+private fun finiteNumber(value: Any, operation: String): Double {
+    require(value is Number) { "$operation: args must be numeric" }
+    return value.toDouble().also { require(it.isFinite()) { "$operation: args must be finite" } }
 }
 
 /** SQRT(number) – returns the square root of a non‑negative number. */
 private fun fnSQRT(args: List<Any?>): Any? {
     require(args.size == 1) { "SQRT(number)" }
-    TODO()
+    val value = args[0] ?: return null
+    if (value is BLBigInt || value is BLBigDec) {
+        val decimal = if (value is BLBigInt) value.toBLBigDec() else value as BLBigDec
+        require(decimal.signum() >= 0) { "SQRT: arg must be non-negative" }
+        return decimal.sqrtDecimal()
+    }
+    val number = finiteNumber(value, "SQRT")
+    require(number >= 0) { "SQRT: arg must be non-negative" }
+    return sqrt(number)
 }
 
 /** RANDOM() – returns a pseudo‑random number in [0, 1). */

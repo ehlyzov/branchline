@@ -1,0 +1,181 @@
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:compileKotlinJvm UP-TO-DATE
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmProcessResources UP-TO-DATE
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :interpreter:jvmMainClasses UP-TO-DATE
+> Task :interpreter:jvmJar UP-TO-DATE
+> Task :test-fixtures:kmpPartiallyResolvedDependenciesChecker
+> Task :test-fixtures:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:compileKotlinJvm UP-TO-DATE
+> Task :vm:compileJvmMainJava NO-SOURCE
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :vm:jvmMainClasses UP-TO-DATE
+> Task :vm:jvmJar UP-TO-DATE
+> Task :test-fixtures:compileKotlinJvm UP-TO-DATE
+> Task :test-fixtures:compileJvmMainJava NO-SOURCE
+> Task :test-fixtures:jvmProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmMainResources SKIPPED
+> Task :test-fixtures:jvmMainClasses UP-TO-DATE
+> Task :test-fixtures:jvmJar UP-TO-DATE
+> Task :vm:compileTestKotlinJvm UP-TO-DATE
+> Task :vm:compileJvmTestJava NO-SOURCE
+> Task :vm:jvmTestProcessResources NO-SOURCE
+> Task :vm:processJvmTestResources SKIPPED
+> Task :vm:jvmTestClasses UP-TO-DATE
+> Task :vm:jvmTest
+> Task :kotlinKotlinNpmCachesSetup
+> Task :kotlinNodeJsSetup UP-TO-DATE
+> Task :kotlinRestoreYarnLock UP-TO-DATE
+> Task :kotlinYarnSetup UP-TO-DATE
+> Task :interpreter:jsPackageJson
+> Task :vm:jsPackageJson UP-TO-DATE
+> Task :cli:jsPackageJson UP-TO-DATE
+> Task :cli:jsTestPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPackageJson UP-TO-DATE
+> Task :vm:jsTestPackageJson UP-TO-DATE
+> Task :cli:jsPublicPackageJson UP-TO-DATE
+> Task :cli:jsTestPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsPublicPackageJson
+> Task :interpreter:jsTestPublicPackageJson UP-TO-DATE
+> Task :vm:jsPublicPackageJson UP-TO-DATE
+> Task :vm:jsTestPublicPackageJson UP-TO-DATE
+> Task :kotlinPackageJsonUmbrella
+> Task :rootPackageJson UP-TO-DATE
+> Task :kotlinNpmInstall UP-TO-DATE
+> Task :kotlinStoreYarnLock UP-TO-DATE
+> Task :interpreter:compileKotlinJs UP-TO-DATE
+> Task :vm:jsProcessResources NO-SOURCE
+> Task :vm:jsTestProcessResources NO-SOURCE
+> Task :vm:kotlinNodeJsSetup UP-TO-DATE
+> Task :cli:kmpPartiallyResolvedDependenciesChecker
+> Task :cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cli:jvmProcessResources NO-SOURCE
+> Task :cli:processJvmMainResources SKIPPED
+> Task :conformance-tests:kmpPartiallyResolvedDependenciesChecker
+> Task :conformance-tests:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :conformance-tests:compileKotlinJvm NO-SOURCE
+> Task :conformance-tests:compileJvmMainJava NO-SOURCE
+> Task :conformance-tests:jvmProcessResources NO-SOURCE
+> Task :conformance-tests:processJvmMainResources SKIPPED
+> Task :conformance-tests:jvmMainClasses UP-TO-DATE
+> Task :conformance-tests:jvmJar UP-TO-DATE
+> Task :conformance-tests:jvmTestProcessResources NO-SOURCE
+> Task :conformance-tests:processJvmTestResources SKIPPED
+> Task :conformance-tests:compileKotlinJs NO-SOURCE
+> Task :conformance-tests:jsProcessResources NO-SOURCE
+> Task :conformance-tests:jsMainClasses UP-TO-DATE
+> Task :conformance-tests:jsTestProcessResources NO-SOURCE
+> Task :conformance-tests:kotlinNodeJsSetup UP-TO-DATE
+> Task :interpreter:jvmTestProcessResources UP-TO-DATE
+> Task :interpreter:processJvmTestResources SKIPPED
+> Task :interpreter:jsProcessResources NO-SOURCE
+> Task :interpreter:jsMainClasses UP-TO-DATE
+> Task :interpreter:compileTestKotlinJs UP-TO-DATE
+> Task :interpreter:jsTestProcessResources NO-SOURCE
+> Task :interpreter:jsTestClasses UP-TO-DATE
+> Task :interpreter:compileTestDevelopmentExecutableKotlinJs UP-TO-DATE
+> Task :interpreter:jsTestTestDevelopmentExecutableCompileSync UP-TO-DATE
+> Task :interpreter:kotlinNodeJsSetup UP-TO-DATE
+> Task :interpreter:jsBrowserTest SKIPPED
+> Task :interpreter:jsNodeTest UP-TO-DATE
+> Task :interpreter:jsTest UP-TO-DATE
+> Task :cli:jvmTestProcessResources UP-TO-DATE
+> Task :cli:processJvmTestResources SKIPPED
+> Task :cli:jsProcessResources NO-SOURCE
+> Task :cli:jsTestProcessResources NO-SOURCE
+> Task :cli:kotlinNodeJsSetup UP-TO-DATE
+> Task :vm-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm-benchmarks:processResources NO-SOURCE
+> Task :interpreter:compileTestKotlinJvm
+> Task :vm-benchmarks:processTestResources NO-SOURCE
+> Task :interpreter:compileJvmTestJava NO-SOURCE
+> Task :interpreter:jvmTestClasses
+> Task :interpreter:jvmTest
+> Task :vm-benchmarks:processJmhResources NO-SOURCE
+
+> Task :cli:compileKotlinJvm
+w: file:///Users/eugene/repo/research/branchline-public/cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/BranchlineCli.kt:1816:5 Redundant creation of Json format. Creating instances for each usage can be slow.
+
+> Task :cli:compileJvmMainJava NO-SOURCE
+> Task :cli:jvmMainClasses
+> Task :cli:jvmJar UP-TO-DATE
+> Task :vm-benchmarks:compileKotlin NO-SOURCE
+> Task :vm-benchmarks:compileJava NO-SOURCE
+> Task :vm-benchmarks:classes UP-TO-DATE
+> Task :vm-benchmarks:jar UP-TO-DATE
+> Task :vm-benchmarks:compileTestKotlin NO-SOURCE
+> Task :vm-benchmarks:compileTestJava NO-SOURCE
+> Task :vm-benchmarks:testClasses UP-TO-DATE
+> Task :cli:compileTestKotlinJvm
+> Task :cli:compileJvmTestJava NO-SOURCE
+> Task :cli:jvmTestClasses
+> Task :vm:compileKotlinJs
+> Task :vm:jsMainClasses
+> Task :conformance-tests:compileTestKotlinJvm
+> Task :conformance-tests:compileJvmTestJava NO-SOURCE
+> Task :conformance-tests:jvmTestClasses
+> Task :vm-benchmarks:compileJmhKotlin
+> Task :vm:compileTestKotlinJs
+
+> Task :cli:compileKotlinJs
+w: file:///Users/eugene/repo/research/branchline-public/cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/BranchlineCli.kt:1816:5 Redundant creation of Json format. Creating instances for each usage can be slow.
+
+> Task :conformance-tests:jvmTest
+PLAYGROUND_EXAMPLE_WARNING id=numeric-powers-roots reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=json-canonical-output reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=pipeline-health-gating reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=stdlib-core-walk reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=contract-empty-array-append reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=stdlib-core-put-delete reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=contract-input-seeded-wildcard-output reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=customer-profile reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=junit-badge-summary reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=xml-output-ordering reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=contract-literal-brackets-static reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=order-shipment reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=stdlib-debug-explain reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=contract-nullable-precision reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=stdlib-hof-overview reason=ai-compatible-source-differs-from-normalized-source
+
+> Task :vm:jsTestClasses
+> Task :conformance-tests:compileTestKotlinJs UP-TO-DATE
+> Task :conformance-tests:jsTestClasses UP-TO-DATE
+> Task :cli:jsMainClasses
+> Task :vm-benchmarks:compileJmhJava NO-SOURCE
+> Task :vm-benchmarks:jmhClasses UP-TO-DATE
+> Task :cli:compileTestKotlinJs
+> Task :vm-benchmarks:jmhRunBytecodeGenerator
+> Task :cli:jsTestClasses
+> Task :vm-benchmarks:jmhCompileGeneratedClasses UP-TO-DATE
+> Task :conformance-tests:compileTestDevelopmentExecutableKotlinJs
+> Task :cli:compileTestDevelopmentExecutableKotlinJs
+> Task :vm-benchmarks:jmhJar
+> Task :conformance-tests:jsTestTestDevelopmentExecutableCompileSync UP-TO-DATE
+> Task :vm:compileTestDevelopmentExecutableKotlinJs
+> Task :conformance-tests:jsNodeTest
+> Task :vm:jsTestTestDevelopmentExecutableCompileSync
+> Task :vm:jsNodeTest
+> Task :vm:jsTest
+> Task :conformance-tests:jsTest
+> Task :cli:jsTestTestDevelopmentExecutableCompileSync
+> Task :cli:jsNodeTest
+> Task :cli:compileProductionExecutableKotlinJs
+> Task :cli:jsProductionExecutableCompileSync
+
+> Task :cli:prepareJsCliPackage
+
+added 2 packages in 298ms
+
+> Task :cli:jvmTest
+
+BUILD SUCCESSFUL in 17s
+82 actionable tasks: 36 executed, 46 up-to-date

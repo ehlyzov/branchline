@@ -190,3 +190,14 @@ private fun dynamicString(value: dynamic): String? {
     if (value == null || jsTypeOf(value) == "undefined") return null
     return value.toString()
 }
+
+internal actual fun <T, W, R> parallelMapWithWorker(
+    limit: Int,
+    items: List<T>,
+    createWorker: () -> W,
+    block: (W, T) -> R,
+): List<R> {
+    if (items.isEmpty()) return emptyList()
+    val worker = createWorker()
+    return items.map { block(worker, it) }
+}

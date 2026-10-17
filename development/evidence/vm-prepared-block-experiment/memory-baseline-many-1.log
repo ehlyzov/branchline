@@ -1,0 +1,19 @@
+{"engine":"baseline","executionApi":"VM.execute","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null,"untimedValidation":{"workload":"reduction","dataset":"large","validatedExecutions":3,"sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"engine":"baseline","executionApi":"VM.execute","preparedExecuted":false,"optimizedExecuted":false,"fallbackReason":null},"operation":"memory","workload":"reduction","dataset":"large","lifetime":"many","executions":1000,"independentlyPreparedExecutorCount":1000,"heapUsedBytes":{"fixtureOnlyAfterPriming":8290080,"fixtureExecutorsWeakReferencesAndLastOutput":14747928,"fixtureWeakReferencesAndLastOutput":8372728,"fixtureOnlyAfterRelease":8336376},"approximateHeapDeltasBytes":{"executorsAndOutputMinusBaseline":6457848,"afterExecutorsReleaseMinusBaseline":82648,"afterAllReleaseMinusBaseline":46296},"collectedExecutorWrappers":1000,"weakReferenceScope":"wrapper collection only; no exact retained graph claim","jvmArguments":["-Xms32m","-Xmx768m","-XX:+UseG1GC"],"heapMaxBytes":805306368,"peakRssSource":"external /usr/bin/time -l; distinct from heap-used and allocation B/op"}
+        0.30 real         0.75 user         0.03 sys
+           139821056  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                9902  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                   0  voluntary context switches
+                3142  involuntary context switches
+          9321015031  instructions retired
+          3045627795  cycles elapsed
+           117949400  peak memory footprint

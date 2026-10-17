@@ -1,0 +1,648 @@
+public final class io.github.ehlyzov.branchline.vm.generated.CompiledLocalComprehension implements io.github.ehlyzov.branchline.vm.LocalLoopKernel {
+  public io.github.ehlyzov.branchline.vm.generated.CompiledLocalComprehension();
+    Code:
+       0: aload_0
+       1: invokespecial #10                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public void run(io.github.ehlyzov.branchline.vm.LocalLoopContext);
+    Code:
+       0: iconst_0
+       1: istore_2
+       2: aload_1
+       3: ldc           #14                 // String o
+       5: invokeinterface #20,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.hasVariable:(Ljava/lang/String;)Z
+      10: ifeq          957
+      13: aload_1
+      14: ldc           #14                 // String o
+      16: invokeinterface #24,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.variable:(Ljava/lang/String;)Ljava/lang/Object;
+      21: astore        12
+      23: aload         12
+      25: aload_1
+      26: ldc           #25                 // int 6
+      28: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+      33: invokestatic  #35                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.safeStatic:(Ljava/lang/Object;Ljava/lang/Object;)Z
+      36: ifeq          967
+      39: aload         12
+      41: aload_1
+      42: ldc           #25                 // int 6
+      44: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+      49: invokestatic  #39                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.readStatic:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      52: astore        13
+      54: aload_1
+      55: ldc           #40                 // int 7
+      57: invokeinterface #43,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.constant:(I)Ljava/lang/Object;
+      62: astore        14
+      64: aload         13
+      66: instanceof    #45                 // class java/lang/Integer
+      69: ifne          95
+      72: aload         13
+      74: instanceof    #47                 // class java/lang/Long
+      77: ifeq          985
+      80: aload         13
+      82: checkcast     #47                 // class java/lang/Long
+      85: invokevirtual #51                 // Method java/lang/Long.longValue:()J
+      88: lstore_3
+      89: iconst_0
+      90: istore        9
+      92: goto          108
+      95: aload         13
+      97: checkcast     #45                 // class java/lang/Integer
+     100: invokevirtual #55                 // Method java/lang/Integer.intValue:()I
+     103: i2l
+     104: lstore_3
+     105: iconst_1
+     106: istore        9
+     108: lload_3
+     109: ldc2_w        #56                 // long 9007199254740991l
+     112: lcmp
+     113: ifgt          985
+     116: lload_3
+     117: ldc2_w        #58                 // long -9007199254740991l
+     120: lcmp
+     121: iflt          985
+     124: aload         14
+     126: instanceof    #45                 // class java/lang/Integer
+     129: ifne          156
+     132: aload         14
+     134: instanceof    #47                 // class java/lang/Long
+     137: ifeq          985
+     140: aload         14
+     142: checkcast     #47                 // class java/lang/Long
+     145: invokevirtual #51                 // Method java/lang/Long.longValue:()J
+     148: lstore        5
+     150: iconst_0
+     151: istore        10
+     153: goto          170
+     156: aload         14
+     158: checkcast     #45                 // class java/lang/Integer
+     161: invokevirtual #55                 // Method java/lang/Integer.intValue:()I
+     164: i2l
+     165: lstore        5
+     167: iconst_1
+     168: istore        10
+     170: lload         5
+     172: ldc2_w        #56                 // long 9007199254740991l
+     175: lcmp
+     176: ifgt          985
+     179: lload         5
+     181: ldc2_w        #58                 // long -9007199254740991l
+     184: lcmp
+     185: iflt          985
+     188: lload_3
+     189: lload         5
+     191: lcmp
+     192: ifgt          199
+     195: iconst_0
+     196: goto          200
+     199: iconst_1
+     200: istore        15
+     202: iconst_1
+     203: istore_2
+     204: iload         15
+     206: ifeq          932
+     209: aload_1
+     210: ldc           #14                 // String o
+     212: invokeinterface #20,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.hasVariable:(Ljava/lang/String;)Z
+     217: ifeq          1011
+     220: aload_1
+     221: ldc           #14                 // String o
+     223: invokeinterface #24,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.variable:(Ljava/lang/String;)Ljava/lang/Object;
+     228: astore        16
+     230: aload         16
+     232: aload_1
+     233: ldc           #60                 // int 11
+     235: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     240: invokestatic  #35                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.safeStatic:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     243: ifeq          1021
+     246: aload         16
+     248: aload_1
+     249: ldc           #60                 // int 11
+     251: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     256: invokestatic  #39                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.readStatic:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     259: astore        17
+     261: aload         17
+     263: aload_1
+     264: ldc           #61                 // int 12
+     266: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     271: invokestatic  #35                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.safeStatic:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     274: ifeq          1039
+     277: aload         17
+     279: aload_1
+     280: ldc           #61                 // int 12
+     282: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     287: invokestatic  #39                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.readStatic:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     290: astore        18
+     292: aload         18
+     294: aload_1
+     295: ldc           #62                 // int 13
+     297: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     302: invokestatic  #35                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.safeStatic:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     305: ifeq          1057
+     308: aload         18
+     310: aload_1
+     311: ldc           #62                 // int 13
+     313: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     318: invokestatic  #39                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.readStatic:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     321: astore        19
+     323: aload_1
+     324: ldc           #63                 // int 14
+     326: invokeinterface #43,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.constant:(I)Ljava/lang/Object;
+     331: astore        20
+     333: aload_1
+     334: ldc           #14                 // String o
+     336: invokeinterface #20,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.hasVariable:(Ljava/lang/String;)Z
+     341: ifeq          1075
+     344: aload_1
+     345: ldc           #14                 // String o
+     347: invokeinterface #24,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.variable:(Ljava/lang/String;)Ljava/lang/Object;
+     352: astore        21
+     354: aload         21
+     356: aload_1
+     357: ldc           #64                 // int 16
+     359: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     364: invokestatic  #35                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.safeStatic:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     367: ifeq          1101
+     370: aload         21
+     372: aload_1
+     373: ldc           #64                 // int 16
+     375: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     380: invokestatic  #39                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.readStatic:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     383: astore        22
+     385: aload_1
+     386: ldc           #65                 // int 17
+     388: invokeinterface #43,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.constant:(I)Ljava/lang/Object;
+     393: astore        23
+     395: aload         22
+     397: instanceof    #45                 // class java/lang/Integer
+     400: ifne          426
+     403: aload         22
+     405: instanceof    #47                 // class java/lang/Long
+     408: ifeq          1135
+     411: aload         22
+     413: checkcast     #47                 // class java/lang/Long
+     416: invokevirtual #51                 // Method java/lang/Long.longValue:()J
+     419: lstore_3
+     420: iconst_0
+     421: istore        9
+     423: goto          439
+     426: aload         22
+     428: checkcast     #45                 // class java/lang/Integer
+     431: invokevirtual #55                 // Method java/lang/Integer.intValue:()I
+     434: i2l
+     435: lstore_3
+     436: iconst_1
+     437: istore        9
+     439: lload_3
+     440: ldc2_w        #56                 // long 9007199254740991l
+     443: lcmp
+     444: ifgt          1135
+     447: lload_3
+     448: ldc2_w        #58                 // long -9007199254740991l
+     451: lcmp
+     452: iflt          1135
+     455: aload         23
+     457: instanceof    #45                 // class java/lang/Integer
+     460: ifne          487
+     463: aload         23
+     465: instanceof    #47                 // class java/lang/Long
+     468: ifeq          1135
+     471: aload         23
+     473: checkcast     #47                 // class java/lang/Long
+     476: invokevirtual #51                 // Method java/lang/Long.longValue:()J
+     479: lstore        5
+     481: iconst_0
+     482: istore        10
+     484: goto          501
+     487: aload         23
+     489: checkcast     #45                 // class java/lang/Integer
+     492: invokevirtual #55                 // Method java/lang/Integer.intValue:()I
+     495: i2l
+     496: lstore        5
+     498: iconst_1
+     499: istore        10
+     501: lload         5
+     503: ldc2_w        #56                 // long 9007199254740991l
+     506: lcmp
+     507: ifgt          1135
+     510: lload         5
+     512: ldc2_w        #58                 // long -9007199254740991l
+     515: lcmp
+     516: iflt          1135
+     519: lload_3
+     520: lload         5
+     522: lmul
+     523: lstore        24
+     525: lload_3
+     526: lconst_0
+     527: lcmp
+     528: ifeq          541
+     531: lload         24
+     533: lload_3
+     534: ldiv
+     535: lload         5
+     537: lcmp
+     538: ifne          1135
+     541: lload         24
+     543: ldc2_w        #56                 // long 9007199254740991l
+     546: lcmp
+     547: ifgt          1135
+     550: lload         24
+     552: ldc2_w        #58                 // long -9007199254740991l
+     555: lcmp
+     556: iflt          1135
+     559: iload         9
+     561: iload         10
+     563: iand
+     564: ifeq          589
+     567: lload         24
+     569: ldc2_w        #66                 // long -2147483648l
+     572: lcmp
+     573: iflt          589
+     576: lload         24
+     578: ldc2_w        #68                 // long 2147483647l
+     581: lcmp
+     582: ifgt          589
+     585: iconst_1
+     586: goto          590
+     589: iconst_0
+     590: istore        26
+     592: iconst_1
+     593: istore_2
+     594: aload_1
+     595: ldc           #14                 // String o
+     597: invokeinterface #20,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.hasVariable:(Ljava/lang/String;)Z
+     602: ifeq          1177
+     605: aload_1
+     606: ldc           #14                 // String o
+     608: invokeinterface #24,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.variable:(Ljava/lang/String;)Ljava/lang/Object;
+     613: astore        27
+     615: aload         27
+     617: aload_1
+     618: ldc           #70                 // int 20
+     620: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     625: invokestatic  #35                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.safeStatic:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     628: ifeq          1228
+     631: aload         27
+     633: aload_1
+     634: ldc           #70                 // int 20
+     636: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     641: invokestatic  #39                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.readStatic:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     644: astore        28
+     646: lload         24
+     648: lstore_3
+     649: iload         26
+     651: istore        9
+     653: lload_3
+     654: ldc2_w        #56                 // long 9007199254740991l
+     657: lcmp
+     658: ifgt          1287
+     661: lload_3
+     662: ldc2_w        #58                 // long -9007199254740991l
+     665: lcmp
+     666: iflt          1287
+     669: aload         28
+     671: instanceof    #45                 // class java/lang/Integer
+     674: ifne          701
+     677: aload         28
+     679: instanceof    #47                 // class java/lang/Long
+     682: ifeq          1287
+     685: aload         28
+     687: checkcast     #47                 // class java/lang/Long
+     690: invokevirtual #51                 // Method java/lang/Long.longValue:()J
+     693: lstore        5
+     695: iconst_0
+     696: istore        10
+     698: goto          715
+     701: aload         28
+     703: checkcast     #45                 // class java/lang/Integer
+     706: invokevirtual #55                 // Method java/lang/Integer.intValue:()I
+     709: i2l
+     710: lstore        5
+     712: iconst_1
+     713: istore        10
+     715: lload         5
+     717: ldc2_w        #56                 // long 9007199254740991l
+     720: lcmp
+     721: ifgt          1287
+     724: lload         5
+     726: ldc2_w        #58                 // long -9007199254740991l
+     729: lcmp
+     730: iflt          1287
+     733: lload_3
+     734: lload         5
+     736: ladd
+     737: lstore        29
+     739: lload         29
+     741: ldc2_w        #56                 // long 9007199254740991l
+     744: lcmp
+     745: ifgt          1287
+     748: lload         29
+     750: ldc2_w        #58                 // long -9007199254740991l
+     753: lcmp
+     754: iflt          1287
+     757: iload         9
+     759: iload         10
+     761: iand
+     762: ifeq          787
+     765: lload         29
+     767: ldc2_w        #66                 // long -2147483648l
+     770: lcmp
+     771: iflt          787
+     774: lload         29
+     776: ldc2_w        #68                 // long 2147483647l
+     779: lcmp
+     780: ifgt          787
+     783: iconst_1
+     784: goto          788
+     787: iconst_0
+     788: istore        31
+     790: iconst_1
+     791: istore_2
+     792: aload_1
+     793: ldc           #71                 // int 22
+     795: invokeinterface #43,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.constant:(I)Ljava/lang/Object;
+     800: astore        32
+     802: aload_1
+     803: ldc           #14                 // String o
+     805: invokeinterface #20,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.hasVariable:(Ljava/lang/String;)Z
+     810: ifeq          1346
+     813: aload_1
+     814: ldc           #14                 // String o
+     816: invokeinterface #24,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.variable:(Ljava/lang/String;)Ljava/lang/Object;
+     821: astore        33
+     823: aload         33
+     825: aload_1
+     826: ldc           #72                 // int 24
+     828: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     833: invokestatic  #35                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.safeStatic:(Ljava/lang/Object;Ljava/lang/Object;)Z
+     836: ifeq          1405
+     839: aload         33
+     841: aload_1
+     842: ldc           #72                 // int 24
+     844: invokeinterface #29,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.key:(I)Ljava/lang/Object;
+     849: invokestatic  #39                 // Method io/github/ehlyzov/branchline/vm/LocalLoopSupport.readStatic:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     852: astore        34
+     854: aload_1
+     855: ldc           #73                 // int 25
+     857: invokeinterface #43,  2           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.constant:(I)Ljava/lang/Object;
+     862: astore        35
+     864: new           #75                 // class java/util/LinkedHashMap
+     867: dup
+     868: ldc           #76                 // int 3
+     870: invokespecial #79                 // Method java/util/LinkedHashMap."<init>":(I)V
+     873: astore        36
+     875: aload         36
+     877: aload         35
+     879: aload         34
+     881: invokevirtual #82                 // Method java/util/LinkedHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     884: pop
+     885: aload         36
+     887: aload         32
+     889: iload         31
+     891: ifeq          903
+     894: lload         29
+     896: l2i
+     897: invokestatic  #86                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     900: goto          908
+     903: lload         29
+     905: invokestatic  #89                 // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+     908: invokevirtual #82                 // Method java/util/LinkedHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     911: pop
+     912: aload         36
+     914: aload         20
+     916: aload         19
+     918: invokevirtual #82                 // Method java/util/LinkedHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     921: pop
+     922: aload_1
+     923: aload         36
+     925: ldc           #90                 // int 27
+     927: invokeinterface #94,  3           // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.append:(Ljava/lang/Object;I)V
+     932: aload_1
+     933: ldc           #95                 // int 28
+     935: ldc           #96                 // int 5
+     937: ldc           #97                 // int 29
+     939: iload_2
+     940: invokeinterface #101,  5          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.next:(IIIZ)I
+     945: iconst_1
+     946: if_icmpeq     2
+     949: aload_1
+     950: iload_2
+     951: invokeinterface #105,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.finish:(Z)V
+     956: return
+     957: aload_1
+     958: ldc           #96                 // int 5
+     960: iload_2
+     961: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+     966: return
+     967: aload_1
+     968: ldc           #25                 // int 6
+     970: iload_2
+     971: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+     976: aload_1
+     977: aload         12
+     979: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+     984: return
+     985: aload_1
+     986: ldc           #114                // int 8
+     988: iload_2
+     989: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+     994: aload_1
+     995: aload         13
+     997: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1002: aload_1
+    1003: aload         14
+    1005: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1010: return
+    1011: aload_1
+    1012: ldc           #115                // int 10
+    1014: iload_2
+    1015: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1020: return
+    1021: aload_1
+    1022: ldc           #60                 // int 11
+    1024: iload_2
+    1025: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1030: aload_1
+    1031: aload         16
+    1033: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1038: return
+    1039: aload_1
+    1040: ldc           #61                 // int 12
+    1042: iload_2
+    1043: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1048: aload_1
+    1049: aload         17
+    1051: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1056: return
+    1057: aload_1
+    1058: ldc           #62                 // int 13
+    1060: iload_2
+    1061: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1066: aload_1
+    1067: aload         18
+    1069: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1074: return
+    1075: aload_1
+    1076: ldc           #116                // int 15
+    1078: iload_2
+    1079: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1084: aload_1
+    1085: aload         19
+    1087: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1092: aload_1
+    1093: aload         20
+    1095: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1100: return
+    1101: aload_1
+    1102: ldc           #64                 // int 16
+    1104: iload_2
+    1105: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1110: aload_1
+    1111: aload         19
+    1113: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1118: aload_1
+    1119: aload         20
+    1121: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1126: aload_1
+    1127: aload         21
+    1129: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1134: return
+    1135: aload_1
+    1136: ldc           #117                // int 18
+    1138: iload_2
+    1139: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1144: aload_1
+    1145: aload         19
+    1147: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1152: aload_1
+    1153: aload         20
+    1155: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1160: aload_1
+    1161: aload         22
+    1163: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1168: aload_1
+    1169: aload         23
+    1171: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1176: return
+    1177: aload_1
+    1178: ldc           #118                // int 19
+    1180: iload_2
+    1181: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1186: aload_1
+    1187: aload         19
+    1189: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1194: aload_1
+    1195: aload         20
+    1197: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1202: aload_1
+    1203: iload         26
+    1205: ifeq          1217
+    1208: lload         24
+    1210: l2i
+    1211: invokestatic  #86                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    1214: goto          1222
+    1217: lload         24
+    1219: invokestatic  #89                 // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+    1222: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1227: return
+    1228: aload_1
+    1229: ldc           #70                 // int 20
+    1231: iload_2
+    1232: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1237: aload_1
+    1238: aload         19
+    1240: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1245: aload_1
+    1246: aload         20
+    1248: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1253: aload_1
+    1254: iload         26
+    1256: ifeq          1268
+    1259: lload         24
+    1261: l2i
+    1262: invokestatic  #86                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    1265: goto          1273
+    1268: lload         24
+    1270: invokestatic  #89                 // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+    1273: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1278: aload_1
+    1279: aload         27
+    1281: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1286: return
+    1287: aload_1
+    1288: ldc           #119                // int 21
+    1290: iload_2
+    1291: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1296: aload_1
+    1297: aload         19
+    1299: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1304: aload_1
+    1305: aload         20
+    1307: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1312: aload_1
+    1313: iload         26
+    1315: ifeq          1327
+    1318: lload         24
+    1320: l2i
+    1321: invokestatic  #86                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    1324: goto          1332
+    1327: lload         24
+    1329: invokestatic  #89                 // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+    1332: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1337: aload_1
+    1338: aload         28
+    1340: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1345: return
+    1346: aload_1
+    1347: ldc           #120                // int 23
+    1349: iload_2
+    1350: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1355: aload_1
+    1356: aload         19
+    1358: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1363: aload_1
+    1364: aload         20
+    1366: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1371: aload_1
+    1372: iload         31
+    1374: ifeq          1386
+    1377: lload         29
+    1379: l2i
+    1380: invokestatic  #86                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    1383: goto          1391
+    1386: lload         29
+    1388: invokestatic  #89                 // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+    1391: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1396: aload_1
+    1397: aload         32
+    1399: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1404: return
+    1405: aload_1
+    1406: ldc           #72                 // int 24
+    1408: iload_2
+    1409: invokeinterface #109,  3          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.beginSpill:(IZ)V
+    1414: aload_1
+    1415: aload         19
+    1417: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1422: aload_1
+    1423: aload         20
+    1425: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1430: aload_1
+    1431: iload         31
+    1433: ifeq          1445
+    1436: lload         29
+    1438: l2i
+    1439: invokestatic  #86                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+    1442: goto          1450
+    1445: lload         29
+    1447: invokestatic  #89                 // Method java/lang/Long.valueOf:(J)Ljava/lang/Long;
+    1450: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1455: aload_1
+    1456: aload         32
+    1458: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1463: aload_1
+    1464: aload         33
+    1466: invokeinterface #113,  2          // InterfaceMethod io/github/ehlyzov/branchline/vm/LocalLoopContext.spill:(Ljava/lang/Object;)V
+    1471: return
+}

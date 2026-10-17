@@ -1,0 +1,66 @@
+[
+  {
+    "case": "simple",
+    "engine": "jvm",
+    "output": {
+      "doubled": 14,
+      "label": "alpha"
+    }
+  },
+  {
+    "case": "simple",
+    "engine": "node",
+    "output": {
+      "doubled": 14,
+      "label": "alpha"
+    }
+  },
+  {
+    "case": "edited",
+    "engine": "jvm",
+    "output": {
+      "doubled": 33,
+      "label": "changed"
+    }
+  },
+  {
+    "case": "edited",
+    "engine": "node",
+    "output": {
+      "doubled": 33,
+      "label": "changed"
+    }
+  },
+  {
+    "case": "projection",
+    "engine": "jvm",
+    "output": {
+      "rows": [
+        {
+          "id": "a",
+          "total": 12
+        },
+        {
+          "id": "c",
+          "total": 10
+        }
+      ]
+    }
+  },
+  {
+    "case": "projection",
+    "engine": "node",
+    "output": {
+      "rows": [
+        {
+          "id": "a",
+          "total": 12
+        },
+        {
+          "id": "c",
+          "total": 10
+        }
+      ]
+    }
+  }
+]

@@ -1,0 +1,11 @@
+
+fun transform(input: Any?): Any? {
+val rows=(input as Map<*, *>)["rows"] as List<Map<*, *>>
+val ordered = rows.sortedWith(
+    compareBy<Map<*, *>> { (it["rank"] as Number).toLong() }
+        .thenBy { it["label"] as String }
+)
+val descending = rows.sortedByDescending { (it["rank"] as Number).toLong() }
+
+return mapOf("ordered" to ordered,"descending" to descending)
+}

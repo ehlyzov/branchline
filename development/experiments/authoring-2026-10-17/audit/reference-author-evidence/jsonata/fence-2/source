@@ -1,0 +1,8 @@
+(
+  $v := settings.level;
+  {
+    "missingOnly": $exists($v) ? $v : 9,
+    "missingOrNull": ($exists($v) and $v != null) ? $v : 9
+  }
+)
+

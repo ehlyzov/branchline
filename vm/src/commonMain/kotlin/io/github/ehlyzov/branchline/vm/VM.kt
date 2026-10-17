@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalVMApi::class)
+
 package io.github.ehlyzov.branchline.vm
 
 import kotlinx.serialization.Serializable
@@ -74,24 +76,38 @@ class VM(
     private val callStack = ArrayDeque<CallFrame>(64)
     private var pc = 0 // Program counter
     private lateinit var bytecode: Bytecode
+    private var ordinaryEnvironment = false
     private var environment = mutableMapOf<String, Any?>()
+        set(value) {
+            field = value
+            // Only these exact map types have unobservable reads and writes.
+            // Function calls and unwinding replace the environment too.
+            ordinaryEnvironment = value::class == HashMap::class || value::class == LinkedHashMap::class
+        }
     private var locals: Array<Any?> = arrayOf()
     private val funcBytecode = HashMap<String, Bytecode>()
     private var lastSuspension: Any? = null
-    private val hostByIndex = ArrayList<((List<Any?>) -> Any?)?>()
-    // Track which bytecode the host index table was prepared for
-    private var hostIndexPreparedFor: Bytecode? = null
+    // Cache only the current root and a bounded working set of its callees.
+    // Identity comparisons must not invoke Bytecode's structural hashCode.
+    private var preparedRoot: Bytecode? = null
+    private val preparedPrograms = ArrayList<PreparedProgram>()
+    private lateinit var preparedProgram: PreparedProgram
+    // Incremental callers can observe values between instructions.
+    private var privateMutationAllowed = false
     private val outputs = ArrayList<Map<Any, Any?>>()
     private var enterEvents: Map<Int, List<IRNode>> = emptyMap()
     private var exitEvents: Map<Int, List<IRNode>> = emptyMap()
     private var pathWrites: Map<Int, PathWriteMeta> = emptyMap()
     private var activePc: Int = -1
     private val pathScratch = ArrayList<Any>(8)
-    private val numericSites: MutableMap<NumericSiteKey, NumericBinarySite> = HashMap()
 
     // Exception handling
     private val tryStack = ArrayDeque<TryFrame>()
     private var lastException: Throwable? = null
+    // Sequential invocation metadata, used only by language adapters. Keep host
+    // exceptions unchanged even when a host deliberately throws a VMException.
+    private var lastHostFailure: Throwable? = null
+    internal fun isHostFailure(failure: Throwable): Boolean = lastHostFailure === failure
 
     // Loop handling
     private val loopStack = ArrayDeque<LoopState>()
@@ -112,6 +128,7 @@ class VM(
             if (t?.opts?.includeCalls == true) t.on(TraceEvent.Return(kind, name, r))
             r
         } catch (ex: Throwable) {
+            if (kind == "HOST") lastHostFailure = ex
             t?.on(TraceEvent.Error("call $kind ${name ?: "<lambda>"}", ex))
             throw ex
         }
@@ -128,24 +145,24 @@ class VM(
     /**
      * Execute bytecode with the given environment
      */
-    init {
-        for ((name, decl) in funcs) {
-            funcBytecode[name] = compileFunctionBytecode(decl)
-        }
-    }
-
     fun execute(bytecode: Bytecode, env: MutableMap<String, Any?> = mutableMapOf()): Any? {
+        check(!preparedBlockRunning || preparedBlockCanonicalEntryAllowed) { "Prepared block execution is not reentrant" }
+        preparedBlockCanonicalEntryAllowed = false
         this.bytecode = bytecode
         this.environment = env
+        privateMutationAllowed = ordinaryEnvironment
         this.pc = 0
         loadTraceMetadata(bytecode)
 
         stack.clear()
         callStack.clear()
         tryStack.clear()
+        loopStack.clear()
+        lastException = null
         lastSuspension = null
+        lastHostFailure = null
         locals = arrayOf()
-        initHostIndexTable()
+        prepareRootProgram(bytecode)
         outputs.clear()
 
         return try {
@@ -159,10 +176,863 @@ class VM(
         }
     }
 
+    /** Last invocation only; counters describe actual treatment work, including partial deoptimization. */
+    @ExperimentalVMApi
+    var experimentalReport: VMExperimentalReport = VMExperimentalReport(VMExperimentalOptions(), VMExperimentalOptions())
+        private set
+
+    @ExperimentalVMApi
+    fun prepareExperimental(bytecode: Bytecode, options: VMExperimentalOptions = VMExperimentalOptions()): VMExperimentalPlan {
+        var reason: String? = null
+        for (at in 0 until bytecode.size()) {
+            val op = OPCODES[bytecode.getOpcode(at)]
+            if (op in setOf(Opcode.CALL_FN, Opcode.CALL_LAMBDA, Opcode.CALL, Opcode.TRY_START, Opcode.TRY_END,
+                    Opcode.CATCH, Opcode.SUSPEND, Opcode.SET_STATIC, Opcode.SET_DYNAMIC, Opcode.PRIVATE_SET_STATIC,
+                    Opcode.PRIVATE_SET_DYNAMIC, Opcode.MODIFY, Opcode.APPEND, Opcode.PLUS_ASSIGN, Opcode.CONCAT)) {
+                reason = "unsupported opcode $op at $at"
+                break
+            }
+            if (op == Opcode.ACCESS_STATIC) {
+                val key = bytecode.getObjKeyOperand(at)
+                if (key is IBig && key.v::class != BLBigInt::class) {
+                    reason = "custom numeric key at $at"
+                    break
+                }
+            }
+            if (op == Opcode.PUSH && bytecode.getConstOperand(at) is LambdaTemplate) {
+                reason = "closure at $at"
+                break
+            }
+        }
+        return VMExperimentalPlan(bytecode, options, reason,
+            if (options.slots && reason == null) ExperimentalSlotPlan(bytecode) else null,
+            if (options.fusion && reason == null) ExperimentalFusionPlan.prepare(bytecode) else null)
+    }
+
+    /** No execution is replayed. An observation boundary resumes ordinary VM dispatch at its original pc. */
+    @ExperimentalVMApi
+    fun executeExperimental(plan: VMExperimentalPlan, env: MutableMap<String, Any?> = mutableMapOf()): Any? {
+        check(!preparedBlockRunning) { "Compiled execution is not reentrant" }
+        val requested = plan.options
+        val stats = if (requested.collectDiagnostics) ExperimentalDiagnostics() else null
+        val reason = plan.fallbackReason ?: when {
+            currentTracer() != null -> "tracing active"
+            env::class != HashMap::class && env::class != LinkedHashMap::class -> "custom environment"
+            else -> null
+        }
+        if ((!requested.slots && !requested.fusion) || reason != null) {
+            experimentalReport = VMExperimentalReport(requested, VMExperimentalOptions(), reason)
+            return execute(plan.bytecode, env)
+        }
+        begin(plan.bytecode, env)
+        privateMutationAllowed = ordinaryEnvironment
+        val slotPlan = plan.slots
+        val frame = slotPlan?.let { ExperimentalSlotFrame(it, env) }
+        val initialized = BooleanArray(slotPlan?.aliases?.size ?: 0)
+        var attachedAliases = true
+        var logicalLocalCapacity = 0
+        var fallback: String? = null
+        var usedSlots = false
+        var usedFusion = false
+
+        fun materializeAliases() {
+            if (frame == null || !attachedAliases) return
+            if (logicalLocalCapacity > 0) ensureLocals(logicalLocalCapacity)
+            for (index in initialized.indices) if (initialized[index]) {
+                val alias = slotPlan!!.aliases[index]
+                if (alias >= 0) locals[index] = frame.read(alias, false)
+            }
+            attachedAliases = false
+        }
+        fun load(op: Opcode, at: Int) {
+            when (op) {
+                Opcode.LOAD_VAR, Opcode.LOAD_SCOPE -> {
+                    if (frame == null) executeOpcode(op) else {
+                        push(frame.read(slotPlan!!.byPc[at], op == Opcode.LOAD_VAR))
+                        if (stats != null) stats.slotReads++; usedSlots = true
+                    }
+                }
+                Opcode.LOAD_LOCAL -> {
+                    val index = bytecode.getIntOperand(at)
+                    val alias = slotPlan?.aliases?.getOrElse(index) { -1 } ?: -1
+                    if (frame != null && attachedAliases && alias >= 0) {
+                        push(if (initialized[index]) frame.read(alias, false) else null)
+                        if (stats != null) stats.slotReads++; usedSlots = true
+                    } else executeOpcode(op)
+                }
+                else -> error("not a load")
+            }
+        }
+        fun stop(reason: String) {
+            fallback = reason
+            materializeAliases()
+            frame?.flush()
+        }
+        fun ordinaryContainer(value: Any?): Boolean = value !== environment && when (value) {
+            is Map<*, *> -> value::class == HashMap::class || value::class == LinkedHashMap::class
+            is List<*> -> value::class == ArrayList::class || value::class == emptyList<Any?>()::class ||
+                value::class == listOf<Any?>(null)::class || value::class == listOf(null, null)::class
+            else -> true
+        }
+        // JVM bignum subclasses can execute user code. Materialize at their source PC
+        // before ordinary dispatch; never invoke a callback to decide whether to deopt.
+        fun scalar(value: Any?): Boolean = preparedBlockScalar(value)
+        fun observerReason(op: Opcode): String? {
+            val top = stack.peek()
+            return when (op) {
+                Opcode.ACCESS_STATIC, Opcode.INIT_FOREACH -> if (!ordinaryContainer(top) ||
+                    (op == Opcode.INIT_FOREACH && top is Iterable<*> && top !is List<*>) || top is Sequence<*>) "custom collection at $pc" else null
+                Opcode.ARRAY_BUILDER_ADD, Opcode.PRIVATE_ARRAY_APPEND ->
+                    if (!ordinaryContainer(stack.elementAtOrNull(1))) "custom array builder at $pc" else null
+                Opcode.ACCESS_DYNAMIC -> if (!scalar(top) || !ordinaryContainer(stack.elementAtOrNull(1))) "custom dynamic access at $pc" else null
+                Opcode.ADD, Opcode.SUB, Opcode.MUL, Opcode.DIV, Opcode.IDIV, Opcode.MOD,
+                Opcode.EQ, Opcode.NEQ, Opcode.LT, Opcode.LE, Opcode.GT, Opcode.GE ->
+                    if (!scalar(top) || !scalar(stack.elementAtOrNull(1))) "observable scalar operation at $pc" else null
+                Opcode.NEG -> if (!scalar(top)) "observable numeric operation at $pc" else null
+                Opcode.AND, Opcode.OR ->
+                    if (!preparedBlockTruthSafe(top) || !preparedBlockTruthSafe(stack.elementAtOrNull(1))) "observable truth operation at $pc" else null
+                Opcode.NOT, Opcode.JUMP_IF_TRUE, Opcode.JUMP_IF_FALSE ->
+                    if (!preparedBlockTruthSafe(top)) "observable truth operation at $pc" else null
+                Opcode.MAKE_OBJECT, Opcode.OUTPUT -> {
+                    val count = bytecode.getIntOperand(pc)
+                    if ((0 until count).any { !scalar(stack.elementAtOrNull(it * 2 + if (op == Opcode.OUTPUT) 1 else 0)) }) "custom object key at $pc" else null
+                }
+                else -> null
+            }
+        }
+        fun mirror(index: Int, local: Int) {
+            // The removed DUP would have failed before either binding changed.
+            if (stack.size >= MAX_STACK_SIZE) throw VMException.StackOverflow()
+            val value = pop()
+            frame!!.write(index, value)
+            initialized[local] = true
+            if (!attachedAliases) { ensureLocals(local + 1); locals[local] = value } else {
+                val required = local + 1
+                if (logicalLocalCapacity < required) {
+                    val grow = if (logicalLocalCapacity == 0) 4 else logicalLocalCapacity * 2
+                    logicalLocalCapacity = maxOf(4, maxOf(required, grow))
+                }
+            }
+            if (stats != null) { stats.slotWrites++; stats.mirrors++; stats.elided += 2 }; usedSlots = true
+        }
+        fun storeLocal() {
+            // Preserve the baseline's geometric capacity even while aliased values live only in slots.
+            if (attachedAliases && logicalLocalCapacity > 0) ensureLocals(logicalLocalCapacity)
+            executeOpcode(Opcode.STORE_LOCAL)
+            logicalLocalCapacity = locals.size
+        }
+        try {
+            while (pc < bytecode.size()) {
+                if (pc < 0) pc = 0
+                if (currentTracer() != null) { stop("tracing activated at $pc"); return run().let { if (outputs.isNotEmpty()) normalizeOutputs() else it } }
+                val op = OPCODES[bytecode.getOpcode(pc)]
+                val observation = observerReason(op)
+                if (observation != null) { stop(observation); return run().let { if (outputs.isNotEmpty()) normalizeOutputs() else it } }
+                if (frame != null && slotPlan!!.mirrorAt[pc] >= 0) {
+                    mirror(slotPlan!!.mirrorAt[pc], bytecode.getIntOperand(pc + 2))
+                    pc += 3
+                    continue
+                }
+                val fusion = if (requested.fusion) plan.fusion?.byPc?.get(pc) else null
+                if (fusion is ExperimentalFusion.StaticPath) {
+                    load(fusion.load, pc)
+                    pc++
+                    var complete = true
+                    for (key in fusion.keys) {
+                        if (currentTracer() != null || !ordinaryContainer(peek())) { complete = false; break }
+                        accessStatic(key)
+                        pc++
+                    }
+                    val executed = pc - fusion.startPc
+                    if (executed > 1) { if (stats != null) { stats.fused++; stats.elided += executed - 1 }; usedFusion = true }
+                    if (!complete) {
+                        stop("path observation boundary at $pc")
+                        return run().let { if (outputs.isNotEmpty()) normalizeOutputs() else it }
+                    }
+                    continue
+                }
+                if (fusion is ExperimentalFusion.MirroredStore) {
+                    // Fusion retains both baseline stores when slots are disabled.
+                    executeOpcode(Opcode.DUP); pc++
+                    if (frame == null) executeOpcode(Opcode.STORE_VAR) else {
+                        frame.write(slotPlan!!.byPc[pc], pop()); if (stats != null) stats.slotWrites++; usedSlots = true
+                    }
+                    pc++
+                    storeLocal(); pc++
+                    if (stats != null) { stats.fused++; stats.elided += 2 }; usedFusion = true
+                    continue
+                }
+                when (op) {
+                    Opcode.LOAD_VAR, Opcode.LOAD_SCOPE, Opcode.LOAD_LOCAL -> load(op, pc)
+                    Opcode.STORE_LOCAL -> storeLocal()
+                    Opcode.STORE_VAR -> if (frame == null) executeOpcode(op) else {
+                        frame.write(slotPlan!!.byPc[pc], pop()); if (stats != null) stats.slotWrites++; usedSlots = true
+                    }
+                    Opcode.INIT_FOREACH -> if (frame == null) executeOpcode(op) else {
+                        val iterable = pop()
+                        val list = iterable as? List<*> ?: throw VMException.TypeMismatch("iterable", iterable?.let { it::class.simpleName } ?: "null")
+                        if (list.isEmpty()) pc = bytecode.getIntOperand(pc) - 1 else {
+                            val index = slotPlan!!.byPc[pc]
+                            val present = frame.contains(index)
+                            val outer = frame.read(index, false)
+                            loopStack.push(LoopState(bytecode.getStringOperand(pc), list, 0, present, outer, index))
+                            frame.write(index, list[0]); if (stats != null) stats.loopWrites++; usedSlots = true
+                        }
+                    }
+                    Opcode.NEXT_FOREACH -> if (frame == null) executeOpcode(op) else {
+                        val state = loopStack.peek()
+                        if (state == null) pc = bytecode.getIntOperand(pc, 1) - 1 else {
+                            state.idx++
+                            if (state.idx < state.list.size) {
+                                frame.write(state.slotIndex, state.list[state.idx]); if (stats != null) stats.loopWrites++; usedSlots = true
+                                pc = bytecode.getIntOperand(pc) - 1
+                            } else {
+                                if (state.hadOuter) frame.write(state.slotIndex, state.outerValue) else frame.remove(state.slotIndex)
+                                if (stats != null) stats.loopWrites++; usedSlots = true; loopStack.pop()
+                                pc = bytecode.getIntOperand(pc, 1) - 1
+                            }
+                        }
+                    }
+                    Opcode.CALL_HOST -> {
+                        materializeAliases(); frame?.flush(); if (stats != null) stats.hostBarriers++
+                        try { executeOpcode(op) } finally { frame?.invalidate() }
+                        if (currentTracer() != null) emitExitEventsAt(pc)
+                    }
+                    else -> executeOpcode(op)
+                }
+                pc++
+            }
+            return if (outputs.isNotEmpty()) normalizeOutputs() else peekOrNull()
+        } catch (abort: VMException.Abort) {
+            // The ordinary entry point inspects the abort value for suspension.
+            // Materialize before a user map can observe that lookup.
+            materializeAliases()
+            frame?.flush()
+            val value = abort.value
+            return if (value is Map<*, *> && value["__suspended"] == true) value
+                else if (outputs.isNotEmpty()) normalizeOutputs() else value
+        } finally {
+            materializeAliases()
+            frame?.flush()
+            experimentalReport = VMExperimentalReport(requested, VMExperimentalOptions(usedSlots, usedFusion, requested.collectDiagnostics), fallback,
+                stats?.slotReads ?: 0, stats?.slotWrites ?: 0, stats?.loopWrites ?: 0,
+                stats?.mirrors ?: 0, stats?.fused ?: 0, stats?.elided ?: 0, stats?.hostBarriers ?: 0)
+            (currentTracer() as? AutoCloseable)?.close()
+        }
+    }
+
+    private var preparedBlockRunning = false
+    private var preparedBlockCanonicalEntryAllowed = false
+    private var preparedBlockFrame: PreparedBlockFrame? = null
+    @ExperimentalVMApi
+    var preparedBlockExecuted: Boolean = false
+        private set
+    @ExperimentalVMApi
+    var preparedBlockOptimized: Boolean = false
+        private set
+    @ExperimentalVMApi
+    var preparedBlockFallbackReason: String? = null
+        private set
+
+    @ExperimentalVMApi
+    fun prepareBlocks(bytecode: Bytecode, optimize: Boolean = false): PreparedBlockPlan =
+        PreparedBlockPlan.prepare(bytecode, optimize)
+
+    /** Sequential, non-reentrant execution of an owned, resolved instruction plan. */
+    @ExperimentalVMApi
+    fun executeBlocks(plan: PreparedBlockPlan, env: MutableMap<String, Any?> = mutableMapOf()): Any? {
+        check(!preparedBlockRunning) { "Prepared block execution is not reentrant" }
+        preparedBlockExecuted = false
+        preparedBlockOptimized = false
+        preparedBlockFallbackReason = plan.fallbackReason ?: when {
+            currentTracer() != null -> "tracing active"
+            env::class != HashMap::class && env::class != LinkedHashMap::class -> "custom environment"
+            else -> null
+        }
+        if (preparedBlockFallbackReason != null) {
+            preparedBlockRunning = true
+            preparedBlockCanonicalEntryAllowed = true
+            return try { execute(plan.bytecode, env) } finally {
+                preparedBlockCanonicalEntryAllowed = false
+                preparedBlockRunning = false
+            }
+        }
+        begin(plan.bytecode, env)
+        privateMutationAllowed = ordinaryEnvironment
+        val frame = if (plan.optimize) {
+            val cached = preparedBlockFrame
+            (if (cached?.plan === plan) cached else PreparedBlockFrame(plan).also { preparedBlockFrame = it })
+                .also { it.reset(env) }
+        } else null
+        preparedBlockRunning = true
+        preparedBlockExecuted = true
+        try {
+            return runPreparedBlocks(plan, frame)
+        } catch (abort: VMException.Abort) {
+            materializePreparedBlockLocals(frame)
+            frame?.flush()
+            val value = abort.value
+            return if (value is Map<*, *> && value["__suspended"] == true) value
+                else if (outputs.isNotEmpty()) normalizeOutputs() else value
+        } finally {
+            finishPreparedBlocks(frame)
+        }
+    }
+
+    private fun runPreparedBlocks(plan: PreparedBlockPlan, frame: PreparedBlockFrame?): Any? {
+        while (pc < bytecode.size()) {
+            if (pc < 0) pc = 0
+            val instruction = plan.instructions[pc] ?: error("Invalid prepared instruction entry $pc")
+            val sourcePc = instruction.sourcePc
+            var nextPc = instruction.nextPc
+            when (instruction.kind) {
+                PreparedBlockOp.PUSH -> push(instruction.value)
+                PreparedBlockOp.DUP -> push(peek())
+                PreparedBlockOp.POP -> pop()
+                PreparedBlockOp.SWAP -> { val a = pop(); val b = pop(); push(a); push(b) }
+                PreparedBlockOp.LOAD_VAR, PreparedBlockOp.LOAD_SCOPE, PreparedBlockOp.LOAD_LOCAL,
+                PreparedBlockOp.SLOT_LOAD, PreparedBlockOp.SLOT_SCOPE, PreparedBlockOp.ALIAS_LOAD -> {
+                    push(readPreparedBlockValue(instruction, frame))
+                }
+                PreparedBlockOp.STORE_VAR -> storeVar(instruction.name!!)
+                PreparedBlockOp.STORE_LOCAL -> {
+                    if (frame != null && frame.aliasesAttached && frame.logicalLocalCapacity > 0) ensureLocals(frame.logicalLocalCapacity)
+                    val value = pop()
+                    ensureLocals(instruction.a + 1)
+                    locals[instruction.a] = value
+                    if (frame != null) frame.logicalLocalCapacity = locals.size
+                }
+                PreparedBlockOp.SLOT_STORE -> {
+                    frame!!.write(instruction.a, pop())
+                    preparedBlockOptimized = true
+                }
+                PreparedBlockOp.MIRROR_STORE -> {
+                    // Preserve DUP's failure before either binding is changed.
+                    if (stack.size >= MAX_STACK_SIZE) throw VMException.StackOverflow()
+                    val value = pop()
+                    frame!!.write(instruction.a, value)
+                    frame.initializedLocals[instruction.b] = true
+                    if (frame.aliasesAttached) {
+                        val required = instruction.b + 1
+                        if (required > frame.logicalLocalCapacity) {
+                            val grow = if (frame.logicalLocalCapacity == 0) 4 else frame.logicalLocalCapacity * 2
+                            frame.logicalLocalCapacity = maxOf(4, maxOf(required, grow))
+                        }
+                    } else {
+                        ensureLocals(instruction.b + 1)
+                        locals[instruction.b] = value
+                    }
+                    preparedBlockOptimized = true
+                }
+                PreparedBlockOp.STATIC_PATH -> {
+                    var container = readPreparedBlockValue(instruction.load!!, frame)
+                    // The original load must still fail on a full stack, before the first access.
+                    if (stack.size >= MAX_STACK_SIZE) throw VMException.StackOverflow()
+                    val keys = instruction.keys!!
+                    var index = 0
+                    while (index < keys.size) {
+                        pc = sourcePc + index + 1
+                        if (!PreparedBlockGuards.ordinaryContainer(container, environment)) {
+                            // Reconstruct the exact stack before this original access, without replaying the load/prefix.
+                            push(container)
+                            return deoptPreparedBlocks(frame, "static path observer")
+                        }
+                        container = readPreparedBlockStatic(container, keys[index])
+                        index++
+                    }
+                    push(container)
+                    preparedBlockOptimized = true
+                }
+                PreparedBlockOp.ADD -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryNumeric(VmNumericOp.ADD)
+                }
+                PreparedBlockOp.SUB -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryNumeric(VmNumericOp.SUB)
+                }
+                PreparedBlockOp.MUL -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryNumeric(VmNumericOp.MUL)
+                }
+                PreparedBlockOp.DIV -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryNumeric(VmNumericOp.DIV)
+                }
+                PreparedBlockOp.IDIV -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryNumeric(VmNumericOp.IDIV)
+                }
+                PreparedBlockOp.MOD -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryNumeric(VmNumericOp.MOD)
+                }
+                PreparedBlockOp.NEG -> {
+                    if (frame != null && !preparedBlockScalar(stack.peek())) return deoptPreparedBlocks(frame, "custom scalar")
+                    unaryArithmetic { negateNumber(it) }
+                }
+                PreparedBlockOp.EQ -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryComparison { l, r -> equalsValues(l, r) }
+                }
+                PreparedBlockOp.NEQ -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryComparison { l, r -> !equalsValues(l, r) }
+                }
+                PreparedBlockOp.LT -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryComparison { l, r -> compareValues(l, r) < 0 }
+                }
+                PreparedBlockOp.LE -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryComparison { l, r -> compareValues(l, r) <= 0 }
+                }
+                PreparedBlockOp.GT -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryComparison { l, r -> compareValues(l, r) > 0 }
+                }
+                PreparedBlockOp.GE -> {
+                    if (frame != null && !preparedBlockPairSafe()) return deoptPreparedBlocks(frame, "custom scalar")
+                    binaryComparison { l, r -> compareValues(l, r) >= 0 }
+                }
+                PreparedBlockOp.AND -> {
+                    if (frame != null && (!preparedBlockTruthSafe(stack.peek()) || !preparedBlockTruthSafe(stack.elementAtOrNull(1)))) return deoptPreparedBlocks(frame, "custom truth value")
+                    val right = pop(); val left = pop(); push(if (!left.asBool()) false else right.asBool())
+                }
+                PreparedBlockOp.OR -> {
+                    if (frame != null && (!preparedBlockTruthSafe(stack.peek()) || !preparedBlockTruthSafe(stack.elementAtOrNull(1)))) return deoptPreparedBlocks(frame, "custom truth value")
+                    val right = pop(); val left = pop(); push(if (left.asBool()) true else right.asBool())
+                }
+                PreparedBlockOp.NOT -> {
+                    if (frame != null && !preparedBlockTruthSafe(stack.peek())) return deoptPreparedBlocks(frame, "custom truth value")
+                    push(!pop().asBool())
+                }
+                PreparedBlockOp.COALESCE -> { val right = pop(); val left = pop(); push(left ?: right) }
+                PreparedBlockOp.MAKE_OBJECT -> {
+                    if (frame != null && !preparedBlockKeysSafe(instruction.a, 0)) return deoptPreparedBlocks(frame, "custom object key")
+                    makeObject(instruction.a)
+                }
+                PreparedBlockOp.MAKE_ARRAY -> makeArray(instruction.a)
+                PreparedBlockOp.ACCESS_STATIC -> {
+                    if (frame != null && !PreparedBlockGuards.ordinaryContainer(stack.peek(), environment)) return deoptPreparedBlocks(frame, "custom static container")
+                    accessStatic(instruction.key!!)
+                }
+                PreparedBlockOp.ACCESS_DYNAMIC -> {
+                    if (frame != null && (!preparedBlockScalar(stack.peek()) || !PreparedBlockGuards.ordinaryContainer(stack.elementAtOrNull(1), environment))) return deoptPreparedBlocks(frame, "custom dynamic container")
+                    accessDynamic()
+                }
+                PreparedBlockOp.ARRAY_BUILDER_INIT -> initArrayBuilder()
+                PreparedBlockOp.ARRAY_BUILDER_ADD -> {
+                    if (frame != null && !PreparedBlockGuards.ordinaryContainer(stack.elementAtOrNull(1), environment)) return deoptPreparedBlocks(frame, "custom array builder")
+                    arrayBuilderAdd()
+                }
+                PreparedBlockOp.PRIVATE_ARRAY_APPEND -> {
+                    if (frame != null && !PreparedBlockGuards.ordinaryContainer(stack.elementAtOrNull(1), environment)) return deoptPreparedBlocks(frame, "custom array builder")
+                    arrayBuilderAdd(privateRoot = true)
+                }
+                PreparedBlockOp.ARRAY_BUILDER_FINISH -> arrayBuilderFinish()
+                PreparedBlockOp.JUMP -> nextPc = instruction.a
+                PreparedBlockOp.JUMP_IF_TRUE -> {
+                    if (frame != null && !preparedBlockTruthSafe(stack.peek())) return deoptPreparedBlocks(frame, "custom truth value")
+                    if (pop().asBool()) nextPc = instruction.a
+                }
+                PreparedBlockOp.JUMP_IF_FALSE -> {
+                    if (frame != null && !preparedBlockTruthSafe(stack.peek())) return deoptPreparedBlocks(frame, "custom truth value")
+                    if (!pop().asBool()) nextPc = instruction.a
+                }
+                PreparedBlockOp.JUMP_IF_NULL -> if (pop() == null) nextPc = instruction.a
+                PreparedBlockOp.CALL_HOST -> {
+                    materializePreparedBlockLocals(frame)
+                    frame?.flush()
+                    try { callHost(instruction.name!!, instruction.b) } finally { frame?.invalidate() }
+                }
+                PreparedBlockOp.RETURN -> handleReturn(null)
+                PreparedBlockOp.RETURN_VALUE -> handleReturn(pop())
+                PreparedBlockOp.OUTPUT -> {
+                    if (frame != null && !preparedBlockKeysSafe(instruction.a, 1)) return deoptPreparedBlocks(frame, "custom output key")
+                    when (instruction.a) {
+                        1 -> createOutput1()
+                        2 -> createOutput2()
+                        else -> createOutput(instruction.a)
+                    }
+                }
+                PreparedBlockOp.INIT_FOREACH -> {
+                    if (frame != null) {
+                        val value = stack.peek()
+                        if (!PreparedBlockGuards.ordinaryContainer(value, environment) || (value is Iterable<*> && value !is List<*>) || value is Sequence<*>) {
+                            return deoptPreparedBlocks(frame, "custom iterable")
+                        }
+                    }
+                    if (frame == null) {
+                        initForEach(instruction.name!!, instruction.a)
+                        if (pc != sourcePc) nextPc = pc + 1
+                    } else {
+                        val iterable = pop()
+                        val list = iterable as? List<*> ?: throw VMException.TypeMismatch("iterable", iterable?.let { it::class.simpleName } ?: "null")
+                        if (list.isEmpty()) nextPc = instruction.a else {
+                            val hadOuter = frame.contains(instruction.b)
+                            val outer = frame.read(instruction.b, false)
+                            loopStack.push(LoopState(instruction.name!!, list, 0, hadOuter, outer, instruction.b))
+                            frame.write(instruction.b, list[0])
+                            preparedBlockOptimized = true
+                        }
+                    }
+                }
+                PreparedBlockOp.NEXT_FOREACH -> {
+                    if (frame == null) {
+                        nextForEach(instruction.a, instruction.b)
+                        nextPc = pc + 1
+                    } else {
+                        val state = loopStack.peek()
+                        if (state == null) nextPc = instruction.b else {
+                            val next = state.idx + 1
+                            if (next < state.list.size) {
+                                state.idx = next
+                                frame.write(state.slotIndex, state.list[next])
+                                nextPc = instruction.a
+                            } else {
+                                if (state.hadOuter) frame.write(state.slotIndex, state.outerValue) else frame.remove(state.slotIndex)
+                                loopStack.pop()
+                                nextPc = instruction.b
+                            }
+                            preparedBlockOptimized = true
+                        }
+                    }
+                }
+                PreparedBlockOp.ABORT -> throw VMException.Abort(if (stack.isEmpty()) null else pop())
+                PreparedBlockOp.TRACE -> emitTrace(instruction.name!!)
+                PreparedBlockOp.BREAKPOINT -> emitBreakpoint(instruction.name!!)
+                PreparedBlockOp.LINE -> emitLineNumber(instruction.a)
+                PreparedBlockOp.NOP -> Unit
+            }
+            // Control mode may encounter an observable value directly; optimized mode guards before it.
+            if (instruction.observation != PreparedBlockObservation.NONE && currentTracer() != null) {
+                emitExitEventsAt(sourcePc)
+                pc = nextPc
+                return deoptPreparedBlocks(frame, "tracing activated")
+            }
+            pc = nextPc
+        }
+        return if (outputs.isNotEmpty()) normalizeOutputs() else peekOrNull()
+    }
+
+    private fun finishPreparedBlocks(frame: PreparedBlockFrame?) {
+        try {
+            materializePreparedBlockLocals(frame)
+            frame?.flush()
+        } finally {
+            frame?.clear()
+            try {
+                (currentTracer() as? AutoCloseable)?.close()
+            } finally {
+                preparedBlockRunning = false
+            }
+        }
+    }
+
+    private fun readPreparedBlockValue(instruction: PreparedBlockInstruction, frame: PreparedBlockFrame?): Any? = when (instruction.kind) {
+        PreparedBlockOp.LOAD_VAR -> loadVariable(instruction.name!!)
+        PreparedBlockOp.LOAD_SCOPE -> environment[instruction.name!!]
+        PreparedBlockOp.LOAD_LOCAL -> locals.getOrNull(instruction.a)
+        PreparedBlockOp.SLOT_LOAD, PreparedBlockOp.SLOT_SCOPE -> {
+            preparedBlockOptimized = true
+            frame!!.read(instruction.a, instruction.kind == PreparedBlockOp.SLOT_LOAD)
+        }
+        PreparedBlockOp.ALIAS_LOAD -> {
+            if (frame!!.aliasesAttached) {
+                preparedBlockOptimized = true
+                if (frame.initializedLocals[instruction.a]) frame.read(instruction.b, false) else null
+            } else locals.getOrNull(instruction.a)
+        }
+        else -> error("Not a prepared load")
+    }
+
+    private fun materializePreparedBlockLocals(frame: PreparedBlockFrame?) {
+        if (frame == null || !frame.aliasesAttached) return
+        if (frame.logicalLocalCapacity > 0) ensureLocals(frame.logicalLocalCapacity)
+        for (index in frame.initializedLocals.indices) if (frame.initializedLocals[index]) {
+            val alias = frame.plan.aliases[index]
+            if (alias >= 0) locals[index] = frame.read(alias, false)
+        }
+        frame.aliasesAttached = false
+    }
+
+    private fun deoptPreparedBlocks(frame: PreparedBlockFrame?, reason: String): Any? {
+        preparedBlockFallbackReason = reason
+        materializePreparedBlockLocals(frame)
+        frame?.flush()
+        val value = run()
+        return if (outputs.isNotEmpty()) normalizeOutputs() else value
+    }
+
+    private fun readPreparedBlockStatic(container: Any?, key: ObjKey): Any? = when (container) {
+        is Map<*, *> -> container[unwrapKey(key)]
+        is List<*> -> {
+            val index = staticIndex(key)
+            if (index < 0 || index >= container.size) throw VMException.IndexOutOfBounds(index, container.size)
+            container[index]
+        }
+        else -> throw VMException.TypeMismatch("object or array", container?.let { it::class.simpleName } ?: "null")
+    }
+
+    private fun preparedBlockScalar(value: Any?): Boolean = value == null || value is String || value is Boolean ||
+        value is Byte || value is Short || value is Int || value is Long || value is Float || value is Double ||
+        (value is BLBigInt && value::class == BLBigInt::class) ||
+        (value is BLBigDec && value::class == BLBigDec::class)
+
+    private fun preparedBlockTruthSafe(value: Any?): Boolean = when (value) {
+        is BLBigInt -> value::class == BLBigInt::class
+        is BLBigDec -> value::class == BLBigDec::class
+        else -> true
+    }
+
+    private fun preparedBlockPairSafe(): Boolean =
+        preparedBlockScalar(stack.peek()) && preparedBlockScalar(stack.elementAtOrNull(1))
+
+    private fun preparedBlockKeysSafe(count: Int, offset: Int): Boolean {
+        var index = 0
+        while (index < count) {
+            if (!preparedBlockScalar(stack.elementAtOrNull(index * 2 + offset))) return false
+            index++
+        }
+        return true
+    }
+
+    private var loopBodyContext: LoopContext? = null
+    @ExperimentalVMApi
+    var loopBodyExecuted: Boolean = false
+        private set
+    @ExperimentalVMApi
+    var loopBodyEntries: Int = 0
+        private set
+    @ExperimentalVMApi
+    var loopBodyFallbackReason: String? = null
+        private set
+
+    /** JVM plans have one generated comprehension; prefix/suffix retain ordinary VM dispatch. */
+    @ExperimentalVMApi
+    fun executeLoopBodies(plan: LoopBodyPlan, env: MutableMap<String, Any?> = mutableMapOf()): Any? {
+        check(!preparedBlockRunning) { "Compiled execution is not reentrant" }
+        loopBodyExecuted = false
+        loopBodyEntries = 0
+        loopBodyFallbackReason = plan.fallbackReason ?: when {
+            currentTracer() != null -> "tracing active"
+            env::class != HashMap::class && env::class != LinkedHashMap::class -> "custom environment"
+            else -> null
+        }
+        if (loopBodyFallbackReason != null) {
+            preparedBlockRunning = true
+            preparedBlockCanonicalEntryAllowed = true
+            return try { execute(plan.bytecode, env) } finally {
+                preparedBlockCanonicalEntryAllowed = false
+                preparedBlockRunning = false
+            }
+        }
+        begin(plan.bytecode, env)
+        privateMutationAllowed = ordinaryEnvironment
+        val context = loopBodyContext ?: LoopContext().also { loopBodyContext = it }
+        context.bind(plan)
+        preparedBlockRunning = true
+        try {
+            // The recognized prefix is linear. Execute INIT exactly once with its original effects.
+            run(limit = plan.bodyStart)
+            if (pc == plan.bodyStart) {
+                if (currentTracer() != null) loopBodyFallbackReason = "tracing active after loop initialization" else {
+                    loopBodyExecuted = true
+                    loopBodyEntries++
+                    try { plan.kernel!!.run(context) } finally { activePc = -1 }
+                }
+            }
+            val result = run()
+            return if (outputs.isNotEmpty()) normalizeOutputs() else result
+        } catch (abort: VMException.Abort) {
+            val value = abort.value
+            return if (value is Map<*, *> && value["__suspended"] == true) value
+                else if (outputs.isNotEmpty()) normalizeOutputs() else value
+        } finally {
+            context.release()
+            // Includes tracer.close within the non-reentrant lifetime, even when close throws.
+            finishPreparedBlocks(null)
+        }
+    }
+
+    private inner class LoopContext : LoopBodyContext {
+        private var plan: LoopBodyPlan? = null
+        private var sourcePc = -1
+        fun bind(value: LoopBodyPlan) { plan = value }
+        fun release() { plan = null; sourcePc = -1 }
+        override fun mark(sourcePc: Int) {
+            this.sourcePc = sourcePc
+            pc = sourcePc
+            activePc = sourcePc
+        }
+        override fun after(nextPc: Int): Boolean {
+            // Canonical run emits Exit after clearing activePc and before its final pc++.
+            pc = nextPc - 1
+            activePc = -1
+            val tracing = currentTracer() != null
+            if (tracing) {
+                emitExitEventsAt(sourcePc)
+                loopBodyFallbackReason = "tracing activated in compiled loop"
+            }
+            pc = nextPc
+            activePc = -1
+            return tracing
+        }
+        override fun pushConstant(sourcePc: Int) = push(plan!!.constantsByPc[sourcePc])
+        override fun dup() = push(peek())
+        override fun pop() { this@VM.pop() }
+        override fun swap() { val a = this@VM.pop(); val b = this@VM.pop(); push(a); push(b) }
+        override fun loadVariable(name: String) {
+            val value = this@VM.loadVariable(name)
+            push(value)
+            emitVarRead(name, value)
+        }
+        override fun loadScope(name: String) = push(environment[name])
+        override fun loadLocal(index: Int) = push(locals.getOrNull(index))
+        override fun accessStatic(sourcePc: Int) = this@VM.accessStatic(plan!!.keysByPc[sourcePc]!!)
+        override fun accessDynamic() = this@VM.accessDynamic()
+        override fun add() = binaryNumeric(VmNumericOp.ADD)
+        override fun sub() = binaryNumeric(VmNumericOp.SUB)
+        override fun mul() = binaryNumeric(VmNumericOp.MUL)
+        override fun div() = binaryNumeric(VmNumericOp.DIV)
+        override fun idiv() = binaryNumeric(VmNumericOp.IDIV)
+        override fun mod() = binaryNumeric(VmNumericOp.MOD)
+        override fun neg() = unaryArithmetic { negateNumber(it) }
+        override fun eq() = binaryComparison { l, r -> equalsValues(l, r) }
+        override fun neq() = binaryComparison { l, r -> !equalsValues(l, r) }
+        override fun lt() = binaryComparison { l, r -> compareValues(l, r) < 0 }
+        override fun le() = binaryComparison { l, r -> compareValues(l, r) <= 0 }
+        override fun gt() = binaryComparison { l, r -> compareValues(l, r) > 0 }
+        override fun ge() = binaryComparison { l, r -> compareValues(l, r) >= 0 }
+        override fun and() { val right = this@VM.pop(); val left = this@VM.pop(); push(if (!left.asBool()) false else right.asBool()) }
+        override fun or() { val right = this@VM.pop(); val left = this@VM.pop(); push(if (left.asBool()) true else right.asBool()) }
+        override fun not() = push(!this@VM.pop().asBool())
+        override fun coalesce() { val right = this@VM.pop(); val left = this@VM.pop(); push(left ?: right) }
+        override fun makeObject(count: Int) = this@VM.makeObject(count)
+        override fun makeArray(count: Int) = this@VM.makeArray(count)
+        override fun arrayBuilderAdd() = this@VM.arrayBuilderAdd()
+        override fun popTruth(): Boolean = this@VM.pop().asBool()
+        override fun nextForeach(start: Int, end: Int): Boolean {
+            nextForEach(start, end)
+            return pc + 1 == start
+        }
+    }
+
+    private var localLoopContext: LocalContext? = null
+    @ExperimentalVMApi
+    var localLoopExecuted: Boolean = false
+        private set
+    @ExperimentalVMApi
+    var localLoopEntries: Int = 0
+        private set
+    @ExperimentalVMApi
+    var localLoopPrimitiveUsed: Boolean = false
+        private set
+    @ExperimentalVMApi
+    var localLoopFallbackReason: String? = null
+        private set
+
+    @ExperimentalVMApi
+    fun executeLocalLoops(plan: LocalLoopPlan, env: MutableMap<String, Any?> = mutableMapOf()): Any? {
+        check(!preparedBlockRunning) { "Compiled execution is not reentrant" }
+        localLoopExecuted = false
+        localLoopEntries = 0
+        localLoopPrimitiveUsed = false
+        localLoopFallbackReason = plan.fallbackReason ?: when {
+            currentTracer() != null -> "tracing active"
+            env::class != HashMap::class && env::class != LinkedHashMap::class -> "custom environment"
+            else -> null
+        }
+        if (localLoopFallbackReason != null) {
+            preparedBlockRunning = true
+            preparedBlockCanonicalEntryAllowed = true
+            return try { execute(plan.bytecode, env) } finally {
+                preparedBlockCanonicalEntryAllowed = false
+                preparedBlockRunning = false
+            }
+        }
+        begin(plan.bytecode, env)
+        privateMutationAllowed = ordinaryEnvironment
+        val context = localLoopContext ?: LocalContext().also { localLoopContext = it }
+        context.bind(plan)
+        preparedBlockRunning = true
+        try {
+            run(limit = plan.bodyStart)
+            if (pc == plan.bodyStart) {
+                when {
+                    currentTracer() != null -> localLoopFallbackReason = "tracing active after loop initialization"
+                    stack.size.toLong() + plan.maxVirtualHeight > MAX_STACK_SIZE -> localLoopFallbackReason = "virtual stack capacity guard"
+                    else -> {
+                        localLoopExecuted = true
+                        localLoopEntries++
+                        try { plan.kernel!!.run(context) } finally { activePc = -1 }
+                    }
+                }
+            }
+            val result = run()
+            return if (outputs.isNotEmpty()) normalizeOutputs() else result
+        } catch (abort: VMException.Abort) {
+            val value = abort.value
+            return if (value is Map<*, *> && value["__suspended"] == true) value
+                else if (outputs.isNotEmpty()) normalizeOutputs() else value
+        } finally {
+            context.release()
+            finishPreparedBlocks(null)
+        }
+    }
+
+    private inner class LocalContext : LocalLoopContext {
+        private var plan: LocalLoopPlan? = null
+        fun bind(value: LocalLoopPlan) { plan = value }
+        fun release() { plan = null }
+        override fun constant(sourcePc: Int): Any? = plan!!.constantsByPc[sourcePc]
+        override fun key(sourcePc: Int): Any = plan!!.keysByPc[sourcePc]!!
+        override fun hasVariable(name: String): Boolean = environment.containsKey(name)
+        override fun variable(name: String): Any? = environment[name]
+        override fun scope(name: String): Any? = environment[name]
+        override fun local(index: Int): Any? = locals.getOrNull(index)
+        override fun beginSpill(sourcePc: Int, primitiveUsed: Boolean) {
+            localLoopPrimitiveUsed = localLoopPrimitiveUsed || primitiveUsed
+            localLoopFallbackReason = "guard before source opcode at $sourcePc"
+            pc = sourcePc
+            activePc = -1
+        }
+        override fun spill(value: Any?) = push(value)
+        override fun append(value: Any?, sourcePc: Int) {
+            pc = sourcePc
+            activePc = sourcePc
+            push(value)
+            arrayBuilderAdd()
+            activePc = -1
+            pc = sourcePc + 1
+        }
+        override fun next(sourcePc: Int, start: Int, end: Int, primitiveUsed: Boolean): Int {
+            localLoopPrimitiveUsed = localLoopPrimitiveUsed || primitiveUsed
+            pc = sourcePc
+            activePc = sourcePc
+            nextForEach(start, end)
+            val target = pc + 1
+            activePc = -1
+            val tracing = currentTracer() != null
+            if (tracing) {
+                emitExitEventsAt(sourcePc)
+                localLoopFallbackReason = "tracing activated at loop boundary"
+            }
+            pc = target
+            return if (tracing) 0 else if (target == start) 1 else 2
+        }
+        override fun finish(primitiveUsed: Boolean) {
+            localLoopPrimitiveUsed = localLoopPrimitiveUsed || primitiveUsed
+        }
+    }
+
     // ----- Incremental execution API (for pause/resume) -----
 
     /** Prepare VM for incremental execution without running. */
     fun begin(bytecode: Bytecode, env: MutableMap<String, Any?> = mutableMapOf()) {
+        check(!preparedBlockRunning) { "Prepared block execution is not reentrant" }
+        privateMutationAllowed = false
         this.bytecode = bytecode
         this.environment = env
         this.pc = 0
@@ -170,15 +1040,20 @@ class VM(
         stack.clear()
         callStack.clear()
         tryStack.clear()
+        loopStack.clear()
+        lastException = null
         lastSuspension = null
+        lastHostFailure = null
         locals = arrayOf()
-        initHostIndexTable()
+        prepareRootProgram(bytecode)
+        outputs.clear()
     }
 
     /**
      * Run up to maxSteps instructions (or to completion). Returns true if finished.
      */
     fun step(maxSteps: Int = Int.MAX_VALUE): Boolean {
+        check(!preparedBlockRunning) { "Prepared block execution is not reentrant" }
         return try {
             run(limit = maxSteps)
             pc >= bytecode.size()
@@ -245,7 +1120,7 @@ class VM(
                 if (tracer?.opts?.step == true) {
                     tracer.on(TraceEvent.Error("VM step ${opcode.name}", e))
                 }
-                val handled = handleException(e)
+                val handled = handleException(e, targetCallDepth)
                 if (!handled) {
                     if (e !is VMException.Abort) {
                         emitCallError(e)
@@ -261,9 +1136,11 @@ class VM(
             }
 
             pc++
-            if (pc >= bytecode.size() && callStack.isNotEmpty()) {
+            while (pc >= bytecode.size() && callStack.isNotEmpty()) {
                 returnFromFunction(null)
-                continue
+                // Explicit RETURN resumes through this loop's pc++ above. An
+                // implicit return occurs after it, so advance the restored pc too.
+                pc++
             }
             if (targetCallDepth >= 0 && callStack.size <= targetCallDepth) {
                 break
@@ -282,10 +1159,8 @@ class VM(
             is Instruction.PUSH -> {
                 val v = instruction.value
                 if (v is LambdaTemplate) {
-                    // Capture environment by reference to avoid costly copies
-                    // when creating closures. This relies on the assumption that
-                    // callers won't mutate the environment in a way that breaks
-                    // closure semantics between creation and invocation.
+                    // Closures retain their live lexical environment. Callee
+                    // parameters and local bindings are isolated in OverlayEnv.
                     push(LambdaValue(v.params, v.bytecode, environment))
                 } else {
                     push(v)
@@ -302,8 +1177,7 @@ class VM(
 
             // Variable Operations
             is Instruction.LOAD_VAR -> {
-                val value = environment[instruction.name]
-                    ?: throw VMException.VariableNotFound(instruction.name)
+                val value = loadVariable(instruction.name)
                 push(value)
                 emitVarRead(instruction.name, value)
             }
@@ -368,9 +1242,12 @@ class VM(
             is Instruction.ACCESS_DYNAMIC -> accessDynamic()
             is Instruction.SET_STATIC -> setStatic(instruction.key)
             is Instruction.SET_DYNAMIC -> setDynamic()
+            is Instruction.PRIVATE_SET_STATIC -> setStatic(instruction.key, privateRoot = true)
+            Instruction.PRIVATE_SET_DYNAMIC -> setDynamic(privateRoot = true)
             is Instruction.APPEND -> appendToArray()
             Instruction.ARRAY_BUILDER_INIT -> initArrayBuilder()
             Instruction.ARRAY_BUILDER_ADD -> arrayBuilderAdd()
+            Instruction.PRIVATE_ARRAY_APPEND -> arrayBuilderAdd(privateRoot = true)
             Instruction.ARRAY_BUILDER_FINISH -> arrayBuilderFinish()
             is Instruction.PLUS_ASSIGN -> plusAssign()
             is Instruction.CONCAT -> concatenateArrays()
@@ -389,7 +1266,7 @@ class VM(
 
             // Function Calls
             is Instruction.CALL -> callFunction(instruction.name, instruction.argCount)
-            is Instruction.CALL_HOST -> callHostIndexed(instruction.index, instruction.name, instruction.argCount)
+            is Instruction.CALL_HOST -> callHost(instruction.name, instruction.argCount)
             is Instruction.CALL_FN -> callUserFunction(instruction.name, instruction.argCount)
             is Instruction.CALL_LAMBDA -> callLambda(instruction.argCount)
             is Instruction.RETURN -> {
@@ -451,7 +1328,7 @@ class VM(
             // Variable Operations
             Opcode.LOAD_VAR -> {
                 val name = bytecode.getStringOperand(pc)
-                val value = environment[name] ?: throw VMException.VariableNotFound(name)
+                val value = loadVariable(name)
                 push(value)
                 emitVarRead(name, value)
             }
@@ -515,9 +1392,12 @@ class VM(
             Opcode.ACCESS_DYNAMIC -> accessDynamic()
             Opcode.SET_STATIC -> setStatic(bytecode.getObjKeyOperand(pc))
             Opcode.SET_DYNAMIC -> setDynamic()
+            Opcode.PRIVATE_SET_STATIC -> setStatic(bytecode.getObjKeyOperand(pc), privateRoot = true)
+            Opcode.PRIVATE_SET_DYNAMIC -> setDynamic(privateRoot = true)
             Opcode.APPEND -> appendToArray()
             Opcode.ARRAY_BUILDER_INIT -> initArrayBuilder()
             Opcode.ARRAY_BUILDER_ADD -> arrayBuilderAdd()
+            Opcode.PRIVATE_ARRAY_APPEND -> arrayBuilderAdd(privateRoot = true)
             Opcode.ARRAY_BUILDER_FINISH -> arrayBuilderFinish()
             Opcode.PLUS_ASSIGN -> plusAssign()
             Opcode.CONCAT -> concatenateArrays()
@@ -535,10 +1415,9 @@ class VM(
                 callFunction(name, argc)
             }
             Opcode.CALL_HOST -> {
-                val index = bytecode.getIntOperand(pc)
                 val name = bytecode.getStringOperand(pc)
                 val argc = bytecode.getIntOperand(pc, 1)
-                callHostIndexed(index, name, argc)
+                callHost(name, argc)
             }
             Opcode.CALL_FN -> {
                 val name = bytecode.getStringOperand(pc)
@@ -697,8 +1576,8 @@ class VM(
             push(left.toString() + right.toString())
             return
         }
-        val key = NumericSiteKey(bytecode, pc)
-        val site = numericSites.getOrPut(key) { NumericBinarySite(op) }
+        val sites = preparedProgram.numericSites
+        val site = sites[pc] ?: NumericBinarySite(op).also { sites[pc] = it }
         try {
             push(site.eval(left, right))
         } catch (e: IllegalArgumentException) {
@@ -811,26 +1690,29 @@ class VM(
     }
 
     // Placeholder implementations for remaining complex operations
-    private fun setStatic(key: ObjKey) {
+    private fun setStatic(key: ObjKey, privateRoot: Boolean = false) {
         val value = pop()
         val container = pop()
         when (container) {
             is Map<*, *> -> {
-                val out = LinkedHashMap<Any, Any?>(container.size + if (!container.containsKey(unwrapKey(key))) 1 else 0)
-                for ((k, v) in container) out[k!!] = v
-                out[unwrapKey(key)] = value
-                push(out)
+                val mapKey = unwrapKey(key)
+                if (privateRoot && privateMutationAllowed && currentTracer() == null && container is MutableMap<*, *>) {
+                    @Suppress("UNCHECKED_CAST")
+                    (container as MutableMap<Any, Any?>)[mapKey] = value
+                    push(container)
+                } else {
+                    val out = LinkedHashMap<Any, Any?>(container.size + if (!container.containsKey(mapKey)) 1 else 0)
+                    for ((k, v) in container) out[k!!] = v
+                    out[mapKey] = value
+                    push(out)
+                }
             }
             is List<*> -> {
                 val idx = staticIndex(key)
                 if (idx < 0 || idx >= container.size) {
                     throw VMException.IndexOutOfBounds(idx, container.size)
                 }
-                val out = ArrayList<Any?>(container.size)
-                for ((i, v) in container.withIndex()) {
-                    out.add(if (i == idx) value else v)
-                }
-                push(out)
+                updateListElement(container, idx, value, privateRoot)
             }
             else -> throw VMException.TypeMismatch(
                 "object or array",
@@ -838,15 +1720,21 @@ class VM(
             )
         }
     }
-    private fun setDynamic() {
+    private fun setDynamic(privateRoot: Boolean = false) {
         val value = pop()
         val key = pop()
         when (val container = pop()) {
             is Map<*, *> -> {
-                val out = LinkedHashMap<Any, Any?>(container.size + if (!container.containsKey(key)) 1 else 0)
-                for ((k, v) in container) out[k!!] = v
-                out[key!!] = value
-                push(out)
+                if (privateRoot && privateMutationAllowed && currentTracer() == null && container is MutableMap<*, *>) {
+                    @Suppress("UNCHECKED_CAST")
+                    (container as MutableMap<Any, Any?>)[key!!] = value
+                    push(container)
+                } else {
+                    val out = LinkedHashMap<Any, Any?>(container.size + if (!container.containsKey(key)) 1 else 0)
+                    for ((k, v) in container) out[k!!] = v
+                    out[key!!] = value
+                    push(out)
+                }
             }
             is List<*> -> {
                 val idx = when (key) {
@@ -858,9 +1746,7 @@ class VM(
                     else -> throw VMException.TypeMismatch("integer", key?.let { it::class.simpleName } ?: "null")
                 }
                 if (idx < 0 || idx >= container.size) throw VMException.IndexOutOfBounds(idx, container.size)
-                val out = ArrayList<Any?>(container.size)
-                for ((i, v) in container.withIndex()) out.add(if (i == idx) value else v)
-                push(out)
+                updateListElement(container, idx, value, privateRoot)
             }
             else -> throw VMException.TypeMismatch(
                 "object or array",
@@ -868,6 +1754,18 @@ class VM(
             )
         }
     }
+    private fun updateListElement(container: List<*>, index: Int, value: Any?, privateRoot: Boolean) {
+        if (privateRoot && privateMutationAllowed && currentTracer() == null && container is MutableList<*>) {
+            @Suppress("UNCHECKED_CAST")
+            (container as MutableList<Any?>)[index] = value
+            push(container)
+        } else {
+            val out = ArrayList<Any?>(container.size)
+            for ((i, item) in container.withIndex()) out.add(if (i == index) value else item)
+            push(out)
+        }
+    }
+
     private fun appendToArray() {
         val elem = pop()
         val arr = pop()
@@ -883,14 +1781,24 @@ class VM(
     private fun initArrayBuilder() {
         push(ArrayList<Any?>())
     }
-    private fun arrayBuilderAdd() {
+    private fun arrayBuilderAdd(privateRoot: Boolean = false) {
         val elem = pop()
         val builder = peek()
-        if (builder !is MutableList<*>) {
+        if (builder !is List<*>) {
             throw VMException.TypeMismatch("array builder", builder?.let { it::class.simpleName } ?: "null")
         }
-        @Suppress("UNCHECKED_CAST")
-        (builder as MutableList<Any?>).add(elem)
+        // Private bindings can be observed through tracing or incremental/custom
+        // environments. Ordinary comprehension builders stay hidden on stack.
+        if (builder !is MutableList<*> || (privateRoot && (!privateMutationAllowed || currentTracer() != null))) {
+            val updated = ArrayList<Any?>(builder.size + 1)
+            updated.addAll(builder)
+            updated.add(elem)
+            pop()
+            push(updated)
+        } else {
+            @Suppress("UNCHECKED_CAST")
+            (builder as MutableList<Any?>).add(elem)
+        }
     }
     private fun arrayBuilderFinish() {
         val builder = pop()
@@ -932,6 +1840,12 @@ class VM(
         out.addAll(right)
         push(out)
     }
+    private fun loadVariable(name: String): Any? {
+        val value = environment[name]
+        if (value == null && !environment.containsKey(name)) throw VMException.VariableNotFound(name)
+        return value
+    }
+
     private enum class CallMode { SCHEDULED, IMMEDIATE }
 
     private fun compileFunctionBytecode(func: FuncDecl): Bytecode {
@@ -971,10 +1885,12 @@ class VM(
         callStack.push(
             CallFrame(
                 returnAddress = returnAddress,
-                environment = HashMap(environment),
-                outerBytecode = bytecode,
+                environment = environment,
+                outerProgram = preparedProgram,
                 stackSize = stack.size,
                 locals = locals,
+                tryDepth = tryStack.size,
+                loopDepth = loopStack.size,
                 traceKind = if (includeTrace) kind else null,
                 traceName = if (includeTrace) name else null,
                 emitTraceReturn = includeTrace,
@@ -984,7 +1900,7 @@ class VM(
         locals = arrayOf()
         bytecode = functionBytecode
         loadTraceMetadata(functionBytecode)
-        initHostIndexTable()
+        preparedProgram = prepareProgram(functionBytecode)
         pc = if (mode == CallMode.IMMEDIATE) 0 else -1
     }
 
@@ -1054,11 +1970,12 @@ class VM(
         startFunctionCall("LAMBDA", null, args, env, fn.bytecode, pc + 1, CallMode.SCHEDULED)
     }
 
-    private fun callHostIndexed(index: Int, name: String, argCount: Int) {
+    private fun callHost(name: String, argCount: Int) {
         val args = ArrayList<Any?>(argCount)
         repeat(argCount) { args.add(pop()) }
-        val fn = hostByIndex.getOrNull(index) ?: hostFns[name]?.also { ensureHostIndex(index, it) }
-        ?: throw VMException.VariableNotFound(name)
+        // Host bindings are live authority, including changes made by a callee.
+        // Resolve by name in O(1); prepared program state must not freeze them.
+        val fn = hostFns[name] ?: throw VMException.VariableNotFound(name)
         val hostArgs = args.map { arg ->
             if (arg is LambdaValue) {
                 { callArgs: List<Any?> -> invokeLambda(arg, callArgs) }
@@ -1070,41 +1987,52 @@ class VM(
         push(result)
     }
 
-    private fun ensureHostIndex(index: Int, fn: (List<Any?>) -> Any?) {
-        while (hostByIndex.size <= index) hostByIndex.add(null)
-        hostByIndex[index] = fn
+    private fun prepareRootProgram(root: Bytecode) {
+        if (preparedRoot !== root) {
+            preparedPrograms.clear()
+            preparedRoot = root
+        }
+        preparedProgram = prepareProgram(root)
     }
 
-    private fun initHostIndexTable() {
-        // Pre-resolve host indices from bytecode once per bytecode instance
-        if (!::bytecode.isInitialized) return
-        if (hostIndexPreparedFor === bytecode) return
-
-        // Bytecode changed: rebuild host index table to avoid stale mappings
-        hostByIndex.clear()
-        for (i in 0 until bytecode.size()) {
-            val op = OPCODES[bytecode.getOpcode(i)]
-            if (op == Opcode.CALL_HOST) {
-                val idx = bytecode.getIntOperand(i, 0)
-                val name = bytecode.getStringOperand(i, 0)
-                val fn = hostFns[name]
-                if (fn != null) ensureHostIndex(idx, fn)
-            }
+    private fun prepareProgram(program: Bytecode): PreparedProgram {
+        // This bounded lookup happens only on calls or entry, never per opcode.
+        for (prepared in preparedPrograms) {
+            if (prepared.bytecode === program) return prepared
         }
-        hostIndexPreparedFor = bytecode
+        val prepared = PreparedProgram(program)
+        if (preparedPrograms.size == MAX_PREPARED_PROGRAMS) {
+            // Transient callees must not evict the root's pc-indexed sites.
+            val eviction = preparedPrograms.indexOfFirst { it.bytecode !== preparedRoot }
+            preparedPrograms.removeAt(eviction)
+        }
+        preparedPrograms.add(prepared)
+        return prepared
     }
 
     private class OverlayEnv(private val parent: Map<String, Any?>) : AbstractMutableMap<String, Any?>() {
         private val locals = HashMap<String, Any?>()
         override val entries: MutableSet<MutableMap.MutableEntry<String, Any?>>
             get() {
-                val combined = LinkedHashMap<String, Any?>(parent.size + locals.size)
-                combined.putAll(parent)
-                combined.putAll(locals)
+                // Enumerating an overlay through size/putAll recursively
+                // materializes its ancestors multiple times at every level.
+                val layers = ArrayList<OverlayEnv>()
+                var base: Map<String, Any?> = this
+                while (base is OverlayEnv) {
+                    layers.add(base)
+                    base = base.parent
+                }
+                val combined = LinkedHashMap<String, Any?>()
+                combined.putAll(base)
+                for (index in layers.lastIndex downTo 0) {
+                    combined.putAll(layers[index].locals)
+                }
                 return combined.entries
             }
         override fun put(key: String, value: Any?): Any? = locals.put(key, value)
-        override fun get(key: String): Any? = locals[key] ?: parent[key]
+        override fun remove(key: String): Any? = locals.remove(key)
+        override fun containsKey(key: String): Boolean = locals.containsKey(key) || parent.containsKey(key)
+        override fun get(key: String): Any? = if (locals.containsKey(key)) locals[key] else parent[key]
     }
 
     private fun invokeLambda(lambda: LambdaValue, args: List<Any?>): Any? {
@@ -1112,8 +2040,28 @@ class VM(
         val env = createCallEnvironment(lambda.params, args, lambda.captured)
         val returnAddress = pc
         startFunctionCall("LAMBDA", null, args, env, lambda.bytecode, returnAddress, CallMode.IMMEDIATE)
-        run(targetCallDepth = depthBefore)
-        return if (stack.isEmpty()) null else pop()
+        return try {
+            run(targetCallDepth = depthBefore)
+            if (stack.isEmpty()) null else pop()
+        } catch (failure: Throwable) {
+            if (failure is VMException.Abort &&
+                (failure.value as? Map<*, *>)?.get("__suspended") == true) throw failure
+            // Hosts may catch callback errors. Leave their caller's VM state
+            // ready to continue even when no language TRY handles the failure.
+            while (callStack.size > depthBefore) {
+                val frame = callStack.pop()
+                while (tryStack.size > frame.tryDepth) tryStack.pop()
+                unwindLoops(frame.loopDepth)
+                while (stack.size > frame.stackSize) stack.pop()
+                environment = frame.environment
+                bytecode = frame.outerBytecode
+                preparedProgram = frame.outerProgram
+                locals = frame.locals
+                loadTraceMetadata(bytecode)
+            }
+            pc = returnAddress
+            throw failure
+        }
     }
 
     private fun handleReturn(value: Any?): Nothing {
@@ -1129,16 +2077,17 @@ class VM(
         if (frame.emitTraceReturn && frame.traceKind != null) {
             tracer?.on(TraceEvent.Return(frame.traceKind, frame.traceName, value))
         }
-        val outerEnv = frame.environment
+        while (tryStack.size > frame.tryDepth) tryStack.pop()
+        unwindLoops(frame.loopDepth)
         // Restore stack depth to the pre-call size, then push return value
         while (stack.size > frame.stackSize) pop()
         while (stack.size < frame.stackSize) push(null)
         push(value)
         // Restore environment and bytecode
-        this.environment = HashMap(outerEnv)
+        this.environment = frame.environment
         this.bytecode = outBc
         loadTraceMetadata(outBc)
-        initHostIndexTable()
+        this.preparedProgram = frame.outerProgram
         this.locals = frame.locals
         // Resume at instruction after CALL_FN
         this.pc = retPc - 1
@@ -1240,7 +2189,8 @@ class VM(
     private fun startTry(catchAddress: Int) {
         // Record start (next instruction) and current stack size for unwinding
         val startAt = pc + 1
-        tryStack.push(TryFrame(catchAddress = catchAddress, stackSize = stack.size, startAddress = startAt, attempts = 0))
+        tryStack.push(TryFrame(catchAddress = catchAddress, stackSize = stack.size, startAddress = startAt,
+            attempts = 0, callDepth = callStack.size, loopDepth = loopStack.size))
     }
     private fun endTry() {
         if (tryStack.isNotEmpty()) tryStack.pop()
@@ -1272,20 +2222,46 @@ class VM(
         lastException = null
     }
 
-    // Minimal exception handling: let VMException propagate to tests/caller.
-    // Returns false to indicate the VM should rethrow the exception.
-    private fun handleException(e: Exception): Boolean {
+    // Return false when execution must propagate to a host or VM caller.
+    private fun handleException(e: Exception, callbackDepth: Int): Boolean {
         // Propagate suspension out of TRY to the caller for snapshot handoff
         if (e is VMException.Abort) {
             val v = e.value
             if (v is Map<*, *> && v["__suspended"] == true) return false
         }
         val frame = tryStack.peek() ?: return false
+        // A host callback must propagate to its host before a caller's TRY can
+        // handle the host call. Only callback-local handlers run in nested run.
+        if (callbackDepth >= 0 && frame.callDepth <= callbackDepth) return false
+        // Catch addresses belong to the program that installed the handler.
+        // Discard callee state before selecting that program's catch instruction.
+        while (callStack.size > frame.callDepth) {
+            val call = callStack.pop()
+            if (call.emitTraceReturn && call.traceKind != null) {
+                currentTracer()?.on(TraceEvent.Error("call ${call.traceKind} ${call.traceName ?: "<lambda>"}", e))
+            }
+            while (tryStack.size > call.tryDepth) tryStack.pop()
+            unwindLoops(call.loopDepth)
+            environment = call.environment
+            bytecode = call.outerBytecode
+            preparedProgram = call.outerProgram
+            locals = call.locals
+            loadTraceMetadata(bytecode)
+        }
+        unwindLoops(frame.loopDepth)
         // Unwind to the stack size captured at TRY_START
         while (stack.size > frame.stackSize) stack.pop()
         lastException = e
         pc = frame.catchAddress - 1
         return true
+    }
+
+    private fun unwindLoops(depth: Int) {
+        while (loopStack.size > depth) {
+            val state = loopStack.pop()
+            if (state.hadOuter) environment[state.varName] = state.outerValue
+            else environment.remove(state.varName)
+        }
     }
 
     // ----- Snapshot (serialize/deserialize VM state for pause/resume) -----
@@ -1312,10 +2288,15 @@ class VM(
         val traceKind: String? = null,
         val traceName: String? = null,
         val emitTraceReturn: Boolean = false,
+        val tryDepth: Int = 0,
+        val loopDepth: Int = 0,
     )
 
     @Serializable
-    data class SerializedTry(val catchPc: Int, val stackSize: Int, val startPc: Int, val attempts: Int)
+    data class SerializedTry(
+        val catchPc: Int, val stackSize: Int, val startPc: Int, val attempts: Int,
+        val callDepth: Int = 0, val loopDepth: Int = 0,
+    )
 
     @Serializable
     data class SerializedLoop(
@@ -1344,9 +2325,11 @@ class VM(
                     traceKind = c.traceKind,
                     traceName = c.traceName,
                     emitTraceReturn = c.emitTraceReturn,
+                    tryDepth = c.tryDepth,
+                    loopDepth = c.loopDepth,
                 )
             },
-            trys = tryStack.map { t -> SerializedTry(t.catchAddress, t.stackSize, t.startAddress, t.attempts) },
+            trys = tryStack.map { t -> SerializedTry(t.catchAddress, t.stackSize, t.startAddress, t.attempts, t.callDepth, t.loopDepth) },
             loops = loopStack.map { l ->
                 SerializedLoop(
                     l.varName,
@@ -1377,9 +2360,11 @@ class VM(
                     traceKind = c.traceKind,
                     traceName = c.traceName,
                     emitTraceReturn = c.emitTraceReturn,
+                    tryDepth = c.tryDepth,
+                    loopDepth = c.loopDepth,
                 )
             },
-            trys = tryStack.map { t -> SerializedTry(t.catchAddress, t.stackSize, t.startAddress, t.attempts) },
+            trys = tryStack.map { t -> SerializedTry(t.catchAddress, t.stackSize, t.startAddress, t.attempts, t.callDepth, t.loopDepth) },
             loops = loopStack.map { l ->
                 SerializedLoop(
                     l.varName,
@@ -1399,6 +2384,7 @@ class VM(
     companion object {
         private const val MAX_STACK_SIZE = 10000
         private const val MAX_CALL_DEPTH = 500
+        private const val MAX_PREPARED_PROGRAMS = 64
         private val OPCODES = Opcode.values()
 
         /** Restore a VM from a JSON snapshot. Provide hostFns/funcs for runtime. */
@@ -1416,7 +2402,7 @@ class VM(
             vm.pc = snap.pc
             // Rebuild operand stack
             vm.stack.clear()
-            for (v in snap.stack) vm.stack.push(BytecodeIO.deserializeValue(v))
+            for (v in snap.stack.asReversed()) vm.stack.push(BytecodeIO.deserializeValue(v))
             // Restore locals
             vm.locals = arrayOf()
             if (snap.locals.isNotEmpty()) {
@@ -1425,7 +2411,7 @@ class VM(
             }
             // Restore call stack
             vm.callStack.clear()
-            for (c in snap.calls) {
+            for (c in snap.calls.asReversed()) {
                 val cenv = HashMap(c.env.mapValues { (_, v) -> BytecodeIO.deserializeValue(v) })
                 val outer = BytecodeIO.deserializeBytecode(c.outer)
                 val localsArray = Array(c.locals.size) { idx -> BytecodeIO.deserializeValue(c.locals[idx]) }
@@ -1433,9 +2419,11 @@ class VM(
                     CallFrame(
                         c.returnPc,
                         cenv,
-                        outer,
+                        vm.prepareProgram(outer),
                         c.stackSize,
                         localsArray,
+                        c.tryDepth,
+                        c.loopDepth,
                         c.traceKind,
                         c.traceName,
                         c.emitTraceReturn,
@@ -1444,10 +2432,10 @@ class VM(
             }
             // Restore try stack
             vm.tryStack.clear()
-            for (t in snap.trys) vm.tryStack.push(TryFrame(t.catchPc, t.stackSize, t.startPc, t.attempts))
+            for (t in snap.trys.asReversed()) vm.tryStack.push(TryFrame(t.catchPc, t.stackSize, t.startPc, t.attempts, t.callDepth, t.loopDepth))
             // Restore loop stack
             vm.loopStack.clear()
-            for (l in snap.loops) {
+            for (l in snap.loops.asReversed()) {
                 val li = l.list.map { BytecodeIO.deserializeValue(it) }
                 val outer = l.outer?.let { BytecodeIO.deserializeValue(it) }
                 vm.loopStack.push(LoopState(l.varName, li, l.idx, l.hadOuter, outer))
@@ -1502,6 +2490,12 @@ class VM(
 
     private fun storeVar(name: String) {
         val value = pop()
+        if (ordinaryEnvironment && currentTracer() == null) {
+            environment[name] = value
+            return
+        }
+        // Custom maps can install a tracer from get/put, so preserve their
+        // original read/write order and resolve tracing again after the write.
         val old = environment[name]
         environment[name] = value
         emitVarWrite(name, old, value)
@@ -1509,24 +2503,24 @@ class VM(
     }
 
     private fun emitEnterEventsAt(pc: Int) {
-        val events = enterEvents[pc] ?: return
         val tracer = currentTracer() ?: return
         if (!tracer.opts.step) return
+        val events = enterEvents[pc] ?: return
         for (node in events) tracer.on(TraceEvent.Enter(node))
     }
 
     private fun emitExitEventsAt(pc: Int) {
-        val events = exitEvents[pc] ?: return
         val tracer = currentTracer() ?: return
         if (!tracer.opts.step) return
+        val events = exitEvents[pc] ?: return
         for (node in events) tracer.on(TraceEvent.Exit(node))
     }
 
     private fun emitPathWriteIfNeeded(pc: Int, storeName: String, oldRoot: Any?, newRoot: Any?) {
         if (pc < 0) return
+        val tracer = currentTracer() ?: return
         val meta = pathWrites[pc] ?: return
         if (meta.root != storeName) return
-        val tracer = currentTracer() ?: return
         val path: List<Any> = meta.displayPath?.let { ArrayList(it) } ?: resolvePath(meta, oldRoot, newRoot)
         val oldValue = if (meta.directValues) oldRoot else readAtPath(oldRoot, path)
         val newValue = if (meta.directValues) newRoot else readAtPath(newRoot, path)
@@ -1678,10 +2672,9 @@ private enum class VmNumericOp {
     MOD,
 }
 
-private data class NumericSiteKey(
-    val bytecode: Bytecode,
-    val pc: Int,
-)
+private class PreparedProgram(val bytecode: Bytecode) {
+    val numericSites: Array<NumericBinarySite?> = arrayOfNulls(bytecode.size())
+}
 
 private const val NUMERIC_SITE_VARIANT_LIMIT = 4
 
@@ -1960,13 +2953,17 @@ private fun toDoubleValue(value: Any?): Double = when (value) {
 private data class CallFrame(
     val returnAddress: Int,
     val environment: MutableMap<String, Any?>,
-    val outerBytecode: Bytecode,
+    val outerProgram: PreparedProgram,
     val stackSize: Int,
     val locals: Array<Any?>,
+    val tryDepth: Int,
+    val loopDepth: Int,
     val traceKind: String?,
     val traceName: String?,
     val emitTraceReturn: Boolean,
-)
+) {
+    val outerBytecode: Bytecode get() = outerProgram.bytecode
+}
 
 
 /**
@@ -1977,6 +2974,8 @@ private data class TryFrame(
     val stackSize: Int,
     val startAddress: Int,
     var attempts: Int,
+    val callDepth: Int,
+    val loopDepth: Int,
 )
 
 /** Loop state for FOR EACH constructs */
@@ -1985,7 +2984,8 @@ private data class LoopState(
     val list: List<Any?>,
     var idx: Int,
     val hadOuter: Boolean,
-    val outerValue: Any?
+    val outerValue: Any?,
+    val slotIndex: Int = -1,
 )
 
 /**

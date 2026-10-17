@@ -1,0 +1,526 @@
+> Task :clean
+> Task :cli:cleanJsNodeTest UP-TO-DATE
+> Task :cli:cleanJvmTest
+> Task :cli:cleanAllTests
+> Task :cli:clean
+> Task :conformance-tests:cleanJsNodeTest UP-TO-DATE
+> Task :conformance-tests:cleanJvmTest
+> Task :conformance-tests:cleanAllTests
+> Task :conformance-tests:clean
+> Task :examples:clean
+> Task :interpreter:cleanJsBrowserTest UP-TO-DATE
+> Task :interpreter:cleanJsNodeTest UP-TO-DATE
+> Task :interpreter:cleanJvmTest
+> Task :interpreter:cleanAllTests
+> Task :interpreter:clean
+> Task :interpreter-benchmarks:clean
+> Task :jsonata-benchmarks:clean
+> Task :test-fixtures:cleanJvmTest UP-TO-DATE
+> Task :test-fixtures:cleanAllTests UP-TO-DATE
+> Task :test-fixtures:clean
+> Task :vm:cleanJsNodeTest UP-TO-DATE
+> Task :vm:cleanJvmTest
+> Task :vm:cleanAllTests
+> Task :vm:clean
+> Task :vm-benchmarks:clean
+> Task :assemble UP-TO-DATE
+> Task :check UP-TO-DATE
+> Task :build UP-TO-DATE
+> Task :cli:kmpPartiallyResolvedDependenciesChecker
+> Task :cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :cli:generateCliVersion
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:transformCommonMainDependenciesMetadata
+> Task :interpreter:generateProjectStructureMetadata
+> Task :interpreter:metadataCommonMainProcessResources NO-SOURCE
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:exportRootPublicationCoordinatesForMetadataApiElements
+> Task :vm:generateProjectStructureMetadata
+> Task :vm:metadataCommonMainProcessResources NO-SOURCE
+> Task :vm:exportRootPublicationCoordinatesForMetadataApiElements
+> Task :cli:generateProjectStructureMetadata
+> Task :cli:metadataCommonMainProcessResources NO-SOURCE
+> Task :cli:jsProcessResources NO-SOURCE
+> Task :kotlinKotlinNpmCachesSetup
+> Task :interpreter:jsPackageJson
+> Task :vm:jsPackageJson
+> Task :cli:jsPackageJson
+> Task :cli:jsPublicPackageJson
+> Task :interpreter:jvmProcessResources
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :cli:jvmProcessResources NO-SOURCE
+> Task :cli:processJvmMainResources SKIPPED
+> Task :kotlinNodeJsSetup UP-TO-DATE
+> Task :kotlinRestoreYarnLock
+> Task :kotlinYarnSetup UP-TO-DATE
+> Task :cli:jsTestPackageJson
+> Task :conformance-tests:jsPackageJson
+> Task :conformance-tests:jsTestPackageJson
+> Task :interpreter:jsTestPackageJson
+> Task :vm:jsTestPackageJson
+> Task :cli:jsTestPublicPackageJson
+> Task :conformance-tests:jsPublicPackageJson
+> Task :conformance-tests:jsTestPublicPackageJson
+> Task :interpreter:jsPublicPackageJson
+> Task :interpreter:jsTestPublicPackageJson
+> Task :vm:jsPublicPackageJson
+> Task :vm:jsTestPublicPackageJson
+> Task :kotlinPackageJsonUmbrella
+> Task :rootPackageJson
+
+> Task :kotlinNpmInstall
+(node:86909) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:86909) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+warning workspace-aggregator-fc92a296-1812-4afc-880e-4462ef8f0bb6 > branchline-interpreter-test > karma-webpack > glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+warning workspace-aggregator-fc92a296-1812-4afc-880e-4462ef8f0bb6 > branchline-interpreter-test > karma > glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+warning workspace-aggregator-fc92a296-1812-4afc-880e-4462ef8f0bb6 > branchline-interpreter-test > karma-webpack > glob > inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+warning workspace-aggregator-fc92a296-1812-4afc-880e-4462ef8f0bb6 > branchline-interpreter-test > karma > rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+warning workspace-aggregator-fc92a296-1812-4afc-880e-4462ef8f0bb6 > branchline-interpreter-test > karma > rimraf > glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+> Task :interpreter:compileCommonMainKotlinMetadata
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:11:31 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:18:31 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:94:38 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:110:53 Unchecked cast of 'MutableList<*>' to 'MutableList<Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:114:57 Unchecked cast of 'MutableMap<*, *>' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:154:43 Unchecked cast of 'MutableList<*>' to 'MutableList<Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:167:37 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:243:53 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:257:54 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/TransformContractBuilder.kt:479:54 No cast needed.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/playground/PlaygroundFacade.kt:259:25 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/runtime/Numbers.kt:16:8 This cast can never succeed.
+
+> Task :interpreter:compileKotlinJs
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:11:31 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:18:31 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:94:38 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:110:53 Unchecked cast of 'MutableList<*>' to 'MutableList<Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:114:57 Unchecked cast of 'MutableMap<*, *>' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:154:43 Unchecked cast of 'MutableList<*>' to 'MutableList<Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:167:37 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:243:53 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:257:54 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/TransformContractBuilder.kt:479:54 No cast needed.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/playground/PlaygroundFacade.kt:259:25 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/runtime/Numbers.kt:16:8 This cast can never succeed.
+
+> Task :interpreter:compileKotlinJvm
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:11:31 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:18:31 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:94:38 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:110:53 Unchecked cast of 'MutableList<*>' to 'MutableList<Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:114:57 Unchecked cast of 'MutableMap<*, *>' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:154:43 Unchecked cast of 'MutableList<*>' to 'MutableList<Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:167:37 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:243:53 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:257:54 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/TransformContractBuilder.kt:479:54 No cast needed.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/playground/PlaygroundFacade.kt:259:25 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/runtime/Numbers.kt:16:8 This cast can never succeed.
+
+> Task :kotlinNpmInstall
+warning Ignored scripts due to flag.
+
+> Task :interpreter:metadataCommonMainClasses
+> Task :interpreter:allMetadataJar
+> Task :interpreter:exportCommonSourceSetsMetadataLocationsForMetadataApiElements
+> Task :vm:transformCommonMainDependenciesMetadata
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmMainClasses
+> Task :interpreter:jvmJar
+> Task :kotlinStoreYarnLock FAILED
+> Task :cli:jsTestProcessResources NO-SOURCE
+> Task :cli:kotlinNodeJsSetup UP-TO-DATE
+> Task :cli:jvmTestProcessResources
+> Task :cli:processJvmTestResources SKIPPED
+> Task :cli:detekt NO-SOURCE
+> Task :conformance-tests:kmpPartiallyResolvedDependenciesChecker
+> Task :conformance-tests:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :conformance-tests:transformCommonMainDependenciesMetadata
+> Task :conformance-tests:compileCommonMainKotlinMetadata NO-SOURCE
+> Task :conformance-tests:generateProjectStructureMetadata
+> Task :conformance-tests:metadataCommonMainProcessResources NO-SOURCE
+> Task :conformance-tests:metadataCommonMainClasses UP-TO-DATE
+> Task :conformance-tests:allMetadataJar
+> Task :conformance-tests:compileKotlinJs NO-SOURCE
+> Task :conformance-tests:jsProcessResources NO-SOURCE
+> Task :conformance-tests:jsMainClasses UP-TO-DATE
+> Task :conformance-tests:jsJar
+> Task :conformance-tests:compileKotlinJvm NO-SOURCE
+> Task :conformance-tests:compileJvmMainJava NO-SOURCE
+> Task :conformance-tests:jvmProcessResources NO-SOURCE
+> Task :conformance-tests:processJvmMainResources SKIPPED
+> Task :conformance-tests:jvmMainClasses UP-TO-DATE
+> Task :conformance-tests:jvmJar
+> Task :conformance-tests:assemble
+> Task :conformance-tests:jsTestProcessResources NO-SOURCE
+> Task :conformance-tests:kotlinNodeJsSetup UP-TO-DATE
+> Task :test-fixtures:kmpPartiallyResolvedDependenciesChecker
+> Task :test-fixtures:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :test-fixtures:jvmProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmMainResources SKIPPED
+> Task :conformance-tests:jvmTestProcessResources NO-SOURCE
+> Task :conformance-tests:processJvmTestResources SKIPPED
+> Task :conformance-tests:detekt NO-SOURCE
+> Task :examples:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :examples:processResources NO-SOURCE
+
+> Task :examples:detekt
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:403:26: The function addExtraEdges(random: Random, nodeCount: Int, extraEdges: Int, levels: IntArray, edges: MutableList<Edge>, edgeSet: MutableSet<Edge>) has too many parameters. The current threshold is set to 6. [LongParameterList]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:1:1: File '/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt' with '32' functions detected. Defined threshold inside files is set to '11' [TooManyFunctions]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/WeightedTreeMetricsDemo.kt:3:1: Imports must be ordered in lexicographic order without any empty lines in-between with "java", "javax", "kotlin" and aliases in the end [ImportOrdering]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:10:1: Unused import [NoUnusedImports]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:3:1: Imports must be ordered in lexicographic order without any empty lines in-between with "java", "javax", "kotlin" and aliases in the end [ImportOrdering]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:297:1: Incorrect modifier order (should be "internal suspend inline") [ModifierOrdering]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexShortestPathDemo.kt:16:51: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexShortestPathDemo.kt:66:62: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/WeightedTreeMetricsDemo.kt:17:45: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/WeightedTreeMetricsDemo.kt:50:52: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/WeightedTreeMetricsDemo.kt:71:62: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/TreeReconstructionDemo.kt:14:45: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/TreeReconstructionDemo.kt:64:62: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:429:13: Function isExtraEdgeAllowed has 3 return statements which exceeds the limit of 2. [ReturnCount]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:307:53: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:398:29: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:414:36: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:496:44: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:513:51: This expression contains a magic number. Consider defining it to a well named constant. [MagicNumber]
+/Users/eugene/repo/research/branchline-public/examples/src/main/kotlin/io/github/ehlyzov/branchline/examples/ComplexDemoSupport.kt:297:1: Modifier order should be: internal suspend inline [ModifierOrder]
+
+
+> Task :examples:processTestResources NO-SOURCE
+> Task :interpreter:jsProcessResources NO-SOURCE
+> Task :interpreter:jsMainClasses
+> Task :interpreter:jsJar
+> Task :interpreter:jsTestProcessResources NO-SOURCE
+> Task :interpreter:kotlinNodeJsSetup UP-TO-DATE
+> Task :interpreter:jvmTestProcessResources
+> Task :interpreter:processJvmTestResources SKIPPED
+> Task :interpreter:detekt NO-SOURCE
+> Task :interpreter-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter-benchmarks:processResources NO-SOURCE
+> Task :interpreter-benchmarks:detekt NO-SOURCE
+> Task :interpreter-benchmarks:processTestResources NO-SOURCE
+> Task :jsonata-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :jsonata-benchmarks:processResources NO-SOURCE
+> Task :jsonata-benchmarks:detekt NO-SOURCE
+> Task :jsonata-benchmarks:processTestResources NO-SOURCE
+> Task :test-fixtures:generateProjectStructureMetadata
+> Task :test-fixtures:allMetadataJar
+> Task :test-fixtures:jvmTestProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmTestResources SKIPPED
+> Task :test-fixtures:detekt NO-SOURCE
+> Task :vm:jsProcessResources NO-SOURCE
+> Task :vm:jsTestProcessResources NO-SOURCE
+> Task :vm:kotlinNodeJsSetup UP-TO-DATE
+> Task :vm:jvmTestProcessResources NO-SOURCE
+> Task :vm:processJvmTestResources SKIPPED
+> Task :vm:detekt NO-SOURCE
+> Task :vm-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm-benchmarks:processResources NO-SOURCE
+> Task :vm-benchmarks:detekt NO-SOURCE
+> Task :vm-benchmarks:processTestResources NO-SOURCE
+> Task :vm-benchmarks:processJmhResources NO-SOURCE
+> Task :examples:compileKotlin
+> Task :examples:compileJava NO-SOURCE
+> Task :examples:classes UP-TO-DATE
+> Task :examples:jar
+> Task :examples:assemble
+> Task :examples:compileTestKotlin NO-SOURCE
+> Task :examples:compileTestJava NO-SOURCE
+> Task :examples:testClasses UP-TO-DATE
+> Task :examples:test NO-SOURCE
+> Task :examples:testJacocoCoverageVerification SKIPPED
+> Task :examples:check
+> Task :examples:build
+> Task :interpreter:compileTestKotlinJs
+> Task :interpreter:jsTestClasses
+
+> Task :vm:compileCommonMainKotlinMetadata
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:242:37 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:251:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:331:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:332:36 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:358:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:369:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:375:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+
+> Task :vm:metadataCommonMainClasses
+> Task :vm:allMetadataJar
+> Task :vm:exportCommonSourceSetsMetadataLocationsForMetadataApiElements
+> Task :cli:transformCommonMainDependenciesMetadata
+
+> Task :vm:compileKotlinJs
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:242:37 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:251:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:331:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:332:36 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:358:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:369:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:375:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+
+> Task :vm:jsMainClasses
+> Task :vm:jsJar
+
+> Task :cli:compileCommonMainKotlinMetadata
+w: file:///Users/eugene/repo/research/branchline-public/cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/BranchlineCli.kt:1846:5 Redundant creation of Json format. Creating instances for each usage can be slow.
+
+> Task :cli:metadataCommonMainClasses
+> Task :cli:allMetadataJar
+
+> Task :vm:compileTestKotlinJs
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockPlanTest.kt:112:34 Unnecessary non-null assertion (!!) on a non-null receiver of type 'PreparedBlockInstruction'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockPlanTest.kt:113:34 Unnecessary non-null assertion (!!) on a non-null receiver of type 'PreparedBlockInstruction'.
+
+> Task :vm:jsTestClasses
+
+> Task :cli:compileKotlinJs
+w: file:///Users/eugene/repo/research/branchline-public/cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/BranchlineCli.kt:1846:5 Redundant creation of Json format. Creating instances for each usage can be slow.
+
+> Task :cli:jsMainClasses
+> Task :cli:jsJar
+> Task :cli:compileTestKotlinJs
+> Task :cli:jsTestClasses
+
+> Task :vm:compileKotlinJvm
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:242:37 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:251:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:331:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:332:36 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:358:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:369:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt:375:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'ExperimentalSlotPlan'.
+
+> Task :vm:compileJvmMainJava NO-SOURCE
+> Task :vm:jvmMainClasses
+> Task :vm:jvmJar
+> Task :jsonata-benchmarks:compileKotlin NO-SOURCE
+> Task :jsonata-benchmarks:compileJava NO-SOURCE
+> Task :jsonata-benchmarks:classes UP-TO-DATE
+> Task :jsonata-benchmarks:jar
+> Task :jsonata-benchmarks:assemble
+> Task :jsonata-benchmarks:compileTestKotlin NO-SOURCE
+> Task :jsonata-benchmarks:compileTestJava NO-SOURCE
+> Task :jsonata-benchmarks:testClasses UP-TO-DATE
+> Task :jsonata-benchmarks:test NO-SOURCE
+> Task :jsonata-benchmarks:testJacocoCoverageVerification SKIPPED
+> Task :jsonata-benchmarks:check UP-TO-DATE
+> Task :jsonata-benchmarks:build
+
+> Task :conformance-tests:compileTestKotlinJs
+w: file:///Users/eugene/repo/research/branchline-public/conformance-tests/src/jsTest/kotlin/io/github/ehlyzov/branchline/playground/PlaygroundExamplesJsTest.kt:189:39 Unchecked cast of 'Any?' to 'Map<String, Any?>'.
+
+> Task :conformance-tests:jsTestClasses
+> Task :test-fixtures:compileKotlinJvm
+> Task :test-fixtures:compileJvmMainJava NO-SOURCE
+> Task :test-fixtures:jvmMainClasses
+> Task :test-fixtures:jvmJar
+> Task :test-fixtures:assemble
+> Task :test-fixtures:compileTestKotlinJvm NO-SOURCE
+> Task :test-fixtures:compileJvmTestJava NO-SOURCE
+> Task :test-fixtures:jvmTestClasses UP-TO-DATE
+> Task :test-fixtures:jvmTest NO-SOURCE
+> Task :test-fixtures:allTests NO-SOURCE
+> Task :test-fixtures:jvmTestJacocoCoverageVerification SKIPPED
+> Task :test-fixtures:check UP-TO-DATE
+> Task :test-fixtures:build
+
+> Task :cli:compileKotlinJvm
+w: file:///Users/eugene/repo/research/branchline-public/cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/BranchlineCli.kt:1846:5 Redundant creation of Json format. Creating instances for each usage can be slow.
+
+> Task :cli:compileJvmMainJava NO-SOURCE
+> Task :cli:jvmMainClasses
+> Task :cli:jvmJar
+> Task :interpreter-benchmarks:compileKotlin NO-SOURCE
+> Task :interpreter-benchmarks:compileJava NO-SOURCE
+> Task :interpreter-benchmarks:classes UP-TO-DATE
+> Task :interpreter-benchmarks:jar
+> Task :interpreter-benchmarks:assemble
+> Task :interpreter-benchmarks:compileTestKotlin NO-SOURCE
+> Task :interpreter-benchmarks:compileTestJava NO-SOURCE
+> Task :interpreter-benchmarks:testClasses UP-TO-DATE
+> Task :interpreter-benchmarks:test NO-SOURCE
+> Task :interpreter-benchmarks:testJacocoCoverageVerification SKIPPED
+> Task :interpreter-benchmarks:check UP-TO-DATE
+> Task :interpreter-benchmarks:build
+> Task :vm-benchmarks:compileKotlin NO-SOURCE
+> Task :vm-benchmarks:compileJava NO-SOURCE
+> Task :vm-benchmarks:classes UP-TO-DATE
+> Task :vm-benchmarks:jar
+> Task :vm-benchmarks:assemble
+> Task :vm-benchmarks:compileTestKotlin NO-SOURCE
+> Task :vm-benchmarks:compileTestJava NO-SOURCE
+> Task :vm-benchmarks:testClasses UP-TO-DATE
+> Task :vm-benchmarks:test NO-SOURCE
+> Task :vm-benchmarks:testJacocoCoverageVerification SKIPPED
+> Task :vm-benchmarks:check UP-TO-DATE
+> Task :vm-benchmarks:build
+> Task :interpreter:compileProductionExecutableKotlinJs
+> Task :interpreter:compileProductionLibraryKotlinJs
+> Task :interpreter:compileTestKotlinJvm
+> Task :cli:compileTestKotlinJvm
+
+> Task :vm-benchmarks:compileJmhKotlin
+w: file:///Users/eugene/repo/research/branchline-public/vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/SelectiveJsonPipelineProbe.kt:172:16 'static fun runFinalization(): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/eugene/repo/research/branchline-public/vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/VMFactorialProbe.kt:71:41 'static fun runFinalization(): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/eugene/repo/research/branchline-public/vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/VMLocalLoopProbe.kt:119:41 'static fun runFinalization(): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/eugene/repo/research/branchline-public/vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/VMLoopBodyProbe.kt:119:41 'static fun runFinalization(): Unit' is deprecated. Deprecated in Java.
+w: file:///Users/eugene/repo/research/branchline-public/vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/VMPreparedBlockProbe.kt:87:41 'static fun runFinalization(): Unit' is deprecated. Deprecated in Java.
+
+> Task :interpreter:compileTestDevelopmentExecutableKotlinJs
+
+> Task :vm:compileTestKotlinJvm
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockPlanTest.kt:112:34 Unnecessary non-null assertion (!!) on a non-null receiver of type 'PreparedBlockInstruction'.
+w: file:///Users/eugene/repo/research/branchline-public/vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockPlanTest.kt:113:34 Unnecessary non-null assertion (!!) on a non-null receiver of type 'PreparedBlockInstruction'.
+
+> Task :vm:compileProductionLibraryKotlinJs
+
+> Task :conformance-tests:compileTestKotlinJvm
+w: file:///Users/eugene/repo/research/branchline-public/conformance-tests/src/jvmTest/kotlin/io/github/ehlyzov/branchline/playground/PlaygroundExamplesJvmTest.kt:231:39 Unchecked cast of 'Any?' to 'Map<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/conformance-tests/src/jvmTest/kotlin/io/github/ehlyzov/branchline/std/StdTimeModuleTest.kt:16:22 Unchecked cast of 'Any?' to 'Map<String, Any?>'.
+
+> Task :cli:blShadowJar
+> Task :cli:compileJvmTestJava NO-SOURCE
+> Task :cli:jvmTestClasses
+> Task :conformance-tests:compileJvmTestJava NO-SOURCE
+> Task :conformance-tests:jvmTestClasses
+> Task :cli:compileProductionExecutableKotlinJs
+> Task :conformance-tests:compileTestDevelopmentExecutableKotlinJs
+> Task :vm:compileTestDevelopmentExecutableKotlinJs
+> Task :cli:compileTestDevelopmentExecutableKotlinJs
+
+> Task :conformance-tests:jvmTest
+PLAYGROUND_EXAMPLE_WARNING id=numeric-powers-roots reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=json-canonical-output reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=pipeline-health-gating reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=stdlib-core-walk reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=contract-empty-array-append reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=stdlib-core-put-delete reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=contract-input-seeded-wildcard-output reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=customer-profile reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=junit-badge-summary reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=xml-output-ordering reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=contract-literal-brackets-static reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=order-shipment reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=stdlib-debug-explain reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=contract-nullable-precision reason=ai-compatible-source-differs-from-normalized-source
+PLAYGROUND_EXAMPLE_WARNING id=stdlib-hof-overview reason=ai-compatible-source-differs-from-normalized-source
+
+> Task :cli:jsProductionExecutableCompileSync
+
+> Task :cli:prepareJsCliPackage
+
+added 2 packages in 314ms
+
+> Task :cli:packageJsCli
+> Task :cli:assemble
+> Task :cli:jsTestTestDevelopmentExecutableCompileSync
+> Task :cli:jvmTest
+> Task :conformance-tests:jsTestTestDevelopmentExecutableCompileSync
+> Task :conformance-tests:jvmTestJacocoCoverageVerification SKIPPED
+> Task :interpreter:jsProductionLibraryCompileSync
+> Task :interpreter:jsProductionExecutableCompileSync
+> Task :interpreter:jsBrowserProductionLibraryDistribution
+> Task :interpreter:jsNodeProductionLibraryDistribution
+> Task :interpreter:jsTestTestDevelopmentExecutableCompileSync
+> Task :interpreter:compileJvmTestJava NO-SOURCE
+> Task :interpreter:jvmTestClasses
+> Task :cli:jvmTestJacocoCoverageVerification
+> Task :interpreter:jvmTest
+> Task :vm:jsProductionLibraryCompileSync
+> Task :vm:jsNodeProductionLibraryDistribution
+> Task :vm:assemble
+> Task :vm:jsTestTestDevelopmentExecutableCompileSync
+> Task :vm:compileJvmTestJava NO-SOURCE
+> Task :vm:jvmTestClasses
+> Task :interpreter:jvmTestJacocoCoverageVerification
+> Task :vm:jvmTest
+> Task :vm-benchmarks:compileJmhJava NO-SOURCE
+> Task :vm-benchmarks:jmhClasses UP-TO-DATE
+> Task :vm:jvmTestJacocoCoverageVerification
+> Task :vm-benchmarks:jmhRunBytecodeGenerator
+> Task :vm-benchmarks:jmhCompileGeneratedClasses
+> Task :vm-benchmarks:jmhJar
+> Task :interpreter:packageInterpreterJs
+
+> Task :playgroundBuildAssets FAILED
+
+> branchline-playground@0.1.0 prebuild
+> npm run test
+
+
+> branchline-playground@0.1.0 test
+> npm run test:worker-deps && npm run test:catalog
+
+
+> branchline-playground@0.1.0 test:worker-deps
+> node scripts/check-worker-deps.mjs
+
+
+> branchline-playground@0.1.0 test:catalog
+> node scripts/test-catalog-metadata.mjs
+
+node:internal/modules/package_json_reader:316
+  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);
+        ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'typescript' imported from /Users/eugene/repo/research/branchline-public/playground/scripts/test-catalog-metadata.mjs
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:316:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:858:18)
+    at defaultResolve (node:internal/modules/esm/resolve:990:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:712:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:729:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:758:52)
+    at #resolve (node:internal/modules/esm/loader:694:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:614:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:143:33) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v25.3.0
+
+[Incubating] Problems report is available at: file:///Users/eugene/repo/research/branchline-public/build/reports/problems/problems-report.html
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':kotlinStoreYarnLock'.
+> Lock file was changed. Run the `kotlinUpgradeYarnLock` task to actualize lock file
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':playgroundBuildAssets'.
+> Process 'command 'npm'' finished with non-zero exit value 1
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 1m 29s
+142 actionable tasks: 130 executed, 12 up-to-date

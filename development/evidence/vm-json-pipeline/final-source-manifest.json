@@ -1,0 +1,21 @@
+{
+  "cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/BranchlineCli.kt": "0bab901930ced696c554ae1a56ff939bdfde89bec13a263139841d25ff2ef3e1",
+  "cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/BranchlineRuntime.kt": "5543eecf3abf1cbfdba85955b87267f41b4a8d94928859a36949755bbdcde6c9",
+  "cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/ExperimentalJsonPipeline.kt": "7f462fef84868b3b8a3a23073f2ec8bc9894e3dd6f239771ee1a655e6482f9bb",
+  "cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/PlatformIO.kt": "86130af5286106560ababe9d5ca34baa7aa5c48762b15bf24d9d7b10d69cce35",
+  "cli/src/commonTest/kotlin/io/github/ehlyzov/branchline/cli/ExperimentalJsonPipelineTest.kt": "fbf8a77e16a418d9120c47d3880dbf349e8d4fe62c88bf39d7e86ab779837790",
+  "cli/src/commonTest/kotlin/io/github/ehlyzov/branchline/cli/ParallelWorkerTest.kt": "41e5556f5c5f8ca4abbb469fc869747179ca3eca643f6c9d956aae5d6e87403d",
+  "cli/src/jsMain/kotlin/io/github/ehlyzov/branchline/cli/JsPlatform.kt": "25841b39939fce70d44b30ae3446b02072761cf113ab5c2d1c5861c6559514e0",
+  "cli/src/jvmMain/kotlin/io/github/ehlyzov/branchline/cli/JvmPlatform.kt": "b910ac3f7655510197fb515db1b1a9df98b359799506a71c706d4fa87f753b3b",
+  "cli/src/jvmTest/kotlin/io/github/ehlyzov/branchline/cli/CompiledFanoutIsolationTest.kt": "22f64758e37ab85c5b49d6ac0ba92a45d727343fd400f8388f1ae029dd30b544",
+  "cli/src/jvmTest/kotlin/io/github/ehlyzov/branchline/cli/ParallelWorkerJvmTest.kt": "e8ef2b61eb1151e4c9d096d13101742b16fd05222bef030b866ea0f9d0c935b6",
+  "interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/json/JsonInput.kt": "dfde7feb777056ccb3a31db25ffefb6cac3db0c5497b6bd1c67da112d000e791",
+  "interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/json/JsonInputSelection.kt": "125d66bba45bb478adb344b95a5c096afde4637b0d5623e407387f156299ab03",
+  "interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/std/StdStringsModule.kt": "1a94f8706f4eef9a7bcb206107cb9149597083bb09a540399a6b98ade08208c0",
+  "interpreter/src/commonTest/kotlin/io/github/ehlyzov/branchline/json/JsonInputSelectionTest.kt": "a57763a993f9aeedf2dbced7081c05611d1cd7920dab571afa9b273619ff2427",
+  "interpreter/src/jsMain/kotlin/io/github/ehlyzov/branchline/std/RegexCacheJs.kt": "2506fb5ebbf4cb8428cbccc079b412d7bdd4fd99021a62fead3f875df21de3ba",
+  "interpreter/src/jvmMain/kotlin/io/github/ehlyzov/branchline/std/RegexCacheJvm.kt": "b8d6da10cdcbd5daec0751a0c27cc8cfc083b8a0e32eee08318f742e6a71ead1",
+  "interpreter/src/jvmTest/kotlin/io/github/ehlyzov/branchline/std/RegexCacheConcurrencyTest.kt": "c291876ec27775afdb6bf05ab351c1977586abe6c7b405eca81b22215deb3375",
+  "vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/SelectiveJsonPipelineBenchmark.kt": "81944165ea8dbbadd50d9af7efe4d13d46b3894faec05d7929e63b249def8365",
+  "vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/SelectiveJsonPipelineProbe.kt": "8aca111f934245f781642d2912e964c582f842752dc13752791a0fe7e1cd6e74"
+}

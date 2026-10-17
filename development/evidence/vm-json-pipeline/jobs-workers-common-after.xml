@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.github.ehlyzov.branchline.cli.ParallelWorkerTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-17T08:53:03.990Z" hostname="Stargate.local" time="0.001">
+  <properties/>
+  <testcase name="workerStateIsReusedAndResultsKeepInputOrder()[jvm]" classname="io.github.ehlyzov.branchline.cli.ParallelWorkerTest" time="0.001"/>
+  <testcase name="emptyInputCreatesNoWorker()[jvm]" classname="io.github.ehlyzov.branchline.cli.ParallelWorkerTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

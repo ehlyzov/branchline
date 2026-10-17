@@ -1,0 +1,64 @@
+[
+  {
+    "id": "simple",
+    "program": "TRANSFORM ReleaseCheck { OUTPUT { doubled: input.value * 2, label: input.label } }",
+    "input": {
+      "value": 7,
+      "label": "alpha"
+    },
+    "expected": {
+      "doubled": 14,
+      "label": "alpha"
+    }
+  },
+  {
+    "id": "edited",
+    "program": "TRANSFORM ReleaseCheck { OUTPUT { doubled: input.value * 3, label: input.label } }",
+    "input": {
+      "value": 11,
+      "label": "changed"
+    },
+    "expected": {
+      "doubled": 33,
+      "label": "changed"
+    }
+  },
+  {
+    "id": "projection",
+    "program": "TRANSFORM ReleaseProjection {\n  LET rows = [{ id: x.id, total: x.price * x.qty } FOR EACH x IN input.items WHERE x.active]\n  OUTPUT { rows: rows }\n}",
+    "input": {
+      "items": [
+        {
+          "id": "a",
+          "active": true,
+          "price": 3,
+          "qty": 4
+        },
+        {
+          "id": "b",
+          "active": false,
+          "price": 99,
+          "qty": 2
+        },
+        {
+          "id": "c",
+          "active": true,
+          "price": 5,
+          "qty": 2
+        }
+      ]
+    },
+    "expected": {
+      "rows": [
+        {
+          "id": "a",
+          "total": 12
+        },
+        {
+          "id": "c",
+          "total": 10
+        }
+      ]
+    }
+  }
+]

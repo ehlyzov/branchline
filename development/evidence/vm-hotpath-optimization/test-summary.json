@@ -1,0 +1,30 @@
+{
+  "vm:jvmTest": {
+    "files": 28,
+    "tests": 149,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "vm:jsNodeTest": {
+    "files": 8,
+    "tests": 78,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "conformance-tests:jvmTest": {
+    "files": 60,
+    "tests": 359,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1
+  },
+  "conformance-tests:jsNodeTest": {
+    "files": 32,
+    "tests": 109,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

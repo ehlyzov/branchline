@@ -1,0 +1,2 @@
+same_root_replacement=old,new
+replacement_during_child=new

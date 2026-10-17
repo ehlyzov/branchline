@@ -1,0 +1,8 @@
+{
+  "smoke": "PASS",
+  "jvmClassMajor": 65,
+  "packageVersion": "0.11.0-alpha.1",
+  "observedCliVersion": "Branchline CLI v0.11.0-alpha.1",
+  "releaseVersionAligned": true,
+  "evidenceDirectory": "/tmp/branchline-artifact-smoke.b0wCKf"
+}

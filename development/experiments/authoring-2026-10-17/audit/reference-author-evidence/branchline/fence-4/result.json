@@ -1,0 +1,1 @@
+{"compile_ok":true,"cases":[{"ok":true,"actual":{"category":"low"},"error":null},{"ok":true,"actual":{"category":"equal"},"error":null},{"ok":true,"actual":{"category":"high"},"error":null}],"compile_seconds":0.074926625,"execute_seconds":0.055349834}

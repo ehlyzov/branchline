@@ -1,0 +1,58 @@
+{
+  "generatedAt": "2026-10-17T08:40:49.179955Z",
+  "benchmarks": [
+    {
+      "name": "pathExpressions",
+      "instructions": 38,
+      "histogram": {
+        "LOAD_VAR": 4,
+        "ACCESS_STATIC": 17,
+        "DUP": 3,
+        "STORE_VAR": 3,
+        "STORE_LOCAL": 3,
+        "PUSH": 4,
+        "LOAD_LOCAL": 3,
+        "OUTPUT": 1
+      }
+    },
+    {
+      "name": "arrayComprehension",
+      "instructions": 36,
+      "histogram": {
+        "ARRAY_BUILDER_INIT": 2,
+        "LOAD_VAR": 5,
+        "ACCESS_STATIC": 7,
+        "INIT_FOREACH": 2,
+        "PUSH": 3,
+        "GT": 1,
+        "JUMP_IF_FALSE": 1,
+        "ARRAY_BUILDER_ADD": 2,
+        "NEXT_FOREACH": 2,
+        "ARRAY_BUILDER_FINISH": 2,
+        "DUP": 2,
+        "STORE_VAR": 2,
+        "STORE_LOCAL": 2,
+        "LOAD_LOCAL": 2,
+        "OUTPUT": 1
+      }
+    },
+    {
+      "name": "typicalTransform",
+      "instructions": 22,
+      "histogram": {
+        "PUSH": 3,
+        "DUP": 2,
+        "STORE_VAR": 2,
+        "STORE_LOCAL": 2,
+        "LOAD_VAR": 3,
+        "ACCESS_STATIC": 3,
+        "INIT_FOREACH": 1,
+        "LOAD_LOCAL": 2,
+        "ADD": 1,
+        "NEXT_FOREACH": 1,
+        "CALL_HOST": 1,
+        "OUTPUT": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,251 @@
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms512m -Xmx2g -XX:+UseSerialGC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 500 ms each
+# Measurement: 5 iterations, 500 ms each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline
+# Parameters: (accessPattern = dynamic, engineMode = eager, inputMiB = 16, selectedPercent = 1, shape = strings)
+
+# Run progress: 0,00% complete, ETA 00:00:16
+# Fork: 1 of 2
+# Warmup Iteration   1: 36,732 ms/op
+# Warmup Iteration   2: 36,980 ms/op
+# Warmup Iteration   3: 35,890 ms/op
+Iteration   1: 36,436 ms/op
+                 ·gc.alloc.rate:      1983,896 MB/sec
+                 ·gc.alloc.rate.norm: 75811965,143 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            9,000 ms
+
+Iteration   2: 36,250 ms/op
+                 ·gc.alloc.rate:      1994,106 MB/sec
+                 ·gc.alloc.rate.norm: 75811984,000 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            9,000 ms
+
+Iteration   3: 37,447 ms/op
+                 ·gc.alloc.rate:      1930,222 MB/sec
+                 ·gc.alloc.rate.norm: 75811965,143 B/op
+                 ·gc.count:           9,000 counts
+                 ·gc.time:            20,000 ms
+
+Iteration   4: 36,384 ms/op
+                 ·gc.alloc.rate:      1986,706 MB/sec
+                 ·gc.alloc.rate.norm: 75811967,429 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            9,000 ms
+
+Iteration   5: 36,087 ms/op
+                 ·gc.alloc.rate:      2003,114 MB/sec
+                 ·gc.alloc.rate.norm: 75811965,143 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            10,000 ms
+
+
+# Run progress: 25,00% complete, ETA 00:00:13
+# Fork: 2 of 2
+# Warmup Iteration   1: 36,847 ms/op
+# Warmup Iteration   2: 36,406 ms/op
+# Warmup Iteration   3: 35,995 ms/op
+Iteration   1: 36,618 ms/op
+                 ·gc.alloc.rate:      1974,079 MB/sec
+                 ·gc.alloc.rate.norm: 75811965,143 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            9,000 ms
+
+Iteration   2: 36,301 ms/op
+                 ·gc.alloc.rate:      1991,213 MB/sec
+                 ·gc.alloc.rate.norm: 75811984,000 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            10,000 ms
+
+Iteration   3: 40,826 ms/op
+                 ·gc.alloc.rate:      1770,516 MB/sec
+                 ·gc.alloc.rate.norm: 75811967,385 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            21,000 ms
+
+Iteration   4: 47,583 ms/op
+                 ·gc.alloc.rate:      1519,140 MB/sec
+                 ·gc.alloc.rate.norm: 75811976,000 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            13,000 ms
+
+Iteration   5: 38,250 ms/op
+                 ·gc.alloc.rate:      1888,704 MB/sec
+                 ·gc.alloc.rate.norm: 75811965,143 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            10,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline":
+  38,218 ±(99.9%) 5,434 ms/op [Average]
+  (min, avg, max) = (36,087, 38,218, 47,583), stdev = 3,595
+  CI (99.9%): [32,784, 43,653] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline:·gc.alloc.rate":
+  1904,170 ±(99.9%) 231,237 MB/sec [Average]
+  (min, avg, max) = (1519,140, 1904,170, 2003,114), stdev = 152,949
+  CI (99.9%): [1672,933, 2135,406] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline:·gc.alloc.rate.norm":
+  75811970,453 ±(99.9%) 11,898 B/op [Average]
+  (min, avg, max) = (75811965,143, 75811970,453, 75811984,000), stdev = 7,870
+  CI (99.9%): [75811958,555, 75811982,350] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline:·gc.count":
+  75,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (6,000, 7,500, 9,000), stdev = 0,850
+  CI (99.9%): [75,000, 75,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline:·gc.time":
+  120,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (9,000, 12,000, 21,000), stdev = 4,643
+  CI (99.9%): [120,000, 120,000] (assumes normal distribution)
+
+
+# JMH version: 1.36
+# VM version: JDK 21.0.11, OpenJDK 64-Bit Server VM, 21.0.11+10-LTS
+# VM invoker: /Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home/bin/java
+# VM options: -Xms512m -Xmx2g -XX:+UseSerialGC
+# Blackhole mode: compiler (auto-detected, use -Djmh.blackhole.autoDetect=false to disable)
+# Warmup: 3 iterations, 500 ms each
+# Measurement: 5 iterations, 500 ms each
+# Timeout: 10 min per iteration
+# Threads: 1 thread, will synchronize iterations
+# Benchmark mode: Average time, time/op
+# Benchmark: io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline
+# Parameters: (accessPattern = dynamic, engineMode = selective, inputMiB = 16, selectedPercent = 1, shape = strings)
+
+# Run progress: 50,00% complete, ETA 00:00:08
+# Fork: 1 of 2
+# Warmup Iteration   1: 36,401 ms/op
+# Warmup Iteration   2: 36,005 ms/op
+# Warmup Iteration   3: 36,114 ms/op
+Iteration   1: 35,803 ms/op
+                 ·gc.alloc.rate:      2018,900 MB/sec
+                 ·gc.alloc.rate.norm: 75811963,200 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            9,000 ms
+
+Iteration   2: 36,030 ms/op
+                 ·gc.alloc.rate:      1998,564 MB/sec
+                 ·gc.alloc.rate.norm: 75811984,000 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            10,000 ms
+
+Iteration   3: 36,048 ms/op
+                 ·gc.alloc.rate:      2005,132 MB/sec
+                 ·gc.alloc.rate.norm: 75811963,200 B/op
+                 ·gc.count:           9,000 counts
+                 ·gc.time:            17,000 ms
+
+Iteration   4: 46,515 ms/op
+                 ·gc.alloc.rate:      1554,054 MB/sec
+                 ·gc.alloc.rate.norm: 75811973,091 B/op
+                 ·gc.count:           6,000 counts
+                 ·gc.time:            7,000 ms
+
+Iteration   5: 35,888 ms/op
+                 ·gc.alloc.rate:      2014,238 MB/sec
+                 ·gc.alloc.rate.norm: 75811965,143 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            8,000 ms
+
+
+# Run progress: 75,00% complete, ETA 00:00:04
+# Fork: 2 of 2
+# Warmup Iteration   1: 35,996 ms/op
+# Warmup Iteration   2: 36,128 ms/op
+# Warmup Iteration   3: 36,226 ms/op
+Iteration   1: 36,094 ms/op
+                 ·gc.alloc.rate:      2002,639 MB/sec
+                 ·gc.alloc.rate.norm: 75811965,143 B/op
+                 ·gc.count:           7,000 counts
+                 ·gc.time:            7,000 ms
+
+Iteration   2: 36,201 ms/op
+                 ·gc.alloc.rate:      1996,755 MB/sec
+                 ·gc.alloc.rate.norm: 75811984,000 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            9,000 ms
+
+Iteration   3: 36,205 ms/op
+                 ·gc.alloc.rate:      1996,575 MB/sec
+                 ·gc.alloc.rate.norm: 75811965,143 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            12,000 ms
+
+Iteration   4: 35,834 ms/op
+                 ·gc.alloc.rate:      2017,280 MB/sec
+                 ·gc.alloc.rate.norm: 75811963,200 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            6,000 ms
+
+Iteration   5: 35,644 ms/op
+                 ·gc.alloc.rate:      2028,026 MB/sec
+                 ·gc.alloc.rate.norm: 75811963,200 B/op
+                 ·gc.count:           8,000 counts
+                 ·gc.time:            5,000 ms
+
+
+
+Result "io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline":
+  37,026 ±(99.9%) 5,048 ms/op [Average]
+  (min, avg, max) = (35,644, 37,026, 46,515), stdev = 3,339
+  CI (99.9%): [31,978, 42,074] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline:·gc.alloc.rate":
+  1963,216 ±(99.9%) 217,949 MB/sec [Average]
+  (min, avg, max) = (1554,054, 1963,216, 2028,026), stdev = 144,160
+  CI (99.9%): [1745,267, 2181,166] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline:·gc.alloc.rate.norm":
+  75811968,932 ±(99.9%) 12,808 B/op [Average]
+  (min, avg, max) = (75811963,200, 75811968,932, 75811984,000), stdev = 8,471
+  CI (99.9%): [75811956,124, 75811981,739] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline:·gc.count":
+  77,000 ±(99.9%) 0,001 counts [Sum]
+  (min, avg, max) = (6,000, 7,700, 9,000), stdev = 0,823
+  CI (99.9%): [77,000, 77,000] (assumes normal distribution)
+
+Secondary result "io.github.ehlyzov.branchline.vm.SelectiveJsonPipelineBenchmark.fullPipeline:·gc.time":
+  90,000 ±(99.9%) 0,001 ms [Sum]
+  (min, avg, max) = (5,000, 9,000, 17,000), stdev = 3,464
+  CI (99.9%): [90,000, 90,000] (assumes normal distribution)
+
+
+# Run complete. Total time: 00:00:17
+
+REMEMBER: The numbers below are just data. To gain reusable insights, you need to follow up on
+why the numbers are the way they are. Use profilers (see -prof, -lprof), design factorial
+experiments, perform baseline and negative tests that provide experimental control, make sure
+the benchmarking environment is safe on JVM/OS/HW level, ask for reviews from the domain experts.
+Do not assume the numbers tell you what you want them to tell.
+
+NOTE: Current JVM experimentally supports Compiler Blackholes, and they are in use. Please exercise
+extra caution when trusting the results, look into the generated code to check the benchmark still
+works, and factor in a small probability of new VM bugs. Additionally, while comparisons between
+different JVMs are already problematic, the performance difference caused by different Blackhole
+modes can be very significant. Please make sure you use the consistent Blackhole mode for comparisons.
+
+Benchmark                                                        (accessPattern)  (engineMode)  (inputMiB)  (selectedPercent)  (shape)  Mode  Cnt         Score     Error   Units
+SelectiveJsonPipelineBenchmark.fullPipeline                              dynamic         eager          16                  1  strings  avgt   10        38,218 ±   5,434   ms/op
+SelectiveJsonPipelineBenchmark.fullPipeline:·gc.alloc.rate               dynamic         eager          16                  1  strings  avgt   10      1904,170 ± 231,237  MB/sec
+SelectiveJsonPipelineBenchmark.fullPipeline:·gc.alloc.rate.norm          dynamic         eager          16                  1  strings  avgt   10  75811970,453 ±  11,898    B/op
+SelectiveJsonPipelineBenchmark.fullPipeline:·gc.count                    dynamic         eager          16                  1  strings  avgt   10        75,000            counts
+SelectiveJsonPipelineBenchmark.fullPipeline:·gc.time                     dynamic         eager          16                  1  strings  avgt   10       120,000                ms
+SelectiveJsonPipelineBenchmark.fullPipeline                              dynamic     selective          16                  1  strings  avgt   10        37,026 ±   5,048   ms/op
+SelectiveJsonPipelineBenchmark.fullPipeline:·gc.alloc.rate               dynamic     selective          16                  1  strings  avgt   10      1963,216 ± 217,949  MB/sec
+SelectiveJsonPipelineBenchmark.fullPipeline:·gc.alloc.rate.norm          dynamic     selective          16                  1  strings  avgt   10  75811968,932 ±  12,808    B/op
+SelectiveJsonPipelineBenchmark.fullPipeline:·gc.count                    dynamic     selective          16                  1  strings  avgt   10        77,000            counts
+SelectiveJsonPipelineBenchmark.fullPipeline:·gc.time                     dynamic     selective          16                  1  strings  avgt   10        90,000                ms
+
+Benchmark result is saved to /Users/eugene/repo/research/branchline-public/development/evidence/vm-json-pipeline/pipeline-fallback-jmh.json

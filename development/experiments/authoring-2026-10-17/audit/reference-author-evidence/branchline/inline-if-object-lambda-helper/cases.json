@@ -1,0 +1,1 @@
+[{"input": {"enabled": true}, "expected": {"choice": "on", "objects": [{"field": "q"}], "blockObjects": [{"field": "q"}], "next": 5, "blockNext": 5, "recovered": 7}}, {"input": {"enabled": false}, "expected": {"choice": "off", "objects": [{"field": "q"}], "blockObjects": [{"field": "q"}], "next": 5, "blockNext": 5, "recovered": 7}}]

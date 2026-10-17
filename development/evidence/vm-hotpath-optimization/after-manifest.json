@@ -1,0 +1,6 @@
+{
+  "vm-benchmarks/build/libs/vm-benchmarks-v0.11.0-SNAPSHOT-jmh.jar": "9a4963d723cd386502a67caa4975cd58800d6449547ac86572246744cf203613",
+  "interpreter-benchmarks/build/libs/interpreter-benchmarks-v0.11.0-SNAPSHOT-jmh.jar": "cd511f52d5bc372cc05dbdf315e0101f41ea39e6176ac80ef491108cb0ac0c13",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt": "4fea7d8220392e87b408406405f04992711c2884548c5c4f3a66c11d392a2d49",
+  "vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/VMTraceFastPathTest.kt": "159ed0339f159b81d99ff47ac3a40d19019900e23e2520a41a41007352f188ad"
+}

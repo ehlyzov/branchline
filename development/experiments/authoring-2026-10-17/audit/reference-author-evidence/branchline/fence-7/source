@@ -1,0 +1,7 @@
+
+TRANSFORM Main {
+LET grouped = REDUCE(input.rows ?? [], {}, (acc, row) ->
+    PUT(acc, row.kind, APPEND(GET(acc, row.kind, []), row)))
+
+OUTPUT {grouped: grouped}
+}

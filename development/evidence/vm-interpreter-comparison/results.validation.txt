@@ -1,0 +1,13 @@
+PASS paths:1000 both engines, expected output and unchanged input
+PASS sum:1000 both engines, expected output and unchanged input
+PASS sum:4000 both engines, expected output and unchanged input
+PASS filter:1000 both engines, expected output and unchanged input
+PASS filter:4000 both engines, expected output and unchanged input
+PASS project:1000 both engines, expected output and unchanged input
+PASS project:4000 both engines, expected output and unchanged input
+PASS lambda:1000 both engines, expected output and unchanged input
+PASS lambda:4000 both engines, expected output and unchanged input
+PASS append:1000 both engines, expected output and unchanged input
+PASS append:4000 both engines, expected output and unchanged input
+PASS set:1000 both engines, expected output and unchanged input
+PASS set:4000 both engines, expected output and unchanged input

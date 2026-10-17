@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.github.ehlyzov.branchline.cli.ParallelWorkerJvmTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-17T08:53:03.779Z" hostname="Stargate.local" time="0.21">
+  <properties/>
+  <testcase name="fourWorkersOverlapAndReuseTheirOwnMutableState()[jvm]" classname="io.github.ehlyzov.branchline.cli.ParallelWorkerJvmTest" time="0.001"/>
+  <testcase name="interruptedCollectorKeepsSharedContextUntilWorkersComplete()[jvm]" classname="io.github.ehlyzov.branchline.cli.ParallelWorkerJvmTest" time="0.207"/>
+  <testcase name="failureWaitsForOtherWorkersBeforeReturning()[jvm]" classname="io.github.ehlyzov.branchline.cli.ParallelWorkerJvmTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

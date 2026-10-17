@@ -1,0 +1,15 @@
+{
+  "changedExistingSources": [
+    "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt"
+  ],
+  "newSources": [
+    "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockPlan.kt",
+    "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockRuntime.kt",
+    "vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockObservationTest.kt",
+    "vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockPlanTest.kt",
+    "vm/src/commonTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockRuntimeStateTest.kt",
+    "vm/src/jvmTest/kotlin/io/github/ehlyzov/branchline/vm/PreparedBlockBigNumberObservationTest.kt",
+    "vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/VMPreparedBlockBenchmark.kt",
+    "vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/VMPreparedBlockProbe.kt"
+  ]
+}

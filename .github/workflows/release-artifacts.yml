@@ -2,13 +2,13 @@ name: Release Artifacts
 
 on:
   release:
-    types: [published, prereleased]
+    types: [published]
   push:
     branches: [ main ]
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag to use (optional). Example: v1.2.3'
+        description: 'Existing tag to build; empty uses the selected ref and canonical version for a full release'
         required: false
         type: string
       full_release:
@@ -60,16 +60,25 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-artifacts
+  cancel-in-progress: false
+
 jobs:
   build-and-upload:
     runs-on: ubuntu-latest
     outputs:
       deploy_pages: ${{ steps.deploy_gate.outputs.deploy_pages }}
+      build_sha: ${{ steps.release_context.outputs.build_sha }}
+      release_version: ${{ steps.release_context.outputs.release_version }}
     if: github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (contains(github.event.head_commit.message || '', '+performance') || contains(github.event.head_commit.message || '', '+jsonata')))
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.tag || github.sha }}
+          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -87,7 +96,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Resolve release context (gh)
+      - name: Resolve and validate release context
+        id: release_context
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -101,26 +111,25 @@ jobs:
           DISPATCH_JSONATA_ITERATIONS: ${{ github.event.inputs.jsonata_iterations }}
           DISPATCH_JSONATA_TIME_ON_ITERATION: ${{ github.event.inputs.jsonata_time_on_iteration }}
           DISPATCH_JSONATA_FORKS: ${{ github.event.inputs.jsonata_forks }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
           HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           set -euo pipefail
 
-          echo "Resolve release context:"
-          echo "  event_name=$GITHUB_EVENT_NAME"
-          echo "  ref_name=${GITHUB_REF_NAME:-<empty>}"
-          echo "  sha=$GITHUB_SHA"
-
-          ensure_release_exists="false"
-          prerelease_flag=""
-          notes=""
+          build_sha=$(git rev-parse HEAD)
+          package_version=$(./gradlew --no-daemon -q printReleaseVersion)
+          [[ "$package_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || { echo "Invalid package version: $package_version" >&2; exit 1; }
+          echo "BUILD_SHA=$build_sha" >> "$GITHUB_ENV"
+          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
+          echo "build_sha=$build_sha" >> "$GITHUB_OUTPUT"
+          echo "release_version=$package_version" >> "$GITHUB_OUTPUT"
 
           if [[ "$GITHUB_EVENT_NAME" == "release" ]]; then
-            tag="${{ github.event.release.tag_name }}"
+            tag="$RELEASE_TAG"
             run_full_release="true"
             run_jmh="true"
             run_jsonata="false"
             jsonata_jmh_profile="representative-long"
-            ensure_release_exists="false"
           elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
             tag="perf-${GITHUB_SHA::7}"
             run_full_release="false"
@@ -131,13 +140,10 @@ jobs:
             else
               run_jsonata="false"
             fi
-            ensure_release_exists="true"
-            prerelease_flag="--prerelease"
-            notes="Automated performance run for $GITHUB_SHA"
+
           else
             # workflow_dispatch
             tag="${DISPATCH_TAG:-}"
-            [[ -z "$tag" ]] && tag="snapshot-${GITHUB_SHA::7}"
 
             # inputs arrive as strings; default true
             fr="${DISPATCH_FULL_RELEASE:-true}"
@@ -145,22 +151,34 @@ jobs:
             rjta="${DISPATCH_RUN_JSONATA:-false}"
             jsonata_jmh_profile="${DISPATCH_JSONATA_JMH_PROFILE:-representative-long}"
 
-            if [[ "${fr,,}" == "false" ]]; then run_full_release="false"; else run_full_release="true"; fi
-            if [[ "${rj,,}" == "false" ]]; then run_jmh="false"; else run_jmh="true"; fi
-            if [[ "${rjta,,}" == "true" ]]; then run_jsonata="true"; else run_jsonata="false"; fi
+            if [[ "$fr" == "false" ]]; then run_full_release="false"; else run_full_release="true"; fi
+            if [[ "$rj" == "false" ]]; then run_jmh="false"; else run_jmh="true"; fi
+            if [[ "$rjta" == "true" ]]; then run_jsonata="true"; else run_jsonata="false"; fi
 
-            ensure_release_exists="true"
-            prerelease_flag="--prerelease"
-            notes="Manual run for $GITHUB_SHA"
           fi
 
-          echo "  TAG_NAME=$tag"
-          echo "  RUN_FULL_RELEASE=$run_full_release"
-          echo "  RUN_JMH=$run_jmh"
-          echo "  RUN_JSONATA=$run_jsonata"
-          echo "  JSONATA_JMH_PROFILE=$jsonata_jmh_profile"
-          echo "  ensure_release_exists=$ensure_release_exists"
-          echo "  prerelease_flag=${prerelease_flag:-<none>}"
+          if [[ "$run_full_release" == "false" && "$run_jmh" == "false" && "$run_jsonata" == "false" ]]; then
+            echo "Select at least one artifact or benchmark build" >&2; exit 1
+          fi
+          for value in "${DISPATCH_JSONATA_JMH_PROFILE:-}" "${DISPATCH_JSONATA_CASE_IDS:-}" "${DISPATCH_JSONATA_WARMUP_ITERATIONS:-}" "${DISPATCH_JSONATA_ITERATIONS:-}" "${DISPATCH_JSONATA_TIME_ON_ITERATION:-}" "${DISPATCH_JSONATA_FORKS:-}"; do
+            [[ "$value" != *$'\n'* && "$value" != *$'\r'* ]] || { echo "Multiline workflow input is not supported" >&2; exit 1; }
+          done
+          if [[ -z "$tag" ]]; then
+            if [[ "$run_full_release" == "true" ]]; then tag="v$package_version"; else tag="snapshot-${build_sha::7}"; fi
+          fi
+          [[ "$tag" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]] || { echo "Unsafe release tag: $tag" >&2; exit 1; }
+          if [[ "$run_full_release" == "true" && "$tag" != "v$package_version" ]]; then
+            echo "Release tag $tag does not match package version v$package_version" >&2
+            exit 1
+          fi
+          if git show-ref --verify --quiet "refs/tags/$tag"; then
+            tag_sha=$(git rev-parse "refs/tags/$tag^{commit}")
+            [[ "$tag_sha" == "$build_sha" ]] || { echo "Tag $tag resolves to $tag_sha, checkout is $build_sha" >&2; exit 1; }
+          fi
+          prerelease=true
+          if [[ "$run_full_release" == "true" && "$package_version" != *-* ]]; then prerelease=false; fi
+          echo "RELEASE_PRERELEASE=$prerelease" >> "$GITHUB_ENV"
+          echo "Building $tag, package $package_version, commit $build_sha"
 
           echo "TAG_NAME=$tag" >> "$GITHUB_ENV"
           echo "RUN_FULL_RELEASE=$run_full_release" >> "$GITHUB_ENV"
@@ -173,26 +191,12 @@ jobs:
           echo "JSONATA_TIME_ON_ITERATION=${DISPATCH_JSONATA_TIME_ON_ITERATION:-}" >> "$GITHUB_ENV"
           echo "JSONATA_FORKS=${DISPATCH_JSONATA_FORKS:-}" >> "$GITHUB_ENV"
 
-          if [[ "$ensure_release_exists" == "true" ]]; then
-            if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-              echo "  Release exists: $tag"
-            else
-              echo "  Creating release: $tag"
-              gh release create "$tag" \
-                --repo "$GITHUB_REPOSITORY" \
-                --title "$tag" \
-                --notes "$notes" \
-                $prerelease_flag \
-                --target "$GITHUB_SHA"
-            fi
-          fi
-
       - name: Decide whether to deploy pages
         id: deploy_gate
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${RUN_JMH}" == "true" || "${RUN_JSONATA}" == "true" ]]; then
+          if [[ "${RUN_FULL_RELEASE}" == "true" || "${RUN_JMH}" == "true" || "${RUN_JSONATA}" == "true" ]]; then
             echo "deploy_pages=true" >> "$GITHUB_OUTPUT"
           else
             echo "deploy_pages=false" >> "$GITHUB_OUTPUT"
@@ -287,44 +291,30 @@ jobs:
           ls -alh build/benchmarks || true
           ls -alh build/jsonata-benchmarks || true
 
-      - name: Capture release artifact paths (glob; decoupled from TAG_NAME)
+      - name: Validate and capture versioned release artifacts
         if: env.RUN_FULL_RELEASE == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
           upload_dir="$GITHUB_WORKSPACE/build/release-upload"
           mkdir -p "$upload_dir"
-
-          js=( "$GITHUB_WORKSPACE"/cli/build/distributions/branchline-cli-js-*.tgz )
-          [[ ${#js[@]} -gt 0 ]] || { echo "JS tarball not found in cli/build/distributions" >&2; exit 1; }
-          js_out="$upload_dir/branchline-cli-js-${TAG_NAME}.tgz"
-          cp "${js[0]}" "$js_out"
-          echo "JS_TARBALL_PATH=$js_out" >> "$GITHUB_ENV"
-
-          jvm=( "$GITHUB_WORKSPACE"/cli/build/libs/branchline-cli-*-all.jar )
-          [[ ${#jvm[@]} -gt 0 ]] || { echo "JVM fat jar not found in cli/build/libs" >&2; exit 1; }
-          jvm_out="$upload_dir/branchline-cli-${TAG_NAME}-all.jar"
-          cp "${jvm[0]}" "$jvm_out"
-          echo "JVM_JAR_PATH=$jvm_out" >> "$GITHUB_ENV"
-
-          interp_jars=( "$GITHUB_WORKSPACE"/interpreter/build/libs/interpreter-jvm-*.jar )
-          [[ ${#interp_jars[@]} -gt 0 ]] || { echo "Interpreter JVM jar not found" >&2; exit 1; }
-          interp_out="$upload_dir/branchline-interpreter-${TAG_NAME}-jvm.jar"
-          cp "${interp_jars[0]}" "$interp_out"
-          echo "INTERPRETER_JVM_PATH=$interp_out" >> "$GITHUB_ENV"
-
-          vm_jars=( "$GITHUB_WORKSPACE"/vm/build/libs/vm-jvm-*.jar )
-          [[ ${#vm_jars[@]} -gt 0 ]] || { echo "VM JVM jar not found" >&2; exit 1; }
-          vm_out="$upload_dir/branchline-vm-${TAG_NAME}-jvm.jar"
-          cp "${vm_jars[0]}" "$vm_out"
-          echo "VM_JVM_PATH=$vm_out" >> "$GITHUB_ENV"
-
-          interp_js=( "$GITHUB_WORKSPACE"/interpreter/build/distributions/branchline-interpreter-*-js.tgz )
-          [[ ${#interp_js[@]} -gt 0 ]] || { echo "Interpreter JS package not found in interpreter/build/distributions" >&2; exit 1; }
-          interp_js_out="$upload_dir/branchline-interpreter-${TAG_NAME}-js.tgz"
-          cp "${interp_js[0]}" "$interp_js_out"
-          echo "INTERPRETER_JS_PATH=$interp_js_out" >> "$GITHUB_ENV"
+          capture() {
+            local source="$1" target="$2" variable="$3"
+            [[ -s "$source" ]] || { echo "Missing exact-version artifact: $source" >&2; exit 1; }
+            cp "$source" "$upload_dir/$target"
+            echo "$variable=$upload_dir/$target" >> "$GITHUB_ENV"
+          }
+          capture "cli/build/distributions/branchline-cli-js-${PACKAGE_VERSION}.tgz" "branchline-cli-js-${TAG_NAME}.tgz" JS_TARBALL_PATH
+          capture "cli/build/libs/branchline-cli-${PACKAGE_VERSION}-all.jar" "branchline-cli-${TAG_NAME}-all.jar" JVM_JAR_PATH
+          capture "interpreter/build/libs/interpreter-jvm-${PACKAGE_VERSION}.jar" "branchline-interpreter-${TAG_NAME}-jvm.jar" INTERPRETER_JVM_PATH
+          capture "vm/build/libs/vm-jvm-${PACKAGE_VERSION}.jar" "branchline-vm-${TAG_NAME}-jvm.jar" VM_JVM_PATH
+          capture "interpreter/build/distributions/branchline-interpreter-${PACKAGE_VERSION}-js.tgz" "branchline-interpreter-${TAG_NAME}-js.tgz" INTERPRETER_JS_PATH
+          actual_jvm=$(java -jar "cli/build/libs/branchline-cli-${PACKAGE_VERSION}-all.jar" --version)
+          actual_node=$(node cli/build/cliJsPackage/bin/bl.cjs --version)
+          [[ "$actual_jvm" == "Branchline CLI ${TAG_NAME}" && "$actual_node" == "$actual_jvm" ]] || { echo "CLI version mismatch: JVM=$actual_jvm Node=$actual_node" >&2; exit 1; }
+          node -e 'const p=require("./cli/build/cliJsPackage/package.json"); if(p.version!==process.env.PACKAGE_VERSION) throw Error("npm version mismatch")'
+          jq -n --arg version "$PACKAGE_VERSION" --arg tag "$TAG_NAME" --arg sha "$BUILD_SHA" '{version:$version,tag:$tag,sha:$sha}' > "$upload_dir/release-metadata.json"
+          (cd "$upload_dir" && sha256sum *.jar *.tgz release-metadata.json > SHA256SUMS)
 
       - name: Capture JMH artifact paths
         if: env.RUN_JMH == 'true'
@@ -382,6 +372,33 @@ jobs:
           cp "$SRC_JSONATA_CSV" "$JSONATA_SUMMARY_CSV"
           echo "JSONATA_SUMMARY_CSV_PATH=$JSONATA_SUMMARY_CSV" >> "$GITHUB_ENV"
 
+      - name: Prepare release only after successful builds
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Recheck the remote tag before uploading; never relabel another commit.
+          remote_tag=$(git ls-remote --tags origin "refs/tags/$TAG_NAME")
+          if [[ -n "$remote_tag" ]]; then
+            git fetch origin "refs/tags/$TAG_NAME"
+            [[ "$(git rev-parse 'FETCH_HEAD^{commit}')" == "$BUILD_SHA" ]] || { echo "Remote release tag moved away from built commit" >&2; exit 1; }
+          fi
+          if release=$(gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease,targetCommitish); then
+            draft=$(jq -r .isDraft <<< "$release")
+            if [[ -z "$remote_tag" ]]; then
+              target=$(jq -r .targetCommitish <<< "$release")
+              [[ "$draft" == "true" && "$target" == "$BUILD_SHA" ]] || { echo "Existing release has no tag bound to built commit" >&2; exit 1; }
+            fi
+            [[ "$(jq -r .isPrerelease <<< "$release")" == "$RELEASE_PRERELEASE" ]] || { echo "Release prerelease status disagrees with package version" >&2; exit 1; }
+          else
+            gh release create "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --title "$TAG_NAME" \
+              --notes "Built from $BUILD_SHA; package version $PACKAGE_VERSION." \
+              --target "$BUILD_SHA" --draft --prerelease="$RELEASE_PRERELEASE" --latest=false
+            draft=true
+          fi
+          echo "PUBLISH_DRAFT=$draft" >> "$GITHUB_ENV"
+
       - name: Upload full release artifacts (gh; tag-based names)
         if: env.RUN_FULL_RELEASE == 'true'
         shell: bash
@@ -396,6 +413,8 @@ jobs:
             "$INTERPRETER_JVM_PATH#branchline-interpreter-${TAG_NAME}-jvm.jar" \
             "$VM_JVM_PATH#branchline-vm-${TAG_NAME}-jvm.jar" \
             "$INTERPRETER_JS_PATH#branchline-interpreter-${TAG_NAME}-js.tgz" \
+            "$GITHUB_WORKSPACE/build/release-upload/release-metadata.json" \
+            "$GITHUB_WORKSPACE/build/release-upload/SHA256SUMS" \
             --clobber \
             --repo "$GITHUB_REPOSITORY"
 
@@ -430,13 +449,23 @@ jobs:
             --clobber \
             --repo "$GITHUB_REPOSITORY"
 
+      - name: Publish completed draft release
+        if: env.PUBLISH_DRAFT == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease="$RELEASE_PRERELEASE" --latest=false
+
   deploy-pages:
     needs: build-and-upload
     if: needs.build-and-upload.outputs.deploy_pages == 'true'
     uses: ./.github/workflows/deploy.yml
     secrets: inherit
     with:
-      ref: ${{ github.sha }}
+      ref: ${{ needs.build-and-upload.outputs.build_sha }}
+      expected_version: ${{ needs.build-and-upload.outputs.release_version }}
     permissions:
       contents: read
       pages: write

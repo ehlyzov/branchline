@@ -1,0 +1,465 @@
+{
+  "generated_utc": "2026-10-16T22:43:11.669164+00:00",
+  "sealed_manifest_sha256": "10edc9da49f693dab06ba3ffcaa84e7c427ea4427f4567e639b7c277e30b6775",
+  "scope": "Completed cells only; lexical screen plus hidden-only literal screen; no business-logic grading",
+  "completed_cells": 27,
+  "expected_cells": 270,
+  "source_count": 29,
+  "cells_by_language": {
+    "branchline": 9,
+    "jsonata": 9,
+    "kotlin": 9
+  },
+  "flag_counts": {},
+  "flagged_cells": [],
+  "unconfirmed_flags_require_review": true,
+  "skipped": [],
+  "cells": [
+    {
+      "cell": "A04-branchline-r2",
+      "language": "branchline",
+      "result_sha256": "e685cb7f91eb785f0a681d4ca1f5c8b6a0c0a134090f802d7da1a1ffcc2c7836",
+      "source_count": 2,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A04-branchline-r2/submission-0.source",
+          "sha256": "921b5b93cdc27f1feaf864ea92b4fb9aabd8b05720d65222384f40af2eea58e3",
+          "bytes": 525,
+          "lines": 13,
+          "flags": []
+        },
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A04-branchline-r2/submission-1.source",
+          "sha256": "0c36fed66b6477ef39edf259aa891541dfd3d7206a552ea2ad136355aa8133a5",
+          "bytes": 532,
+          "lines": 14,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A04-branchline-r3",
+      "language": "branchline",
+      "result_sha256": "b41bbad358431e7937a757834cc6c99ad73f700828fc87787d10430aae0ea153",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A04-branchline-r3/submission-0.source",
+          "sha256": "103ba104452eec77d273fce125aa60c1d22b5686c2c82d6aa2f6dd881605337d",
+          "bytes": 499,
+          "lines": 14,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A04-jsonata-r2",
+      "language": "jsonata",
+      "result_sha256": "82e53798281d692e05f5e5614dd9cec0dd8b9d6eb1c9b626196e76570aea7e9b",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A04-jsonata-r2/submission-0.source",
+          "sha256": "3bd77762ad41cc1ec39e15f3ae18c3e7ca4be2c31c52c4d43e948049e5c2f001",
+          "bytes": 284,
+          "lines": 4,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A04-jsonata-r3",
+      "language": "jsonata",
+      "result_sha256": "262190d5cd082617543d4f0c105bd384a76a7717c0f402e2f4e87dab712463ea",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A04-jsonata-r3/submission-0.source",
+          "sha256": "915513161c94c232eca08f223f2ecd4c6a16df9e71a1670ad9a3e92381c5d0b8",
+          "bytes": 295,
+          "lines": 1,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A04-kotlin-r2",
+      "language": "kotlin",
+      "result_sha256": "739793bad5719d9e7e257aa576a6a467b90e2f5f7a9458b72a0c48515d792b62",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A04-kotlin-r2/submission-0.source",
+          "sha256": "c9f784dff60f4ba62c9db824ad26f935493fdb82e7db5d35ffeddcdd97a944ab",
+          "bytes": 681,
+          "lines": 19,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A04-kotlin-r3",
+      "language": "kotlin",
+      "result_sha256": "e4694447cd438798fc1428cde7af6a038020fd499dcbede4d663c7e857d699c4",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A04-kotlin-r3/submission-0.source",
+          "sha256": "01191150d4fd5e291f32b280ede570e2b3c437342a4576cee42b65c78af63da3",
+          "bytes": 648,
+          "lines": 17,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A05-branchline-r2",
+      "language": "branchline",
+      "result_sha256": "c0379cec47bdfb65c7399026ff4bd64f97563513a59c28686552b41b11e188e9",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A05-branchline-r2/submission-0.source",
+          "sha256": "074eb454b02b15eba8a854a277855fc1b2ed51c4a7cb90659e8a93ca5366468a",
+          "bytes": 453,
+          "lines": 11,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A05-jsonata-r2",
+      "language": "jsonata",
+      "result_sha256": "94c7c206dea579c59675dd86dac0378fec648e53f1af0fdfd7d6f4fa72cc35ef",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A05-jsonata-r2/submission-0.source",
+          "sha256": "72a41c378a40907cab5c3336bc779e09f6f5ea238b41aacb2ca7b4abf8a5b24c",
+          "bytes": 311,
+          "lines": 8,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A05-kotlin-r2",
+      "language": "kotlin",
+      "result_sha256": "945c8998438af17ade713f943160a2debd21d471804901418372397e5584e62f",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A05-kotlin-r2/submission-0.source",
+          "sha256": "96b447b39549c941c283ea07d3ed0b6e8300b14f5fafd870a6a813a064006f23",
+          "bytes": 479,
+          "lines": 13,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A07-branchline-r1",
+      "language": "branchline",
+      "result_sha256": "29e10a47a4ac67461797a0dd9a57e7125ad5ad950cc2431c8634a17b34ffa885",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A07-branchline-r1/submission-0.source",
+          "sha256": "760fda1a4bbcd1b76f78381d7bc9cfd3a1bc46b4dd0521a06399d69447a028d4",
+          "bytes": 742,
+          "lines": 24,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A07-jsonata-r1",
+      "language": "jsonata",
+      "result_sha256": "f6c93bc92967f11266d0e3f7ca565295f71e48906c4285c6844fa601fb3a7721",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A07-jsonata-r1/submission-0.source",
+          "sha256": "be3e42e65a5e4393fbb233251965e79cea29554b98971ae1e8542e01354a7510",
+          "bytes": 673,
+          "lines": 24,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A07-kotlin-r1",
+      "language": "kotlin",
+      "result_sha256": "780384b7f305e7184625f86044d873f08173114a353ced22519bcd3727dd4def",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A07-kotlin-r1/submission-0.source",
+          "sha256": "acb0a54e371c041aefb01c9315a2314019b14de7d9e757cddf0928e665bba809",
+          "bytes": 725,
+          "lines": 22,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A15-branchline-r2",
+      "language": "branchline",
+      "result_sha256": "b7561886d05c03aadbedf520d97b9761cc26adaad4c678e25f196cd3e500334d",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A15-branchline-r2/submission-0.source",
+          "sha256": "7076cf668b2f410ee4208f9d1d26b12729d2ff8d39e085cce0868e10f4cbda94",
+          "bytes": 604,
+          "lines": 16,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A15-jsonata-r2",
+      "language": "jsonata",
+      "result_sha256": "f303680de4f820b637bdbb56e66c12f60b21c2335179d4401136c681d95ea59e",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A15-jsonata-r2/submission-0.source",
+          "sha256": "781492d5608a05a3e5e008dac18feca45f7e46b85c186173bc8f78fc9d1b3716",
+          "bytes": 537,
+          "lines": 18,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A15-kotlin-r2",
+      "language": "kotlin",
+      "result_sha256": "918d99c5d7bafba74fb2f1f1230e8f934d3bff056e61d8803fb9c1cf496358b4",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A15-kotlin-r2/submission-0.source",
+          "sha256": "1b0140a3a0345f398939715117ed2b9b2199708a4418db07f1de6197926fe538",
+          "bytes": 1009,
+          "lines": 25,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A17-branchline-r1",
+      "language": "branchline",
+      "result_sha256": "96d12b583cb65586687269802fede82925a2207a37c158693a09c258b9f28983",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A17-branchline-r1/submission-0.source",
+          "sha256": "87d6d1766d299b6aa9fddf6fdf80c2b34ccd503c594f6c5f76c4b6ed88085691",
+          "bytes": 178,
+          "lines": 4,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A17-jsonata-r1",
+      "language": "jsonata",
+      "result_sha256": "1f175b2771ba8746bb1f26c679677e7fc221b2522bd6cd34f3b613fd663ab6fb",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A17-jsonata-r1/submission-0.source",
+          "sha256": "8c241011f2f49ee96c50045bd1e34f2b9d0d01d8c5cc79a54b75f846181ab2f5",
+          "bytes": 146,
+          "lines": 4,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A17-kotlin-r1",
+      "language": "kotlin",
+      "result_sha256": "952340038987a3e028b982cd7cd820feb082d71d96881fe4b6a4b91007b905bc",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A17-kotlin-r1/submission-0.source",
+          "sha256": "5e674a31d063002ce8eae2ba3b8e4fc408f15c272aa5e95445280bfa8a3a8b46",
+          "bytes": 322,
+          "lines": 7,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A19-branchline-r1",
+      "language": "branchline",
+      "result_sha256": "166614f7abfe7511cc0c21dde5e9d48d8cb76c64705ad1b7ca7b857e690cad21",
+      "source_count": 2,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A19-branchline-r1/submission-0.source",
+          "sha256": "2f453d5aa47715f5f28c4ea9677864be2e53b08f28fa7f1277336a27d63cb38a",
+          "bytes": 373,
+          "lines": 13,
+          "flags": []
+        },
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A19-branchline-r1/submission-1.source",
+          "sha256": "6cb6d5bb102bb32177a5a0a09c107a6deae1e222cbcadc5f7a9b1bc0beba641d",
+          "bytes": 316,
+          "lines": 8,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A19-jsonata-r1",
+      "language": "jsonata",
+      "result_sha256": "cadde3fd7d65b750683e628dcea4e7c198e5837079b48a787cfd2fb4e241c28e",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A19-jsonata-r1/submission-0.source",
+          "sha256": "13e23749b3be69abd27cdf996c36e3763a3d52089edaedfa0f475d96c0b8d30f",
+          "bytes": 242,
+          "lines": 6,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A19-kotlin-r1",
+      "language": "kotlin",
+      "result_sha256": "8007ab951715dd92d0b29593485dc00b3002f73b06ce3ad8c4c8ed139e10238c",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A19-kotlin-r1/submission-0.source",
+          "sha256": "0becb402a5d66ea598c061301453156d908663292e1a155876342eec07d53227",
+          "bytes": 518,
+          "lines": 15,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A24-branchline-r3",
+      "language": "branchline",
+      "result_sha256": "bcc3655a6ab595309fcfb82f87b05fa519b9d96e5f7244951365a174cb933a1b",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A24-branchline-r3/submission-0.source",
+          "sha256": "05c1f304d73f01d233cd2add7881ed1296dc61b938e9627c885eaaa2f28984ce",
+          "bytes": 664,
+          "lines": 24,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A24-jsonata-r3",
+      "language": "jsonata",
+      "result_sha256": "c5a543a6fd1fa8d3d0beec23e51afb233facf4b6fea13ef931cdf1bd457481eb",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A24-jsonata-r3/submission-0.source",
+          "sha256": "224c06e30ed8b34317b37b93719ded650b03ae131e880d5bde59289ee3415cd3",
+          "bytes": 341,
+          "lines": 1,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A24-kotlin-r3",
+      "language": "kotlin",
+      "result_sha256": "378a9793afee30f08cd44eccdc652106a128a5fac45560af3bcc0b06d68037d9",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A24-kotlin-r3/submission-0.source",
+          "sha256": "224869b5d0a6516e41bbbde9e88b629a9a28479728f16596d4fc0affc4830bd1",
+          "bytes": 714,
+          "lines": 22,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A29-branchline-r3",
+      "language": "branchline",
+      "result_sha256": "11fdf575a92ebfb2f51a6baa9e46d8337737f206d137397ebf64987835f96ab3",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A29-branchline-r3/submission-0.source",
+          "sha256": "0668ea80a6bd035f6d574482256bc2fcb72e93ea4086befa6f5029c41e8ae38a",
+          "bytes": 275,
+          "lines": 11,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A29-jsonata-r3",
+      "language": "jsonata",
+      "result_sha256": "36f125db9ca43db8b01211599a36f8d92f721f6141f85ebd44639837a16f9d04",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A29-jsonata-r3/submission-0.source",
+          "sha256": "a0cd07946771e4a2d27e7e474d5fdea9d35ea3cc2d6f0087bc53bb8089eca80f",
+          "bytes": 133,
+          "lines": 1,
+          "flags": []
+        }
+      ]
+    },
+    {
+      "cell": "A29-kotlin-r3",
+      "language": "kotlin",
+      "result_sha256": "f8522a6cb0a762011abc0288602530872b9a351e98f7ec34ed54514df72c7a2f",
+      "source_count": 1,
+      "issues": [],
+      "sources": [
+        {
+          "path": "/tmp/branchline-authoring-private/runs/A29-kotlin-r3/submission-0.source",
+          "sha256": "34e54ca4b2d0ad00d26d1fd86381dfbf03ae59ce312e802c31bcc1de224f4931",
+          "bytes": 342,
+          "lines": 11,
+          "flags": []
+        }
+      ]
+    }
+  ]
+}

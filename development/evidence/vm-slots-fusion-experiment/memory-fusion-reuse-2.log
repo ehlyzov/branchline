@@ -1,0 +1,19 @@
+{"requestedSlots":false,"requestedFusion":true,"collectDiagnostics":false,"effectiveSlots":false,"effectiveFusion":true,"fallbackReason":null,"slotReads":0,"slotWrites":0,"loopSlotWrites":0,"mirroredStoresElided":0,"fusedDispatches":0,"instructionsElided":0,"hostBarriers":0,"untimedDiagnostics":{"workload":"reduction","dataset":"large","sourceSha256":"ff72a5e9cad1cd63d04aa72a2d0f9e25d528200f57c00a320777a1649ea6c50c","expectedOutputHash":841009963,"validatedExecutions":3,"requestedSlots":false,"requestedFusion":true,"collectDiagnostics":true,"effectiveSlots":false,"effectiveFusion":true,"fallbackReason":null,"slotReads":0,"slotWrites":0,"loopSlotWrites":0,"mirroredStoresElided":0,"fusedDispatches":1003,"instructionsElided":1504,"hostBarriers":1},"operation":"memory","engine":"fusion","lifetime":"reuse","workload":"reduction","dataset":"large","executions":1000,"preparedExecutorCount":1,"heapUsedBytes":{"fixtureOnlyAfterPriming":8322376,"fixtureExecutorsWeakReferencesAndLastOutput":8366088,"fixtureWeakReferencesAndLastOutput":8359456,"fixtureOnlyAfterRelease":8359064},"approximateHeapDeltasBytes":{"preparedAndLastOutputMinusBaseline":43712,"afterExecutorsReleaseMinusBaseline":37080,"afterAllReleaseMinusBaseline":36688},"collectedExecutorWrappers":1,"weakReferenceScope":"executor wrappers only; no assertion about exact reachable graphs","jvmArguments":["-Xms32m","-Xmx768m","-XX:+UseG1GC"],"heapMaxBytes":805306368,"peakRssSource":"external /usr/bin/time -l; not a heap-used or B/op value"}
+        0.30 real         0.68 user         0.02 sys
+           119078912  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+                8883  page reclaims
+                   0  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                   2  voluntary context switches
+                2905  involuntary context switches
+          9421218030  instructions retired
+          2786775013  cycles elapsed
+            97256288  peak memory footprint

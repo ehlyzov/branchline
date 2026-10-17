@@ -1,0 +1,69 @@
+--- VM.before.kt
++++ vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt
+@@ -74,7 +74,14 @@
+     private val callStack = ArrayDeque<CallFrame>(64)
+     private var pc = 0 // Program counter
+     private lateinit var bytecode: Bytecode
++    private var ordinaryEnvironment = false
+     private var environment = mutableMapOf<String, Any?>()
++        set(value) {
++            field = value
++            // Only these exact map types have unobservable reads and writes.
++            // Function calls and unwinding replace the environment too.
++            ordinaryEnvironment = value::class == HashMap::class || value::class == LinkedHashMap::class
++        }
+     private var locals: Array<Any?> = arrayOf()
+     private val funcBytecode = HashMap<String, Bytecode>()
+     private var lastSuspension: Any? = null
+@@ -137,9 +144,9 @@
+      * Execute bytecode with the given environment
+      */
+     fun execute(bytecode: Bytecode, env: MutableMap<String, Any?> = mutableMapOf()): Any? {
+-        privateMutationAllowed = env::class == HashMap::class || env::class == LinkedHashMap::class
+         this.bytecode = bytecode
+         this.environment = env
++        privateMutationAllowed = ordinaryEnvironment
+         this.pc = 0
+         loadTraceMetadata(bytecode)
+ 
+@@ -1626,6 +1633,12 @@
+ 
+     private fun storeVar(name: String) {
+         val value = pop()
++        if (ordinaryEnvironment && currentTracer() == null) {
++            environment[name] = value
++            return
++        }
++        // Custom maps can install a tracer from get/put, so preserve their
++        // original read/write order and resolve tracing again after the write.
+         val old = environment[name]
+         environment[name] = value
+         emitVarWrite(name, old, value)
+@@ -1633,24 +1646,24 @@
+     }
+ 
+     private fun emitEnterEventsAt(pc: Int) {
+-        val events = enterEvents[pc] ?: return
+         val tracer = currentTracer() ?: return
+         if (!tracer.opts.step) return
++        val events = enterEvents[pc] ?: return
+         for (node in events) tracer.on(TraceEvent.Enter(node))
+     }
+ 
+     private fun emitExitEventsAt(pc: Int) {
+-        val events = exitEvents[pc] ?: return
+         val tracer = currentTracer() ?: return
+         if (!tracer.opts.step) return
++        val events = exitEvents[pc] ?: return
+         for (node in events) tracer.on(TraceEvent.Exit(node))
+     }
+ 
+     private fun emitPathWriteIfNeeded(pc: Int, storeName: String, oldRoot: Any?, newRoot: Any?) {
+         if (pc < 0) return
++        val tracer = currentTracer() ?: return
+         val meta = pathWrites[pc] ?: return
+         if (meta.root != storeName) return
+-        val tracer = currentTracer() ?: return
+         val path: List<Any> = meta.displayPath?.let { ArrayList(it) } ?: resolvePath(meta, oldRoot, newRoot)
+         val oldValue = if (meta.directValues) oldRoot else readAtPath(oldRoot, path)
+         val newValue = if (meta.directValues) newRoot else readAtPath(newRoot, path)

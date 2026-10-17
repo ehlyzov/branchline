@@ -1,0 +1,10 @@
+{
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/LocalLoopPlan.kt": "new",
+  "vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/VM.kt": "changed",
+  "vm/src/jvmMain/kotlin/io/github/ehlyzov/branchline/vm/JvmLocalLoopCompiler.kt": "new",
+  "vm/src/jvmMain/kotlin/io/github/ehlyzov/branchline/vm/LocalLoopSupport.kt": "new",
+  "vm/src/jvmTest/kotlin/io/github/ehlyzov/branchline/vm/LocalLoopObservationTest.kt": "new",
+  "vm/src/jvmTest/kotlin/io/github/ehlyzov/branchline/vm/LocalLoopPlanTest.kt": "new",
+  "vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/VMLocalLoopBenchmark.kt": "new",
+  "vm-benchmarks/src/jmh/kotlin/io/github/ehlyzov/branchline/vm/VMLocalLoopProbe.kt": "new"
+}

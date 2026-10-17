@@ -1,0 +1,74 @@
+[
+  {
+    "module": "cli",
+    "task": "jvmTest",
+    "reportFiles": 11,
+    "tests": 56,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "cli",
+    "task": "jsNodeTest",
+    "reportFiles": 5,
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "interpreter",
+    "task": "jvmTest",
+    "reportFiles": 25,
+    "tests": 214,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "interpreter",
+    "task": "jsNodeTest",
+    "reportFiles": 8,
+    "tests": 62,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "vm",
+    "task": "jvmTest",
+    "reportFiles": 28,
+    "tests": 149,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "vm",
+    "task": "jsNodeTest",
+    "reportFiles": 8,
+    "tests": 78,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "module": "conformance-tests",
+    "task": "jvmTest",
+    "reportFiles": 60,
+    "tests": 359,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 1
+  },
+  {
+    "module": "conformance-tests",
+    "task": "jsNodeTest",
+    "reportFiles": 32,
+    "tests": 109,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+]

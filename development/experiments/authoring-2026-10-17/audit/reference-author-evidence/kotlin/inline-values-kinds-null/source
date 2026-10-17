@@ -1,0 +1,13 @@
+fun Next(x: Long): Long = x + 1
+fun transform(input: Any?): Any? {
+val obj=mapOf<String,Any?>("k" to null)
+val fallback=8
+val xs=listOf(2L,5L)
+val accumulated=mutableListOf<Any?>()
+accumulated.add(listOf(7L))
+accumulated.addAll(listOf(8L))
+val index=3
+val original=input
+
+return mapOf("contains" to obj.containsKey("k"),"missingDefault" to obj.getOrDefault("absent",fallback),"presentNull" to obj.getOrDefault("k",fallback),"zero" to (0L?:9L),"empty" to "".isNotEmpty(),"literal" to mapOf("code" to "q","amount" to 3L),"single" to listOf(7L),"nested" to listOf(listOf(7L)),"emptyList" to emptyList<Any?>(),"emptyMap" to emptyMap<String,Any?>(),"mappedEmpty" to emptyList<Long>().map{it+1},"mappedSingle" to listOf(4L).map{it+1},"mapNotNull" to listOf(null,4).mapNotNull{it},"flatten" to listOf(listOf(2),listOf(5)).flatten(),"flatMap" to listOf(2,5).flatMap{listOf(it,it+1)},"accumulated" to accumulated,"range" to (0 until 0).toList(),"inclusive" to (0..2).toList(),"fold" to emptyList<Long>().fold(0L){a,x->a+x},"sum" to xs.sum(),"sumOf" to xs.sumOf{it},"count" to xs.count(),"any" to emptyList<Long>().any{true},"all" to emptyList<Long>().all{false},"none" to xs.none{it<0},"first" to xs.firstOrNull(),"find" to xs.find{it>3},"min" to xs.minOrNull(),"max" to xs.maxOrNull(),"interpolation" to "item-$index","isMap" to (original is Map<*, *>),"safeCast" to (original as? List<*>),"helper" to Next(4L))
+}

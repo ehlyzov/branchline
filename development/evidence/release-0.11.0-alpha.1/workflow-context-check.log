@@ -1,0 +1,19 @@
+PASS YAML and shell syntax: .github/workflows/release-artifacts.yml
+PASS YAML and shell syntax: .github/workflows/deploy.yml
+PASS manual full defaults
+PASS manual full explicit tag
+PASS wrong version tag rejected
+PASS wrong tag commit rejected
+PASS unsafe tag rejected
+PASS multiline benchmark input rejected
+PASS no work rejected
+PASS manual benchmark only
+PASS manual JSONata only
+PASS push performance
+PASS push JSONata
+PASS release event
+PASS deployment with exact SHA/version
+PASS deployment standalone selected ref
+PASS deployment wrong SHA rejected
+PASS deployment wrong version rejected
+PASS 12 release-context and 4 deployment cases

@@ -1,0 +1,14 @@
+
+fun transform(input: Any?): Any? {
+val root=input as Map<*, *>
+val score=(root["score"] as Number).toLong()
+val enabled=root["enabled"] as Boolean
+val category = when {
+    score > 10L -> "high"
+    score == 10L -> "equal"
+    else -> "low"
+}
+val label = if (enabled) "on" else "off"
+
+return mapOf("category" to category,"label" to label)
+}

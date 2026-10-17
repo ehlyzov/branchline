@@ -1,0 +1,146 @@
+> Task :cli:kmpPartiallyResolvedDependenciesChecker
+> Task :cli:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:kmpPartiallyResolvedDependenciesChecker
+> Task :interpreter:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :interpreter:jvmProcessResources UP-TO-DATE
+> Task :interpreter:processJvmMainResources SKIPPED
+> Task :vm:kmpPartiallyResolvedDependenciesChecker
+> Task :vm:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm:jvmProcessResources NO-SOURCE
+> Task :vm:processJvmMainResources SKIPPED
+> Task :cli:jvmProcessResources NO-SOURCE
+> Task :cli:processJvmMainResources SKIPPED
+> Task :cli:jvmTestProcessResources UP-TO-DATE
+> Task :cli:processJvmTestResources SKIPPED
+> Task :cli:jsProcessResources NO-SOURCE
+> Task :kotlinKotlinNpmCachesSetup
+> Task :kotlinNodeJsSetup UP-TO-DATE
+> Task :kotlinRestoreYarnLock UP-TO-DATE
+> Task :kotlinYarnSetup UP-TO-DATE
+> Task :interpreter:jsPackageJson UP-TO-DATE
+> Task :vm:jsPackageJson UP-TO-DATE
+> Task :cli:jsPackageJson UP-TO-DATE
+> Task :cli:jsTestPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPackageJson UP-TO-DATE
+> Task :vm:jsTestPackageJson UP-TO-DATE
+> Task :cli:jsPublicPackageJson UP-TO-DATE
+> Task :cli:jsTestPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsPublicPackageJson UP-TO-DATE
+> Task :conformance-tests:jsTestPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsPublicPackageJson UP-TO-DATE
+> Task :interpreter:jsTestPublicPackageJson UP-TO-DATE
+> Task :vm:jsPublicPackageJson UP-TO-DATE
+> Task :vm:jsTestPublicPackageJson UP-TO-DATE
+> Task :kotlinPackageJsonUmbrella UP-TO-DATE
+> Task :rootPackageJson UP-TO-DATE
+> Task :kotlinNpmInstall UP-TO-DATE
+> Task :kotlinStoreYarnLock UP-TO-DATE
+> Task :cli:jsTestProcessResources NO-SOURCE
+> Task :cli:kotlinNodeJsSetup UP-TO-DATE
+> Task :test-fixtures:kmpPartiallyResolvedDependenciesChecker
+> Task :test-fixtures:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :test-fixtures:jvmProcessResources NO-SOURCE
+> Task :test-fixtures:processJvmMainResources SKIPPED
+> Task :interpreter:jvmTestProcessResources UP-TO-DATE
+> Task :interpreter:processJvmTestResources SKIPPED
+> Task :interpreter:jsProcessResources NO-SOURCE
+> Task :interpreter:jsTestProcessResources NO-SOURCE
+> Task :interpreter:kotlinNodeJsSetup UP-TO-DATE
+> Task :vm-benchmarks:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :vm-benchmarks:processResources NO-SOURCE
+> Task :vm-benchmarks:processTestResources NO-SOURCE
+> Task :vm-benchmarks:processJmhResources NO-SOURCE
+
+> Task :interpreter:compileKotlinJs
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:11:31 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:18:31 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:94:38 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:110:53 Unchecked cast of 'MutableList<*>' to 'MutableList<Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:114:57 Unchecked cast of 'MutableMap<*, *>' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:154:43 Unchecked cast of 'MutableList<*>' to 'MutableList<Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:167:37 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:243:53 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:257:54 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/TransformContractBuilder.kt:479:54 No cast needed.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/playground/PlaygroundFacade.kt:259:25 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/runtime/Numbers.kt:16:8 This cast can never succeed.
+
+> Task :interpreter:jsMainClasses
+> Task :interpreter:compileTestKotlinJs
+> Task :interpreter:jsTestClasses
+> Task :vm:compileKotlinJs
+> Task :interpreter:compileTestDevelopmentExecutableKotlinJs
+> Task :interpreter:jsTestTestDevelopmentExecutableCompileSync
+
+> Task :cli:compileKotlinJs
+w: file:///Users/eugene/repo/research/branchline-public/cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/BranchlineCli.kt:1843:5 Redundant creation of Json format. Creating instances for each usage can be slow.
+
+> Task :interpreter:compileKotlinJvm
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:11:31 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:18:31 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:94:38 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:110:53 Unchecked cast of 'MutableList<*>' to 'MutableList<Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:114:57 Unchecked cast of 'MutableMap<*, *>' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:154:43 Unchecked cast of 'MutableList<*>' to 'MutableList<Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:167:37 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:243:53 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/ContractWitnessGenerator.kt:257:54 Unchecked cast of 'Any?' to 'MutableMap<String, Any?>'.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/contract/TransformContractBuilder.kt:479:54 No cast needed.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/playground/PlaygroundFacade.kt:259:25 This is a delicate API and its use requires care. Make sure you fully read and understand documentation of the declaration that is marked as a delicate API.
+w: file:///Users/eugene/repo/research/branchline-public/interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/runtime/Numbers.kt:16:8 This cast can never succeed.
+
+> Task :interpreter:jsNodeTest
+> Task :interpreter:compileJvmMainJava NO-SOURCE
+> Task :interpreter:jvmMainClasses
+> Task :interpreter:jvmJar
+> Task :vm:compileKotlinJvm UP-TO-DATE
+> Task :vm:compileJvmMainJava NO-SOURCE
+> Task :vm:jvmMainClasses UP-TO-DATE
+> Task :vm:jvmJar UP-TO-DATE
+> Task :cli:compileKotlinJvm UP-TO-DATE
+> Task :cli:compileJvmMainJava NO-SOURCE
+> Task :cli:jvmMainClasses UP-TO-DATE
+> Task :cli:jvmJar UP-TO-DATE
+> Task :cli:jsMainClasses
+> Task :test-fixtures:compileKotlinJvm UP-TO-DATE
+> Task :test-fixtures:compileJvmMainJava NO-SOURCE
+> Task :test-fixtures:jvmMainClasses UP-TO-DATE
+> Task :test-fixtures:jvmJar UP-TO-DATE
+> Task :vm-benchmarks:compileKotlin NO-SOURCE
+> Task :vm-benchmarks:compileJava NO-SOURCE
+> Task :vm-benchmarks:classes UP-TO-DATE
+> Task :vm-benchmarks:jar UP-TO-DATE
+> Task :vm-benchmarks:compileTestKotlin NO-SOURCE
+> Task :vm-benchmarks:compileTestJava NO-SOURCE
+> Task :vm-benchmarks:testClasses UP-TO-DATE
+> Task :vm-benchmarks:compileJmhKotlin UP-TO-DATE
+> Task :vm-benchmarks:compileJmhJava NO-SOURCE
+> Task :vm-benchmarks:jmhClasses UP-TO-DATE
+> Task :cli:compileTestKotlinJs
+> Task :cli:compileTestKotlinJvm
+> Task :vm-benchmarks:jmhRunBytecodeGenerator
+> Task :cli:compileJvmTestJava NO-SOURCE
+> Task :cli:jvmTestClasses
+> Task :cli:jsTestClasses
+> Task :vm-benchmarks:jmhCompileGeneratedClasses UP-TO-DATE
+> Task :interpreter:compileTestKotlinJvm
+> Task :cli:compileTestDevelopmentExecutableKotlinJs
+> Task :vm-benchmarks:jmhJar
+> Task :cli:jsTestTestDevelopmentExecutableCompileSync
+> Task :cli:jsNodeTest
+> Task :interpreter:compileJvmTestJava NO-SOURCE
+> Task :interpreter:jvmTestClasses
+> Task :cli:compileProductionExecutableKotlinJs
+> Task :interpreter:jvmTest
+> Task :cli:jsProductionExecutableCompileSync
+
+> Task :cli:prepareJsCliPackage
+
+added 2 packages in 250ms
+
+> Task :cli:jvmTest
+
+BUILD SUCCESSFUL in 10s
+63 actionable tasks: 27 executed, 36 up-to-date

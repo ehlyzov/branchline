@@ -1,0 +1,14 @@
+[
+  {
+    "case": "ordinary",
+    "exit": 0
+  },
+  {
+    "case": "preview_unmarked",
+    "exit": 1
+  },
+  {
+    "case": "preview_optin",
+    "exit": 0
+  }
+]

@@ -1,0 +1,9 @@
+FUNC Next(x) = x + 1
+TRANSFORM Main {
+LET obj = {k: NULL, code: "q", amount: 3}
+LET xs = [2, 5]
+LET rows = [{code: "q", value: 1}, {code: "q", value: 2}]
+LET table = REDUCE(rows, {}, (acc, row) -> PUT(acc, row.code, row))
+LET wanted = "q"
+OUTPUT {literal: {code: "q", amount: 3}, path: input.child.code, quoted: input["some-key"], position: xs[0], missing: GET(obj,"absent",8), presentNull: GET(obj,"k",8), nullDefault: GET(obj,"k",8) ?? 8, present: SOME(KEYS(obj),(k) -> k == "k"), obj: IS_OBJECT(obj), objectFunction: IS_FUNCTION((x) -> x + 1), nullList: LISTIFY(NULL), objectList: LISTIFY({code:"q"}), listList: LISTIFY([7]), wrap: [7], keys: KEYS(xs), values: VALUES({code:"q"}), entries: ENTRIES({code:"q"}), put: PUT([2],1,5), deleted: DELETE({code:"q",extra:4},"extra"), appended: APPEND([2],[5]), prepended: PREPEND([2],5), flattened: FLATTEN([[2],[5],8]), lookup: GET(table,"q",NULL), found: FIND(rows,(row) -> row.code == wanted), distinct: DISTINCT([2,5,2]), sorted: SORT([5,2]), reverse: REVERSE([2,5]), zip: ZIP([2,5],[7]), range: RANGE(1,3), length: LENGTH(NULL), count: COUNT({code:"q"}), emptySum: SUM([]), emptyAvg: AVG([]), emptyMin: MIN([]), emptyMax: MAX([]), any: SOME([], (x) -> TRUE), all: EVERY([], (x) -> FALSE)}
+}

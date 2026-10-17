@@ -1,0 +1,5 @@
+unexecuted_root_padding,ns_per_execution,allocated_bytes_per_execution
+0,488,272
+8192,653,841
+32768,227,2325
+65536,313,4370
