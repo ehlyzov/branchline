@@ -7,6 +7,8 @@ superseded_by: []
 last_updated: 2026-10-17
 changelog:
   - date: 2026-10-17
+    change: "Accepted playground UX fixes (drafts, stale results, Stop/recovery, XML validation and source diagnostics); 1.0 operational/compatibility gates remain open. See planning/playground-ux-2026-10-17.md and evidence/playground-ux-2026-10-17/."
+  - date: 2026-10-17
     change: "Completed profiled JVM loop-body compilation: projection time improved 11–16% versus VM, no proven interpreter win, preparation and plan memory increased; keep opt-in."
   - date: 2026-10-17
     change: "Completed compiler-prepared VM experiment: large reduction time improved 26%, interpreter remains faster, projection/paths gate failed and prepared memory grew; keep opt-in."

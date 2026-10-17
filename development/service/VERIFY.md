@@ -19,6 +19,15 @@
 - Compiled CLI worker isolation: `./gradlew :cli:jvmTest --tests '*CompiledFanoutIsolationTest' --tests '*ParallelWorker*' :interpreter:jvmTest --tests '*RegexCacheConcurrencyTest'`.
 - Experimental JSON parser/planner/pipeline JVM checks: `./gradlew :interpreter:jvmTest --tests '*JsonInputSelectionTest' :cli:jvmTest --tests '*ExperimentalJsonPipelineTest'`. Node coverage: `./gradlew :interpreter:jsNodeTest :cli:jsNodeTest`; run Node suites unfiltered and inspect XML test counts, since JVM-style filters can select zero Node tests.
 - Playground assets: `./gradlew playgroundBuildAssets`.
+- Playground UX/input changes: `cd playground && npm test` checks worker dependencies,
+  catalog metadata, XML input validation and actual-runtime wrapper diagnostics.
+  The browser interpreter distribution is required by that last test. Run the asset build and actual browser
+  acceptance for draft preservation, stale results, current-setting shortcuts,
+  Stop/recovery, input/syntax errors and narrow-screen controls; static build success
+  does not establish these interactions. Facade wrapping changes require
+  `./gradlew :interpreter:jvmTest --tests '*PlaygroundFacadeTest'` and unfiltered
+  `./gradlew :interpreter:jsNodeTest`, with the same CHROME_BIN setting as the local
+  Yarn lock; inspect actual JUnit XML counts.
 - Contour integrity: `bin/audit_contour.sh`.
 - Price-ingest functional comparison: `./gradlew :jsonata-benchmarks:priceIngestComparison`. Requires the pinned Dashjoin JVM dependency; all three engines are mandatory. Reports business-transform cases separately from shared wire-boundary rejects and makes no performance claim.
 - Comparison sensitivity: `./gradlew :jsonata-benchmarks:priceIngestComparison -PpriceIngestCorruptEngine=kotlin`. Expected result is nonzero exit with the injected `ordinary-create` mismatch; a successful exit fails this negative check.

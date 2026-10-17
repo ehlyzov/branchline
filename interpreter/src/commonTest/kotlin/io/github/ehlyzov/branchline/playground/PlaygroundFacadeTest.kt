@@ -53,6 +53,59 @@ public class PlaygroundFacadeTest {
     }
 
     @Test
+    public fun transformWordInBodyDataAndCommentsDoesNotDisableWrapping() {
+        val programs = listOf(
+            """OUTPUT { value: "TRANSFORM" }""",
+            """// TRANSFORM body example
+                OUTPUT { value: "TRANSFORM" }
+            """.trimIndent(),
+            """/* TRANSFORM declaration description */ OUTPUT { value: "TRANSFORM" }""",
+            """LET `TRANSFORM` = "TRANSFORM"
+                OUTPUT { value: `TRANSFORM` }
+            """.trimIndent(),
+            """OUTPUT { value: input.TRANSFORM }""",
+        )
+        for (program in programs) {
+            assertTrue(PlaygroundFacade.isBodyOnlyProgram(program), program)
+            val result = PlaygroundFacade.run(program, """{"TRANSFORM":"TRANSFORM"}""")
+            assertTrue(result.success, result.errorMessage)
+            assertEquals(
+                Json.parseToJsonElement("""{"value":"TRANSFORM"}"""),
+                Json.parseToJsonElement(result.outputJson ?: error("missing output")),
+            )
+            val inspected = PlaygroundFacade.inspect(program)
+            assertTrue(inspected.success, inspected.errorMessage)
+            assertTrue(inspected.normalizedSource?.contains("TRANSFORM Playground") == true)
+        }
+        val keywordKey = PlaygroundFacade.run("OUTPUT { TRANSFORM: 1 }", "{}")
+        assertTrue(keywordKey.success, keywordKey.errorMessage)
+        assertEquals(
+            Json.parseToJsonElement("""{"TRANSFORM":1}"""),
+            Json.parseToJsonElement(keywordKey.outputJson ?: error("missing output")),
+        )
+    }
+
+    @Test
+    public fun fullProgramsAndMalformedSourceKeepTheirErrorPath() {
+        val fullProgramWithType = """
+            TYPE Name = ENUM { Ada, Grace }
+            TRANSFORM Full { OUTPUT { value: "TRANSFORM" } }
+        """.trimIndent()
+        assertFalse(PlaygroundFacade.isBodyOnlyProgram(fullProgramWithType))
+        val full = PlaygroundFacade.run(fullProgramWithType, "{}")
+        assertTrue(full.success, full.errorMessage)
+
+        val malformed = PlaygroundFacade.run("TRANSFORM Broken { OUTPUT { value: } }", "{}")
+        assertFalse(malformed.success)
+        assertNotNull(malformed.line)
+        assertTrue(malformed.errorMessage?.contains("Unexpected token") == true)
+
+        val invalidCharacter = PlaygroundFacade.run("OUTPUT { value: 1 }\n@", "{}")
+        assertFalse(invalidCharacter.success)
+        assertTrue(invalidCharacter.errorMessage?.contains("Unexpected character '@'") == true)
+    }
+
+    @Test
     public fun inspectExposesStructuredEnvelopeForPlaygroundState() {
         val result = PlaygroundFacade.inspect(bodyOnlyProgram)
 

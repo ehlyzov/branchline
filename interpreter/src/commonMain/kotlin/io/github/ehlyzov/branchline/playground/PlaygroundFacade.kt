@@ -12,6 +12,7 @@ import io.github.ehlyzov.branchline.Lexer
 import io.github.ehlyzov.branchline.ParseException
 import io.github.ehlyzov.branchline.Parser
 import io.github.ehlyzov.branchline.TransformDecl
+import io.github.ehlyzov.branchline.TokenType
 import io.github.ehlyzov.branchline.DEFAULT_INPUT_ALIAS
 import io.github.ehlyzov.branchline.contract.ContractCoercion
 import io.github.ehlyzov.branchline.contract.ContractEnforcer
@@ -341,11 +342,21 @@ object PlaygroundFacade {
         }
     }
 
+    public fun isBodyOnlyProgram(program: String): Boolean {
+        val firstToken = try {
+            Lexer(program).lex().firstOrNull()?.type
+        } catch (_: IllegalArgumentException) {
+            // Preserve the existing lexing/error path for malformed source.
+            return !Regex("\\bTRANSFORM\\b", RegexOption.IGNORE_CASE).containsMatchIn(program)
+        }
+        return firstToken != TokenType.TRANSFORM && firstToken != TokenType.SHARED &&
+            firstToken != TokenType.FUNC && firstToken != TokenType.TYPE
+    }
+
     private fun wrapProgramIfNeeded(body: String, sharedSpecs: List<SharedStorageSpec>): String {
-        val hasTransformKeyword = Regex("\\bTRANSFORM\\b", RegexOption.IGNORE_CASE).containsMatchIn(body)
         val sharedDecls = renderSharedDecls(sharedSpecs)
         val sharedPrefix = if (sharedDecls.isBlank()) "" else "$sharedDecls\n\n"
-        if (hasTransformKeyword) return body
+        if (!isBodyOnlyProgram(body)) return body
 
         val trimmed = body.trim().lines()
         val indented = trimmed.joinToString("\n") { line ->

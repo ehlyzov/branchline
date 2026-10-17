@@ -25,14 +25,14 @@ import {
 } from './playground-state';
 import './playground.css';
 
-const DEFAULT_PROGRAM = `LET fullName = msg.first_name + " " + msg.last_name;
-LET loyalty = msg.loyalty_tier ?? "standard";
+const DEFAULT_PROGRAM = `LET fullName = input.first_name + " " + input.last_name;
+LET loyalty = input.loyalty_tier ?? "standard";
 
 OUTPUT {
-    id: msg.id,
+    id: input.id,
     full_name: fullName,
     loyalty_tier: loyalty,
-    shipping_city: msg.address.city
+    shipping_city: input.address.city
 }`;
 
 const DEFAULT_INPUT = `{
@@ -146,6 +146,26 @@ type BranchlinePlaygroundProps = {
   defaultExampleId?: string;
 };
 
+type PlaygroundDraft = {
+  program: string;
+  input: string;
+  inputFormat: InputFormat;
+  outputFormat: OutputFormat;
+  tracing: boolean;
+  contracts: boolean;
+  contractsMode: ContractMode;
+  contractsDebug: boolean;
+};
+
+function originalDraft(example: PlaygroundExample): PlaygroundDraft {
+  return {
+    program: example.program, input: example.input,
+    inputFormat: example.inputFormat, outputFormat: example.outputFormat,
+    tracing: example.enableTracing, contracts: example.enableContracts,
+    contractsMode: 'off', contractsDebug: false
+  };
+}
+
 type InspectTab = 'normalized' | 'diagnostics' | 'blockers';
 
 type InspectTabDefinition = {
@@ -254,11 +274,28 @@ function compatibilityClass(result: PlaygroundInspectPayload | null): string {
 export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundProps) {
   const programContainerRef = React.useRef<HTMLDivElement | null>(null);
   const inputContainerRef = React.useRef<HTMLDivElement | null>(null);
-  const outputRef = React.useRef<HTMLPreElement | null>(null);
   const programEditorRef = React.useRef<monaco.editor.IStandaloneCodeEditor>();
   const inputEditorRef = React.useRef<monaco.editor.IStandaloneCodeEditor>();
   const workerRef = React.useRef<Worker>();
+  const restartWorkerRef = React.useRef<() => void>(() => {});
+  const failWorkerRef = React.useRef<(message: string) => void>(() => {});
+  const runningRef = React.useRef(false);
+  const [lifecycleMessage, setLifecycleMessage] = React.useState<string | null>(null);
   const requestIdRef = React.useRef(0);
+  const runRef = React.useRef<() => void>(() => {});
+  const draftsRef = React.useRef(new Map<string, PlaygroundDraft>());
+  const revisionRef = React.useRef(0);
+  const submittedRevisionRef = React.useRef(0);
+  const [revision, setRevision] = React.useState(0);
+  const [resultRevision, setResultRevision] = React.useState<number | null>(null);
+  const instanceId = React.useId();
+  const inspectTabRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+  const markEdited = React.useCallback(() => {
+    revisionRef.current += 1;
+    setRevision(revisionRef.current);
+    const model = programEditorRef.current?.getModel();
+    if (model) monaco.editor.setModelMarkers(model, 'branchline', []);
+  }, []);
   const [playgroundState, setPlaygroundState] = React.useState(() => createInitialPlaygroundState());
   const [catalogCategory, setCatalogCategory] = React.useState<CatalogCategoryFilter>('all');
   const [catalogAiSubset, setCatalogAiSubset] = React.useState<CatalogAiSubsetFilter>('all');
@@ -312,21 +349,38 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     [selectedExampleId]
   );
   const selectedExampleInFiltered = filteredExamples.some((example) => example.id === selectedExampleId);
-  const visibleSelectedExample = selectedExampleInFiltered ? selectedExample : null;
+  const visibleSelectedExample = selectedExample;
   const selectedTags = visibleSelectedExample ? visibleCatalogTags(visibleSelectedExample.tags) : [];
   const hiddenTagCount = visibleSelectedExample ? Math.max(0, visibleSelectedExample.tags.length - selectedTags.length) : 0;
   const [isTracingEnabled, setIsTracingEnabled] = React.useState<boolean>(() => selectedExample?.enableTracing ?? false);
   const [isContractsEnabled, setIsContractsEnabled] = React.useState<boolean>(() => selectedExample?.enableContracts ?? false);
   const [contractsMode, setContractsMode] = React.useState<ContractMode>('off');
   const [contractsDebug, setContractsDebug] = React.useState(false);
-  const tracingRef = React.useRef(isTracingEnabled);
+  const currentDraft = React.useCallback((): PlaygroundDraft => ({
+    program: programEditorRef.current?.getValue() ?? selectedExample?.program ?? '',
+    input: inputEditorRef.current?.getValue() ?? selectedExample?.input ?? '',
+    inputFormat, outputFormat, tracing: isTracingEnabled, contracts: isContractsEnabled,
+    contractsMode, contractsDebug
+  }), [selectedExample, inputFormat, outputFormat, isTracingEnabled, isContractsEnabled, contractsMode, contractsDebug]);
+
+  const selectExample = (id: string) => {
+    if (id === selectedExampleId) return;
+    draftsRef.current.set(selectedExampleId, currentDraft());
+    setSelectedExampleId(id);
+  };
 
   const run = React.useCallback(() => {
+    if (runningRef.current) return;
+    if (!workerRef.current) restartWorkerRef.current();
+    if (!workerRef.current) return;
+    setLifecycleMessage(null);
+    submittedRevisionRef.current = revisionRef.current;
     const program = programEditorRef.current?.getValue() ?? '';
     const input = inputEditorRef.current?.getValue() ?? '';
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
     setPlaygroundState((state) => startInspectRequest(state, requestId));
+    runningRef.current = true;
     setIsRunning(true);
     setError(null);
     setTraceHuman(null);
@@ -335,29 +389,32 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     setOutputContract(null);
     setContractSource(null);
     setContractWarnings(null);
-    workerRef.current?.postMessage({
-      requestId,
-      code: program,
-      input,
-      trace: tracingRef.current,
-      inspect: true,
-      inputFormat,
-      outputFormat,
-      includeContracts: isContractsEnabled,
-      contractsMode,
-      contractsDebug,
-      shared: selectedExample?.shared ?? []
-    });
-  }, [contractsDebug, contractsMode, inputFormat, isContractsEnabled, outputFormat, selectedExample]);
+    try {
+      workerRef.current.postMessage({
+        requestId,
+        code: program,
+        input,
+        trace: isTracingEnabled,
+        inspect: true,
+        inputFormat,
+        outputFormat,
+        includeContracts: isContractsEnabled,
+        contractsMode,
+        contractsDebug,
+        shared: selectedExample?.shared ?? []
+      });
+    } catch {
+      failWorkerRef.current('The playground could not start this run. Run again to retry.');
+    }
+  }, [contractsDebug, contractsMode, inputFormat, isContractsEnabled, isTracingEnabled, outputFormat, selectedExample]);
+  runRef.current = run;
 
-  const resetExample = React.useCallback(() => {
+  const loadExample = React.useCallback((draft?: PlaygroundDraft) => {
     if (!selectedExample) {
       return;
     }
-    const program = selectedExample.program ?? DEFAULT_PROGRAM;
-    const input = selectedExample.input ?? DEFAULT_INPUT;
-    const format = selectedExample.inputFormat ?? 'json';
-    const outputFmt = selectedExample.outputFormat ?? 'json';
+    const next = draft ?? originalDraft(selectedExample);
+    const { program, input, inputFormat: format, outputFormat: outputFmt } = next;
 
     if (programEditorRef.current) {
       programEditorRef.current.setValue(program);
@@ -369,7 +426,10 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     setInputFormat(format);
     setOutputFormat(outputFmt);
 
+    setLifecycleMessage(null);
+    setResultRevision(null);
     setError(null);
+    runningRef.current = false;
     setIsRunning(false);
     setOutput('');
     setTraceHuman(null);
@@ -381,15 +441,30 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
     setPlaygroundState((state) => cancelInspectRequest(state, requestId));
-    if (outputRef.current) {
-      outputRef.current.textContent = '';
-    }
 
-    setIsTracingEnabled(selectedExample.enableTracing);
-    setIsContractsEnabled(selectedExample.enableContracts);
-    setContractsMode('off');
-    setContractsDebug(false);
+    setIsTracingEnabled(next.tracing);
+    setIsContractsEnabled(next.contracts);
+    setContractsMode(next.contractsMode);
+    setContractsDebug(next.contractsDebug);
+    restartWorkerRef.current();
   }, [selectedExample]);
+
+  const resetExample = () => {
+    if (!selectedExample) return;
+    if (JSON.stringify(currentDraft()) !== JSON.stringify(originalDraft(selectedExample)) &&
+        !window.confirm('Discard edits and restore this example?')) return;
+    draftsRef.current.delete(selectedExampleId);
+    loadExample();
+  };
+
+  const stopRun = () => {
+    requestIdRef.current += 1;
+    setPlaygroundState((state) => cancelInspectRequest(state, requestIdRef.current));
+    runningRef.current = false;
+    setIsRunning(false);
+    setLifecycleMessage('Run stopped. Edit or Run again when ready.');
+    restartWorkerRef.current();
+  };
 
   React.useEffect(() => {
     ensureBranchlineLanguage();
@@ -400,9 +475,11 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         language: BRANCHLINE_LANGUAGE_ID,
         automaticLayout: true,
         minimap: { enabled: false },
-        fontSize: 14
+        fontSize: 14,
+        ariaLabel: 'Branchline program editor'
       });
-      programEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => run());
+      programEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => runRef.current());
+      programEditorRef.current.onDidChangeModelContent(markEdited);
     }
 
     if (inputContainerRef.current && !inputEditorRef.current) {
@@ -411,12 +488,14 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         language: 'json',
         automaticLayout: true,
         minimap: { enabled: false },
-        fontSize: 14
+        fontSize: 14,
+        ariaLabel: 'Input data editor'
       });
+      inputEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => runRef.current());
+      inputEditorRef.current.onDidChangeModelContent(markEdited);
     }
 
-    workerRef.current = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
-    workerRef.current.onmessage = (event: MessageEvent<WorkerResult>) => {
+    const receiveResult = (event: MessageEvent<WorkerResult>) => {
       const result = event.data;
       setPlaygroundState((state) =>
         receiveInspectResult(state, result.requestId, result.inspectResult, result.inspectError).state
@@ -426,16 +505,18 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         return;
       }
 
+      runningRef.current = false;
       setIsRunning(false);
+      setResultRevision(submittedRevisionRef.current);
 
-      if (programEditorRef.current) {
+      if (programEditorRef.current && submittedRevisionRef.current === revisionRef.current) {
         const model = programEditorRef.current.getModel();
         if (model) {
-          if (result.success) {
+          if (result.success || result.line == null || result.column == null) {
             monaco.editor.setModelMarkers(model, 'branchline', []);
           } else {
-            const line = result.line ?? 1;
-            const column = result.column ?? 1;
+            const line = result.line;
+            const column = result.column;
             monaco.editor.setModelMarkers(model, 'branchline', [
               {
                 startLineNumber: line,
@@ -459,9 +540,6 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         setOutputContract(result.outputContractJson ?? null);
         setContractSource(result.contractSource ?? null);
         setContractWarnings(result.contractWarnings ?? null);
-        if (outputRef.current) {
-          outputRef.current.textContent = result.outputJson ?? 'null';
-        }
       } else {
         const location =
           result.line != null && result.column != null
@@ -477,11 +555,48 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         setOutputContract(null);
         setContractSource(null);
         setContractWarnings(null);
-        if (outputRef.current) {
-          outputRef.current.textContent = '';
-        }
       }
     };
+
+    const failWorker = (message: string) => {
+      requestIdRef.current += 1;
+      setPlaygroundState((state) => cancelInspectRequest(state, requestIdRef.current, message));
+      runningRef.current = false;
+      setIsRunning(false);
+      setLifecycleMessage(null);
+      setError(message);
+      setOutput('');
+      setTraceHuman(null);
+      setTraceJson(null);
+      setInputContract(null);
+      setOutputContract(null);
+      setContractSource(null);
+      setContractWarnings(null);
+      setResultRevision(submittedRevisionRef.current);
+      workerRef.current?.terminate();
+      workerRef.current = undefined;
+    };
+    failWorkerRef.current = failWorker;
+    const restartWorker = () => {
+      workerRef.current?.terminate();
+      workerRef.current = undefined;
+      try {
+        const worker = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
+        workerRef.current = worker;
+        worker.onmessage = receiveResult;
+        worker.onerror = (event) => {
+          event.preventDefault();
+          if (workerRef.current === worker) failWorker('The playground worker failed. Run again to retry.');
+        };
+        worker.onmessageerror = () => {
+          if (workerRef.current === worker) failWorker('The playground could not read the worker result. Run again to retry.');
+        };
+      } catch {
+        failWorker('The playground worker could not start. Run again to retry.');
+      }
+    };
+    restartWorkerRef.current = restartWorker;
+    restartWorker();
 
     return () => {
       if (programContainerRef.current && programWheelGuardRef.current) {
@@ -498,19 +613,8 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   }, []);
 
   React.useEffect(() => {
-    if (filteredExamples.length === 0 || selectedExampleInFiltered) {
-      return;
-    }
-    setSelectedExampleId(filteredExamples[0].id);
-  }, [filteredExamples, selectedExampleInFiltered]);
-
-  React.useEffect(() => {
-    if (!programEditorRef.current || !inputEditorRef.current || !selectedExample) {
-      return;
-    }
-    resetExample();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resetExample, selectedExample]);
+    loadExample(draftsRef.current.get(selectedExampleId));
+  }, [loadExample, selectedExampleId]);
 
   React.useEffect(() => {
     const model = inputEditorRef.current?.getModel();
@@ -522,8 +626,8 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   }, [inputFormat]);
 
   React.useEffect(() => {
-    tracingRef.current = isTracingEnabled;
-  }, [isTracingEnabled]);
+    markEdited();
+  }, [inputFormat, outputFormat, isTracingEnabled, isContractsEnabled, contractsMode, contractsDebug, markEdited]);
 
   React.useEffect(() => {
     if (!isContractsEnabled) {
@@ -541,6 +645,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     }
   }, [contractsMode]);
 
+  const resultsAreStale = resultRevision !== null && resultRevision !== revision;
   const hasTrace = Boolean(traceHuman || traceJson);
   const inspectState = playgroundState.inspect;
   const inspectDiagnostics = diagnosticsForInspect(inspectState.result);
@@ -595,47 +700,19 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         <div className="playground-title">
           <h2>Branchline Playground</h2>
           <p>
-            Explore Branchline transformations with curated scenarios. Pick an example, tweak the editors, and run the
-            program. Switching examples restores their original content.
+            Pick an example, edit the program and input, then Run.
           </p>
         </div>
         <div className="playground-controls">
-          <label className="playground-select playground-select--compact">
-            <span>Category</span>
-            <select
-              value={catalogCategory}
-              onChange={(event) => setCatalogCategory(event.target.value as CatalogCategoryFilter)}
-            >
-              {categoryOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="playground-select playground-select--compact">
-            <span>AI subset</span>
-            <select
-              value={catalogAiSubset}
-              onChange={(event) => setCatalogAiSubset(event.target.value as CatalogAiSubsetFilter)}
-            >
-              {CATALOG_AI_SUBSET_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
           <label className="playground-select">
             <span>Example</span>
             <select
               data-playground-example-select
-              value={selectedExampleInFiltered ? selectedExampleId : ''}
-              onChange={(event) => setSelectedExampleId(event.target.value)}
-              disabled={filteredExamples.length === 0}
+              value={selectedExampleId}
+              onChange={(event) => selectExample(event.target.value)}
             >
-              {filteredExamples.length === 0 ? (
-                <option value="">No examples match</option>
+              {!selectedExampleInFiltered && selectedExample ? (
+                <option value={selectedExampleId}>{selectedExample.title} (current; outside filters)</option>
               ) : null}
               {filteredExamples.map((example) => (
                 <option key={example.id} value={example.id}>
@@ -644,100 +721,133 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
               ))}
             </select>
           </label>
-          <label className="playground-select">
-            <span>Input format</span>
-            <select value={inputFormat} onChange={(event) => setInputFormat(event.target.value as InputFormat)}>
-              <option value="json">JSON</option>
-              <option value="xml">XML</option>
-            </select>
-          </label>
-          <label className="playground-select">
-            <span>Output format</span>
-            <select value={outputFormat} onChange={(event) => setOutputFormat(event.target.value as OutputFormat)}>
-              <option value="json">JSON (pretty)</option>
-              <option value="json-compact">JSON (compact)</option>
-              <option value="json-canonical">JSON (canonical)</option>
-              <option value="xml">XML</option>
-              <option value="xml-compact">XML (compact)</option>
-            </select>
-          </label>
-          <label className="playground-toggle">
-            <input
-              type="checkbox"
-              checked={isTracingEnabled}
-              onChange={(event) => setIsTracingEnabled(event.target.checked)}
-            />
-            <span>Enable tracing (EXPLAIN)</span>
-          </label>
-          <label className="playground-toggle">
-            <input
-              type="checkbox"
-              checked={isContractsEnabled}
-              onChange={(event) => setIsContractsEnabled(event.target.checked)}
-            />
-            <span>Show input/output contracts</span>
-          </label>
-          <label className="playground-select">
-            <span>Contract checks</span>
-            <select value={contractsMode} onChange={(event) => setContractsMode(event.target.value as ContractMode)}>
-              <option value="off">Off</option>
-              <option value="warn">Warn</option>
-              <option value="strict">Strict</option>
-            </select>
-          </label>
-          {isContractsEnabled ? (
-            <label className="playground-toggle">
-              <input
-                type="checkbox"
-                checked={contractsDebug}
-                onChange={(event) => setContractsDebug(event.target.checked)}
-              />
-              <span>Contract debug (include spans)</span>
-            </label>
-          ) : null}
-          <button className="playground-button playground-button--ghost" onClick={resetExample}>
-            Reset example
-          </button>
-          <a className="playground-button playground-button--ghost" href={openInNewTabUrl} target="_blank" rel="noreferrer">
-            Open in new tab
-          </a>
           <button className="playground-button" onClick={run} disabled={isRunning}>
             {isRunning ? 'Running…' : 'Run ▶'}
           </button>
-          <span className="playground-catalog-count" aria-live="polite">
-            {filteredExamples.length} of {examples.length} examples
-          </span>
+          {isRunning ? <button className="playground-button playground-button--ghost" onClick={stopRun}>Stop</button> : null}
+          <button className="playground-button playground-button--ghost" onClick={resetExample}>
+            Reset example
+          </button>
+          <a className="playground-button playground-button--ghost" href={openInNewTabUrl} target="_blank" rel="noreferrer" title="Opens the original example; edits are kept only in this tab.">
+            Open original example ↗
+          </a>
         </div>
+        <p className="playground-session-notice">Drafts stay in this tab until reload.</p>
+        <details className="playground-advanced">
+          <summary>Filters &amp; run settings</summary>
+          <div className="playground-controls playground-controls--advanced">
+            <label className="playground-select playground-select--compact">
+              <span>Category</span>
+              <select
+                value={catalogCategory}
+                onChange={(event) => setCatalogCategory(event.target.value as CatalogCategoryFilter)}
+              >
+                {categoryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="playground-select playground-select--compact">
+              <span>AI subset</span>
+              <select
+                value={catalogAiSubset}
+                onChange={(event) => setCatalogAiSubset(event.target.value as CatalogAiSubsetFilter)}
+              >
+                {CATALOG_AI_SUBSET_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <span className="playground-catalog-count" aria-live="polite">
+              {filteredExamples.length} of {examples.length} examples
+            </span>
+            <label className="playground-select">
+              <span>Input format</span>
+              <select value={inputFormat} onChange={(event) => setInputFormat(event.target.value as InputFormat)}>
+                <option value="json">JSON</option>
+                <option value="xml">XML</option>
+              </select>
+            </label>
+            <label className="playground-select">
+              <span>Output format</span>
+              <select value={outputFormat} onChange={(event) => setOutputFormat(event.target.value as OutputFormat)}>
+                <option value="json">JSON (pretty)</option>
+                <option value="json-compact">JSON (compact)</option>
+                <option value="json-canonical">JSON (canonical)</option>
+                <option value="xml">XML</option>
+                <option value="xml-compact">XML (compact)</option>
+              </select>
+            </label>
+            <label className="playground-toggle">
+              <input
+                type="checkbox"
+                checked={isTracingEnabled}
+                onChange={(event) => setIsTracingEnabled(event.target.checked)}
+              />
+              <span>Enable tracing (EXPLAIN)</span>
+            </label>
+            <label className="playground-toggle">
+              <input
+                type="checkbox"
+                checked={isContractsEnabled}
+                onChange={(event) => setIsContractsEnabled(event.target.checked)}
+              />
+              <span>Show input/output contracts</span>
+            </label>
+            <label className="playground-select">
+              <span>Contract checks</span>
+              <select value={contractsMode} onChange={(event) => setContractsMode(event.target.value as ContractMode)}>
+                <option value="off">Off</option>
+                <option value="warn">Warn</option>
+                <option value="strict">Strict</option>
+              </select>
+            </label>
+            {isContractsEnabled ? (
+              <label className="playground-toggle">
+                <input
+                  type="checkbox"
+                  checked={contractsDebug}
+                  onChange={(event) => setContractsDebug(event.target.checked)}
+                />
+                <span>Contract debug (include spans)</span>
+              </label>
+            ) : null}
+          </div>
+          <p className="playground-session-hint">Filters narrow the list without replacing your current draft. Clear filters to browse every example.</p>
+        </details>
       </header>
 
       {visibleSelectedExample ? (
-        <div className="example-description">
+        <details className="example-description">
+          <summary>Example details</summary>
           {visibleSelectedExample.description ? <p>{visibleSelectedExample.description}</p> : null}
-          <div className="example-metadata" aria-label="Selected example metadata">
-            <span className="example-metadata__badge example-metadata__badge--category">
-              {catalogCategoryLabel(catalogCategoryValue(visibleSelectedExample))}
-            </span>
-            <span className={`example-metadata__badge example-metadata__badge--ai-${visibleSelectedExample.aiSubset}`}>
-              {catalogAiSubsetLabel(visibleSelectedExample.aiSubset)}
-            </span>
-            {selectedTags.map((tag) => (
-              <span key={tag} className="example-metadata__badge example-metadata__badge--tag">
-                {tag}
+            <div className="example-metadata" aria-label="Selected example metadata">
+              <span className="example-metadata__badge example-metadata__badge--category">
+                {catalogCategoryLabel(catalogCategoryValue(visibleSelectedExample))}
               </span>
-            ))}
-            {hiddenTagCount > 0 ? (
-              <span className="example-metadata__badge example-metadata__badge--tag">
-                +{hiddenTagCount}
+              <span className={`example-metadata__badge example-metadata__badge--ai-${visibleSelectedExample.aiSubset}`}>
+                {catalogAiSubsetLabel(visibleSelectedExample.aiSubset)}
               </span>
-            ) : null}
-          </div>
-        </div>
+              {selectedTags.map((tag) => (
+                <span key={tag} className="example-metadata__badge example-metadata__badge--tag">
+                  {tag}
+                </span>
+              ))}
+              {hiddenTagCount > 0 ? (
+                <span className="example-metadata__badge example-metadata__badge--tag">
+                  +{hiddenTagCount}
+                </span>
+              ) : null}
+            </div>
+        </details>
       ) : null}
 
       <div className="playground-note">
-        Examples are loaded from <code>playground/examples</code>. Add a new file there and refresh the page to see it here.
-        The editor shows only the body of <code>TRANSFORM</code>; use the <code>msg</code> variable to reference the incoming payload.
-        Toggle tracing when you need <code>EXPLAIN(...)</code> provenance output.
+        Read the incoming object with <code>input</code>. ⌘/Ctrl + Enter runs from either editor.
       </div>
 
       <main className="playground-main">
@@ -745,7 +855,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
           <header className="panel-header">
             <div>
               <h3>Branchline Program</h3>
-              <p>Use ⌘/Ctrl + Enter to run the playground.</p>
+              <p>A transform body or full TRANSFORM program.</p>
             </div>
           </header>
           <div ref={programContainerRef} className="editor-surface" />
@@ -758,12 +868,11 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
               <p>
                 {inputFormat === 'xml' ? (
                   <>
-                    Provide XML that the playground will parse using the same settings as the Branchline CLI before binding it
-                    to <code>msg</code>.
+                    XML is mapped to an object under its root element, available as <code>input</code>.
                   </>
                 ) : (
                   <>
-                    Provide the object bound to <code>msg</code>.
+                    Provide a JSON object, available as <code>input</code>.
                   </>
                 )}
               </p>
@@ -772,15 +881,20 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
           <div ref={inputContainerRef} className="editor-surface" />
         </section>
 
-        <section className="panel playground-main__output">
+        <section className="panel playground-main__output" aria-busy={isRunning}>
           <header className="panel-header">
             <div>
               <h3>Output &amp; Trace</h3>
               <p>The result of executing your Branchline program.</p>
             </div>
           </header>
+          <div className={`playground-run-status${resultsAreStale ? ' playground-run-status--stale' : ''}`} role="status" aria-live="polite">
+            {isRunning ? 'Running submitted program…' : lifecycleMessage ?? (resultsAreStale
+              ? 'Results are out of date. Run again to update output and Inspect.'
+              : resultRevision === null ? 'Ready to run.' : error ? 'Run failed.' : 'Run complete.')}
+          </div>
           {error ? (
-            <div className="panel-error">{error}</div>
+            <div className="panel-error" role="alert">{resultsAreStale ? 'Previous run: ' : ''}{error}</div>
           ) : (
             <>
               {contractWarnings ? (
@@ -792,7 +906,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
               <div className={`results-grid${hasTrace ? ' results-grid--with-trace' : ''}`}>
                 <div className="results-pane">
                   <div className="panel-subheader">Program output</div>
-                  <pre ref={outputRef} className="panel-output">
+                  <pre className="panel-output">
                     {output || 'Run the playground to view output.'}
                   </pre>
                 </div>
@@ -846,18 +960,32 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
               <p>Normalized source, diagnostics, and AI subset compatibility.</p>
             </div>
             <span
-              className={`inspect-compatibility inspect-compatibility--${compatibilityClass(inspectState.result)}`}
+              className={`inspect-compatibility inspect-compatibility--${compatibilityClass(resultsAreStale ? null : inspectState.result)}`}
             >
-              {inspectCompatibility}
+              {resultsAreStale ? 'Out of date' : inspectCompatibility}
             </span>
           </header>
+          {resultsAreStale ? <p className="playground-run-status playground-run-status--stale">Inspect describes the previous run. Run again after your edits.</p> : null}
           <div className="inspect-tabs" role="tablist" aria-label="Inspect panes">
-            {INSPECT_TABS.map((tab) => (
+            {INSPECT_TABS.map((tab, index) => (
               <button
                 key={tab.id}
                 type="button"
                 className={`inspect-tab${activeInspectTab === tab.id ? ' inspect-tab--active' : ''}`}
                 role="tab"
+                id={`${instanceId}-tab-${tab.id}`}
+                aria-controls={`${instanceId}-inspect-panel`}
+                tabIndex={activeInspectTab === tab.id ? 0 : -1}
+                ref={(element) => { inspectTabRefs.current[index] = element; }}
+                onKeyDown={(event) => {
+                  const next = event.key === 'ArrowRight' ? (index + 1) % INSPECT_TABS.length
+                    : event.key === 'ArrowLeft' ? (index + INSPECT_TABS.length - 1) % INSPECT_TABS.length
+                    : event.key === 'Home' ? 0 : event.key === 'End' ? INSPECT_TABS.length - 1 : null;
+                  if (next === null) return;
+                  event.preventDefault();
+                  setActiveInspectTab(INSPECT_TABS[next].id);
+                  inspectTabRefs.current[next]?.focus();
+                }}
                 aria-selected={activeInspectTab === tab.id}
                 onClick={() => setActiveInspectTab(tab.id)}
               >
@@ -871,11 +999,12 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
               </button>
             ))}
           </div>
-          <div className="inspect-content" role="tabpanel">
+          <div className="inspect-content" role="tabpanel" id={`${instanceId}-inspect-panel`}
+            aria-labelledby={`${instanceId}-tab-${activeInspectTab}`} tabIndex={0}>
             {inspectState.isLoading ? (
-              <div className="inspect-state">Inspecting current program…</div>
+              <div className="inspect-state">Inspecting submitted program…</div>
             ) : inspectState.error ? (
-              <div className="inspect-state inspect-state--error">{inspectState.error}</div>
+              <div className="inspect-state inspect-state--error" role="alert">{inspectState.error}</div>
             ) : activeInspectTab === 'normalized' ? (
               inspectState.result?.normalizedSource ? (
                 <pre className="inspect-code">{inspectState.result.normalizedSource}</pre>

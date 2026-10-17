@@ -5,18 +5,17 @@ description: Try Branchline in your browser with the interactive playground.
 
 # Interactive Playground
 
-Experiment with Branchline directly in your browser—no installs required. Pick an example, edit the program and input, enable tracing, and run. The catalog can be filtered by example category and AI subset compatibility so docs, tests, and AI-authoring examples stay discoverable from the same descriptor metadata.
+Pick an example, edit the program and input, then Run Branchline in your browser.
 
 <link rel="stylesheet" href="../assets/playground.css">
 
 <div class="playground-embed">
-  <div class="playground-embed__intro"><strong>Tips:</strong> Cmd/Ctrl + Enter runs. Switch JSON/XML input. Toggle tracing for <code>EXPLAIN(...)</code>. Use Inspect for normalized source, diagnostics, and AI subset blockers. Changing examples resets the editors.</div>
   <div class="playground-frame">
     <div class="bl-playground" data-default-example="customer-profile" role="region" aria-label="Branchline playground embed"></div>
   </div>
   <div class="playground-embed__actions">
-    <a href="../playground/" target="_blank" rel="noreferrer" class="md-button md-button--primary" data-playground-open-new-tab>Open in new tab</a>
-    <span class="playground-embed__hint">Use <code>?example=&lt;id&gt;</code> in the URL to preload an example (e.g., <code>?example=stdlib-hof-overview</code>).</span>
+    <a href="../playground/" target="_blank" rel="noreferrer" class="md-button md-button--primary" data-playground-open-new-tab>Open original example in new tab</a>
+    <span class="playground-embed__hint">The new tab opens the original example; it does not transfer your edits. Use <code>?example=&lt;id&gt;</code> to preload an example.</span>
   </div>
 </div>
 
@@ -47,7 +46,7 @@ Experiment with Branchline directly in your browser—no installs required. Pick
 
 ## Curated examples (all preserved)
 
-Use the category and AI subset filters in the embedded playground to narrow this list. Examples marked AI compatible are intended for inspect-first authoring loops; examples marked incompatible are still runnable language examples, but Inspect will explain why they are outside the AI canonical subset.
+Open **Filters & run settings** to narrow the catalog by category and AI subset. Filtering keeps your current draft selected, even if it falls outside the filter. Examples marked AI compatible are intended for inspect-first authoring loops; examples marked incompatible are still runnable language examples, but Inspect will explain why they are outside the AI canonical subset.
 
 - [collection-transforms](?example=collection-transforms){ target="_blank" } — MAP/FILTER/REDUCE style array work
 - [contract-deep-composition](?example=contract-deep-composition){ target="_blank" } — deep nested output inferred from stdlib-first composition
@@ -74,6 +73,14 @@ Use the category and AI subset filters in the embedded playground to narrow this
   [stdlib-hof-overview](?example=stdlib-hof-overview){ target="_blank" },
   [stdlib-debug-explain](?example=stdlib-debug-explain){ target="_blank" },
   [stdlib-time-now](?example=stdlib-time-now){ target="_blank" }
+
+## Editing and running
+
+- Provide a JSON object (or mapped XML) as input. Reference it with `input`, for example `OUTPUT { name: input.name }`.
+- The program accepts a transform body or a complete `TRANSFORM` program. With multiple transforms, the playground runs `Playground` if present, otherwise the first transform.
+- Edits and run settings are kept per example in memory for this tab only. Reloading or closing the tab discards them. **Reset example** asks before discarding a modified draft.
+- Editing a program, input, or run setting marks output and Inspect as out of date. Run again to refresh them.
+- **Stop** terminates a running worker, including a program that does not finish. Run starts a fresh worker after Stop or a worker failure.
 
 ## Troubleshooting
 - If the embed does not appear, open the new-tab link above.
