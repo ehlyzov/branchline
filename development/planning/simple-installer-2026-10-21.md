@@ -1,6 +1,6 @@
 # One-command Branchline installation
 
-Status: implemented; local acceptance passed, publication pending. User requests installation as simple as Codeclew.
+Status: published and independently accepted. User requests installation as simple as Codeclew.
 
 Reference inspected: `/Users/eugene/repo/codeclew/site/install.sh` and its README.
 Scope: a POSIX shell installer published as `docs/install.sh`, installing the
@@ -43,3 +43,22 @@ unrelated research artifacts outside the implementation commit.
   bounded to implementation source paths, excluding unrelated output artifacts.
 - Evidence: output/simple-installer-2026-10-21/. No CLI package rebuild or version
   bump: the installer consumes the already published checksum-verified RC.
+
+## Public acceptance
+
+- Implementation commit: 2f07dee39dea307e2aa5c5379d7add49c267b484.
+- Test Suite: https://github.com/ehlyzov/branchline/actions/runs/39642395341
+  completed successfully; all five jobs passed and no failed step was hidden by
+  continue-on-error.
+- Pages: https://github.com/ehlyzov/branchline/actions/runs/39643408669 completed
+  successfully, including installer fixture checks on Ubuntu. Public metadata
+  identifies the exact implementation SHA; public install.sh matches source bytes.
+- Actual public curl-to-sh installations on macOS arm64 passed for Java21 and
+  Node22.23.3 in fresh temporary prefixes. Both report rc.1 and produce BOOK/PEN
+  from public recipe downloads with PEN qty changed to1.
+- Public browser: install guide shows the command/prerequisites, editor runs the
+  order example to BOOK, local handoff shows bl and preserves the edited-file
+  context. No browser console warnings/errors in the tested path.
+- This did not install into the user's default home prefix, install a runtime,
+  change shell profiles, or qualify a new OS/CPU/runtime matrix.
+- Raw acceptance JSON/logs and screenshots: output/simple-installer-2026-10-21/.
