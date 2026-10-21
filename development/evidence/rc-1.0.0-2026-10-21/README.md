@@ -1,5 +1,9 @@
 # 1.0.0-rc.1 release qualification
 
+**Completed:** see [published acceptance](published.md) and
+[artifact/evidence hashes](published-result.json). The pre-publication record below
+is retained with its original scope.
+
 User cancelled pilot preparation and requested a public RC. No integrator kit or
 external pilot is created. The exact release source is identified by the eventual
 Git tag; base 9de86a0 alone does not include this release's accepted changes.

@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0-rc.1",
+  "source_commit": "98c76591f6111d811c02366ee4fa61907cdee3fd",
+  "verified_at": "2026-10-21T10:20:28.973266+00:00",
+  "release": "https://github.com/ehlyzov/branchline/releases/tag/v1.0.0-rc.1",
+  "ci_run": 39581974629,
+  "release_pages_run": 39582760339,
+  "published_macos_checks": 144,
+  "published_linux_arm64_checks": 144,
+  "parent_utf8_cross_artifact_checks": 8,
+  "public_chrome_checks": 14,
+  "public_browser": "155.0.8059.40",
+  "page_checked_at": "2026-10-21T10:19:28.284Z",
+  "public_url": "https://ehlyzov.github.io/branchline/playground/?rc-check=98c7659",
+  "initial_external_warning": "GitHub releases/latest 404; no editor runtime/resource failures; final reload had no errors",
+  "artifact_sha256": {
+    "SHA256SUMS": "dfa75de798432f2c28edc900ccc714142874ecced4e40d0d3cce1f8ae26e03a2",
+    "branchline-cli-js-v1.0.0-rc.1.tgz": "9fd28eecadd92128941e04cc9ae2071656fad29906991fe42cb835b30e1ff8c4",
+    "branchline-cli-v1.0.0-rc.1-all.jar": "6833f90b2ab8876b4eaede45c5348d9f11d26427722dd9318bd83a8c15a4fa64",
+    "branchline-interpreter-v1.0.0-rc.1-js.tgz": "5641e8747a9d83eec2149a1f773082a3f7f375a9f08e9357d06883a9fe18201a",
+    "branchline-interpreter-v1.0.0-rc.1-jvm.jar": "ba88c672efd0dc8799fc46a4ce0e07c7ddace8922fddffe38d7b96a3ad171558",
+    "branchline-vm-v1.0.0-rc.1-jvm.jar": "5848ef37fa882fcd3c6526343c90bbf533035fbc1fa4e71e6ff9a0b60153066f",
+    "release-metadata.json": "9a129efd55ef8dedc72e44bf42687a84511061dea6ea562ddcf7b49ac68af895"
+  },
+  "evidence_sha256": {
+    "output/rc-1.0.0-2026-10-21/ci-run-final.json": "3f1b04bfb8c49b2708762fde1ba606e05b2369786a5416fd58b2202ca5975430",
+    "output/rc-1.0.0-2026-10-21/release-run-final.json": "9dbbb40af8a9021d1922522c2d5f841d6580a861c1ce832263d980a867d92ca1",
+    "output/rc-1.0.0-2026-10-21/published-verification-summary.json": "19ed867dcdc16dc81ae6fa494add344a1d9d872de5dc8b648fba9b391251f650",
+    "output/rc-1.0.0-2026-10-21/parent-published-acceptance.json": "8361b8c2501a524841e20c7966cda3abb281d3dbf1c9592f0e5d7ad70d924e80",
+    "output/rc-1.0.0-2026-10-21/public-site-metadata.json": "b0e974be83e6bb96a985fbdeeabc2224e09825a876ff26c0954281377e2de8ac",
+    "output/playwright/rc-1.0.0-2026-10-21/acceptance.json": "4f598cd7b8a6768b1608cd3692b00e73393ae9357afa94a463dcbce79702b55e",
+    "output/playwright/rc-1.0.0-2026-10-21/acceptance.js": "9e0a3a5f4bd895311ec5f1f16c5b17e0a5b1f8b76aaaf6731417ea4beb26d25a"
+  }
+}

@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: ['planning/one-zero-platform-2026-10-21']
 blocks: []
 supersedes: []
@@ -56,3 +56,12 @@ published-asset validation. Agents own bounded packaging/version and independent
 review. Reuse successful checks for unchanged exact commit; never bypass failures.
 The earlier unexecuted pilot-kit allocation and local-only publication boundary
 above are superseded by this explicit instruction. Actual pilot remains unstarted.
+
+
+## Accepted outcome
+
+Public v1.0.0-rc.1 released from qualified commit 98c76591f6111d811c02366ee4fa61907cdee3fd.
+Exact-commit CI and release/Pages runs passed. Actual public packages passed 288
+matrix cases and eight parent cases; public Chrome editor passed 14 cases with
+matching deployment metadata. See `development/evidence/rc-1.0.0-2026-10-21/published.md`.
+No integrator kit or pilot was prepared after the user's scope correction.

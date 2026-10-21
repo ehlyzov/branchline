@@ -7,7 +7,7 @@ superseded_by: []
 last_updated: 2026-10-21
 changelog:
   - date: 2026-10-21
-    change: "User cancelled pilot preparation; preparing public v1.0.0-rc.1 with qualified packages, release publication and public editor verification; see planning/one-zero-rc-pilot-2026-10-21.md, releases/1.0.0-rc.1.md and evidence/rc-1.0.0-2026-10-21/README.md."
+    change: "Published v1.0.0-rc.1 from 98c7659: exact-commit CI, five public packages/checksums, 288 published-package matrix cases, eight parent cases and 14 public editor checks passed. Pilot preparation cancelled; see planning/one-zero-rc-pilot-2026-10-21.md, releases/1.0.0-rc.1.md and evidence/rc-1.0.0-2026-10-21/README.md."
   - date: 2026-10-21
     change: "Accepted macOS platform cells: 251 packaged CLI cases, 28 Chrome/WebKit checks, 99 CLI tests and 8 independent UTF-8/cross-artifact checks; repaired Node native I/O errors. Recovered Docker after host ENOSPC and accepted 144 additional packaged cases on Debian 13.7 arm64/Linuxkit with Java 21/25 and Node 22/24; bounded platform gate closed, actual pilot host and Firefox unqualified. See evidence/one-zero-platform-2026-10-21/README.md and planning/one-zero-platform-2026-10-21.md for the external pilot handoff."
   - date: 2026-10-18

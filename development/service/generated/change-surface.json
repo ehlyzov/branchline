@@ -43,6 +43,8 @@
       "development/evidence/rc-1.0.0-2026-10-21/cli-matrix.py",
       "development/evidence/rc-1.0.0-2026-10-21/local-matrix-summary.json",
       "development/evidence/rc-1.0.0-2026-10-21/packaging.md",
+      "development/evidence/rc-1.0.0-2026-10-21/published-result.json",
+      "development/evidence/rc-1.0.0-2026-10-21/published.md",
       "development/evidence/rc-1.0.0-2026-10-21/review.md",
       "development/planning/one-zero-contracts-2026-10-18.md",
       "development/planning/one-zero-pilot-run-record.md",
@@ -87,5 +89,5 @@
     "service_map": "Update development/service/SERVICE_MAP.md for topology, entrypoint, integration-boundary, workflow, or hotspot changes.",
     "verify": "Update development/service/VERIFY.md for build, test, lint, local-run, CI, or evidence changes."
   },
-  "selection_scope": "Accepted RC source/documentation/evidence paths only; unrelated local research, raw output and downloaded runtimes omitted"
+  "selection_scope": "Accepted RC paths plus post-publication evidence only; release tag remains at 98c76591f6111d811c02366ee4fa61907cdee3fd"
 }
