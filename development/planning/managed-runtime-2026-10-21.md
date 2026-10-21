@@ -1,6 +1,6 @@
 # Managed runtime installation
 
-Status: implemented; local acceptance passed, publication pending. User explicitly requests removal of Java/Node prerequisites,
+Status: published and independently accepted. User explicitly requests removal of Java/Node prerequisites,
 clean-machine acceptance and updated public instructions.
 
 Default installer will provision a private, pinned Temurin 21 JRE regardless of
@@ -41,3 +41,29 @@ Keep unrelated local audit artifacts outside this implementation commit.
   host-runtime isolation, not a claim of a freshly provisioned physical Mac.
 - Playground tests and MkDocs build pass; contour audit passes without warnings.
 - Logs, vendor pins, image manifest and raw results: output/managed-runtime-2026-10-21/.
+
+## Public acceptance — 2026-10-21
+
+- Implementation commit: `bd86542c93dfb288a12582f5998d40366ea54376`.
+- Full Test Suite [39655178838](https://github.com/ehlyzov/branchline/actions/runs/39655178838)
+  passed all five jobs for that exact commit.
+- Pages [39656183073](https://github.com/ehlyzov/branchline/actions/runs/39656183073)
+  passed clean-installer qualification, build and deploy. Its clean Debian12
+  x86_64 containers independently passed both real-runtime installations as
+  UID1000, initially without Java, Node or Python.
+- Public `release-metadata.json` identifies that commit, workflow and v1.0.0-rc.1.
+  Downloaded public `install.sh` is byte-identical to accepted source.
+- Repeated both fresh Debian12 arm64 installations using the public installer
+  URL after deployment: successful transform, invalid-input rejection and
+  repeat install passed. No mounted host runtime or cache was used.
+- Fresh public install guide visibly states no preinstalled Java/Node, shows
+  the quick command and private-runtime behavior. Public recipe opens in the
+  Playground; Run produces independently expected order A-104, London, [BOOK].
+  Browser console has no warnings/errors. Screenshots and DOM snapshots are in
+  the evidence directory above (`public-install-page.*`, `public-editor.*`).
+- Scope limits: clean Linux arm64/x86_64 containers, plus macOS arm64 host-runtime
+  isolation. No clean physical Mac or real macOS x86_64 acceptance is claimed;
+  Windows and musl remain unsupported. No global runtime/profile changes were made.
+
+This acceptance-only record may follow the deployed commit without rebuilding
+the unchanged product; published metadata continues to identify `bd86542c`.
