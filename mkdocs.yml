@@ -6,6 +6,7 @@ repo_name: ehlyzov/branchline
 repo_url: https://github.com/ehlyzov/branchline
 
 exclude_docs: |
+  /includes/quick-install.md
   /includes/prepare-order/
   /includes/recipes/
 

@@ -4,8 +4,29 @@ title: Getting Started
 
 # Getting Started
 
-Turn an order into a shipment payload, then change the input and see the result.
-Start in your browser; no installation is needed.
+Turn an order into a shipment payload, change the input, then run your edited
+files locally. You will get the same JSON result in the browser and terminal.
+
+## Install Branchline
+
+On **macOS or Linux**, run this command in your terminal. It downloads Branchline
+and its private Java runtime; **you do not need Java or Node installed**. No `sudo` needed.
+
+--8<-- "includes/quick-install.md"
+
+Make `bl` available in this terminal and check the installation:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+bl --version
+```
+
+Expect `Branchline CLI v1.0.0-rc.1` (a release candidate). To use `bl` in future
+terminals, add that PATH line to your shell profile. See [installation details](install.md)
+for supported systems, updates and the optional Node runtime.
+
+Prefer to try it first? Skip installation and continue in the browser below;
+you can return to this step before running locally.
 
 ## 1. Run an order transformation
 
@@ -43,17 +64,28 @@ PEN now passes the filter, so the result is:
 ## Run locally
 
 Use **Download program.bl** and **Download input.json** in the Playground to keep
-your current edits. Then follow [Install and run locally](install.md) for the pinned
-JVM or Node CLI in one command, then run:
+your current edits. Put both files in the same folder and open a terminal in that
+folder. Keep the filenames `program.bl` and `input.json`; if your browser adds a
+suffix such as `(1)` to a repeat download, rename the new files in that folder.
+If you skipped installation, [install Branchline first](#install-branchline).
+Then run:
 
 ```bash
 bl program.bl --input input.json
 ```
 
-You can also download the original
+After changing PEN's quantity to `1`, expect:
+
+--8<-- "includes/prepare-order/exercise-expected.md"
+
+If `bl` is not found, run the PATH command above in this terminal. If an input
+file is not found, check that you are in the folder containing both downloaded files.
+
+Starting directly in the terminal? Download the original
 [program.bl](../downloads/prepare-order/program.bl),
 [input.json](../downloads/prepare-order/input.json), and
-[expected.json](../downloads/prepare-order/expected.json).
+[expected.json](../downloads/prepare-order/expected.json), then run the same command.
+The original input returns only `BOOK`; your edited input returns `BOOK` and `PEN`.
 JSON whitespace and object key order may differ between runtimes.
 
 ## Continue learning

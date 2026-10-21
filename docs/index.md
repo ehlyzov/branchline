@@ -21,8 +21,16 @@ Branchline is a language for reshaping structured data. Select fields, handle mi
 
 </div>
 
-No installation needed to try it. Run locally on JVM or Node when you are ready.
+No installation needed to try it in your browser.
 { .bl-home__hint }
+
+## Install with one command
+
+For **macOS and Linux**. No Java or Node to install first: Branchline downloads its own private runtime. No `sudo` needed.
+
+--8<-- "includes/quick-install.md"
+
+[Run your first local transformation →](guides/getting-started.md) · [Installation details](guides/install.md)
 
 </div>
 

@@ -1,4 +1,10 @@
 /* The landing page uses Material's existing typography and color tokens. */
+.md-typeset .bl-install-command pre > code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding-right: 2.8rem;
+}
+
 .bl-home {
   margin: 0 auto;
   max-width: 70rem;
