@@ -1,5 +1,9 @@
 {
-  "title": "Stdlib: KEYS, VALUES, ENTRIES",
+  "title": "Inspect object keys, values and entries",
+  "aiSubset": "unknown",
+  "tags": ["objects", "keys", "values", "entries"],
+  "category": "inspect-data",
+  "id": "stdlib-core-keys-values",
   "description": "Explore KEYS, VALUES, and ENTRIES on objects and lists.",
   "program": [
     "LET objectKeys = KEYS(input.user)",

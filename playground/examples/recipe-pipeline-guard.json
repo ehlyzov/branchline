@@ -1,0 +1,148 @@
+{
+  "title": "Reject invalid pipeline input",
+  "id": "recipe-pipeline-guard",
+  "category": "validate-data",
+  "tags": [
+    "recipe",
+    "beginner",
+    "ai-canonical"
+  ],
+  "aiSubset": "compatible",
+  "description": "Require a named pipeline run with passing checks before emitting a deploy payload.",
+  "program": [
+    "TRANSFORM PipelineGuard {",
+    "    ASSERT(input.run_id != null, \"Pipeline run_id is required\")",
+    "    ASSERT(input.branch != null, \"Pipeline branch is required\")",
+    "    ASSERT(input.checks != null, \"Pipeline checks array is required\")",
+    "    ASSERT(LENGTH(input.checks) > 0, \"At least one pipeline check is required\")",
+    "    ASSERT(EVERY(input.checks, (check) -> check.name != null), \"Every check needs a name\")",
+    "    ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\" || check.status == \"failed\"), \"Unknown pipeline check status\")",
+    "    ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\"), \"Pipeline checks must pass\")",
+    "    OUTPUT {",
+    "        run_id: input.run_id,",
+    "        branch: input.branch,",
+    "        deploy: true,",
+    "        checked_names: MAP(input.checks, (check) -> check.name)",
+    "    }",
+    "}"
+  ],
+  "input": {
+    "run_id": "build-104",
+    "branch": "main",
+    "checks": [
+      {
+        "name": "unit tests",
+        "status": "passed"
+      },
+      {
+        "name": "package",
+        "status": "passed"
+      }
+    ]
+  },
+  "expectedOutput": {
+    "run_id": "build-104",
+    "branch": "main",
+    "deploy": true,
+    "checked_names": [
+      "unit tests",
+      "package"
+    ]
+  },
+  "exercise": {
+    "instruction": "Change package status from passed to failed, then run again. Expect an error and no deploy payload.",
+    "patch": {
+      "path": [
+        "checks",
+        1,
+        "status"
+      ],
+      "value": "failed"
+    },
+    "expectedError": "Pipeline checks must pass"
+  },
+  "edgeCases": [
+    {
+      "name": "Empty checks are rejected",
+      "input": {
+        "run_id": "build-105",
+        "branch": "main",
+        "checks": []
+      },
+      "expectedError": "At least one pipeline check is required"
+    },
+    {
+      "name": "Missing checks are rejected",
+      "input": {
+        "run_id": "build-105",
+        "branch": "main"
+      },
+      "expectedError": "Pipeline checks array is required"
+    },
+    {
+      "name": "Unknown check status is rejected",
+      "input": {
+        "run_id": "build-105",
+        "branch": "main",
+        "checks": [
+          {
+            "name": "tests",
+            "status": "pending"
+          }
+        ]
+      },
+      "expectedError": "Unknown pipeline check status"
+    },
+    {
+      "name": "Missing run id is rejected",
+      "input": {
+        "branch": "main",
+        "checks": [
+          {
+            "name": "tests",
+            "status": "passed"
+          }
+        ]
+      },
+      "expectedError": "Pipeline run_id is required"
+    },
+    {
+      "name": "One passing check is accepted",
+      "input": {
+        "run_id": "build-106",
+        "branch": "release",
+        "checks": [
+          {
+            "name": "smoke",
+            "status": "passed"
+          }
+        ]
+      },
+      "expectedOutput": {
+        "run_id": "build-106",
+        "branch": "release",
+        "deploy": true,
+        "checked_names": [
+          "smoke"
+        ]
+      }
+    }
+  ],
+  "recipe": {
+    "problem": "Refuse to create a deployment payload when the pipeline feed is incomplete, empty, or reports an unsuccessful check.",
+    "prerequisites": [
+      "run_id and branch are required text identifiers. checks is a required nonempty array.",
+      "Every check has a name and status passed or failed. Pending, skipped, missing, and unknown statuses must not authorize deployment."
+    ],
+    "explanation": [
+      "ASSERT stops execution on the first violated requirement, before OUTPUT is reached.",
+      "An explicit nonempty check prevents EVERY on an empty array from authorizing a deploy.",
+      "Only a run whose checks all passed reaches OUTPUT. The payload preserves run_id, branch, and the checked names."
+    ],
+    "limits": [
+      "This is a data gate, not a deployment command or authorization system.",
+      "A trusted producer must supply the complete expected check list. One supplied passing check does not prove other required checks ran.",
+      "Branch protection, identity, timestamps, signatures, and allowed branches need separate policies."
+    ]
+  }
+}

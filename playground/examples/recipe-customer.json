@@ -1,0 +1,124 @@
+{
+  "title": "Normalize a customer",
+  "id": "recipe-customer",
+  "category": "reshape-data",
+  "tags": [
+    "recipe",
+    "beginner",
+    "ai-canonical"
+  ],
+  "aiSubset": "compatible",
+  "description": "Trim a customer name and normalize an email while preserving unknown contact data.",
+  "program": [
+    "TRANSFORM NormalizeCustomer {",
+    "    LET address = input.address ?? {}",
+    "    ASSERT(input.id != null, \"Customer id is required\")",
+    "    ASSERT(input.name != null, \"Customer name is required\")",
+    "    LET name = TRIM(input.name)",
+    "    ASSERT(name != \"\", \"Customer name must not be blank\")",
+    "    LET email = CASE {",
+    "        WHEN input.email == null THEN null",
+    "        WHEN TRIM(input.email) == \"\" THEN null",
+    "        ELSE LOWER(TRIM(input.email))",
+    "    }",
+    "    OUTPUT {",
+    "        customer_id: input.id,",
+    "        name: name,",
+    "        email: email,",
+    "        city: address.city ?? null",
+    "    }",
+    "}"
+  ],
+  "input": {
+    "id": "C-17",
+    "name": "  Ada Lovelace  ",
+    "email": " ADA@EXAMPLE.COM ",
+    "address": {
+      "city": "London"
+    }
+  },
+  "expectedOutput": {
+    "customer_id": "C-17",
+    "name": "Ada Lovelace",
+    "email": "ada@example.com",
+    "city": "London"
+  },
+  "exercise": {
+    "instruction": "Change email to \"  ADA+NEWS@EXAMPLE.COM  \", then run again.",
+    "patch": {
+      "path": [
+        "email"
+      ],
+      "value": "  ADA+NEWS@EXAMPLE.COM  "
+    },
+    "expectedOutput": {
+      "customer_id": "C-17",
+      "name": "Ada Lovelace",
+      "email": "ada+news@example.com",
+      "city": "London"
+    }
+  },
+  "edgeCases": [
+    {
+      "name": "Missing optional contacts stay null",
+      "input": {
+        "id": "C-18",
+        "name": " Grace Hopper "
+      },
+      "expectedOutput": {
+        "customer_id": "C-18",
+        "name": "Grace Hopper",
+        "email": null,
+        "city": null
+      }
+    },
+    {
+      "name": "Blank email becomes null",
+      "input": {
+        "id": "C-19",
+        "name": "Lin",
+        "email": "  ",
+        "address": null
+      },
+      "expectedOutput": {
+        "customer_id": "C-19",
+        "name": "Lin",
+        "email": null,
+        "city": null
+      }
+    },
+    {
+      "name": "Missing required name is rejected",
+      "input": {
+        "id": "C-20"
+      },
+      "expectedError": "Customer name is required"
+    },
+    {
+      "name": "Blank required name is rejected",
+      "input": {
+        "id": "C-20",
+        "name": "  "
+      },
+      "expectedError": "Customer name must not be blank"
+    }
+  ],
+  "recipe": {
+    "problem": "Convert a customer record into a consistent API payload without inventing an email address or city.",
+    "prerequisites": [
+      "Use JSON input. id is a required customer identifier; name is required text.",
+      "email is optional text or null; address is an optional object or null with an optional city."
+    ],
+    "explanation": [
+      "ASSERT rejects absent required fields and a name that becomes blank after trimming.",
+      "name removes outer whitespace. email removes outer whitespace and lowercases text; blank or absent email becomes null.",
+      "The output explicitly maps id to customer_id and keeps an unknown city as null.",
+      "address uses an empty object before reading city: a missing leaf returns null, but reading through a null parent would fail."
+    ],
+    "limits": [
+      "This performs text normalization, not email validation or identity verification.",
+      "The entire email is lowercased by this recipe policy. Keep the original address if your mail system requires case preservation.",
+      "Unknown optional fields stay null; other input fields are omitted."
+    ]
+  }
+}

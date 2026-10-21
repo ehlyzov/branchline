@@ -1,0 +1,163 @@
+{
+  "title": "Summarize paid sales",
+  "id": "recipe-sales-summary",
+  "category": "summarize-data",
+  "tags": [
+    "recipe",
+    "beginner",
+    "ai-canonical"
+  ],
+  "aiSubset": "compatible",
+  "description": "Count paid sales and sum integer minor-unit amounts; keep pending and refunded sales out of revenue.",
+  "program": [
+    "TRANSFORM SummarizeSales {",
+    "    ASSERT(input.currency != null, \"Currency is required\")",
+    "    ASSERT(input.sales != null, \"Sales array is required\")",
+    "    ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents != null), \"Every sale needs amount_cents\")",
+    "    ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents >= 0), \"Amounts must be nonnegative\")",
+    "    ASSERT(EVERY(input.sales, (sale) -> sale.status == \"paid\" || sale.status == \"pending\" || sale.status == \"refunded\"), \"Unknown sale status\")",
+    "    LET paid = FILTER(input.sales, (sale) -> sale.status == \"paid\")",
+    "    OUTPUT {",
+    "        currency: input.currency,",
+    "        paid_count: LENGTH(paid),",
+    "        revenue_cents: SUM(MAP(paid, (sale) -> sale.amount_cents)),",
+    "        excluded_count: LENGTH(input.sales) - LENGTH(paid)",
+    "    }",
+    "}"
+  ],
+  "input": {
+    "currency": "GBP",
+    "sales": [
+      {
+        "id": "S-1",
+        "status": "paid",
+        "amount_cents": 2500
+      },
+      {
+        "id": "S-2",
+        "status": "pending",
+        "amount_cents": 900
+      },
+      {
+        "id": "S-3",
+        "status": "paid",
+        "amount_cents": 1200
+      }
+    ]
+  },
+  "expectedOutput": {
+    "currency": "GBP",
+    "paid_count": 2,
+    "revenue_cents": 3700,
+    "excluded_count": 1
+  },
+  "exercise": {
+    "instruction": "Change S-2 status from pending to paid, then run again.",
+    "patch": {
+      "path": [
+        "sales",
+        1,
+        "status"
+      ],
+      "value": "paid"
+    },
+    "expectedOutput": {
+      "currency": "GBP",
+      "paid_count": 3,
+      "revenue_cents": 4600,
+      "excluded_count": 0
+    }
+  },
+  "edgeCases": [
+    {
+      "name": "Empty sales have a zero total",
+      "input": {
+        "currency": "GBP",
+        "sales": []
+      },
+      "expectedOutput": {
+        "currency": "GBP",
+        "paid_count": 0,
+        "revenue_cents": 0,
+        "excluded_count": 0
+      }
+    },
+    {
+      "name": "Refunded sales are excluded and zero paid sales count",
+      "input": {
+        "currency": "GBP",
+        "sales": [
+          {
+            "status": "refunded",
+            "amount_cents": 1200
+          },
+          {
+            "status": "paid",
+            "amount_cents": 0
+          }
+        ]
+      },
+      "expectedOutput": {
+        "currency": "GBP",
+        "paid_count": 1,
+        "revenue_cents": 0,
+        "excluded_count": 1
+      }
+    },
+    {
+      "name": "Missing amount is rejected",
+      "input": {
+        "currency": "GBP",
+        "sales": [
+          {
+            "status": "paid"
+          }
+        ]
+      },
+      "expectedError": "Every sale needs amount_cents"
+    },
+    {
+      "name": "Negative amount is rejected",
+      "input": {
+        "currency": "GBP",
+        "sales": [
+          {
+            "status": "paid",
+            "amount_cents": -1
+          }
+        ]
+      },
+      "expectedError": "Amounts must be nonnegative"
+    },
+    {
+      "name": "Unknown status is rejected",
+      "input": {
+        "currency": "GBP",
+        "sales": [
+          {
+            "status": "unknown",
+            "amount_cents": 100
+          }
+        ]
+      },
+      "expectedError": "Unknown sale status"
+    }
+  ],
+  "recipe": {
+    "problem": "Produce a small revenue summary from a single-currency sales feed. Count only paid records.",
+    "prerequisites": [
+      "currency is required. All sales must already use that one currency.",
+      "sales is a required array. Each sale has status paid, pending, or refunded and a nonnegative integer amount_cents."
+    ],
+    "explanation": [
+      "The assertions reject missing amounts, negative amounts, and unrecognized statuses before aggregation.",
+      "paid keeps only records whose status is paid. SUM adds their amount_cents, including a legitimate zero amount.",
+      "excluded_count reports records that did not contribute. An empty array has count 0 and total 0."
+    ],
+    "limits": [
+      "A refunded record is excluded; this is gross paid revenue, not a ledger that subtracts refunds.",
+      "No currency conversion, rounding, tax, duplicate detection, or currency minor-unit lookup is performed.",
+      "Keep amounts and the aggregate within the cross-runtime safe integer range; this recipe makes no arbitrary-precision guarantee."
+    ]
+  }
+}

@@ -1,31 +1,20 @@
 ---
-title: Real-world Recipes
+title: Practical Recipes
 ---
 
-# Real-world Recipes
+# Practical Recipes
 
-These short scenarios mirror the kinds of workflows ETL builders ship in production. Each one links to a runnable example you can adapt.
+Choose a task, run the complete example, then make one small change. Each recipe includes input, expected output, an exercise, prerequisites, and files for a local run.
 
-## Customer profile enrichment
-Add defaults, normalize nested fields, and build a stable output schema.
-- [customer-profile](../playground.md?example=customer-profile){ target="_blank" }
+| Your task | Start here |
+| --- | --- |
+| Normalize a customer record | [Normalize a customer](../recipes/recipe-customer.md) |
+| Filter order items and build a payload | [Prepare an order](../recipes/prepare-order.md) |
+| Calculate totals for a sales report | [Summarize sales](../recipes/recipe-sales-summary.md) |
+| Check required fields and handle missing values | [Handle incomplete data](../recipes/recipe-incomplete-data.md) |
+| Turn a JSON test report into a summary | [Summarize a test report](../recipes/recipe-test-report.md) |
+| Reject invalid input before a pipeline continues | [Guard a pipeline](../recipes/recipe-pipeline-guard.md) |
 
-## Order shipment normalization
-Collect shipping and line-item data into a clean shipment record.
-- [order-shipment](../playground.md?example=order-shipment){ target="_blank" }
+New to Branchline? Start with [Prepare an order](../recipes/prepare-order.md), or follow [Getting started](../guides/getting-started.md).
 
-## Pipeline health gating
-Fail fast when health checks or test gates break.
-- [pipeline-health-gating](../playground.md?example=pipeline-health-gating){ target="_blank" }
-
-## Test report summaries
-Transform JUnit XML-like data into a compact dashboard summary.
-- [junit-badge-summary](../playground.md?example=junit-badge-summary){ target="_blank" }
-
-## Collection transforms
-Batch reshape collections for downstream storage or API calls.
-- [collection-transforms](../playground.md?example=collection-transforms){ target="_blank" }
-
-## Where to go next
-- Browse the [Standard Library](../language/std-core.md) for reusable helpers.
-- Explore deployment tips in [Production Use](../guides/production-use.md).
+For focused examples of XML, text formatting, numeric behavior, tracing, contracts, shared state, and transform options, browse the [task-based example catalog](../guides/examples.md). The [Playground](../playground.md) groups runnable examples by the same tasks.

@@ -1,5 +1,9 @@
 {
-  "title": "Stdlib: STRING, NUMBER, BOOLEAN",
+  "title": "Convert primitive input values",
+  "aiSubset": "unknown",
+  "tags": ["casting", "number", "boolean", "string"],
+  "category": "reshape-data",
+  "id": "stdlib-strings-casts",
   "description": "Convert between primitive types and observe null/error behavior.",
   "program": [
     "LET asString = STRING(input.raw.number)",

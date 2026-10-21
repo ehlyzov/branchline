@@ -1,7 +1,7 @@
 {
-  "title": "Canonical JSON Output",
+  "title": "Serialize JSON with canonical ordering",
   "id": "json-canonical-output",
-  "category": "json",
+  "category": "numeric-data",
   "tags": ["json-canonical", "deterministic-output", "numbers", "ordering", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Deterministic key ordering and normalized number rendering using json-canonical output.",

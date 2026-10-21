@@ -1,5 +1,9 @@
 {
-  "title": "Stdlib: Base64 helpers",
+  "title": "Decode and re-encode a Base64 payload",
+  "aiSubset": "unknown",
+  "tags": ["base64", "bytes", "encoding"],
+  "category": "text-and-encoding",
+  "id": "stdlib-strings-base64",
   "description": "Decode base64 payloads to bytes and re-encode for JSON output.",
   "program": [
     "LET bytes = BASE64_DECODE(input.payload)",

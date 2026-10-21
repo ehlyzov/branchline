@@ -1,5 +1,9 @@
 {
-  "title": "XML mapping: namespaces",
+  "title": "Read namespaced XML elements and attributes",
+  "aiSubset": "unknown",
+  "tags": ["xml", "namespaces", "attributes"],
+  "category": "xml-data",
+  "id": "xml-namespaces-mapping",
   "description": "Shows @xmlns namespace declarations and prefixed element/attribute keys in mapped XML input.",
   "program": [
     "LET doc = input.doc",

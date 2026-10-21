@@ -7,6 +7,7 @@ repo_url: https://github.com/ehlyzov/branchline
 
 exclude_docs: |
   /includes/prepare-order/
+  /includes/recipes/
 
 theme:
   name: material
@@ -54,19 +55,26 @@ nav:
   - Home: index.md
   - Try it: playground.md
   - Get started: guides/getting-started.md
+  - Recipes:
+    - Choose a task: learn/recipes.md
+    - Normalize a customer: recipes/recipe-customer.md
+    - Prepare an order: recipes/prepare-order.md
+    - Summarize sales: recipes/recipe-sales-summary.md
+    - Handle incomplete data: recipes/recipe-incomplete-data.md
+    - Summarize test results: recipes/recipe-test-report.md
+    - Reject invalid input: recipes/recipe-pipeline-guard.md
+    - All examples by task: guides/examples.md
   - Learn:
     - Tour of Branchline: learn/index.md
     - Hello, Transform: learn/hello-transform.md
     - Paths and Reshaping: learn/paths-and-reshaping.md
     - Control Flow for Pipelines: learn/control-flow.md
     - Error Handling and Tracing: learn/error-handling.md
-    - Real-world Recipes: learn/recipes.md
     - Guides Index: guides/index.md
     - First Steps: guides/first-steps.md
     - FOR EACH Loops: guides/for-each.md
     - Array Comprehensions: guides/array-comprehension.md
     - TRY/CATCH: guides/try-catch.md
-    - Examples: guides/examples.md
   - Reference:
     - Overview: language/index.md
     - Lexical Structure: language/lexical.md

@@ -1,0 +1,43 @@
+[
+  {
+    "name": "Missing optional objects and arrays",
+    "input": {
+      "id": "C-18"
+    },
+    "expectedOutput": {
+      "customer_id": "C-18",
+      "email": null,
+      "phone": null,
+      "tags": [],
+      "needs_contact": true
+    }
+  },
+  {
+    "name": "Existing phone and tags are preserved",
+    "input": {
+      "id": "C-19",
+      "contact": {
+        "phone": "+44 20 0000 0000"
+      },
+      "tags": [
+        "customer"
+      ]
+    },
+    "expectedOutput": {
+      "customer_id": "C-19",
+      "email": null,
+      "phone": "+44 20 0000 0000",
+      "tags": [
+        "customer"
+      ],
+      "needs_contact": false
+    }
+  },
+  {
+    "name": "Missing customer id is rejected",
+    "input": {
+      "contact": {}
+    },
+    "expectedError": "Customer id is required"
+  }
+]

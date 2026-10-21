@@ -1,5 +1,5 @@
 {
-  "title": "Contracts: append from empty array",
+  "title": "Inspect contracts when building an array",
   "id": "contract-empty-array-append",
   "category": "contracts",
   "tags": ["contract-inference", "arrays", "foreach", "append", "ai-canonical"],

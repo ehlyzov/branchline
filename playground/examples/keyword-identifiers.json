@@ -1,5 +1,9 @@
 {
-  "title": "Use keywords as identifiers",
+  "title": "Use keyword names in a transform",
+  "aiSubset": "unknown",
+  "tags": ["identifiers", "keywords", "escaping"],
+  "category": "configure-transforms",
+  "id": "keyword-identifiers",
   "description": "Shows soft keywords as names and backtick-escaped identifiers for hard keywords.",
   "program": [
     "LET output = 1",

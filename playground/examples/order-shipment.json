@@ -1,7 +1,7 @@
 {
-  "title": "Order shipment overview",
+  "title": "Build an order shipment overview",
   "id": "order-shipment",
-  "category": "business-transform",
+  "category": "reshape-data",
   "tags": ["orders", "shipping", "get", "format", "case", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Extract shipping operations data with GET/FORMAT and CASE-based rush classification.",

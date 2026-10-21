@@ -1,7 +1,7 @@
 {
-  "title": "Stdlib: WALK over nested data",
+  "title": "Inspect paths through nested data",
   "id": "stdlib-core-walk",
-  "category": "stdlib",
+  "category": "inspect-data",
   "tags": ["walk", "collect", "nested-data", "paths", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Traverse nested objects/lists with WALK and inspect the resulting path metadata.",

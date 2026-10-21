@@ -1,7 +1,7 @@
 {
-  "title": "Transform Options",
+  "title": "Configure transform adapters and shared storage",
   "id": "transform-options",
-  "category": "advanced",
+  "category": "configure-transforms",
   "tags": ["options", "adapters", "shared", "buffer-mode", "advanced"],
   "aiSubset": "incompatible",
   "description": "Demonstrates per-transform OPTIONS configuration.",

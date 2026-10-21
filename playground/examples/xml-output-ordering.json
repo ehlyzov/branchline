@@ -1,7 +1,7 @@
 {
-  "title": "XML output ordering shape",
+  "title": "Control XML element order and namespaces",
   "id": "xml-output-ordering",
-  "category": "xml",
+  "category": "xml-data",
   "tags": ["xml-output", "ordering", "namespaces", "attributes", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Builds an XML-shaped object using @order and @xmlns for deterministic XML serialization.",

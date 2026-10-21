@@ -1,5 +1,9 @@
 {
-  "title": "Stdlib: APPEND, PREPEND, COLLECT, IS_OBJECT",
+  "title": "Build lists and collect nested entries",
+  "aiSubset": "unknown",
+  "tags": ["arrays", "append", "prepend", "collect"],
+  "category": "reshape-data",
+  "id": "stdlib-core-append-prepend",
   "description": "Build new lists with APPEND/PREPEND and normalize iterables with COLLECT.",
   "program": [
     "LET appended = APPEND(input.scores, 99)",

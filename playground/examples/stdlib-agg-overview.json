@@ -1,5 +1,9 @@
 {
-  "title": "Stdlib: Aggregation helpers",
+  "title": "Summarize counts, prices and ranges",
+  "aiSubset": "unknown",
+  "tags": ["aggregation", "sum", "average", "count"],
+  "category": "summarize-data",
+  "id": "stdlib-agg-overview",
   "description": "Summaries with LENGTH/COUNT, SUM, AVG, MIN, and MAX.",
   "program": [
     "LET totalItems = LENGTH(input.items)",

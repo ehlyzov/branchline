@@ -1,0 +1,45 @@
+[
+  {
+    "name": "Missing optional contacts stay null",
+    "input": {
+      "id": "C-18",
+      "name": " Grace Hopper "
+    },
+    "expectedOutput": {
+      "customer_id": "C-18",
+      "name": "Grace Hopper",
+      "email": null,
+      "city": null
+    }
+  },
+  {
+    "name": "Blank email becomes null",
+    "input": {
+      "id": "C-19",
+      "name": "Lin",
+      "email": "  ",
+      "address": null
+    },
+    "expectedOutput": {
+      "customer_id": "C-19",
+      "name": "Lin",
+      "email": null,
+      "city": null
+    }
+  },
+  {
+    "name": "Missing required name is rejected",
+    "input": {
+      "id": "C-20"
+    },
+    "expectedError": "Customer name is required"
+  },
+  {
+    "name": "Blank required name is rejected",
+    "input": {
+      "id": "C-20",
+      "name": "  "
+    },
+    "expectedError": "Customer name must not be blank"
+  }
+]

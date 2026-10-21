@@ -1,0 +1,120 @@
+{
+  "title": "Handle incomplete contact data",
+  "id": "recipe-incomplete-data",
+  "category": "validate-data",
+  "tags": [
+    "recipe",
+    "beginner",
+    "ai-canonical"
+  ],
+  "aiSubset": "compatible",
+  "description": "Keep missing email and phone as null, normalize optional tags, and flag records needing contact details.",
+  "program": [
+    "TRANSFORM ContactReadiness {",
+    "    ASSERT(input.id != null, \"Customer id is required\")",
+    "    LET contact = input.contact ?? {}",
+    "    LET email = contact.email ?? null",
+    "    LET phone = contact.phone ?? null",
+    "    LET tags = input.tags ?? []",
+    "    OUTPUT {",
+    "        customer_id: input.id,",
+    "        email: email,",
+    "        phone: phone,",
+    "        tags: tags,",
+    "        needs_contact: email == null && phone == null",
+    "    }",
+    "}"
+  ],
+  "input": {
+    "id": "C-17",
+    "contact": {
+      "email": null
+    },
+    "tags": null
+  },
+  "expectedOutput": {
+    "customer_id": "C-17",
+    "email": null,
+    "phone": null,
+    "tags": [],
+    "needs_contact": true
+  },
+  "exercise": {
+    "instruction": "Set contact.email to \"ada@example.com\", then run again.",
+    "patch": {
+      "path": [
+        "contact",
+        "email"
+      ],
+      "value": "ada@example.com"
+    },
+    "expectedOutput": {
+      "customer_id": "C-17",
+      "email": "ada@example.com",
+      "phone": null,
+      "tags": [],
+      "needs_contact": false
+    }
+  },
+  "edgeCases": [
+    {
+      "name": "Missing optional objects and arrays",
+      "input": {
+        "id": "C-18"
+      },
+      "expectedOutput": {
+        "customer_id": "C-18",
+        "email": null,
+        "phone": null,
+        "tags": [],
+        "needs_contact": true
+      }
+    },
+    {
+      "name": "Existing phone and tags are preserved",
+      "input": {
+        "id": "C-19",
+        "contact": {
+          "phone": "+44 20 0000 0000"
+        },
+        "tags": [
+          "customer"
+        ]
+      },
+      "expectedOutput": {
+        "customer_id": "C-19",
+        "email": null,
+        "phone": "+44 20 0000 0000",
+        "tags": [
+          "customer"
+        ],
+        "needs_contact": false
+      }
+    },
+    {
+      "name": "Missing customer id is rejected",
+      "input": {
+        "contact": {}
+      },
+      "expectedError": "Customer id is required"
+    }
+  ],
+  "recipe": {
+    "problem": "Prepare incomplete contact records for a follow-up queue while preserving the distinction between an unknown contact and a known value.",
+    "prerequisites": [
+      "id is required. contact is optional, with optional email and phone text fields or null.",
+      "tags is an optional array of text or null. An absent or null tags field means no tags for this workflow."
+    ],
+    "explanation": [
+      "The required identifier is checked before producing a result.",
+      "contact uses an empty object before reading optional leaves. A missing leaf is null; indexing a null parent would fail.",
+      "email and phone stay null when absent or explicitly null. No placeholder contact detail is invented.",
+      "tags uses an empty collection only for absent or null tags. needs_contact is true when both contact fields are null."
+    ],
+    "limits": [
+      "This checks presence only. Blank strings count as present; normalize and validate contacts first when blank text should mean missing.",
+      "Wrong input types are outside this recipe schema; tags must be an array when supplied.",
+      "The program does not send messages or update customer records."
+    ]
+  }
+}

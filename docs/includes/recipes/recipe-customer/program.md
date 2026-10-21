@@ -1,0 +1,22 @@
+<!-- Generated from playground/examples/recipe-customer.json; run npm run sync:recipes in playground/. -->
+
+```branchline
+TRANSFORM NormalizeCustomer {
+    LET address = input.address ?? {}
+    ASSERT(input.id != null, "Customer id is required")
+    ASSERT(input.name != null, "Customer name is required")
+    LET name = TRIM(input.name)
+    ASSERT(name != "", "Customer name must not be blank")
+    LET email = CASE {
+        WHEN input.email == null THEN null
+        WHEN TRIM(input.email) == "" THEN null
+        ELSE LOWER(TRIM(input.email))
+    }
+    OUTPUT {
+        customer_id: input.id,
+        name: name,
+        email: email,
+        city: address.city ?? null
+    }
+}
+```

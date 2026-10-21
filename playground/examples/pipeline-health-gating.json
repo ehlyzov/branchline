@@ -1,7 +1,7 @@
 {
-  "title": "Gate deployments with CHECKPOINT and ASSERT",
+  "title": "Reject failing builds before deployment",
   "id": "pipeline-health-gating",
-  "category": "operations",
+  "category": "validate-data",
   "tags": ["pipeline", "health-gate", "checkpoint", "assert", "trace", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Uses FOR EACH normalization, FILTER-based aggregates, and CASE-driven rollout gating.",

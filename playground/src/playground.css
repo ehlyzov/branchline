@@ -780,3 +780,197 @@
   .playground-exercise { font-size: 13px; }
   .playground-local { gap: 10px; }
 }
+
+/* Keep native form fields and disclosures predictable inside Material pages. */
+.branchline-playground .playground-controls--primary {
+  display: grid;
+  grid-template-columns: minmax(160px, .8fr) minmax(220px, 1.4fr) auto;
+  align-items: end;
+  gap: 8px 12px;
+}
+.branchline-playground .playground-select {
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  line-height: 1.4;
+}
+.branchline-playground .playground-select select {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
+  font-family: inherit;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+}
+.playground-actions {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  min-width: 0;
+}
+.playground-actions .playground-button {
+  flex: 0 1 auto;
+  width: auto;
+  white-space: nowrap;
+}
+.playground-controls--primary .playground-overview-status {
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+}
+.branchline-playground details.playground-advanced,
+.branchline-playground details.example-description,
+.branchline-playground details.playground-disclosure,
+.branchline-playground details.panel-trace-structured {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+}
+.branchline-playground details > summary {
+  display: list-item;
+  list-style: disclosure-closed inside;
+  margin: 0;
+  padding: 6px 0;
+  border: 0;
+  background: transparent;
+  color: var(--md-primary-fg-color, #2563eb);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.branchline-playground details[open] > summary {
+  list-style-type: disclosure-open;
+  margin-bottom: 8px;
+}
+.branchline-playground details > summary::before,
+.branchline-playground details > summary::after {
+  display: none;
+}
+.playground-settings {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid rgba(100, 116, 139, .25);
+  border-radius: 8px;
+  background: var(--md-default-bg-color, #fff);
+}
+.branchline-playground .playground-controls--advanced {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.playground-toggle-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-column: 1 / -1;
+  gap: 12px 16px;
+}
+.branchline-playground .playground-toggle {
+  align-items: flex-start;
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.branchline-playground .playground-toggle input {
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--md-primary-fg-color, #2563eb);
+}
+.playground-controls--advanced .playground-catalog-count {
+  grid-column: 1 / -1;
+  white-space: normal;
+}
+.branchline-playground .playground-settings > .example-description {
+  margin-top: 16px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(100, 116, 139, .2);
+}
+.branchline-playground .playground-settings .playground-session-hint {
+  margin: 12px 0 8px;
+  line-height: 1.5;
+}
+.branchline-playground details.playground-disclosure,
+.branchline-playground details.panel-trace-structured {
+  padding: 10px;
+  border: 1px solid rgba(100, 116, 139, .25);
+  border-radius: 8px;
+  background: var(--md-default-bg-color, #fff);
+}
+.branchline-playground details.inspect-panel {
+  padding: 14px;
+}
+.branchline-playground .playground-disclosure > :not(summary),
+.branchline-playground .panel-trace-structured > :not(summary) {
+  min-width: 0;
+  margin-top: 10px;
+}
+.branchline-playground .playground-disclosure > summary,
+.branchline-playground .panel-trace-structured > summary {
+  padding: 0;
+}
+.branchline-playground .example-description p {
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+.playground-settings > a,
+.playground-exercise a,
+.playground-local a {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 900px) {
+  .branchline-playground .playground-controls--primary {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+  }
+  .playground-actions { grid-column: 1 / -1; }
+  .branchline-playground .playground-controls--advanced { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .playground-toggle-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 540px) {
+  .branchline-playground .playground-controls--primary,
+  .branchline-playground .playground-controls--advanced,
+  .playground-toggle-group { grid-template-columns: minmax(0, 1fr); }
+  .playground-actions .playground-button {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 10px;
+    font-size: 14px;
+  }
+  .playground-settings { padding: 12px; }
+  .branchline-playground .playground-controls--advanced { gap: 12px; }
+}
+.branchline-playground details.playground-exercise-result {
+  margin-top: 8px;
+  padding: 8px 10px;
+}
+.playground-exercise-result .panel-output { min-height: 0; }
+
+/* Brown primary branding needs a lighter action color on Material's slate surface. */
+[data-md-color-scheme="slate"] .branchline-playground {
+  --playground-action-color: #bfdbfe;
+}
+[data-md-color-scheme="slate"] .branchline-playground :is(details > summary, .playground-button--ghost, .playground-file-button, a) {
+  color: var(--playground-action-color);
+}
+[data-md-color-scheme="slate"] .branchline-playground :is(.playground-button--ghost, .playground-file-button) {
+  border-color: rgba(191, 219, 254, .55);
+}
+[data-md-color-scheme="slate"] .branchline-playground :is(details > summary, .playground-button--ghost, .playground-file-button, a):focus-visible {
+  outline: 3px solid var(--playground-action-color);
+  outline-offset: 3px;
+}

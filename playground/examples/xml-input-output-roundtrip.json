@@ -1,5 +1,9 @@
 {
-  "title": "XML input/output roundtrip",
+  "title": "Convert an XML invoice to an XML report",
+  "aiSubset": "unknown",
+  "tags": ["xml-input", "xml-output", "namespaces"],
+  "category": "xml-data",
+  "id": "xml-input-output-roundtrip",
   "description": "Parses raw XML input into Branchline mapping and emits XML output using namespace-aware ordering.",
   "program": [
     "LET invoice = input.invoice",

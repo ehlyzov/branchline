@@ -1,5 +1,9 @@
 {
-  "title": "XML mapping: mixed content",
+  "title": "Read XML attributes and mixed text",
+  "aiSubset": "unknown",
+  "tags": ["xml", "mixed-content", "text-segments"],
+  "category": "xml-data",
+  "id": "xml-mapping-mixed-content",
   "description": "Demonstrates the normalized XML shape using @attributes, $, and $n text segments.",
   "program": [
     "LET row = input.row",

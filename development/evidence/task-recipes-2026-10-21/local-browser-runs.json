@@ -1,0 +1,78 @@
+[
+  {
+    "id": "prepare-order",
+    "output": "{\n    \"order_id\": \"A-104\",\n    \"city\": \"London\",\n    \"skus\": [\n        \"BOOK\"\n    ]\n}",
+    "expected": {
+      "order_id": "A-104",
+      "city": "London",
+      "skus": [
+        "BOOK"
+      ]
+    },
+    "pass": true
+  },
+  {
+    "id": "recipe-customer",
+    "output": "{\n    \"customer_id\": \"C-17\",\n    \"name\": \"Ada Lovelace\",\n    \"email\": \"ada@example.com\",\n    \"city\": \"London\"\n}",
+    "expected": {
+      "customer_id": "C-17",
+      "name": "Ada Lovelace",
+      "email": "ada@example.com",
+      "city": "London"
+    },
+    "pass": true
+  },
+  {
+    "id": "recipe-sales-summary",
+    "output": "{\n    \"currency\": \"GBP\",\n    \"paid_count\": 2,\n    \"revenue_cents\": 3700,\n    \"excluded_count\": 1\n}",
+    "expected": {
+      "currency": "GBP",
+      "paid_count": 2,
+      "revenue_cents": 3700,
+      "excluded_count": 1
+    },
+    "pass": true
+  },
+  {
+    "id": "recipe-incomplete-data",
+    "output": "{\n    \"customer_id\": \"C-17\",\n    \"email\": null,\n    \"phone\": null,\n    \"tags\": [],\n    \"needs_contact\": true\n}",
+    "expected": {
+      "customer_id": "C-17",
+      "email": null,
+      "phone": null,
+      "tags": [],
+      "needs_contact": true
+    },
+    "pass": true
+  },
+  {
+    "id": "recipe-test-report",
+    "output": "{\n    \"status\": \"failing\",\n    \"total\": 3,\n    \"passed\": 1,\n    \"failed\": 1,\n    \"skipped\": 1,\n    \"duration_ms\": 200,\n    \"failed_tests\": [\n        \"checkout\"\n    ]\n}",
+    "expected": {
+      "status": "failing",
+      "total": 3,
+      "passed": 1,
+      "failed": 1,
+      "skipped": 1,
+      "duration_ms": 200,
+      "failed_tests": [
+        "checkout"
+      ]
+    },
+    "pass": true
+  },
+  {
+    "id": "recipe-pipeline-guard",
+    "output": "{\n    \"run_id\": \"build-104\",\n    \"branch\": \"main\",\n    \"deploy\": true,\n    \"checked_names\": [\n        \"unit tests\",\n        \"package\"\n    ]\n}",
+    "expected": {
+      "run_id": "build-104",
+      "branch": "main",
+      "deploy": true,
+      "checked_names": [
+        "unit tests",
+        "package"
+      ]
+    },
+    "pass": true
+  }
+]

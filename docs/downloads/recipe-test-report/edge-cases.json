@@ -1,0 +1,63 @@
+[
+  {
+    "name": "Empty report has no runs",
+    "input": {
+      "tests": []
+    },
+    "expectedOutput": {
+      "status": "no-runs",
+      "total": 0,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "failed_tests": []
+    }
+  },
+  {
+    "name": "Skipped-only report is not passing",
+    "input": {
+      "tests": [
+        {
+          "name": "optional",
+          "status": "skipped",
+          "duration_ms": 0
+        }
+      ]
+    },
+    "expectedOutput": {
+      "status": "no-runs",
+      "total": 1,
+      "passed": 0,
+      "failed": 0,
+      "skipped": 1,
+      "duration_ms": 0,
+      "failed_tests": []
+    }
+  },
+  {
+    "name": "Missing duration is rejected",
+    "input": {
+      "tests": [
+        {
+          "name": "login",
+          "status": "passed"
+        }
+      ]
+    },
+    "expectedError": "Every test needs duration_ms"
+  },
+  {
+    "name": "Unknown status is rejected",
+    "input": {
+      "tests": [
+        {
+          "name": "login",
+          "status": "flaky",
+          "duration_ms": 10
+        }
+      ]
+    },
+    "expectedError": "Unknown test status"
+  }
+]

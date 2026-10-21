@@ -1,5 +1,9 @@
 {
-  "title": "Error Handling: TRY/CATCH",
+  "title": "Handle a failed calculation guard",
+  "aiSubset": "unknown",
+  "tags": ["assert", "try-catch", "fallback"],
+  "category": "validate-data",
+  "id": "error-handling-try-catch",
   "description": "Use TRY/CATCH with ASSERT to guard calculations and emit a safe fallback payload.",
   "program": [
     "LET total = SUM(input.items)",

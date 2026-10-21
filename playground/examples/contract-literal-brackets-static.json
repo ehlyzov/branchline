@@ -1,5 +1,5 @@
 {
-  "title": "Contracts: literal bracket keys",
+  "title": "Inspect contracts for literal bracket paths",
   "id": "contract-literal-brackets-static",
   "category": "contracts",
   "tags": ["literal-brackets", "static-paths", "xml-attributes", "ai-canonical"],

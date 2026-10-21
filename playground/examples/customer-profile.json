@@ -1,7 +1,7 @@
 {
-  "title": "Customer profile enrichment",
+  "title": "Enrich a customer profile",
   "id": "customer-profile",
-  "category": "business-transform",
+  "category": "reshape-data",
   "tags": ["customer", "profile", "format", "get", "case", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Build a normalized customer profile with FORMAT/GET helpers and a CASE-backed loyalty fallback.",

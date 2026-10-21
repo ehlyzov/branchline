@@ -1,0 +1,18 @@
+<!-- Generated from playground/examples/recipe-sales-summary.json; run npm run sync:recipes in playground/. -->
+
+```branchline
+TRANSFORM SummarizeSales {
+    ASSERT(input.currency != null, "Currency is required")
+    ASSERT(input.sales != null, "Sales array is required")
+    ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents != null), "Every sale needs amount_cents")
+    ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents >= 0), "Amounts must be nonnegative")
+    ASSERT(EVERY(input.sales, (sale) -> sale.status == "paid" || sale.status == "pending" || sale.status == "refunded"), "Unknown sale status")
+    LET paid = FILTER(input.sales, (sale) -> sale.status == "paid")
+    OUTPUT {
+        currency: input.currency,
+        paid_count: LENGTH(paid),
+        revenue_cents: SUM(MAP(paid, (sale) -> sale.amount_cents)),
+        excluded_count: LENGTH(input.sales) - LENGTH(paid)
+    }
+}
+```

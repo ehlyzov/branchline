@@ -1,5 +1,5 @@
 {
-  "title": "Contract nullable precision",
+  "title": "Declare nullable input and output contracts",
   "id": "contract-nullable-precision",
   "category": "contracts",
   "tags": ["nullable", "typed-signature", "contract-json", "ai-canonical"],

@@ -1,5 +1,9 @@
 {
-  "title": "Expressions: CASE",
+  "title": "Choose a report status from totals",
+  "aiSubset": "unknown",
+  "tags": ["case", "status", "test-report"],
+  "category": "summarize-data",
+  "id": "stdlib-case-basic",
   "description": "Choose the first matching branch with CASE/WHEN/ELSE using concise derived values.",
   "program": [
     "LET failed = input.totals.failures + input.totals.errors",

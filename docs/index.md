@@ -78,7 +78,7 @@ This example expects an array of items with numeric quantities. The missing-city
 
 Rename fields and flatten nested records for the next service in your workflow.
 
-[Explore a customer profile](playground.md?example=customer-profile)
+[Normalize a customer profile](recipes/recipe-customer.md)
 
 </section>
 
@@ -88,7 +88,7 @@ Rename fields and flatten nested records for the next service in your workflow.
 
 Select the rows you need and build a new list with explicit transformation rules.
 
-[Explore collection transforms](playground.md?example=collection-transforms)
+[Prepare an order payload](recipes/prepare-order.md)
 
 </section>
 
@@ -98,11 +98,13 @@ Select the rows you need and build a new list with explicit transformation rules
 
 Turn a structured test report into counts and status fields for a dashboard.
 
-[Explore a test report summary](playground.md?example=junit-badge-summary)
+[Summarize test results](recipes/recipe-test-report.md)
 
 </section>
 
 </div>
+
+[Choose from six practical recipes](learn/recipes.md) · [Browse all examples by task](guides/examples.md)
 
 <div class="bl-home__limits" markdown="1">
 

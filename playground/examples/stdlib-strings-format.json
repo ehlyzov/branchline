@@ -1,5 +1,9 @@
 {
-  "title": "Stdlib: FORMAT",
+  "title": "Format messages with placeholders",
+  "aiSubset": "unknown",
+  "tags": ["format", "placeholders", "escaping"],
+  "category": "text-and-encoding",
+  "id": "stdlib-strings-format",
   "description": "Named and indexed placeholders with brace escaping.",
   "program": [
     "LET named = FORMAT(\"Hello {name} ({role})\", { name: input.name, role: input.role })",

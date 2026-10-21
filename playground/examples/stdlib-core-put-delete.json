@@ -1,7 +1,7 @@
 {
-  "title": "Stdlib: PUT and DELETE",
+  "title": "Update and remove object or list entries",
   "id": "stdlib-core-put-delete",
-  "category": "stdlib",
+  "category": "reshape-data",
   "tags": ["put", "delete", "immutable-update", "objects", "lists", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Use PUT and DELETE to update objects and lists immutably.",

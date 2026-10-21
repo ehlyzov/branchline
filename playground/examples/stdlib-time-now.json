@@ -1,5 +1,9 @@
 {
-  "title": "Stdlib: NOW timestamp",
+  "title": "Capture the current timestamp",
+  "aiSubset": "unknown",
+  "tags": ["now", "timestamp", "clock"],
+  "category": "state-and-time",
+  "id": "stdlib-time-now",
   "description": "Call NOW() to capture the current timestamp (ISO 8601).",
   "program": [
     "LET captured = NOW()",

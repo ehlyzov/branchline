@@ -1,0 +1,14 @@
+{
+  "run_id": "build-104",
+  "branch": "main",
+  "checks": [
+    {
+      "name": "unit tests",
+      "status": "passed"
+    },
+    {
+      "name": "package",
+      "status": "failed"
+    }
+  ]
+}

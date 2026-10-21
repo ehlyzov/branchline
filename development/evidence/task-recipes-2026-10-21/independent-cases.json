@@ -1,0 +1,25 @@
+{
+  "prepare-order": [
+    {"name":"independent-selection", "input":{"id":"X", "shipping":{}, "items":[{"sku":"NO","qty":-3},{"sku":"ZERO","qty":0},{"sku":"YES","qty":1},{"sku":"YES","qty":4}]}, "expectedOutput":{"order_id":"X","city":"Not provided","skus":["YES","YES"]}}
+  ],
+  "recipe-customer": [
+    {"name":"independent-normalization", "input":{"id":"C-X","name":"  Mary Jane  ","email":" X+Y@EXAMPLE.ORG  ","address":{}},"expectedOutput":{"customer_id":"C-X","name":"Mary Jane","email":"x+y@example.org","city":null}},
+    {"name":"independent-missing-parent", "input":{"id":"C-Y","name":"Grace"},"expectedOutput":{"customer_id":"C-Y","name":"Grace","email":null,"city":null}}
+  ],
+  "recipe-sales-summary": [
+    {"name":"independent-filter-sum", "input":{"currency":"EUR","sales":[{"status":"paid","amount_cents":11},{"status":"refunded","amount_cents":999},{"status":"paid","amount_cents":0},{"status":"pending","amount_cents":73},{"status":"paid","amount_cents":29}]},"expectedOutput":{"currency":"EUR","paid_count":3,"revenue_cents":40,"excluded_count":2}},
+    {"name":"independent-null-amount", "input":{"currency":"EUR","sales":[{"status":"pending","amount_cents":null}]},"expectedError":"Every sale needs amount_cents"}
+  ],
+  "recipe-incomplete-data": [
+    {"name":"independent-null-parent", "input":{"id":"C-X","contact":null,"tags":[]},"expectedOutput":{"customer_id":"C-X","email":null,"phone":null,"tags":[],"needs_contact":true}},
+    {"name":"independent-preserve", "input":{"id":"C-Y","contact":{"email":"x@example.org","phone":null},"tags":["a","a"]},"expectedOutput":{"customer_id":"C-Y","email":"x@example.org","phone":null,"tags":["a","a"],"needs_contact":false}}
+  ],
+  "recipe-test-report": [
+    {"name":"independent-failure-order", "input":{"tests":[{"name":"b","status":"failed","duration_ms":7},{"name":"a","status":"failed","duration_ms":0},{"name":"c","status":"passed","duration_ms":3}]},"expectedOutput":{"status":"failing","total":3,"passed":1,"failed":2,"skipped":0,"duration_ms":10,"failed_tests":["b","a"]}},
+    {"name":"independent-negative-duration", "input":{"tests":[{"name":"x","status":"passed","duration_ms":-1}]},"expectedError":"Durations must be nonnegative"}
+  ],
+  "recipe-pipeline-guard": [
+    {"name":"independent-reject-first", "input":{"run_id":"R-X","branch":"release","checks":[{"name":"lint","status":"failed"},{"name":"tests","status":"passed"}]},"expectedError":"Pipeline checks must pass"},
+    {"name":"independent-preserve-order", "input":{"run_id":"R-Y","branch":"feature/x","checks":[{"name":"z","status":"passed"},{"name":"a","status":"passed"}]},"expectedOutput":{"run_id":"R-Y","branch":"feature/x","deploy":true,"checked_names":["z","a"]}}
+  ]
+}

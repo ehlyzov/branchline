@@ -1,0 +1,1172 @@
+{
+  "program_sha256": {
+    "prepare-order": "22ece9f472b5b8a4b292e1a5cc2346110faa2cd5048518fa38964501f46fa6b1",
+    "recipe-customer": "1290e468e2a401680cfae41c2fc9bf763691d24aea249eb342f7381c85e255e4",
+    "recipe-sales-summary": "0ffdb396f01e05776a14df9dea9c98eb40d92e311f79e9d692070eaa04d7d2d5",
+    "recipe-incomplete-data": "dc0a9e87f8edee48d2439b86c1ecdde6336097b91c21b3091ec7a794b9992db5",
+    "recipe-test-report": "c1935a786a2bda3574b867358b1e8cdeae6a5f72bfedb9113afb9629baed67e9",
+    "recipe-pipeline-guard": "d44ff3907db270e1004b1db6338d5fdcf6374ee78795a1f2ad07f99be4eff181"
+  },
+  "cases": [
+    {
+      "recipe": "prepare-order",
+      "case": "base",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "prepare-order",
+      "case": "base",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "prepare-order",
+      "case": "exercise",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK",
+          "PEN"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "prepare-order",
+      "case": "exercise",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK",
+          "PEN"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "prepare-order",
+      "case": "independent-selection",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "order_id": "X",
+        "city": "Not provided",
+        "skus": [
+          "YES",
+          "YES"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "prepare-order",
+      "case": "independent-selection",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "order_id": "X",
+        "city": "Not provided",
+        "skus": [
+          "YES",
+          "YES"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "base",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-17",
+        "name": "Ada Lovelace",
+        "email": "ada@example.com",
+        "city": "London"
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "base",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-17",
+        "name": "Ada Lovelace",
+        "email": "ada@example.com",
+        "city": "London"
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "exercise",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-17",
+        "name": "Ada Lovelace",
+        "email": "ada+news@example.com",
+        "city": "London"
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "exercise",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-17",
+        "name": "Ada Lovelace",
+        "email": "ada+news@example.com",
+        "city": "London"
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "Missing optional contacts stay null",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-18",
+        "name": "Grace Hopper",
+        "email": null,
+        "city": null
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "Missing optional contacts stay null",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-18",
+        "name": "Grace Hopper",
+        "email": null,
+        "city": null
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "Blank email becomes null",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-19",
+        "name": "Lin",
+        "email": null,
+        "city": null
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "Blank email becomes null",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-19",
+        "name": "Lin",
+        "email": null,
+        "city": null
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "Missing required name is rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Customer name is required\nat [4:11]\n3 |     ASSERT(input.id != null, \"Customer id is required\")\n4 |     ASSERT(input.name != null, \"Customer name is required\")\n              ^\n5 |     LET name = TRIM(input.name)\n"
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "Missing required name is rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Customer name is required\nat [4:11]\n3 |     ASSERT(input.id != null, \"Customer id is required\")\n4 |     ASSERT(input.name != null, \"Customer name is required\")\n              ^\n5 |     LET name = TRIM(input.name)\n"
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "Blank required name is rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Customer name must not be blank\nat [6:11]\n5 |     LET name = TRIM(input.name)\n6 |     ASSERT(name != \"\", \"Customer name must not be blank\")\n              ^\n7 |     LET email = CASE {\n"
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "Blank required name is rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Customer name must not be blank\nat [6:11]\n5 |     LET name = TRIM(input.name)\n6 |     ASSERT(name != \"\", \"Customer name must not be blank\")\n              ^\n7 |     LET email = CASE {\n"
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "independent-normalization",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-X",
+        "name": "Mary Jane",
+        "email": "x+y@example.org",
+        "city": null
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "independent-normalization",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-X",
+        "name": "Mary Jane",
+        "email": "x+y@example.org",
+        "city": null
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "independent-missing-parent",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-Y",
+        "name": "Grace",
+        "email": null,
+        "city": null
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-customer",
+      "case": "independent-missing-parent",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-Y",
+        "name": "Grace",
+        "email": null,
+        "city": null
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "base",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "currency": "GBP",
+        "paid_count": 2,
+        "revenue_cents": 3700,
+        "excluded_count": 1
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "base",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "currency": "GBP",
+        "paid_count": 2,
+        "revenue_cents": 3700,
+        "excluded_count": 1
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "exercise",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "currency": "GBP",
+        "paid_count": 3,
+        "revenue_cents": 4600,
+        "excluded_count": 0
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "exercise",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "currency": "GBP",
+        "paid_count": 3,
+        "revenue_cents": 4600,
+        "excluded_count": 0
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "Empty sales have a zero total",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "currency": "GBP",
+        "paid_count": 0,
+        "revenue_cents": 0,
+        "excluded_count": 0
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "Empty sales have a zero total",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "currency": "GBP",
+        "paid_count": 0,
+        "revenue_cents": 0,
+        "excluded_count": 0
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "Refunded sales are excluded and zero paid sales count",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "currency": "GBP",
+        "paid_count": 1,
+        "revenue_cents": 0,
+        "excluded_count": 1
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "Refunded sales are excluded and zero paid sales count",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "currency": "GBP",
+        "paid_count": 1,
+        "revenue_cents": 0,
+        "excluded_count": 1
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "Missing amount is rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Every sale needs amount_cents\nat [4:11]\n3 |     ASSERT(input.sales != null, \"Sales array is required\")\n4 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents != null), \"Every sale needs amount_cents\")\n              ^\n5 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents >= 0), \"Amounts must be nonnegative\")\n"
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "Missing amount is rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Every sale needs amount_cents\nat [4:11]\n3 |     ASSERT(input.sales != null, \"Sales array is required\")\n4 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents != null), \"Every sale needs amount_cents\")\n              ^\n5 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents >= 0), \"Amounts must be nonnegative\")\n"
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "Negative amount is rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Amounts must be nonnegative\nat [5:11]\n4 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents != null), \"Every sale needs amount_cents\")\n5 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents >= 0), \"Amounts must be nonnegative\")\n              ^\n6 |     ASSERT(EVERY(input.sales, (sale) -> sale.status == \"paid\" || sale.status == \"pending\" || sale.status == \"refunded\"), \"Unknown sale status\")\n"
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "Negative amount is rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Amounts must be nonnegative\nat [5:11]\n4 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents != null), \"Every sale needs amount_cents\")\n5 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents >= 0), \"Amounts must be nonnegative\")\n              ^\n6 |     ASSERT(EVERY(input.sales, (sale) -> sale.status == \"paid\" || sale.status == \"pending\" || sale.status == \"refunded\"), \"Unknown sale status\")\n"
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "Unknown status is rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Unknown sale status\nat [6:11]\n5 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents >= 0), \"Amounts must be nonnegative\")\n6 |     ASSERT(EVERY(input.sales, (sale) -> sale.status == \"paid\" || sale.status == \"pending\" || sale.status == \"refunded\"), \"Unknown sale status\")\n              ^\n7 |     LET paid = FILTER(input.sales, (sale) -> sale.status == \"paid\")\n"
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "Unknown status is rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Unknown sale status\nat [6:11]\n5 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents >= 0), \"Amounts must be nonnegative\")\n6 |     ASSERT(EVERY(input.sales, (sale) -> sale.status == \"paid\" || sale.status == \"pending\" || sale.status == \"refunded\"), \"Unknown sale status\")\n              ^\n7 |     LET paid = FILTER(input.sales, (sale) -> sale.status == \"paid\")\n"
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "independent-filter-sum",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "currency": "EUR",
+        "paid_count": 3,
+        "revenue_cents": 40,
+        "excluded_count": 2
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "independent-filter-sum",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "currency": "EUR",
+        "paid_count": 3,
+        "revenue_cents": 40,
+        "excluded_count": 2
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "independent-null-amount",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Every sale needs amount_cents\nat [4:11]\n3 |     ASSERT(input.sales != null, \"Sales array is required\")\n4 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents != null), \"Every sale needs amount_cents\")\n              ^\n5 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents >= 0), \"Amounts must be nonnegative\")\n"
+    },
+    {
+      "recipe": "recipe-sales-summary",
+      "case": "independent-null-amount",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Every sale needs amount_cents\nat [4:11]\n3 |     ASSERT(input.sales != null, \"Sales array is required\")\n4 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents != null), \"Every sale needs amount_cents\")\n              ^\n5 |     ASSERT(EVERY(input.sales, (sale) -> sale.amount_cents >= 0), \"Amounts must be nonnegative\")\n"
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "base",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-17",
+        "email": null,
+        "phone": null,
+        "tags": [],
+        "needs_contact": true
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "base",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-17",
+        "email": null,
+        "phone": null,
+        "tags": [],
+        "needs_contact": true
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "exercise",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-17",
+        "email": "ada@example.com",
+        "phone": null,
+        "tags": [],
+        "needs_contact": false
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "exercise",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-17",
+        "email": "ada@example.com",
+        "phone": null,
+        "tags": [],
+        "needs_contact": false
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "Missing optional objects and arrays",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-18",
+        "email": null,
+        "phone": null,
+        "tags": [],
+        "needs_contact": true
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "Missing optional objects and arrays",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-18",
+        "email": null,
+        "phone": null,
+        "tags": [],
+        "needs_contact": true
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "Existing phone and tags are preserved",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-19",
+        "email": null,
+        "phone": "+44 20 0000 0000",
+        "tags": [
+          "customer"
+        ],
+        "needs_contact": false
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "Existing phone and tags are preserved",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-19",
+        "email": null,
+        "phone": "+44 20 0000 0000",
+        "tags": [
+          "customer"
+        ],
+        "needs_contact": false
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "Missing customer id is rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Customer id is required\nat [2:11]\n1 | TRANSFORM ContactReadiness {\n2 |     ASSERT(input.id != null, \"Customer id is required\")\n              ^\n3 |     LET contact = input.contact ?? {}\n"
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "Missing customer id is rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Customer id is required\nat [2:11]\n1 | TRANSFORM ContactReadiness {\n2 |     ASSERT(input.id != null, \"Customer id is required\")\n              ^\n3 |     LET contact = input.contact ?? {}\n"
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "independent-null-parent",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-X",
+        "email": null,
+        "phone": null,
+        "tags": [],
+        "needs_contact": true
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "independent-null-parent",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-X",
+        "email": null,
+        "phone": null,
+        "tags": [],
+        "needs_contact": true
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "independent-preserve",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-Y",
+        "email": "x@example.org",
+        "phone": null,
+        "tags": [
+          "a",
+          "a"
+        ],
+        "needs_contact": false
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-incomplete-data",
+      "case": "independent-preserve",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "customer_id": "C-Y",
+        "email": "x@example.org",
+        "phone": null,
+        "tags": [
+          "a",
+          "a"
+        ],
+        "needs_contact": false
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "base",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "status": "failing",
+        "total": 3,
+        "passed": 1,
+        "failed": 1,
+        "skipped": 1,
+        "duration_ms": 200,
+        "failed_tests": [
+          "checkout"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "base",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "status": "failing",
+        "total": 3,
+        "passed": 1,
+        "failed": 1,
+        "skipped": 1,
+        "duration_ms": 200,
+        "failed_tests": [
+          "checkout"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "exercise",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "status": "passing",
+        "total": 3,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 1,
+        "duration_ms": 200,
+        "failed_tests": []
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "exercise",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "status": "passing",
+        "total": 3,
+        "passed": 2,
+        "failed": 0,
+        "skipped": 1,
+        "duration_ms": 200,
+        "failed_tests": []
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "Empty report has no runs",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "status": "no-runs",
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "duration_ms": 0,
+        "failed_tests": []
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "Empty report has no runs",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "status": "no-runs",
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "duration_ms": 0,
+        "failed_tests": []
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "Skipped-only report is not passing",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "status": "no-runs",
+        "total": 1,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 1,
+        "duration_ms": 0,
+        "failed_tests": []
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "Skipped-only report is not passing",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "status": "no-runs",
+        "total": 1,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 1,
+        "duration_ms": 0,
+        "failed_tests": []
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "Missing duration is rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Every test needs duration_ms\nat [4:11]\n3 |     ASSERT(EVERY(input.tests, (test) -> test.name != null), \"Every test needs a name\")\n4 |     ASSERT(EVERY(input.tests, (test) -> test.duration_ms != null), \"Every test needs duration_ms\")\n              ^\n5 |     ASSERT(EVERY(input.tests, (test) -> test.duration_ms >= 0), \"Durations must be nonnegative\")\n"
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "Missing duration is rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Every test needs duration_ms\nat [4:11]\n3 |     ASSERT(EVERY(input.tests, (test) -> test.name != null), \"Every test needs a name\")\n4 |     ASSERT(EVERY(input.tests, (test) -> test.duration_ms != null), \"Every test needs duration_ms\")\n              ^\n5 |     ASSERT(EVERY(input.tests, (test) -> test.duration_ms >= 0), \"Durations must be nonnegative\")\n"
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "Unknown status is rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Unknown test status\nat [6:11]\n5 |     ASSERT(EVERY(input.tests, (test) -> test.duration_ms >= 0), \"Durations must be nonnegative\")\n6 |     ASSERT(EVERY(input.tests, (test) -> test.status == \"passed\" || test.status == \"failed\" || test.status == \"skipped\"), \"Unknown test status\")\n              ^\n7 |     LET passed = FILTER(input.tests, (test) -> test.status == \"passed\")\n"
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "Unknown status is rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Unknown test status\nat [6:11]\n5 |     ASSERT(EVERY(input.tests, (test) -> test.duration_ms >= 0), \"Durations must be nonnegative\")\n6 |     ASSERT(EVERY(input.tests, (test) -> test.status == \"passed\" || test.status == \"failed\" || test.status == \"skipped\"), \"Unknown test status\")\n              ^\n7 |     LET passed = FILTER(input.tests, (test) -> test.status == \"passed\")\n"
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "independent-failure-order",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "status": "failing",
+        "total": 3,
+        "passed": 1,
+        "failed": 2,
+        "skipped": 0,
+        "duration_ms": 10,
+        "failed_tests": [
+          "b",
+          "a"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "independent-failure-order",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "status": "failing",
+        "total": 3,
+        "passed": 1,
+        "failed": 2,
+        "skipped": 0,
+        "duration_ms": 10,
+        "failed_tests": [
+          "b",
+          "a"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "independent-negative-duration",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Durations must be nonnegative\nat [5:11]\n4 |     ASSERT(EVERY(input.tests, (test) -> test.duration_ms != null), \"Every test needs duration_ms\")\n5 |     ASSERT(EVERY(input.tests, (test) -> test.duration_ms >= 0), \"Durations must be nonnegative\")\n              ^\n6 |     ASSERT(EVERY(input.tests, (test) -> test.status == \"passed\" || test.status == \"failed\" || test.status == \"skipped\"), \"Unknown test status\")\n"
+    },
+    {
+      "recipe": "recipe-test-report",
+      "case": "independent-negative-duration",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Durations must be nonnegative\nat [5:11]\n4 |     ASSERT(EVERY(input.tests, (test) -> test.duration_ms != null), \"Every test needs duration_ms\")\n5 |     ASSERT(EVERY(input.tests, (test) -> test.duration_ms >= 0), \"Durations must be nonnegative\")\n              ^\n6 |     ASSERT(EVERY(input.tests, (test) -> test.status == \"passed\" || test.status == \"failed\" || test.status == \"skipped\"), \"Unknown test status\")\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "base",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "run_id": "build-104",
+        "branch": "main",
+        "deploy": true,
+        "checked_names": [
+          "unit tests",
+          "package"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "base",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "run_id": "build-104",
+        "branch": "main",
+        "deploy": true,
+        "checked_names": [
+          "unit tests",
+          "package"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "exercise",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Pipeline checks must pass\nat [8:11]\n7 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\" || check.status == \"failed\"), \"Unknown pipeline check status\")\n8 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\"), \"Pipeline checks must pass\")\n              ^\n9 |     OUTPUT {\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "exercise",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Pipeline checks must pass\nat [8:11]\n7 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\" || check.status == \"failed\"), \"Unknown pipeline check status\")\n8 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\"), \"Pipeline checks must pass\")\n              ^\n9 |     OUTPUT {\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "Empty checks are rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "At least one pipeline check is required\nat [5:11]\n4 |     ASSERT(input.checks != null, \"Pipeline checks array is required\")\n5 |     ASSERT(LENGTH(input.checks) > 0, \"At least one pipeline check is required\")\n              ^\n6 |     ASSERT(EVERY(input.checks, (check) -> check.name != null), \"Every check needs a name\")\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "Empty checks are rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "At least one pipeline check is required\nat [5:11]\n4 |     ASSERT(input.checks != null, \"Pipeline checks array is required\")\n5 |     ASSERT(LENGTH(input.checks) > 0, \"At least one pipeline check is required\")\n              ^\n6 |     ASSERT(EVERY(input.checks, (check) -> check.name != null), \"Every check needs a name\")\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "Missing checks are rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Pipeline checks array is required\nat [4:11]\n3 |     ASSERT(input.branch != null, \"Pipeline branch is required\")\n4 |     ASSERT(input.checks != null, \"Pipeline checks array is required\")\n              ^\n5 |     ASSERT(LENGTH(input.checks) > 0, \"At least one pipeline check is required\")\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "Missing checks are rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Pipeline checks array is required\nat [4:11]\n3 |     ASSERT(input.branch != null, \"Pipeline branch is required\")\n4 |     ASSERT(input.checks != null, \"Pipeline checks array is required\")\n              ^\n5 |     ASSERT(LENGTH(input.checks) > 0, \"At least one pipeline check is required\")\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "Unknown check status is rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Unknown pipeline check status\nat [7:11]\n6 |     ASSERT(EVERY(input.checks, (check) -> check.name != null), \"Every check needs a name\")\n7 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\" || check.status == \"failed\"), \"Unknown pipeline check status\")\n              ^\n8 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\"), \"Pipeline checks must pass\")\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "Unknown check status is rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Unknown pipeline check status\nat [7:11]\n6 |     ASSERT(EVERY(input.checks, (check) -> check.name != null), \"Every check needs a name\")\n7 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\" || check.status == \"failed\"), \"Unknown pipeline check status\")\n              ^\n8 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\"), \"Pipeline checks must pass\")\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "Missing run id is rejected",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Pipeline run_id is required\nat [2:11]\n1 | TRANSFORM PipelineGuard {\n2 |     ASSERT(input.run_id != null, \"Pipeline run_id is required\")\n              ^\n3 |     ASSERT(input.branch != null, \"Pipeline branch is required\")\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "Missing run id is rejected",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Pipeline run_id is required\nat [2:11]\n1 | TRANSFORM PipelineGuard {\n2 |     ASSERT(input.run_id != null, \"Pipeline run_id is required\")\n              ^\n3 |     ASSERT(input.branch != null, \"Pipeline branch is required\")\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "One passing check is accepted",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "run_id": "build-106",
+        "branch": "release",
+        "deploy": true,
+        "checked_names": [
+          "smoke"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "One passing check is accepted",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "run_id": "build-106",
+        "branch": "release",
+        "deploy": true,
+        "checked_names": [
+          "smoke"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "independent-reject-first",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Pipeline checks must pass\nat [8:11]\n7 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\" || check.status == \"failed\"), \"Unknown pipeline check status\")\n8 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\"), \"Pipeline checks must pass\")\n              ^\n9 |     OUTPUT {\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "independent-reject-first",
+      "runtime": "node",
+      "ok": true,
+      "exit": 70,
+      "output": null,
+      "stderr": "Pipeline checks must pass\nat [8:11]\n7 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\" || check.status == \"failed\"), \"Unknown pipeline check status\")\n8 |     ASSERT(EVERY(input.checks, (check) -> check.status == \"passed\"), \"Pipeline checks must pass\")\n              ^\n9 |     OUTPUT {\n"
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "independent-preserve-order",
+      "runtime": "jvm",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "run_id": "R-Y",
+        "branch": "feature/x",
+        "deploy": true,
+        "checked_names": [
+          "z",
+          "a"
+        ]
+      },
+      "stderr": ""
+    },
+    {
+      "recipe": "recipe-pipeline-guard",
+      "case": "independent-preserve-order",
+      "runtime": "node",
+      "ok": true,
+      "exit": 0,
+      "output": {
+        "run_id": "R-Y",
+        "branch": "feature/x",
+        "deploy": true,
+        "checked_names": [
+          "z",
+          "a"
+        ]
+      },
+      "stderr": ""
+    }
+  ]
+}

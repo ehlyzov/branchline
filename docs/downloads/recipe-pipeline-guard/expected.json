@@ -1,0 +1,9 @@
+{
+  "run_id": "build-104",
+  "branch": "main",
+  "deploy": true,
+  "checked_names": [
+    "unit tests",
+    "package"
+  ]
+}

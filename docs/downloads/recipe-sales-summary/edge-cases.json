@@ -1,0 +1,75 @@
+[
+  {
+    "name": "Empty sales have a zero total",
+    "input": {
+      "currency": "GBP",
+      "sales": []
+    },
+    "expectedOutput": {
+      "currency": "GBP",
+      "paid_count": 0,
+      "revenue_cents": 0,
+      "excluded_count": 0
+    }
+  },
+  {
+    "name": "Refunded sales are excluded and zero paid sales count",
+    "input": {
+      "currency": "GBP",
+      "sales": [
+        {
+          "status": "refunded",
+          "amount_cents": 1200
+        },
+        {
+          "status": "paid",
+          "amount_cents": 0
+        }
+      ]
+    },
+    "expectedOutput": {
+      "currency": "GBP",
+      "paid_count": 1,
+      "revenue_cents": 0,
+      "excluded_count": 1
+    }
+  },
+  {
+    "name": "Missing amount is rejected",
+    "input": {
+      "currency": "GBP",
+      "sales": [
+        {
+          "status": "paid"
+        }
+      ]
+    },
+    "expectedError": "Every sale needs amount_cents"
+  },
+  {
+    "name": "Negative amount is rejected",
+    "input": {
+      "currency": "GBP",
+      "sales": [
+        {
+          "status": "paid",
+          "amount_cents": -1
+        }
+      ]
+    },
+    "expectedError": "Amounts must be nonnegative"
+  },
+  {
+    "name": "Unknown status is rejected",
+    "input": {
+      "currency": "GBP",
+      "sales": [
+        {
+          "status": "unknown",
+          "amount_cents": 100
+        }
+      ]
+    },
+    "expectedError": "Unknown sale status"
+  }
+]

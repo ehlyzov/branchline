@@ -1,7 +1,7 @@
 {
-  "title": "Stdlib: Higher-order functions",
+  "title": "Map, filter and reduce array values",
   "id": "stdlib-hof-overview",
-  "category": "stdlib",
+  "category": "reshape-data",
   "tags": ["map", "filter", "reduce", "lambda", "higher-order", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "MAP, FILTER, REDUCE, SOME, EVERY, FIND, APPLY, IS_FUNCTION working together.",

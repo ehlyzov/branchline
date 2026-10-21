@@ -1,7 +1,7 @@
 {
   "title": "Prepare an order payload",
   "id": "prepare-order",
-  "category": "getting-started",
+  "category": "reshape-data",
   "tags": ["orders", "filter", "projection", "defaults", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Keep items with positive quantities and shape a small shipment payload.",

@@ -1,0 +1,67 @@
+[
+  {
+    "name": "Empty checks are rejected",
+    "input": {
+      "run_id": "build-105",
+      "branch": "main",
+      "checks": []
+    },
+    "expectedError": "At least one pipeline check is required"
+  },
+  {
+    "name": "Missing checks are rejected",
+    "input": {
+      "run_id": "build-105",
+      "branch": "main"
+    },
+    "expectedError": "Pipeline checks array is required"
+  },
+  {
+    "name": "Unknown check status is rejected",
+    "input": {
+      "run_id": "build-105",
+      "branch": "main",
+      "checks": [
+        {
+          "name": "tests",
+          "status": "pending"
+        }
+      ]
+    },
+    "expectedError": "Unknown pipeline check status"
+  },
+  {
+    "name": "Missing run id is rejected",
+    "input": {
+      "branch": "main",
+      "checks": [
+        {
+          "name": "tests",
+          "status": "passed"
+        }
+      ]
+    },
+    "expectedError": "Pipeline run_id is required"
+  },
+  {
+    "name": "One passing check is accepted",
+    "input": {
+      "run_id": "build-106",
+      "branch": "release",
+      "checks": [
+        {
+          "name": "smoke",
+          "status": "passed"
+        }
+      ]
+    },
+    "expectedOutput": {
+      "run_id": "build-106",
+      "branch": "release",
+      "deploy": true,
+      "checked_names": [
+        "smoke"
+      ]
+    }
+  }
+]

@@ -1,7 +1,7 @@
 {
-  "title": "Hello, Transform",
+  "title": "Build a greeting from input",
   "id": "hello-transform",
-  "category": "getting-started",
+  "category": "reshape-data",
   "tags": ["minimal", "output", "string-concat", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Minimal transform that reads input and emits a greeting.",

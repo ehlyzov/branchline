@@ -1,6 +1,10 @@
 {
-  "title": "Large JSON Numbers",
-  "description": "Large integers and high-precision decimals are preserved and emitted as JSON strings in safe mode.",
+  "title": "Inspect large numbers in JSON output",
+  "aiSubset": "unknown",
+  "tags": ["json-output", "large-numbers", "runtime-limits"],
+  "category": "numeric-data",
+  "id": "json-large-numbers",
+  "description": "Inspect safe JSON output for large numeric input. Browser and JVM numeric capabilities differ; see Numeric Semantics before adapting this example.",
   "outputFormat": "json",
   "program": [
     "TRANSFORM LargeNumbers {",

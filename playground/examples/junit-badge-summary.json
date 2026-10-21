@@ -1,7 +1,7 @@
 {
-  "title": "Summarize JUnit XML (simple)",
+  "title": "Summarize a JUnit XML report",
   "id": "junit-badge-summary",
-  "category": "xml",
+  "category": "summarize-data",
   "tags": ["junit", "xml-shape", "aggregation", "case", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Normalize testsuite data with FILTER + FOR EACH + += and derive totals and badge status via SUM/MAP + CASE.",

@@ -1,5 +1,9 @@
 {
-  "title": "Stdlib: Array helpers",
+  "title": "Deduplicate, sort and combine arrays",
+  "aiSubset": "unknown",
+  "tags": ["arrays", "distinct", "sort", "zip"],
+  "category": "reshape-data",
+  "id": "stdlib-arrays-overview",
   "description": "Distinct, flatten, sort, generate ranges, and zip lists together.",
   "program": [
     "LET unique = DISTINCT(input.values)",

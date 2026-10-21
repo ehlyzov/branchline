@@ -1,5 +1,9 @@
 {
-  "title": "Normalize scores with collection helpers",
+  "title": "Normalize scores and find passing values",
+  "aiSubset": "unknown",
+  "tags": ["arrays", "map", "filter", "reduce"],
+  "category": "reshape-data",
+  "id": "collection-transforms",
   "description": "Demonstrates MAP, FILTER, REDUCE, SOME, EVERY, and FIND to reshape and analyze arrays.",
   "program": [
     "LET increments = MAP(input.scores, (value) -> value + input.increment)",

@@ -1,0 +1,169 @@
+{
+  "title": "Summarize a JSON test report",
+  "id": "recipe-test-report",
+  "category": "summarize-data",
+  "tags": [
+    "recipe",
+    "beginner",
+    "ai-canonical"
+  ],
+  "aiSubset": "compatible",
+  "description": "Count test outcomes, list failed names, and total recorded durations from a small JSON report.",
+  "program": [
+    "TRANSFORM SummarizeTests {",
+    "    ASSERT(input.tests != null, \"Tests array is required\")",
+    "    ASSERT(EVERY(input.tests, (test) -> test.name != null), \"Every test needs a name\")",
+    "    ASSERT(EVERY(input.tests, (test) -> test.duration_ms != null), \"Every test needs duration_ms\")",
+    "    ASSERT(EVERY(input.tests, (test) -> test.duration_ms >= 0), \"Durations must be nonnegative\")",
+    "    ASSERT(EVERY(input.tests, (test) -> test.status == \"passed\" || test.status == \"failed\" || test.status == \"skipped\"), \"Unknown test status\")",
+    "    LET passed = FILTER(input.tests, (test) -> test.status == \"passed\")",
+    "    LET failed = FILTER(input.tests, (test) -> test.status == \"failed\")",
+    "    LET skipped = FILTER(input.tests, (test) -> test.status == \"skipped\")",
+    "    LET status = CASE {",
+    "        WHEN LENGTH(failed) > 0 THEN \"failing\"",
+    "        WHEN LENGTH(passed) == 0 THEN \"no-runs\"",
+    "        ELSE \"passing\"",
+    "    }",
+    "    OUTPUT {",
+    "        status: status,",
+    "        total: LENGTH(input.tests),",
+    "        passed: LENGTH(passed),",
+    "        failed: LENGTH(failed),",
+    "        skipped: LENGTH(skipped),",
+    "        duration_ms: SUM(MAP(input.tests, (test) -> test.duration_ms)),",
+    "        failed_tests: MAP(failed, (test) -> test.name)",
+    "    }",
+    "}"
+  ],
+  "input": {
+    "tests": [
+      {
+        "name": "login",
+        "status": "passed",
+        "duration_ms": 120
+      },
+      {
+        "name": "checkout",
+        "status": "failed",
+        "duration_ms": 80
+      },
+      {
+        "name": "legacy",
+        "status": "skipped",
+        "duration_ms": 0
+      }
+    ]
+  },
+  "expectedOutput": {
+    "status": "failing",
+    "total": 3,
+    "passed": 1,
+    "failed": 1,
+    "skipped": 1,
+    "duration_ms": 200,
+    "failed_tests": [
+      "checkout"
+    ]
+  },
+  "exercise": {
+    "instruction": "Change checkout status from failed to passed, then run again.",
+    "patch": {
+      "path": [
+        "tests",
+        1,
+        "status"
+      ],
+      "value": "passed"
+    },
+    "expectedOutput": {
+      "status": "passing",
+      "total": 3,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 1,
+      "duration_ms": 200,
+      "failed_tests": []
+    }
+  },
+  "edgeCases": [
+    {
+      "name": "Empty report has no runs",
+      "input": {
+        "tests": []
+      },
+      "expectedOutput": {
+        "status": "no-runs",
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "duration_ms": 0,
+        "failed_tests": []
+      }
+    },
+    {
+      "name": "Skipped-only report is not passing",
+      "input": {
+        "tests": [
+          {
+            "name": "optional",
+            "status": "skipped",
+            "duration_ms": 0
+          }
+        ]
+      },
+      "expectedOutput": {
+        "status": "no-runs",
+        "total": 1,
+        "passed": 0,
+        "failed": 0,
+        "skipped": 1,
+        "duration_ms": 0,
+        "failed_tests": []
+      }
+    },
+    {
+      "name": "Missing duration is rejected",
+      "input": {
+        "tests": [
+          {
+            "name": "login",
+            "status": "passed"
+          }
+        ]
+      },
+      "expectedError": "Every test needs duration_ms"
+    },
+    {
+      "name": "Unknown status is rejected",
+      "input": {
+        "tests": [
+          {
+            "name": "login",
+            "status": "flaky",
+            "duration_ms": 10
+          }
+        ]
+      },
+      "expectedError": "Unknown test status"
+    }
+  ],
+  "recipe": {
+    "problem": "Turn a flat JSON test report into a build summary with counts, recorded duration, and names to investigate.",
+    "prerequisites": [
+      "tests is a required array. Each test needs a name, status passed/failed/skipped, and a nonnegative integer duration_ms.",
+      "This input is plain JSON, not a JUnit XML document."
+    ],
+    "explanation": [
+      "The assertions prevent missing durations from silently becoming zero and reject unknown outcomes.",
+      "The three filters classify each record. failed_tests keeps the original order of failed names.",
+      "The status is failing if any test failed, no-runs if none passed or failed, and passing otherwise.",
+      "duration_ms sums all recorded durations; an empty report has a zero sum."
+    ],
+    "limits": [
+      "Summed durations are recorded test time, not wall-clock build duration when tests run in parallel.",
+      "Retries and duplicate names are counted as separate records. The recipe does not parse test-runner-specific formats.",
+      "Keep durations and totals within the cross-runtime safe integer range."
+    ]
+  }
+}

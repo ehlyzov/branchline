@@ -1,5 +1,5 @@
 {
-  "title": "Contract: input-seeded wildcard output",
+  "title": "Inspect contracts with dynamic keys",
   "id": "contract-input-seeded-wildcard-output",
   "category": "contracts",
   "tags": ["contract-inference", "dynamic-access", "typed-signature", "wildcard-output", "ai-canonical"],

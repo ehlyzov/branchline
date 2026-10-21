@@ -1,7 +1,7 @@
 {
-  "title": "Stdlib: CHECKPOINT, ASSERT, EXPLAIN",
+  "title": "Trace and guard a discounted total",
   "id": "stdlib-debug-explain",
-  "category": "debugging",
+  "category": "inspect-data",
   "tags": ["checkpoint", "assert", "explain", "trace", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Guard a calculation, mark checkpoints, and view provenance via EXPLAIN. Enable tracing to see EXPLAIN output.",

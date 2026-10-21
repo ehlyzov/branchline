@@ -39,6 +39,11 @@
   Independently execute browser-downloaded edited files with published JVM/Node
   CLI, then verify the public home -> example -> edit -> local-run journey against
   deployed release-metadata.json SHA. See evidence/first-success-2026-10-21/.
+- Task recipes: `cd playground && npm run test:recipes` checks generated recipe
+  pages/downloads and executes base, exercise and edge cases through the JS facade.
+  Run `npm run sync:recipes` after changing canonical recipe fixtures. Independently
+  execute all six recipe files with the published JVM/Node CLI and verify task
+  filtering plus expanded settings at desktop/mobile widths in a real browser.
 - Playground UX/input changes: `cd playground && npm test` checks worker dependencies,
   catalog metadata, XML input validation and actual-runtime wrapper diagnostics.
   The browser interpreter distribution is required by that last test. Run the asset build and actual browser

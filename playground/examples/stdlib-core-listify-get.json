@@ -1,5 +1,9 @@
 {
-  "title": "Stdlib: LISTIFY, GET, INT, PARSE_INT",
+  "title": "Normalize lists and look up defaults",
+  "aiSubset": "unknown",
+  "tags": ["listify", "defaults", "parsing"],
+  "category": "reshape-data",
+  "id": "stdlib-core-listify-get",
   "description": "Normalize input shapes, use safe lookups, and parse integers strictly or tolerantly.",
   "program": [
     "LET suitesFromObject = LISTIFY(input.testsuite)",

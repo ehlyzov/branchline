@@ -1,5 +1,9 @@
 {
-  "title": "Shared Memory: SHARED and Writes",
+  "title": "Write a timestamp to shared state",
+  "aiSubset": "unknown",
+  "tags": ["shared-memory", "writes", "now"],
+  "category": "state-and-time",
+  "id": "shared-memory-basics",
   "description": "Declare shared memory and write session state. Reading/waiting requires host integration.",
   "shared": [
     {

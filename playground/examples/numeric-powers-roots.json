@@ -1,14 +1,8 @@
 {
-  "title": "Numeric: powers and square roots",
+  "title": "Calculate powers and square roots",
   "id": "numeric-powers-roots",
-  "category": "stdlib",
-  "tags": [
-    "numeric",
-    "power",
-    "sqrt",
-    "decimal",
-    "ai-canonical"
-  ],
+  "category": "numeric-data",
+  "tags": ["numeric", "power", "sqrt", "decimal", "ai-canonical"],
   "aiSubset": "compatible",
   "description": "Evaluate ordinary powers and square roots, plus a decimal power exactly representable on both JVM and JS. See Numeric Semantics for wider precision limits.",
   "showContracts": false,

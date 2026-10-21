@@ -1,5 +1,9 @@
 {
-  "title": "Explain derived totals",
+  "title": "Trace how an order total is derived",
+  "aiSubset": "unknown",
+  "tags": ["trace", "explain", "orders"],
+  "category": "inspect-data",
+  "id": "explain-derived-total",
   "description": "Calculate an order total and include EXPLAIN(\"total\") to inspect how the value was produced.",
   "program": [
     "LET subtotal = input.unit_price * input.quantity",

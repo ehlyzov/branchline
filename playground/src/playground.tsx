@@ -2,13 +2,14 @@ import React from 'react';
 import './monaco-environment';
 import * as monaco from 'monaco-editor';
 import { BRANCHLINE_LANGUAGE_ID, ensureBranchlineLanguage } from './branchline-language';
-import { currentJourneyFiles, FIRST_SUCCESS_EXAMPLE_ID, journeyInstruction, type JourneyExercise } from './first-success';
+import { currentJourneyFiles, FIRST_SUCCESS_EXAMPLE_ID, journeyGuideUrl, journeyInstruction, type JourneyExercise } from './first-success';
 import {
   CATALOG_AI_SUBSET_OPTIONS,
   catalogAiSubsetLabel,
   catalogAiSubsetValue,
   catalogCategoryLabel,
-  catalogCategoryOptions,
+  catalogCategoryGroups,
+  catalogExampleGroups,
   catalogCategoryValue,
   filterCatalogExamples,
   visibleCatalogTags,
@@ -352,11 +353,12 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
 
     return items.sort((a, b) => a.title.localeCompare(b.title));
   }, []);
-  const categoryOptions = React.useMemo(() => catalogCategoryOptions(examples), [examples]);
+  const categoryGroups = React.useMemo(() => catalogCategoryGroups(examples), [examples]);
   const filteredExamples = React.useMemo(
     () => filterCatalogExamples(examples, { category: catalogCategory, aiSubset: catalogAiSubset }),
     [catalogAiSubset, catalogCategory, examples]
   );
+  const exampleGroups = React.useMemo(() => catalogExampleGroups(filteredExamples), [filteredExamples]);
   const [selectedExampleId, setSelectedExampleId] = React.useState(() =>
     resolveDefaultExample(examples, defaultExampleId)
   );
@@ -365,6 +367,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     [examples, selectedExampleId]
   );
   const exerciseInstruction = journeyInstruction(selectedExampleId, selectedExample?.exercise);
+  const recipeGuideUrl = journeyGuideUrl(selectedExampleId);
   const openInNewTabUrl = React.useMemo(
     () => buildHostedPlaygroundUrl(selectedExampleId),
     [selectedExampleId]
@@ -753,7 +756,17 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
             Pick an example, edit the program and input, then Run.
           </p>
         </div>
-        <div className="playground-controls">
+        <div className="playground-controls playground-controls--primary">
+          <label className="playground-select playground-select--task">
+            <span>Task</span>
+            <select value={catalogCategory} onChange={(event) => setCatalogCategory(event.target.value as CatalogCategoryFilter)}>
+              {categoryGroups.map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </label>
           <label className="playground-select">
             <span>Example</span>
             <select
@@ -764,13 +777,14 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
               {!selectedExampleInFiltered && selectedExample ? (
                 <option value={selectedExampleId}>{selectedExample.title} (current; outside filters)</option>
               ) : null}
-              {filteredExamples.map((example) => (
-                <option key={example.id} value={example.id}>
-                  {example.title}
-                </option>
+              {exampleGroups.map((group) => (
+                <optgroup key={group.value} label={group.label}>
+                  {group.examples.map((example) => <option key={example.id} value={example.id}>{example.title}</option>)}
+                </optgroup>
               ))}
             </select>
           </label>
+          <div className="playground-actions">
           <button className="playground-button" onClick={run} disabled={isRunning}>
             {isRunning ? 'Running…' : 'Run ▶'}
           </button>
@@ -778,26 +792,15 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
           <button className="playground-button playground-button--ghost" onClick={resetExample}>
             Reset example
           </button>
+          </div>
           <span className={`playground-overview-status${resultsAreStale ? ' playground-overview-status--stale' : ''}`} role="status" aria-live="polite">
             {isRunning ? 'Running…' : lifecycleMessage ?? (resultsAreStale ? 'Results out of date — run again.' : resultRevision === null ? '⌘/Ctrl + Enter to run' : error ? 'Run failed.' : 'Run complete.')}
           </span>
         </div>
         <details className="playground-advanced">
-          <summary>Filters &amp; run settings</summary>
+          <summary>Run settings &amp; details</summary>
+          <div className="playground-settings">
           <div className="playground-controls playground-controls--advanced">
-            <label className="playground-select playground-select--compact">
-              <span>Category</span>
-              <select
-                value={catalogCategory}
-                onChange={(event) => setCatalogCategory(event.target.value as CatalogCategoryFilter)}
-              >
-                {categoryOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
             <label className="playground-select playground-select--compact">
               <span>AI subset</span>
               <select
@@ -811,9 +814,6 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
                 ))}
               </select>
             </label>
-            <span className="playground-catalog-count" aria-live="polite">
-              {filteredExamples.length} of {examples.length} examples
-            </span>
             <label className="playground-select">
               <span>Input format</span>
               <select value={inputFormat} onChange={(event) => setInputFormat(event.target.value as InputFormat)}>
@@ -831,6 +831,15 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
                 <option value="xml-compact">XML (compact)</option>
               </select>
             </label>
+            <label className="playground-select">
+              <span>Contract checks</span>
+              <select value={contractsMode} onChange={(event) => setContractsMode(event.target.value as ContractMode)}>
+                <option value="off">Off</option>
+                <option value="warn">Warn</option>
+                <option value="strict">Strict</option>
+              </select>
+            </label>
+            <div className="playground-toggle-group">
             <label className="playground-toggle">
               <input
                 type="checkbox"
@@ -847,14 +856,6 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
               />
               <span>Show input/output contracts</span>
             </label>
-            <label className="playground-select">
-              <span>Contract checks</span>
-              <select value={contractsMode} onChange={(event) => setContractsMode(event.target.value as ContractMode)}>
-                <option value="off">Off</option>
-                <option value="warn">Warn</option>
-                <option value="strict">Strict</option>
-              </select>
-            </label>
             {isContractsEnabled ? (
               <label className="playground-toggle">
                 <input
@@ -865,6 +866,8 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
                 <span>Contract debug (include spans)</span>
               </label>
             ) : null}
+            </div>
+            <span className="playground-catalog-count" aria-live="polite">{filteredExamples.length} of {examples.length} examples match the task and subset filters.</span>
           </div>
       {visibleSelectedExample ? (
         <details className="example-description">
@@ -893,13 +896,19 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
 
           <p className="playground-session-hint">Filters keep your current draft. Drafts stay in this tab until reload. ⌘/Ctrl + Enter runs with your current settings.</p>
           <a href={openInNewTabUrl} target="_blank" rel="noreferrer">Open original example in a new tab ↗</a>
+          </div>
         </details>
       </header>
 
 
       {exerciseInstruction ? (
         <div className="playground-exercise">
-          <p><strong>Try a change:</strong> {exerciseInstruction} Expect BOOK and PEN in Output.</p>
+          <p><strong>Try a change:</strong> {exerciseInstruction} {recipeGuideUrl ? <a href={recipeGuideUrl}>Recipe guide →</a> : null}</p>
+          {selectedExample?.exercise ? <details className="playground-exercise-result playground-disclosure">
+            <summary>Expected result after this change</summary>
+            {selectedExample.exercise.expectedError ? <p>Run should fail: {selectedExample.exercise.expectedError}</p>
+              : <pre className="panel-output">{JSON.stringify(selectedExample.exercise.expectedOutput, null, 2)}</pre>}
+          </details> : null}
         </div>
       ) : null}
 
@@ -1034,11 +1043,11 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
 
       </main>
 
-      {selectedExampleId === FIRST_SUCCESS_EXAMPLE_ID ? <div className="playground-local">
+      {recipeGuideUrl ? <div className="playground-local">
         <strong>Keep going locally</strong>
         <button type="button" className="playground-file-button" onClick={() => downloadCurrentFile('program.bl')} disabled={!canDownloadJourney}>Download program.bl</button>
         <button type="button" className="playground-file-button" onClick={() => downloadCurrentFile('input.json')} disabled={!canDownloadJourney}>Download input.json</button>
-        <a href="../guides/getting-started/#run-locally">Run these files locally →</a>
+        <a href={`${recipeGuideUrl}#validation-commands`}>Run these files locally →</a>
         <small>{canDownloadJourney ? 'Downloads include your current edits. Drafts stay in this tab until reload.' : 'Select JSON input and fix any JSON syntax errors to download the current files.'}</small>
       </div> : <p className="playground-session-notice">Drafts stay in this tab until reload. <a href="../guides/getting-started/#run-locally">Learn to run Branchline locally →</a></p>}
 
