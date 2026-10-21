@@ -56,3 +56,26 @@ Public acceptance on 2026-10-21:
 Acceptance record may follow the deployed source without rebuilding unchanged
 product pages. Screenshots, downloaded files, command results and deployment JSON
 remain under the evidence directory above.
+
+## System clipboard acceptance — 2026-10-22 (Europe/Moscow)
+
+The clipboard limitation above is closed for ordinary Brave on macOS
+(installed bundle version `154.1.96.61`). Native UI actions clicked Copy on both
+the public home page and Get started. Native TextEdit Cmd+V pasted the system
+clipboard; each document was saved as UTF-8 without replacing its content through
+automation. Before the Get started check, a distinct sentinel was copied into the
+system clipboard; the website button replaced it with the correct command.
+
+Both saved files match exactly 64 ASCII bytes: the advertised one-line curl/sh
+command followed by LF. No visual wrapping, nonbreaking spaces or extra text were
+copied. Each saved file was executed unchanged using `sh` in its own fresh
+non-root Debian arm64 container without Java/Node. Both installed v1.0.0-rc.1 with
+the private JRE, passed `bl --version`, and returned the independent expected
+`{"greeting":"Clipboard works"}` result. PATH was set as documented after install.
+
+Evidence: `output/clipboard-acceptance-2026-10-21/acceptance.json`, the two
+`*-command.txt` files, `*-execution.log`, and `system-paste.png`. Directory retains
+the start date; completion was 00:01 Moscow on October 22. Published SHA remains
+`0e5430236c22ef27626499e024c70b9140166bbd`. No site defect was reproduced; no product
+change or redeployment is required. This confirms ordinary-browser clipboard
+behavior, without asserting a root cause for the earlier in-app automation result.

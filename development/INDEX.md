@@ -314,4 +314,4 @@ This index is the canonical entry point for the /development knowledge base. All
 
 - [Managed runtime installation](planning/managed-runtime-2026-10-21.md) -- private pinned Java/Node runtimes and clean-container acceptance.
 
-- [Installation on home and Get started](planning/install-entrypoints-2026-10-21.md) -- visible one-command setup and verified browser-to-local newcomer journey.
+- [Installation on home and Get started](planning/install-entrypoints-2026-10-21.md) -- visible one-command setup, verified browser-to-local journey and native system-clipboard acceptance.
