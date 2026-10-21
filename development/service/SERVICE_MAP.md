@@ -70,11 +70,15 @@ Branchline is an experimental Kotlin Multiplatform data transformation language 
 
 ## Critical Integrations Visible From The Repo
 
-- `docs/install.sh` is the public one-command macOS/Linux installer. It selects
-  installed Java 21+ or Node 22/24, pins the recommended RC, verifies GitHub release
-  checksums and actual CLI version, then atomically activates the user-local bl launcher.
-  It does not install runtimes or change shell profiles. `bin/test_installer.py`
+- `docs/install.sh` is the public one-command macOS/Linux installer. It provisions
+  private pinned Temurin21 (default) or Node24 runtimes from vendor archives on
+  macOS/Linux arm64/x64, verifies embedded runtime hashes plus CLI release
+  checksums/versions, then atomically activates the user-local bl launcher.
+  It does not use system Java/Node or change shell profiles. `bin/test_installer.py`
   checks failure preservation and launcher behavior in the Pages workflow.
+  `bin/test_installer_clean.sh` gates Pages in fresh non-root Debian containers
+  without Java/Node/Python; its Dockerfile and smoke script are under
+  `bin/installer-smoke/`. Runtime pin updates require this gate and macOS checks.
 
 - Gradle Kotlin Multiplatform builds JVM, JS browser, and JS Node outputs.
 - `vm/build.gradle` pins `org.ow2.asm:asm:9.9` in `jvmMain` for experimental loop class generation; it adds no JavaCompiler or JS code-generation dependency.

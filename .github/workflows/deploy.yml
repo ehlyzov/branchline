@@ -36,7 +36,19 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  installer-clean:
+    name: Clean installer acceptance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+      - name: Install and run without Java or Node
+        run: sh bin/test_installer_clean.sh
+
   build:
+    needs: installer-clean
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

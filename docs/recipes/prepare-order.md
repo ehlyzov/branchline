@@ -45,9 +45,9 @@ Compare JSON values; whitespace and object key order can differ.
 In the Playground, select **Run** and compare the Result with the expected output.
 Then try the edit below. Enable tracing only if you want to inspect execution.
 
-First follow the [one-command installation guide](../guides/install.md) with
-**Java 21/25** or **Node 22/24**. It installs the published **v1.0.0-rc.1** CLI as
-`bl` and explains runtime/platform limits.
+First follow the [one-command installation guide](../guides/install.md).
+**No preinstalled Java or Node is needed:** it downloads a private runtime and the
+published **v1.0.0-rc.1** CLI as `bl`, and explains runtime/platform limits.
 
 **Already downloaded your edited files from the Playground?** Keep
 `program.bl` and `input.json` together, skip the original downloads below, and run:

@@ -28,7 +28,7 @@ OUTPUT {
 
 Branchline ships with experimental CLI helpers for JVM and Node runtimes. Running any CLI with no arguments now prints a detailed help screen (`-h`/`--help` also supported).
 
-**Quick install (macOS/Linux)** — with Java 21/25 or Node 22/24 installed:
+**Quick install (macOS/Linux)** — no preinstalled Java or Node required:
 
 ```bash
 curl -fsSL https://ehlyzov.github.io/branchline/install.sh | sh
@@ -37,8 +37,9 @@ bl --version
 bl program.bl --input input.json
 ```
 
-The installer selects Java 21+ first, otherwise Node 22/24, verifies the published
-RC checksum and version, and installs `bl` without sudo. To select Node explicitly,
+The installer downloads a private Temurin 21 JRE and the published RC, verifies
+checksums and versions, and installs `bl` without sudo or global runtime changes.
+To download a private Node 24 runtime instead,
 append `-s -- --runtime node` after `sh`. Runtime numeric guarantees differ.
 See [installation, updates and manual packages](https://ehlyzov.github.io/branchline/guides/install/).
 

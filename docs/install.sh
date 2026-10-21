@@ -18,9 +18,9 @@ main() {
         shift 2 ;;
       --help|-h)
         printf '%s\n' 'Install Branchline: sh install.sh [--runtime auto|jvm|node] [--version v1.0.0-rc.1]' \
-          'Defaults: published RC; Java 21+ preferred, otherwise Node 22/24.' \
+          'Defaults: published RC with a private Temurin 21 JRE; --runtime node downloads private Node 24.' \
           'Paths: BRANCHLINE_INSTALL_ROOT (~/.local/share/branchline), BRANCHLINE_BIN_DIR (~/.local/bin).' \
-          'No sudo, runtime installation, or shell-profile changes.'
+          'No preinstalled Java/Node, sudo, or shell-profile changes. auto is an alias for jvm.'
         exit 0 ;;
       *) fail "Unknown option: $1 (see --help)" ;;
     esac
@@ -34,41 +34,56 @@ main() {
 '*) fail 'Installation paths must not contain newlines' ;; esac
     [ ! -L "$directory" ] || fail "Installation directory is a symlink: $directory"
   done
-  for tool in curl awk grep sed mktemp; do
+  for tool in curl awk grep sed mktemp tar; do
     command -v "$tool" >/dev/null 2>&1 || fail "Required tool not found: $tool"
   done
   if command -v sha256sum >/dev/null 2>&1; then HASH=sha256sum
   elif command -v shasum >/dev/null 2>&1; then HASH=shasum
   else fail 'SHA-256 verification needs sha256sum or shasum'; fi
 
-  JAVA_MAJOR=0
-  if command -v java >/dev/null 2>&1; then
-    JAVA_MAJOR=$(java -version 2>&1 | sed -n 's/.*version "\([0-9][0-9]*\).*/\1/p' | head -1)
-  fi
-  case "$JAVA_MAJOR" in ''|*[!0-9]*) JAVA_MAJOR=0 ;; esac
-  NODE_MAJOR=0
-  if command -v node >/dev/null 2>&1; then
-    NODE_MAJOR=$(node --version 2>/dev/null | sed -n 's/^v\([0-9][0-9]*\).*/\1/p')
-  fi
-  case "$NODE_MAJOR" in ''|*[!0-9]*) NODE_MAJOR=0 ;; esac
-  if [ "$RUNTIME" = auto ]; then
-    if [ "$JAVA_MAJOR" -ge 21 ]; then RUNTIME=jvm
-    elif [ "$NODE_MAJOR" = 22 ] || [ "$NODE_MAJOR" = 24 ]; then RUNTIME=node
-    else fail 'Install Java 21/25 or Node 22/24, then rerun. https://ehlyzov.github.io/branchline/guides/install/'; fi
+  # Keep the default deterministic: existing host runtimes never change semantics.
+  [ "$RUNTIME" != auto ] || RUNTIME=jvm
+  case "$(uname -s):$(uname -m)" in
+    Darwin:arm64) OS=mac; NODE_OS=darwin; ARCH=aarch64; NODE_ARCH=arm64 ;;
+    Darwin:x86_64) OS=mac; NODE_OS=darwin; ARCH=x64; NODE_ARCH=x64 ;;
+    Linux:aarch64|Linux:arm64) OS=linux; NODE_OS=linux; ARCH=aarch64; NODE_ARCH=arm64 ;;
+    Linux:x86_64) OS=linux; NODE_OS=linux; ARCH=x64; NODE_ARCH=x64 ;;
+    *) fail 'Managed runtimes support macOS/Linux on arm64 or x86_64 only.' ;;
+  esac
+  if [ "$OS" = linux ]; then
+    LIBC_VERSION=$(getconf GNU_LIBC_VERSION 2>/dev/null) || fail 'Managed Linux runtimes require glibc 2.28+; musl/Alpine is unsupported.'
+    printf '%s\n' "$LIBC_VERSION" | awk '{split($2,v,"."); exit !(v[1]>2 || (v[1]==2 && v[2]>=28))}' || fail 'Managed Linux runtimes require glibc 2.28+.'
   fi
   if [ "$RUNTIME" = jvm ]; then
-    [ "$JAVA_MAJOR" -ge 21 ] || fail 'JVM installation needs Java 21+ (recommended: 21 or 25).'
-    EXECUTABLE=$(command -v java)
     ASSET=branchline-cli-$VERSION-all.jar
+    RUNTIME_VERSION=21.0.12.1
+    RUNTIME_ROOT=jdk-21.0.12.1+1-jre
+    RUNTIME_ASSET=OpenJDK21U-jre_${ARCH}_${OS}_hotspot_21.0.12.1_1.tar.gz
+    RUNTIME_URL=https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/$RUNTIME_ASSET
+    case "$OS:$ARCH" in
+      linux:aarch64) RUNTIME_SHA=14be1f35ebdbd1f6e8d57eb911a3ffb74d6d9aa255abc5daf2b1302002cf2cf2 ;;
+      mac:aarch64) RUNTIME_SHA=dec50fc6f9fcd4fe3ae8cabf5a5fa68f6afc48841f7698e468e9aa5d54beed84 ;;
+      linux:x64) RUNTIME_SHA=2413149700df0f7d440500a84a8f764c535f21e5a5e87d38328b64eec2c5b500 ;;
+      mac:x64) RUNTIME_SHA=6717ec641fd9ce0bb209ca083ee23b42202ac68cb6fcc5753496e0e4a0f41989 ;;
+    esac
+    RUNTIME_BIN=bin/java
+    [ "$OS" != mac ] || RUNTIME_BIN=Contents/Home/bin/java
   else
-    [ "$NODE_MAJOR" = 22 ] || [ "$NODE_MAJOR" = 24 ] || fail 'Node installation needs Node 22 or 24. Use --runtime jvm for Java.'
-    command -v tar >/dev/null 2>&1 || fail 'Node installation needs tar'
-    EXECUTABLE=$(command -v node)
     ASSET=branchline-cli-js-$VERSION.tgz
+    RUNTIME_VERSION=v24.22.0
+    RUNTIME_ROOT=node-$RUNTIME_VERSION-$NODE_OS-$NODE_ARCH
+    RUNTIME_ASSET=$RUNTIME_ROOT.tar.gz
+    RUNTIME_URL=https://nodejs.org/dist/$RUNTIME_VERSION/$RUNTIME_ASSET
+    case "$NODE_OS:$NODE_ARCH" in
+      darwin:arm64) RUNTIME_SHA=6a9724d9b50a5f22b4816cded441b5a8d9ddae546191a5e5b7efa5a5e2ee26d5 ;;
+      darwin:x64) RUNTIME_SHA=495e3f273c645f3c4677d438304cdfc701729ea5dec5728f5c8e76a2dece4b91 ;;
+      linux:arm64) RUNTIME_SHA=b7e7991d5407815adfa74a2a9cd4db683552c8ce32ff4a295c22e972849c3f5d ;;
+      linux:x64) RUNTIME_SHA=28ea0a438de9a13bd7891fd758eee6c7819ee8af5442dfd8d45bd65e56d4228c ;;
+    esac
+    RUNTIME_BIN=bin/node
     progress 'Node selected: JS numbers do not provide the JVM exact-decimal profile.'
   fi
-  case "$EXECUTABLE" in /*) ;; *) fail 'Runtime must resolve to an absolute executable path; use an absolute PATH entry.' ;; esac
-  progress "Installing $VERSION using $RUNTIME ($EXECUTABLE)"
+  progress "Installing $VERSION with private $RUNTIME $RUNTIME_VERSION ($OS/$ARCH)"
   mkdir -p "$INSTALL_ROOT/releases" "$BIN_DIR"
   [ ! -L "$INSTALL_ROOT/releases" ] || fail 'Release directory must not be a symlink'
   LOCK=$BIN_DIR/.branchline-install-lock
@@ -92,17 +107,39 @@ main() {
     curl --fail --show-error --location --silent --retry 2 --connect-timeout 15 --max-time 300 \
       --proto '=https' --proto-redir '=https' --tlsv1.2 "$1" --output "$2"
   }
+  verify_hash() {
+    if [ "$HASH" = sha256sum ]; then ACTUAL=$(sha256sum "$1" | awk '{print $1}')
+    else ACTUAL=$(shasum -a 256 "$1" | awk '{print $1}'); fi
+    [ "$ACTUAL" = "$2" ] || fail 'SHA-256 mismatch; existing installation unchanged.'
+  }
   progress 'Downloading published CLI and SHA256SUMS...'
   download "$RELEASE_URL/$ASSET" "$TMP_ROOT/$ASSET" || fail 'CLI download failed; existing installation unchanged.'
   download "$RELEASE_URL/SHA256SUMS" "$TMP_ROOT/SHA256SUMS" || fail 'Checksum download failed; existing installation unchanged.'
   EXPECTED=$(awk -v name="$ASSET" '$2 == name { print $1 }' "$TMP_ROOT/SHA256SUMS")
   [ "${#EXPECTED}" -eq 64 ] || fail 'Missing, duplicate or invalid release checksum'
   case "$EXPECTED" in *[!0-9a-f]*) fail 'Invalid release checksum' ;; esac
-  if [ "$HASH" = sha256sum ]; then ACTUAL=$(sha256sum "$TMP_ROOT/$ASSET" | awk '{print $1}')
-  else ACTUAL=$(shasum -a 256 "$TMP_ROOT/$ASSET" | awk '{print $1}'); fi
-  [ "$ACTUAL" = "$EXPECTED" ] || fail 'SHA-256 mismatch; existing installation unchanged.'
-  progress 'Checksum verified. Preparing launcher...'
+  verify_hash "$TMP_ROOT/$ASSET" "$EXPECTED"
+  progress "Downloading private $RUNTIME $RUNTIME_VERSION..."
+  download "$RUNTIME_URL" "$TMP_ROOT/runtime.tar.gz" || fail 'Runtime download failed; existing installation unchanged.'
+  verify_hash "$TMP_ROOT/runtime.tar.gz" "$RUNTIME_SHA"
+  progress 'CLI and runtime checksums verified. Preparing private installation...'
   STAGE=$(mktemp -d "$INSTALL_ROOT/releases/$VERSION-$RUNTIME.XXXXXX")
+  mkdir "$STAGE/runtime"
+  tar -tzf "$TMP_ROOT/runtime.tar.gz" > "$TMP_ROOT/runtime-entries"
+  [ -s "$TMP_ROOT/runtime-entries" ] || fail 'Empty runtime archive'
+  awk -v root="$RUNTIME_ROOT" 'index($0,root "/")!=1 || $0 ~ /(^|\/)\.\.(\/|$)/ {exit 1}' "$TMP_ROOT/runtime-entries" || fail 'Unexpected runtime archive layout'
+  # These vendor archives are immutable and matched against embedded SHA-256 pins.
+  # Preserve their internal symlinks, licenses and legal notices in a fresh directory.
+  tar -xzf "$TMP_ROOT/runtime.tar.gz" -C "$STAGE/runtime" --strip-components=1
+  EXECUTABLE=$STAGE/runtime/$RUNTIME_BIN
+  [ -x "$EXECUTABLE" ] || fail 'Private runtime executable missing'
+  if [ "$RUNTIME" = jvm ]; then
+    RUNTIME_ACTUAL=$("$EXECUTABLE" -version 2>&1) || fail 'Private Java cannot run on this system; existing installation unchanged.'
+    printf '%s\n' "$RUNTIME_ACTUAL" | grep -F "version \"$RUNTIME_VERSION\"" >/dev/null || fail 'Private Java version mismatch'
+  else
+    RUNTIME_ACTUAL=$("$EXECUTABLE" --version) || fail 'Private Node cannot run on this system; existing installation unchanged.'
+    [ "$RUNTIME_ACTUAL" = "$RUNTIME_VERSION" ] || fail 'Private Node version mismatch'
+  fi
   if [ "$RUNTIME" = jvm ]; then
     mv "$TMP_ROOT/$ASSET" "$STAGE/branchline.jar"
     PAYLOAD=$STAGE/branchline.jar
@@ -136,6 +173,6 @@ main() {
     *) printf 'For this terminal, run:\n  export PATH='; quote "$BIN_DIR"; printf ':"$PATH"\n' ;;
   esac
   printf '%s\n' 'Then: bl --version' '      bl program.bl --input input.json' \
-    'To update or change runtime, rerun the installer. Previous payloads are retained.'
+    'To update Branchline and its private runtime, rerun the installer. Previous installations are retained.'
 }
 main "$@"

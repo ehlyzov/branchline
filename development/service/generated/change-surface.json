@@ -7,12 +7,14 @@
     "changed_paths": [
       ".github/workflows/deploy.yml",
       "README.md",
+      "bin/installer-smoke/Dockerfile",
+      "bin/installer-smoke/smoke.sh",
       "bin/test_installer.py",
+      "bin/test_installer_clean.sh",
       "development/INDEX.md",
-      "development/planning/simple-installer-2026-10-21.md",
+      "development/planning/managed-runtime-2026-10-21.md",
       "development/service/SERVICE_MAP.md",
       "development/service/VERIFY.md",
-      "docs/guides/getting-started.md",
       "docs/guides/install.md",
       "docs/install.sh",
       "docs/recipes/prepare-order.md",
@@ -28,5 +30,5 @@
     "service_map": "Update development/service/SERVICE_MAP.md for topology, entrypoint, integration-boundary, workflow, or hotspot changes.",
     "verify": "Update development/service/VERIFY.md for build, test, lint, local-run, CI, or evidence changes."
   },
-  "scope": "Installer implementation source paths; unrelated local research/output artifacts excluded."
+  "scope": "Managed-runtime implementation source paths; unrelated local research/output artifacts excluded."
 }

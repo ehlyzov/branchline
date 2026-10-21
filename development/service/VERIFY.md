@@ -10,9 +10,13 @@
 ## Narrow Verification Path
 
 - Release installer: `sh -n docs/install.sh` and `python3 bin/test_installer.py`.
-  Pages runs these checks before publication. Also install real published JVM/Node
-  packages into temporary prefixes and run edited recipe files; stubs do not
-  establish real package/runtime acceptance. Installer changes do not rebuild CLI
+  Pages runs these checks before publication, plus
+  `sh bin/test_installer_clean.sh` in fresh non-root Debian containers without
+  Java/Node/Python. Both default private JRE and explicit private Node must install,
+  execute independent JSON, reject malformed input and survive reinstall. Set
+  BRANCHLINE_INSTALLER_URL to the public HTTPS script for post-deploy acceptance.
+  Also run on macOS with restricted PATH; fixture archives do not establish real
+  package/runtime acceptance. Pin vendor hashes/versions and preserve licenses. Installer changes do not rebuild CLI
   packages unless package layout itself changes.
 
 - Interpreter JVM behavior: `./gradlew :interpreter:jvmTest`.

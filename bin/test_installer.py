@@ -3,12 +3,13 @@
 import hashlib
 import io
 import os
+import re
 from pathlib import Path
 import subprocess
 import tarfile
 import tempfile
 
-SCRIPT = Path(__file__).resolve().parents[1] / 'docs/install.sh'
+SOURCE = Path(__file__).resolve().parents[1] / 'docs/install.sh'
 VERSION = 'v1.0.0-rc.1'
 
 def executable(path, text):
@@ -39,22 +40,56 @@ while [ "$#" -gt 0 ]; do
  case "$1" in https://*) url=$1; shift ;; --output) output=$2; shift 2 ;; *) shift ;; esac
 done
 [ "${TEST_DOWNLOAD_FAIL:-0}" != 1 ] || exit 22
+case "$url" in *OpenJDK*|*node-v24*) [ "${TEST_RUNTIME_DOWNLOAD_FAIL:-0}" != 1 ] || exit 22 ;; esac
 cp "$TEST_ASSETS/${url##*/}" "$output"
 ''')
-    executable(fake / 'java', '''#!/bin/sh
-if [ "$1" = -version ]; then echo 'openjdk version "'"${TEST_JAVA_MAJOR:-21}"'.0.1"' >&2; exit 0; fi
+    java_stub = '''#!/bin/sh
+if [ "$1" = -version ]; then echo 'openjdk version "'"${TEST_RUNTIME_VERSION:-21.0.12.1}"'"' >&2; exit 0; fi
 shift 2
 if [ "$1" = --version ]; then echo "Branchline CLI ${TEST_CLI_VERSION:-v1.0.0-rc.1}"; exit 0; fi
 printf '%s\n' "$@"
 exit 37
-''')
-    executable(fake / 'node', '''#!/bin/sh
-if [ "$1" = --version ]; then echo "v${TEST_NODE_MAJOR:-24}.0.0"; exit 0; fi
+'''
+    node_stub = '''#!/bin/sh
+if [ "$1" = --version ]; then echo "${TEST_RUNTIME_VERSION:-v24.22.0}"; exit 0; fi
 shift
 if [ "$1" = --version ]; then echo "Branchline CLI ${TEST_CLI_VERSION:-v1.0.0-rc.1}"; exit 0; fi
 printf '%s\n' "$@"
 exit 37
-''')
+'''
+    # Only the test copy receives fixture archive hashes; production has no checksum override.
+    source = SOURCE.read_text()
+    runtime_archives = []
+    for match in re.finditer(r'      (mac|darwin|linux):(aarch64|arm64|x64)\) RUNTIME_SHA=([0-9a-f]{64})', source):
+        os_name, arch, pinned = match.groups()
+        is_java = source.index(match.group()) < source.index('RUNTIME_BIN=bin/java')
+        if is_java:
+            name = f'OpenJDK21U-jre_{arch}_{os_name}_hotspot_21.0.12.1_1.tar.gz'
+            archive_root = 'jdk-21.0.12.1+1-jre'
+            binary = 'Contents/Home/bin/java' if os_name == 'mac' else 'bin/java'
+            payload = java_stub.encode()
+        else:
+            archive_root = f'node-v24.22.0-{os_name}-{arch}'
+            name = archive_root + '.tar.gz'
+            binary = 'bin/node'
+            payload = node_stub.encode()
+        archive_path = assets / name
+        with tarfile.open(archive_path, 'w:gz') as archive:
+            info = tarfile.TarInfo(f'{archive_root}/{binary}')
+            info.size = len(payload); info.mode = 0o700
+            archive.addfile(info, io.BytesIO(payload))
+            license_info = tarfile.TarInfo(f'{archive_root}/LICENSE')
+            license_info.size = 7
+            archive.addfile(license_info, io.BytesIO(b'license'))
+        source = source.replace(pinned, hashlib.sha256(archive_path.read_bytes()).hexdigest())
+        runtime_archives.append(archive_path)
+    assert len(runtime_archives) == 8
+    SCRIPT = root / 'test-install.sh'
+    SCRIPT.write_text(source)
+    executable(fake / 'uname', '#!/bin/sh\ncase "$1" in -s) echo "${TEST_OS:-Linux}" ;; -m) echo "${TEST_ARCH:-x86_64}" ;; esac\n')
+    executable(fake / 'getconf', '#!/bin/sh\necho "${TEST_LIBC:-glibc 2.36}"\n')
+    for host_runtime in ('java', 'node'):
+        executable(fake / host_runtime, '#!/bin/sh\necho "Host runtime must not be used" >&2\nexit 99\n')
     install = root / "user's app data"
     bindir = root / "user's bin"
     env = dict(os.environ, PATH=f'{fake}:/usr/bin:/bin', TEST_ASSETS=str(assets),
@@ -76,7 +111,7 @@ exit 37
     assert 'jvm' in str(next((install / 'releases').iterdir()))
     result = subprocess.run([str(launcher), 'file with spaces.bl', '--input', '-', ''], env=env, capture_output=True, text=True)
     assert result.returncode == 37 and result.stdout == 'file with spaces.bl\n--input\n-\n\n', result
-    checked('auto prefers Java; quoted paths, arguments and exit status preserved')
+    checked('default downloads private Java; host runtimes ignored; quoted argv and exit preserved')
     run('--runtime', 'node')
     previous = launcher.read_bytes()
     checked('explicit Node install and version check')
@@ -96,11 +131,23 @@ exit 37
     assert launcher.read_bytes() == previous
     checked('duplicate checksum rejected')
     sums.write_text(good_sums)
-    run(ok=False, extra={'TEST_JAVA_MAJOR':'17', 'TEST_NODE_MAJOR':'18'})
+    for change in ({'TEST_RUNTIME_VERSION':'bad'}, {'TEST_RUNTIME_DOWNLOAD_FAIL':'1'}):
+        run(ok=False, extra=change)
+        assert launcher.read_bytes() == previous
+        checked(f'private runtime failure preserves active command: {next(iter(change))}')
+    archive = assets / 'OpenJDK21U-jre_x64_linux_hotspot_21.0.12.1_1.tar.gz'
+    saved = archive.read_bytes(); archive.write_bytes(saved + b'corrupt')
+    run(ok=False)
     assert launcher.read_bytes() == previous
-    checked('missing suitable runtime fails before activation')
-    run(extra={'TEST_JAVA_MAJOR':'17', 'TEST_NODE_MAJOR':'22'})
-    checked('auto falls back to maintained Node')
+    archive.write_bytes(saved)
+    checked('runtime checksum mismatch preserves active command')
+    for os_name, arch in [('Darwin','arm64'),('Darwin','x86_64'),('Linux','aarch64'),('Linux','x86_64')]:
+        for runtime in ('jvm','node'):
+            run('--runtime',runtime,extra={'TEST_OS':os_name,'TEST_ARCH':arch})
+    checked('all eight OS/CPU/runtime mappings install private executable')
+    for extra in ({'TEST_OS':'FreeBSD'},{'TEST_ARCH':'riscv64'},{'TEST_LIBC':'musl'},{'TEST_LIBC':'glibc 2.27'}):
+        run(ok=False,extra=extra)
+    checked('unsupported platform and libc rejected')
     for args in (('--version','../../bad'), ('--runtime','other'), ('--runtime',)):
         run(*args, ok=False)
     checked('invalid options rejected')
