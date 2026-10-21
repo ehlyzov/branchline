@@ -44,7 +44,11 @@ PEN now passes the filter, so the result is:
 
 Use **Download program.bl** and **Download input.json** in the Playground to keep
 your current edits. Then follow [Install and run locally](install.md) for the pinned
-JVM or Node CLI, exact commands, and a version check.
+JVM or Node CLI in one command, then run:
+
+```bash
+bl program.bl --input input.json
+```
 
 You can also download the original
 [program.bl](../downloads/prepare-order/program.bl),
@@ -96,16 +100,10 @@ expects `name` to be a string.
 
 ### Validation commands
 
-For the JVM:
+Using the installed JVM or Node launcher:
 
 ```bash
-java -jar branchline-cli-v1.0.0-rc.1-all.jar hello.bl --input sample.json
-```
-
-For Node, from the working directory created in the local setup:
-
-```bash
-node branchline-cli/bin/bl.cjs hello.bl --input sample.json
+bl hello.bl --input sample.json
 ```
 
 In the Playground, paste the program and input into their editors, run, and compare
@@ -155,8 +153,7 @@ is `{"name":"Guest","nickname":null,"active":true,"attempts":3}`.
 Replace `sample.json` with the input above and run:
 
 ```bash
-java -jar branchline-cli-v1.0.0-rc.1-all.jar defaults.bl --input sample.json
-node branchline-cli/bin/bl.cjs defaults.bl --input sample.json
+bl defaults.bl --input sample.json
 ```
 
 The same program and input can be pasted into the Playground.
@@ -208,8 +205,7 @@ integers or decimal amounts.
 Replace `sample.json` with the input above and run:
 
 ```bash
-java -jar branchline-cli-v1.0.0-rc.1-all.jar available-items.bl --input sample.json
-node branchline-cli/bin/bl.cjs available-items.bl --input sample.json
+bl available-items.bl --input sample.json
 ```
 
 The same program and input can be pasted into the Playground.

@@ -28,20 +28,19 @@ OUTPUT {
 
 Branchline ships with experimental CLI helpers for JVM and Node runtimes. Running any CLI with no arguments now prints a detailed help screen (`-h`/`--help` also supported).
 
-**Quick usage (JVM)**
+**Quick install (macOS/Linux)** — with Java 21/25 or Node 22/24 installed:
 
-1. Download the JVM CLI fat jar from GitHub Releases (asset: `branchline-cli-<tag>-all.jar`).
-2. Run a script:
-   `java -jar branchline-cli-<tag>-all.jar examples/hello.bl --input fixtures/hello.json`
-3. Pipe input via stdin:
-   `cat fixtures/hello.json | java -jar branchline-cli-<tag>-all.jar examples/hello.bl --input - --quiet`
+```bash
+curl -fsSL https://ehlyzov.github.io/branchline/install.sh | sh
+export PATH="$HOME/.local/bin:$PATH"
+bl --version
+bl program.bl --input input.json
+```
 
-**Quick usage (Node)**
-
-1. Download the Node CLI tarball from GitHub Releases (asset: `branchline-cli-js-<tag>.tgz`).
-2. Extract it and run:
-   `tar -xzf branchline-cli-js-<tag>.tgz`
-   `./bin/bl.cjs path/to/program.bl --input sample.json`
+The installer selects Java 21+ first, otherwise Node 22/24, verifies the published
+RC checksum and version, and installs `bl` without sudo. To select Node explicitly,
+append `-s -- --runtime node` after `sh`. Runtime numeric guarantees differ.
+See [installation, updates and manual packages](https://ehlyzov.github.io/branchline/guides/install/).
 
 Both runtimes accept `--input-format xml` for XML payloads.
 

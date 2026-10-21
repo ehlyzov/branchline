@@ -9,6 +9,12 @@
 
 ## Narrow Verification Path
 
+- Release installer: `sh -n docs/install.sh` and `python3 bin/test_installer.py`.
+  Pages runs these checks before publication. Also install real published JVM/Node
+  packages into temporary prefixes and run edited recipe files; stubs do not
+  establish real package/runtime acceptance. Installer changes do not rebuild CLI
+  packages unless package layout itself changes.
+
 - Interpreter JVM behavior: `./gradlew :interpreter:jvmTest`.
 - Interpreter JS behavior: `./gradlew :interpreter:jsTest`.
 - VM JVM behavior: `./gradlew :vm:jvmTest`.

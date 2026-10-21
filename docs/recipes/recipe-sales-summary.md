@@ -45,30 +45,33 @@ Compare JSON values; whitespace and object key order can differ.
 In the Playground, select **Run** and compare the Result with the expected output.
 Then try the edit below. Enable tracing only if you want to inspect execution.
 
-To run locally, choose **Java 21+** or **Node 18+** and follow the
-[installation guide](../guides/install.md) to download the published
-**v1.0.0-rc.1** CLI. That guide includes the release URLs, extraction commands,
-and platform requirements. Save the program and input in the same directory as
-your CLI, or download the original files:
+First follow the [one-command installation guide](../guides/install.md) with
+**Java 21/25** or **Node 22/24**. It installs the published **v1.0.0-rc.1** CLI as
+`bl` and explains runtime/platform limits.
+
+**Already downloaded your edited files from the Playground?** Keep
+`program.bl` and `input.json` together, skip the original downloads below, and run:
+
+```bash
+bl program.bl --input input.json
+```
+
+Use the expected result for your edit (see **Try one edit**), rather than the
+original result above. For an ASSERT rejection, the CLI exits with an error and
+emits no result JSON.
+
+### Optional: get the original example
+
+Only if you have no files yet, download fresh copies into a new directory.
+These commands overwrite files with the same names:
 
 ```bash
 curl -fL -o program.bl https://ehlyzov.github.io/branchline/downloads/recipe-sales-summary/program.bl
 curl -fL -o input.json https://ehlyzov.github.io/branchline/downloads/recipe-sales-summary/input.json
+bl program.bl --input input.json
 ```
 
-Run either command from that directory:
-
-```bash
-# JVM: the downloaded release jar
-java -jar branchline-cli-v1.0.0-rc.1-all.jar program.bl --input input.json
-
-# Node: the release package extracted into branchline-cli
-node branchline-cli/bin/bl.cjs program.bl --input input.json
-```
-
-Both commands use the same program and JSON input and should produce the expected
-result above. For an ASSERT rejection, the CLI exits with an error and emits no
-result JSON.
+With these original files, compare with **Expected output** above.
 
 ## Try one edit
 

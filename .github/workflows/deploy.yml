@@ -94,6 +94,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: playground/package-lock.json
 
+      - name: Check release installer
+        run: |
+          sh -n docs/install.sh
+          python3 bin/test_installer.py
+
       - name: Install Python dependencies
         run: pip install -r requirements.txt
 

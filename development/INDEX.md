@@ -309,3 +309,5 @@ This index is the canonical entry point for the /development knowledge base. All
 - [Alpha.1 Release Acceptance](evidence/release-0.11.0-alpha.1/README.md) -- parent package/browser/compiler checks, compatibility fixtures and release workflow evidence.
 
 - [Task Recipes and Form Usability](planning/task-recipes-2026-10-21.md) -- six executable recipes, task catalog, expanded controls and public acceptance.
+
+- [One-command installation](planning/simple-installer-2026-10-21.md) -- checksum-verified published CLI installer, `bl` launcher and local handoff.
