@@ -1,0 +1,138 @@
+{
+  "verifiedAt": "2026-10-21T14:41:17.407Z",
+  "url": "https://ehlyzov.github.io/branchline/playground/",
+  "sha": "881956b8f6c634ec841d0c0bdfaf38ba143daecd",
+  "deployment": "39617235453",
+  "recipeRuns": [
+    {
+      "id": "prepare-order",
+      "case": "base",
+      "output": "{\n    \"order_id\": \"A-104\",\n    \"city\": \"London\",\n    \"skus\": [\n        \"BOOK\"\n    ]\n}",
+      "pass": true
+    },
+    {
+      "id": "prepare-order",
+      "case": "exercise",
+      "output": "{\n    \"order_id\": \"A-104\",\n    \"city\": \"London\",\n    \"skus\": [\n        \"BOOK\",\n        \"PEN\"\n    ]\n}",
+      "error": null,
+      "pass": true
+    },
+    {
+      "id": "recipe-customer",
+      "case": "base",
+      "output": "{\n    \"customer_id\": \"C-17\",\n    \"name\": \"Ada Lovelace\",\n    \"email\": \"ada@example.com\",\n    \"city\": \"London\"\n}",
+      "pass": true
+    },
+    {
+      "id": "recipe-customer",
+      "case": "exercise",
+      "output": "{\n    \"customer_id\": \"C-17\",\n    \"name\": \"Ada Lovelace\",\n    \"email\": \"ada+news@example.com\",\n    \"city\": \"London\"\n}",
+      "error": null,
+      "pass": true
+    },
+    {
+      "id": "recipe-sales-summary",
+      "case": "base",
+      "output": "{\n    \"currency\": \"GBP\",\n    \"paid_count\": 2,\n    \"revenue_cents\": 3700,\n    \"excluded_count\": 1\n}",
+      "pass": true
+    },
+    {
+      "id": "recipe-sales-summary",
+      "case": "exercise",
+      "output": "{\n    \"currency\": \"GBP\",\n    \"paid_count\": 3,\n    \"revenue_cents\": 4600,\n    \"excluded_count\": 0\n}",
+      "error": null,
+      "pass": true
+    },
+    {
+      "id": "recipe-incomplete-data",
+      "case": "base",
+      "output": "{\n    \"customer_id\": \"C-17\",\n    \"email\": null,\n    \"phone\": null,\n    \"tags\": [],\n    \"needs_contact\": true\n}",
+      "pass": true
+    },
+    {
+      "id": "recipe-incomplete-data",
+      "case": "exercise",
+      "output": "{\n    \"customer_id\": \"C-17\",\n    \"email\": \"ada@example.com\",\n    \"phone\": null,\n    \"tags\": [],\n    \"needs_contact\": false\n}",
+      "error": null,
+      "pass": true
+    },
+    {
+      "id": "recipe-test-report",
+      "case": "base",
+      "output": "{\n    \"status\": \"failing\",\n    \"total\": 3,\n    \"passed\": 1,\n    \"failed\": 1,\n    \"skipped\": 1,\n    \"duration_ms\": 200,\n    \"failed_tests\": [\n        \"checkout\"\n    ]\n}",
+      "pass": true
+    },
+    {
+      "id": "recipe-test-report",
+      "case": "exercise",
+      "output": "{\n    \"status\": \"passing\",\n    \"total\": 3,\n    \"passed\": 2,\n    \"failed\": 0,\n    \"skipped\": 1,\n    \"duration_ms\": 200,\n    \"failed_tests\": []\n}",
+      "error": null,
+      "pass": true
+    },
+    {
+      "id": "recipe-pipeline-guard",
+      "case": "base",
+      "output": "{\n    \"run_id\": \"build-104\",\n    \"branch\": \"main\",\n    \"deploy\": true,\n    \"checked_names\": [\n        \"unit tests\",\n        \"package\"\n    ]\n}",
+      "pass": true
+    },
+    {
+      "id": "recipe-pipeline-guard",
+      "case": "exercise",
+      "output": null,
+      "error": "Pipeline checks must pass",
+      "pass": true,
+      "retry": "First paste left page focus and did not alter the input (confirmed by downloaded JSON). Native AX editor targeting applied failed status; Run showed expected error and no output."
+    }
+  ],
+  "editedOutput": {
+    "customer_id": "C-PUBLIC",
+    "source": "browser-check",
+    "name": "Grace Hopper",
+    "email": "news@example.org",
+    "city": "Paris"
+  },
+  "mobile": {
+    "fields": [
+      {
+        "left": 30,
+        "right": 360,
+        "width": 330
+      },
+      {
+        "left": 30,
+        "right": 360,
+        "width": 330
+      },
+      {
+        "left": 30,
+        "right": 360,
+        "width": 330
+      },
+      {
+        "left": 30,
+        "right": 360,
+        "width": 330
+      }
+    ],
+    "scroll": 390,
+    "width": 390
+  },
+  "dark": {
+    "reset": "rgb(191, 219, 254)",
+    "scheme": "slate",
+    "summary": "rgb(191, 219, 254)"
+  },
+  "guide": {
+    "heading": "Validation commands¶",
+    "url": "https://ehlyzov.github.io/branchline/recipes/recipe-customer/#validation-commands"
+  },
+  "syntaxErrorAndRecovery": true,
+  "filterPreservesEditedCurrent": true,
+  "exactEditedDownloads": true,
+  "console": [],
+  "network": {
+    "responses": 43,
+    "failed": [],
+    "truncated": false
+  }
+}

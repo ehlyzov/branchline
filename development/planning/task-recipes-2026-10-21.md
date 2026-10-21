@@ -1,6 +1,6 @@
 # Task recipes and expanded-form usability
 
-Status: local acceptance passed; publication in progress. Authorized scope: six practical recipes, task-based example catalog, expanded input/control layout fixes, exact-source Pages publication and independent public acceptance.
+Status: complete; published and independently accepted. Authorized scope: six practical recipes, task-based example catalog, expanded input/control layout fixes, exact-source Pages publication and independent public acceptance.
 
 ## Accepted slice
 - Six recipes: normalize a customer, prepare an order (reuse prepare-order), summarize sales, handle incomplete data, summarize a JSON test report, reject invalid pipeline input.
@@ -25,3 +25,6 @@ No syntax, runtime, numerical guarantees or package version changes are intended
 
 ## Local result
 88/88 published JVM/Node CLI checks;36 JS recipe scenarios;all6 real-browser runs;41 old fixture behaviors preserved. Expanded desktop/mobile controls and dark contrast verified. Evidence: ../evidence/task-recipes-2026-10-21/README.md.
+
+## Published result
+Source881956b8;CI39614940983;Pages39617235453. Public12/12 recipe scenarios,2/2 edited-file CLI runs,18/18 static hashes;expanded controls and console/resources pass. See evidence report.

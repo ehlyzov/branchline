@@ -1,0 +1,788 @@
+{
+  "conclusion": "success",
+  "headSha": "881956b8f6c634ec841d0c0bdfaf38ba143daecd",
+  "jobs": [
+    {
+      "completedAt": "2026-10-21T14:15:24Z",
+      "conclusion": "success",
+      "databaseId": 119273342222,
+      "name": "Build CLI Jar",
+      "startedAt": "2026-10-21T14:13:21Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-21T14:13:24Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-21T14:13:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:13:26Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 2,
+          "startedAt": "2026-10-21T14:13:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:13:30Z",
+          "conclusion": "success",
+          "name": "Setup Java",
+          "number": 3,
+          "startedAt": "2026-10-21T14:13:26Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:13:31Z",
+          "conclusion": "success",
+          "name": "Setup Gradle",
+          "number": 4,
+          "startedAt": "2026-10-21T14:13:30Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:15Z",
+          "conclusion": "success",
+          "name": "Build Branchline CLI (JVM)",
+          "number": 5,
+          "startedAt": "2026-10-21T14:13:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:18Z",
+          "conclusion": "success",
+          "name": "Upload Branchline CLI jar",
+          "number": 6,
+          "startedAt": "2026-10-21T14:15:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:20Z",
+          "conclusion": "success",
+          "name": "Post Setup Gradle",
+          "number": 10,
+          "startedAt": "2026-10-21T14:15:18Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:21Z",
+          "conclusion": "success",
+          "name": "Post Setup Java",
+          "number": 11,
+          "startedAt": "2026-10-21T14:15:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:21Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 12,
+          "startedAt": "2026-10-21T14:15:21Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:21Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 13,
+          "startedAt": "2026-10-21T14:15:21Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/ehlyzov/branchline/actions/runs/39614940983/job/119273342222"
+    },
+    {
+      "completedAt": "2026-10-21T14:22:28Z",
+      "conclusion": "success",
+      "databaseId": 119274472054,
+      "name": "CLI Tests",
+      "startedAt": "2026-10-21T14:15:27Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-21T14:15:31Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-21T14:15:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:50Z",
+          "conclusion": "success",
+          "name": "Build RubbaBoy/BYOB@v1.3.0",
+          "number": 2,
+          "startedAt": "2026-10-21T14:15:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:51Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 3,
+          "startedAt": "2026-10-21T14:15:50Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:57Z",
+          "conclusion": "success",
+          "name": "Setup Java",
+          "number": 4,
+          "startedAt": "2026-10-21T14:15:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:02Z",
+          "conclusion": "success",
+          "name": "Setup Node.js",
+          "number": 5,
+          "startedAt": "2026-10-21T14:15:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:03Z",
+          "conclusion": "success",
+          "name": "Setup Gradle",
+          "number": 6,
+          "startedAt": "2026-10-21T14:16:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:22:17Z",
+          "conclusion": "success",
+          "name": "Run CLI tests",
+          "number": 7,
+          "startedAt": "2026-10-21T14:16:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:22:19Z",
+          "conclusion": "success",
+          "name": "Download Branchline CLI (JVM)",
+          "number": 8,
+          "startedAt": "2026-10-21T14:22:17Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:22:19Z",
+          "conclusion": "success",
+          "name": "Configure Branchline CLI jar path",
+          "number": 9,
+          "startedAt": "2026-10-21T14:22:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:22:20Z",
+          "conclusion": "success",
+          "name": "Summarize CLI tests",
+          "number": 10,
+          "startedAt": "2026-10-21T14:22:19Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:22:22Z",
+          "conclusion": "success",
+          "name": "Update CLI badge",
+          "number": 11,
+          "startedAt": "2026-10-21T14:22:20Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:22:22Z",
+          "conclusion": "skipped",
+          "name": "Fail if CLI tests failed",
+          "number": 12,
+          "startedAt": "2026-10-21T14:22:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:22:24Z",
+          "conclusion": "success",
+          "name": "Post Setup Gradle",
+          "number": 21,
+          "startedAt": "2026-10-21T14:22:22Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:22:24Z",
+          "conclusion": "success",
+          "name": "Post Setup Node.js",
+          "number": 22,
+          "startedAt": "2026-10-21T14:22:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:22:25Z",
+          "conclusion": "success",
+          "name": "Post Setup Java",
+          "number": 23,
+          "startedAt": "2026-10-21T14:22:24Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:22:25Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 24,
+          "startedAt": "2026-10-21T14:22:25Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:22:25Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 25,
+          "startedAt": "2026-10-21T14:22:25Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/ehlyzov/branchline/actions/runs/39614940983/job/119274472054",
+      "verifiedJUnitSummary": {
+        "status": "passing",
+        "tests": "198 tests",
+        "color": "44cc11",
+        "reports": 22,
+        "failed": 0,
+        "totals": {
+          "tests": 198,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      }
+    },
+    {
+      "completedAt": "2026-10-21T14:19:00Z",
+      "conclusion": "success",
+      "databaseId": 119274472059,
+      "name": "Interpreter Tests",
+      "startedAt": "2026-10-21T14:15:27Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-21T14:15:29Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-21T14:15:27Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:44Z",
+          "conclusion": "success",
+          "name": "Build RubbaBoy/BYOB@v1.3.0",
+          "number": 2,
+          "startedAt": "2026-10-21T14:15:29Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:45Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 3,
+          "startedAt": "2026-10-21T14:15:44Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:49Z",
+          "conclusion": "success",
+          "name": "Setup Java",
+          "number": 4,
+          "startedAt": "2026-10-21T14:15:45Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:53Z",
+          "conclusion": "success",
+          "name": "Setup Node.js",
+          "number": 5,
+          "startedAt": "2026-10-21T14:15:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:03Z",
+          "conclusion": "success",
+          "name": "Setup Chrome",
+          "number": 6,
+          "startedAt": "2026-10-21T14:15:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:03Z",
+          "conclusion": "success",
+          "name": "Configure Chrome launcher",
+          "number": 7,
+          "startedAt": "2026-10-21T14:16:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:04Z",
+          "conclusion": "success",
+          "name": "Setup Gradle",
+          "number": 8,
+          "startedAt": "2026-10-21T14:16:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:51Z",
+          "conclusion": "success",
+          "name": "Run interpreter tests",
+          "number": 9,
+          "startedAt": "2026-10-21T14:16:04Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:52Z",
+          "conclusion": "success",
+          "name": "Download Branchline CLI (JVM)",
+          "number": 10,
+          "startedAt": "2026-10-21T14:18:51Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:52Z",
+          "conclusion": "success",
+          "name": "Configure Branchline CLI jar path",
+          "number": 11,
+          "startedAt": "2026-10-21T14:18:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:53Z",
+          "conclusion": "success",
+          "name": "Summarize interpreter tests",
+          "number": 12,
+          "startedAt": "2026-10-21T14:18:52Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:54Z",
+          "conclusion": "success",
+          "name": "Update interpreter badge",
+          "number": 13,
+          "startedAt": "2026-10-21T14:18:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:54Z",
+          "conclusion": "skipped",
+          "name": "Fail if interpreter tests failed",
+          "number": 14,
+          "startedAt": "2026-10-21T14:18:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:57Z",
+          "conclusion": "success",
+          "name": "Post Setup Gradle",
+          "number": 25,
+          "startedAt": "2026-10-21T14:18:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:57Z",
+          "conclusion": "success",
+          "name": "Post Setup Node.js",
+          "number": 26,
+          "startedAt": "2026-10-21T14:18:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:57Z",
+          "conclusion": "success",
+          "name": "Post Setup Java",
+          "number": 27,
+          "startedAt": "2026-10-21T14:18:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:58Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 28,
+          "startedAt": "2026-10-21T14:18:57Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:58Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 29,
+          "startedAt": "2026-10-21T14:18:58Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/ehlyzov/branchline/actions/runs/39614940983/job/119274472059",
+      "verifiedJUnitSummary": {
+        "status": "passing",
+        "tests": "706 tests",
+        "color": "44cc11",
+        "reports": 44,
+        "failed": 0,
+        "totals": {
+          "tests": 706,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      }
+    },
+    {
+      "completedAt": "2026-10-21T14:19:11Z",
+      "conclusion": "success",
+      "databaseId": 119274472108,
+      "name": "Conformance Tests",
+      "startedAt": "2026-10-21T14:15:27Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-21T14:15:33Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-21T14:15:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:48Z",
+          "conclusion": "success",
+          "name": "Build RubbaBoy/BYOB@v1.3.0",
+          "number": 2,
+          "startedAt": "2026-10-21T14:15:33Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:49Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 3,
+          "startedAt": "2026-10-21T14:15:48Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:53Z",
+          "conclusion": "success",
+          "name": "Setup Java",
+          "number": 4,
+          "startedAt": "2026-10-21T14:15:49Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:58Z",
+          "conclusion": "success",
+          "name": "Setup Node.js",
+          "number": 5,
+          "startedAt": "2026-10-21T14:15:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:06Z",
+          "conclusion": "success",
+          "name": "Setup Chrome",
+          "number": 6,
+          "startedAt": "2026-10-21T14:15:58Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:06Z",
+          "conclusion": "success",
+          "name": "Configure Chrome launcher",
+          "number": 7,
+          "startedAt": "2026-10-21T14:16:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:07Z",
+          "conclusion": "success",
+          "name": "Setup Gradle",
+          "number": 8,
+          "startedAt": "2026-10-21T14:16:06Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:18:59Z",
+          "conclusion": "success",
+          "name": "Run conformance tests",
+          "number": 9,
+          "startedAt": "2026-10-21T14:16:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:19:02Z",
+          "conclusion": "success",
+          "name": "Download Branchline CLI (JVM)",
+          "number": 10,
+          "startedAt": "2026-10-21T14:18:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:19:02Z",
+          "conclusion": "success",
+          "name": "Configure Branchline CLI jar path",
+          "number": 11,
+          "startedAt": "2026-10-21T14:19:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:19:02Z",
+          "conclusion": "success",
+          "name": "Summarize conformance tests",
+          "number": 12,
+          "startedAt": "2026-10-21T14:19:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:19:05Z",
+          "conclusion": "success",
+          "name": "Update conformance badge",
+          "number": 13,
+          "startedAt": "2026-10-21T14:19:02Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:19:05Z",
+          "conclusion": "skipped",
+          "name": "Fail if conformance tests failed",
+          "number": 14,
+          "startedAt": "2026-10-21T14:19:05Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:19:07Z",
+          "conclusion": "success",
+          "name": "Post Setup Gradle",
+          "number": 25,
+          "startedAt": "2026-10-21T14:19:05Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:19:07Z",
+          "conclusion": "success",
+          "name": "Post Setup Node.js",
+          "number": 26,
+          "startedAt": "2026-10-21T14:19:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:19:07Z",
+          "conclusion": "success",
+          "name": "Post Setup Java",
+          "number": 27,
+          "startedAt": "2026-10-21T14:19:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:19:07Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 28,
+          "startedAt": "2026-10-21T14:19:07Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:19:08Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 29,
+          "startedAt": "2026-10-21T14:19:07Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/ehlyzov/branchline/actions/runs/39614940983/job/119274472108",
+      "verifiedJUnitSummary": {
+        "status": "passing",
+        "tests": "1066 tests, 2 skipped",
+        "color": "44cc11",
+        "reports": 103,
+        "failed": 0,
+        "totals": {
+          "tests": 1066,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 2
+        }
+      }
+    },
+    {
+      "completedAt": "2026-10-21T14:23:19Z",
+      "conclusion": "success",
+      "databaseId": 119274472500,
+      "name": "VM Tests",
+      "startedAt": "2026-10-21T14:15:27Z",
+      "status": "completed",
+      "steps": [
+        {
+          "completedAt": "2026-10-21T14:15:31Z",
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "startedAt": "2026-10-21T14:15:28Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:53Z",
+          "conclusion": "success",
+          "name": "Build RubbaBoy/BYOB@v1.3.0",
+          "number": 2,
+          "startedAt": "2026-10-21T14:15:31Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:54Z",
+          "conclusion": "success",
+          "name": "Checkout",
+          "number": 3,
+          "startedAt": "2026-10-21T14:15:53Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:15:59Z",
+          "conclusion": "success",
+          "name": "Setup Java",
+          "number": 4,
+          "startedAt": "2026-10-21T14:15:54Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:03Z",
+          "conclusion": "success",
+          "name": "Setup Node.js",
+          "number": 5,
+          "startedAt": "2026-10-21T14:15:59Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:15Z",
+          "conclusion": "success",
+          "name": "Setup Chrome",
+          "number": 6,
+          "startedAt": "2026-10-21T14:16:03Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:15Z",
+          "conclusion": "success",
+          "name": "Configure Chrome launcher",
+          "number": 7,
+          "startedAt": "2026-10-21T14:16:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:16:15Z",
+          "conclusion": "success",
+          "name": "Setup Gradle",
+          "number": 8,
+          "startedAt": "2026-10-21T14:16:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:23:09Z",
+          "conclusion": "success",
+          "name": "Run VM tests",
+          "number": 9,
+          "startedAt": "2026-10-21T14:16:15Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:23:11Z",
+          "conclusion": "success",
+          "name": "Download Branchline CLI (JVM)",
+          "number": 10,
+          "startedAt": "2026-10-21T14:23:09Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:23:11Z",
+          "conclusion": "success",
+          "name": "Configure Branchline CLI jar path",
+          "number": 11,
+          "startedAt": "2026-10-21T14:23:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:23:11Z",
+          "conclusion": "success",
+          "name": "Summarize VM tests",
+          "number": 12,
+          "startedAt": "2026-10-21T14:23:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:23:14Z",
+          "conclusion": "success",
+          "name": "Update VM badge",
+          "number": 13,
+          "startedAt": "2026-10-21T14:23:11Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:23:14Z",
+          "conclusion": "skipped",
+          "name": "Fail if VM tests failed",
+          "number": 14,
+          "startedAt": "2026-10-21T14:23:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:23:16Z",
+          "conclusion": "success",
+          "name": "Post Setup Gradle",
+          "number": 25,
+          "startedAt": "2026-10-21T14:23:14Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:23:16Z",
+          "conclusion": "success",
+          "name": "Post Setup Node.js",
+          "number": 26,
+          "startedAt": "2026-10-21T14:23:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:23:16Z",
+          "conclusion": "success",
+          "name": "Post Setup Java",
+          "number": 27,
+          "startedAt": "2026-10-21T14:23:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:23:16Z",
+          "conclusion": "success",
+          "name": "Post Checkout",
+          "number": 28,
+          "startedAt": "2026-10-21T14:23:16Z",
+          "status": "completed"
+        },
+        {
+          "completedAt": "2026-10-21T14:23:16Z",
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 29,
+          "startedAt": "2026-10-21T14:23:16Z",
+          "status": "completed"
+        }
+      ],
+      "url": "https://github.com/ehlyzov/branchline/actions/runs/39614940983/job/119274472500",
+      "verifiedJUnitSummary": {
+        "status": "passing",
+        "tests": "732 tests",
+        "color": "44cc11",
+        "reports": 61,
+        "failed": 0,
+        "totals": {
+          "tests": 732,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      }
+    }
+  ],
+  "status": "completed",
+  "url": "https://github.com/ehlyzov/branchline/actions/runs/39614940983",
+  "acceptance": "All five jobs and all required test steps successful. Completed raw JUnit summaries independently checked:2702 tests,zero failures/errors,two skipped. Initial REST aggregate status lag resolved."
+}

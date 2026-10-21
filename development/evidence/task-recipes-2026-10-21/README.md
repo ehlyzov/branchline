@@ -16,4 +16,12 @@ The six tasks are customer normalization, order shaping, paid-sales summary, inc
 Raw local screenshots/logs: `output/task-recipes-2026-10-21/`. This is independent engineering UX acceptance, not a study with external participants or a full accessibility audit.
 
 ## Publication
-Pending exact-commit CI, Pages deployment and public-browser acceptance. These are required before final completion.
+Published source **881956b8f6c634ec841d0c0bdfaf38ba143daecd**, version **1.0.0-rc.1**.
+- [Test Suite 39614940983](https://github.com/ehlyzov/branchline/actions/runs/39614940983): all5 jobs success;2702 tests,0 failures/errors,2 skipped. Aggregate REST status initially lagged completed job steps; raw completed JUnit summaries were checked before deployment and aggregate status subsequently became successful.
+- [Pages 39617235453](https://github.com/ehlyzov/branchline/actions/runs/39617235453): success; public release-metadata.json matches exact source SHA/run.
+- Fresh public browser:12/12 recipe base/exercise checks, custom input+program change, syntax error/recovery, preserved edited draft outside taskfilter, correct local-run guide anchor.
+- Exact browser-downloaded edited program/input passed both published CLIs.18/18 original public files match accepted-source hashes.
+- Expanded public settings at1280px and390px; mobile select bounds30..360px and no page overflow, including nested contract output. Public dark action text matches verified readable color. Console warnings/errors empty;43 observed network responses,0 failed requests or HTTP errors, no event truncation.
+- One automation paste initially targeted the page instead of Monaco. Downloaded JSON proved input unchanged; native AX targeting applied the intended edit, then the expected pipeline rejection occurred. This was not a runtime mismatch; recorded in public-browser.json.
+
+See `public-browser.json`, `public-downloads.json`, `published-metadata.json`, `deploy-result.json`, and `ci-result.json`. Screenshots remain under `output/task-recipes-2026-10-21/`. Generated-page link audit:10 touched pages,1293 internal links/anchors,0 missing targets.

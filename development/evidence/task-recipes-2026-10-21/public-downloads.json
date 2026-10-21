@@ -1,0 +1,120 @@
+{
+  "editedBrowserFiles": [
+    {
+      "runtime": "jvm",
+      "exit": 0,
+      "output": {
+        "customer_id": "C-PUBLIC",
+        "source": "browser-check",
+        "name": "Grace Hopper",
+        "email": "news@example.org",
+        "city": "Paris"
+      },
+      "pass": true
+    },
+    {
+      "runtime": "node",
+      "exit": 0,
+      "output": {
+        "customer_id": "C-PUBLIC",
+        "source": "browser-check",
+        "name": "Grace Hopper",
+        "email": "news@example.org",
+        "city": "Paris"
+      },
+      "pass": true
+    }
+  ],
+  "publicStaticFiles": [
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/prepare-order/program.bl",
+      "sha256": "22ece9f472b5b8a4b292e1a5cc2346110faa2cd5048518fa38964501f46fa6b1",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/prepare-order/input.json",
+      "sha256": "fbe67df2fefa70b8336ed9b5fdf70d6a37ba871184caa895c56b2ff6cb66a625",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/prepare-order/expected.json",
+      "sha256": "b09bd641c5ef3000c5913cb2263673bd867bf063e780558ade1873881a5ab134",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-customer/program.bl",
+      "sha256": "1290e468e2a401680cfae41c2fc9bf763691d24aea249eb342f7381c85e255e4",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-customer/input.json",
+      "sha256": "9f9cbbc4e6d648d97aef132ef15148e09f02a10b8a0f92e22b19dbfd687f1f8b",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-customer/expected.json",
+      "sha256": "ce2dc6c69457e996fefe7199080cd925ec2500af4689354969e4ea091663d4c4",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-sales-summary/program.bl",
+      "sha256": "0ffdb396f01e05776a14df9dea9c98eb40d92e311f79e9d692070eaa04d7d2d5",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-sales-summary/input.json",
+      "sha256": "b1efb54e45bec519e6b26287c33765fda5063c42b3cb06b218c96acb19c3e0dc",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-sales-summary/expected.json",
+      "sha256": "fe10a7667a142aee4d6908867e23efaeb754489922775e28ca670b7bf4229a63",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-incomplete-data/program.bl",
+      "sha256": "dc0a9e87f8edee48d2439b86c1ecdde6336097b91c21b3091ec7a794b9992db5",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-incomplete-data/input.json",
+      "sha256": "6d2049b62851a5f9dc55539f0928cfc852b551850b4470880d902a538898c890",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-incomplete-data/expected.json",
+      "sha256": "105da8eb2786b5e5911b4f7249d1b0ec2aa7f2557d2bf1cf16abe4e3fe7d626b",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-test-report/program.bl",
+      "sha256": "c1935a786a2bda3574b867358b1e8cdeae6a5f72bfedb9113afb9629baed67e9",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-test-report/input.json",
+      "sha256": "4e3ec147c9467ecbf22ff12276c5d264e15ba66ff1e8c9e70dd67af57f47480e",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-test-report/expected.json",
+      "sha256": "9ff79898eec54d09d6d650a51f927e0220fb5235ec5eb45c4d0eafb9c2a04334",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-pipeline-guard/program.bl",
+      "sha256": "d44ff3907db270e1004b1db6338d5fdcf6374ee78795a1f2ad07f99be4eff181",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-pipeline-guard/input.json",
+      "sha256": "b78a72fe5c357aa50d5177a614f184c91512587cda407813f6a6cc775d198f76",
+      "matchesSource": true
+    },
+    {
+      "url": "https://ehlyzov.github.io/branchline/downloads/recipe-pipeline-guard/expected.json",
+      "sha256": "8e4b7c91c96d454647d70392f046b0fbfd43ce8d611d842e5614877f249c0ad5",
+      "matchesSource": true
+    }
+  ]
+}
