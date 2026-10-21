@@ -1,5 +1,5 @@
 ---
-status: In Progress
+status: Implemented
 depends_on: ['planning/ux-docs-audit-2026-10-21']
 blocks: []
 supersedes: []
@@ -45,3 +45,10 @@ MkDocs build; local browser home -> example -> edit -> result -> local instructi
 and downloads; syntax-error recovery; narrow/wide layout and keyboard controls;
 public deployment metadata matches accepted commit, repeat browser flow and check
 console/resources. No universal performance/adoption or WCAG certification claims.
+
+## Accepted and published
+
+Implemented by three GPT-6.1 Sol High agents; parent independent UX and runtime
+acceptance passed. Source c4ce37ab; CI39599783459 and Pages39600640882 passed.
+Public metadata and real browser journey confirmed. Details and limitations:
+`development/evidence/first-success-2026-10-21/README.md`. RC packages unchanged.

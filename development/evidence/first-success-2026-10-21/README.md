@@ -37,3 +37,18 @@ This is functional/expert UX acceptance, not user research or accessibility
 certification. No language runtime behavior, published RC package or version was
 changed. Public deployment verification follows the accepted source commit and
 must use release-metadata.json plus real browser execution, not HTTP200 alone.
+
+## Public acceptance
+
+Published source: c4ce37ab783949bd5d863c32fcdecac111a8ce5a. Test Suite
+39599783459: all five jobs and actual step conclusions passed. Pages
+39600640882: build/deploy passed. Public release-metadata.json matched SHA, run
+and unchanged1.0.0-rc.1 version. See published.json for time, checks and limits.
+
+Fresh public browser session with cache disabled passed original BOOK, changed
+input BOOK/PEN, changed program city Paris, syntax error/recovery, actual edited
+downloads executed on published JVM/Node, legacy customer-profile, guide/install
+links and390px compact layout. Three public static downloads matched source bytes.
+No console warnings/errors or failed/HTTP-error resources in captured network.
+Temporary browser viewport/cache overrides were reset. Public screenshots09–12
+and raw logs are under output/first-success-2026-10-21/.

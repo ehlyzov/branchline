@@ -1,0 +1,41 @@
+[
+  {
+    "runtime": "jvm",
+    "exit": 0,
+    "output": {
+      "order_id": "A-104",
+      "city": "Paris",
+      "skus": [
+        "BOOK",
+        "PEN"
+      ]
+    }
+  },
+  {
+    "runtime": "node",
+    "exit": 0,
+    "output": {
+      "order_id": "A-104",
+      "city": "Paris",
+      "skus": [
+        "BOOK",
+        "PEN"
+      ]
+    }
+  },
+  {
+    "public_file": "program.bl",
+    "sha256": "22ece9f472b5b8a4b292e1a5cc2346110faa2cd5048518fa38964501f46fa6b1",
+    "matches_source": true
+  },
+  {
+    "public_file": "input.json",
+    "sha256": "fbe67df2fefa70b8336ed9b5fdf70d6a37ba871184caa895c56b2ff6cb66a625",
+    "matches_source": true
+  },
+  {
+    "public_file": "expected.json",
+    "sha256": "b09bd641c5ef3000c5913cb2263673bd867bf063e780558ade1873881a5ab134",
+    "matches_source": true
+  }
+]

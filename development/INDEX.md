@@ -7,7 +7,7 @@ superseded_by: []
 last_updated: 2026-10-21
 changelog:
   - date: 2026-10-21
-    change: "Started first-success journey implementation: home, executable order example, editing and local run, independent UX/correctness acceptance and Pages publication; see planning/first-success-journey-2026-10-21.md."
+    change: "Published first-success journey from c4ce37ab: corrected executable guides, task-first home, compact editor and current-edit downloads; independent JVM/Node/browser acceptance and CI39599783459 / Pages39600640882 passed. See planning/first-success-journey-2026-10-21.md and evidence/first-success-2026-10-21/."
   - date: 2026-10-21
     change: "Completed published documentation/example UX audit: seven flow captures, 40-example inventory, confirmed First Steps root-access error, four representative RC example checks and three hero probes. Positioning, site architecture and usability protocol: planning/ux-docs-audit-2026-10-21.md and ../output/ux-docs-2026-10-21/report.html. Research only; redesign not implemented."
   - date: 2026-10-21

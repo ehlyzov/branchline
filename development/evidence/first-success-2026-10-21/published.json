@@ -1,0 +1,31 @@
+{
+  "checked_at_utc": "2026-10-21T12:40:46.736742+00:00",
+  "url": "https://ehlyzov.github.io/branchline/",
+  "metadata": {
+    "version": "1.0.0-rc.1",
+    "sha": "c4ce37ab783949bd5d863c32fcdecac111a8ce5a",
+    "workflow_run": "39600640882"
+  },
+  "ci_run": "https://github.com/ehlyzov/branchline/actions/runs/39599783459",
+  "deploy_run": "https://github.com/ehlyzov/branchline/actions/runs/39600640882",
+  "resource_responses": 54,
+  "network_failures": [],
+  "console_errors": [],
+  "checks": {
+    "fresh_home_cta": true,
+    "original_BOOK_result": true,
+    "edited_input_BOOK_PEN_result": true,
+    "edited_code_Paris_result": true,
+    "syntax_error_and_recovery": true,
+    "public_browser_downloads_execute_on_jvm_node": true,
+    "public_static_downloads_match_source": true,
+    "narrow_390_no_horizontal_overflow": true,
+    "old_customer_profile": true,
+    "guide_install_links": true
+  },
+  "limitations": [
+    "Expert functional/UX acceptance, not participant research",
+    "390px emulation, not real-device mobile testing",
+    "No full WCAG/screen-reader certification"
+  ]
+}
