@@ -6,6 +6,12 @@ title: Production Use
 
 Operational patterns for running Branchline in ETL pipelines.
 
+Branchline v1.0.0-rc.1 is a release candidate. Stable 1.0 adoption and production
+readiness remain open; the external pilot has not started. Use the
+[operational pilot plan](pilot-plan.md) for a bounded
+JVM trial, including independent installation, resource limits, observation and
+rollback. Local example tests do not establish production readiness.
+
 ## Recommended workflow
 1. Commit `.bl` programs alongside pipeline code.
 2. Run Branchline in CI with fixed inputs for regression checks.
@@ -17,8 +23,10 @@ Operational patterns for running Branchline in ETL pipelines.
 - Use `ASSERT` to fail fast on invalid data.
 
 ## Error handling
-- Wrap risky logic in `TRY/CATCH` and return fallbacks.
-- Use retry modifiers for transient host failures.
+- Handle expected domain failures explicitly; preserve a visible rejection rather
+  than silently replacing corrupted or invalid output with a default.
+- Retry only classified transient host failures with host-owned idempotency.
+  Runtime failure must not replay side effects through another execution engine.
 
 ## Performance tips
 - Cache expensive paths with `LET`.
@@ -29,3 +37,4 @@ Operational patterns for running Branchline in ETL pipelines.
 - [TRY/CATCH](try-catch.md)
 - [Debug Utilities](../language/std-debug.md)
 - [Benchmarks](../benchmarks.md)
+- [Operational Pilot](pilot-plan.md)

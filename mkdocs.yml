@@ -55,6 +55,7 @@ nav:
     - Getting Started: guides/getting-started.md
     - First Steps: guides/first-steps.md
     - Install Branchline: guides/install.md
+    - Platform Support: guides/platform-support.md
     - Branchline CLI: guides/cli.md
   - Learn:
     - Tour of Branchline: learn/index.md
@@ -76,6 +77,7 @@ nav:
     - Statements: language/statements.md
     - Expressions: language/expressions.md
     - Numeric Semantics: language/numeric.md
+    - Standard Library Support: language/stdlib-support.md
     - Grammar: language/grammar.md
   - Standard Library:
     - Core Functions: language/std-core.md
@@ -87,8 +89,10 @@ nav:
     - Debug Utilities: language/std-debug.md
   - Operations:
     - Production Use: guides/production-use.md
+    - Operational Pilot: guides/pilot-plan.md
     - Migration Guides: guides/migrations.md
     - Release Readiness & Stability: guides/release-readiness.md
+    - API Support: guides/api-support.md
   - Architecture:
     - VM Overview: vm.md
   - Benchmarks:

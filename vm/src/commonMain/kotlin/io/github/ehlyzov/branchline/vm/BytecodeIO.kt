@@ -8,8 +8,10 @@ import io.github.ehlyzov.branchline.I32
 import io.github.ehlyzov.branchline.I64
 import io.github.ehlyzov.branchline.IBig
 import io.github.ehlyzov.branchline.ObjKey
+import io.github.ehlyzov.branchline.runtime.isPlatformIntegerNumber
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
+import io.github.ehlyzov.branchline.runtime.bignum.blBigIntParse
 
 /**
  * Utility for serializing VM bytecode and constant pools to a portable JSON payload.
@@ -57,10 +59,19 @@ object BytecodeIO {
         null -> SerializedValue("null")
         is Boolean -> SerializedValue("bool", b = value)
         is String -> SerializedValue("str", s = value)
-        is Int, is Long -> SerializedValue("i64", s = value.toString())
-        is Double, is Float -> SerializedValue("f64", s = value.toString())
-        is BLBigInt -> SerializedValue("i64", s = value.toString())
-        is BLBigDec -> SerializedValue("f64", s = value.toString())
+        is Int, is Long, is Double, is Float -> {
+            // JS primitive numbers share runtime type checks. Fractional or
+            // unsafe integral Double text must not be decoded through toLong().
+            val integer = isPlatformIntegerNumber(value) &&
+                (value is Long || (value as Number).toDouble() in
+                    -9_007_199_254_740_991.0..9_007_199_254_740_991.0)
+            val negativeZero = (value as Number).toDouble().let { it == 0.0 && 1.0 / it < 0.0 }
+            SerializedValue(if (integer && !negativeZero) "i64" else "f64",
+                s = if (negativeZero) "-0.0" else value.toString())
+        }
+        is BLBigInt -> SerializedValue("bi", s = value.toString())
+        // BigDecimal.toString() (not toPlainString()) preserves negative scale.
+        is BLBigDec -> SerializedValue("bd", s = bytecodeDecimalText(value))
         is List<*> -> SerializedValue("arr", arr = value.map { serializeValue(it) })
         is Array<*> -> SerializedValue("arr", arr = value.map { serializeValue(it) })
         is Map<*, *> -> LinkedHashMap<String, SerializedValue>(value.size).let { mapped ->
@@ -70,18 +81,51 @@ object BytecodeIO {
         else -> SerializedValue("str", s = value.toString())
     }
 
-    fun deserializeValue(value: SerializedValue): Any? = when (value.t) {
-        "null" -> null
-        "bool" -> value.b
-        "str" -> value.s
-        "i64" -> value.s!!.toLong()
-        "f64" -> value.s!!.toDouble()
-        "arr" -> value.arr!!.map { deserializeValue(it) }
-        "obj" -> value.obj!!.mapValues { (_, v) -> deserializeValue(v) }
-        else -> throw IllegalArgumentException(
-            "Unsupported bytecode value type '${value.t}'. Upgrade Branchline or recompile the script with the target CLI using blc.",
+    fun deserializeValue(value: SerializedValue): Any? {
+        fun invalid(reason: String): Nothing = throw IllegalArgumentException(
+            "Invalid bytecode value '${value.t}': $reason. Upgrade Branchline or recompile the script with the target CLI using blc.",
         )
+        fun text(): String {
+            if (value.b != null || value.arr != null || value.obj != null) invalid("unexpected payload fields")
+            return value.s ?: invalid("missing string payload")
+        }
+        return when (value.t) {
+            "null" -> {
+                if (value.s != null || value.b != null || value.arr != null || value.obj != null) invalid("unexpected payload fields")
+                null
+            }
+            "bool" -> {
+                if (value.s != null || value.arr != null || value.obj != null) invalid("unexpected payload fields")
+                value.b ?: invalid("missing boolean payload")
+            }
+            "str" -> text()
+            "i64" -> text().toLongOrNull() ?: invalid("expected a signed 64-bit integer")
+            "f64" -> text().toDoubleOrNull() ?: invalid("expected a floating-point number")
+            "bi", "bd" -> {
+                val payload = text()
+                if (!(if (value.t == "bi") integerText else decimalText).matches(payload)) invalid("malformed numeric text")
+                try {
+                    if (value.t == "bi") blBigIntParse(payload) else parseBytecodeDecimal(payload)
+                } catch (failure: IllegalArgumentException) {
+                    invalid(failure.message ?: "numeric payload is outside the platform representation")
+                }
+            }
+            "arr" -> {
+                if (value.s != null || value.b != null || value.obj != null) invalid("unexpected payload fields")
+                (value.arr ?: invalid("missing array payload")).map { deserializeValue(it) }
+            }
+            "obj" -> {
+                if (value.s != null || value.b != null || value.arr != null) invalid("unexpected payload fields")
+                (value.obj ?: invalid("missing object payload")).mapValues { (_, v) -> deserializeValue(v) }
+            }
+            else -> throw IllegalArgumentException(
+                "Unsupported bytecode value type '${value.t}'. Upgrade Branchline or recompile the script with the target CLI using blc.",
+            )
+        }
     }
+
+    private val integerText = Regex("[+-]?[0-9]+")
+    private val decimalText = Regex("[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?")
 
     private fun unwrapKeyConst(key: ObjKey): Any = when (key) {
         is ObjKey.Name -> key.v
@@ -243,3 +287,8 @@ object BytecodeIO {
         )
     }
 }
+
+// Keep platform admission separate from arithmetic: JVM has arbitrary precision,
+// while JS uses a signed Long for BigInt and a Double for BigDec.
+internal expect fun parseBytecodeDecimal(text: String): BLBigDec
+internal expect fun bytecodeDecimalText(value: BLBigDec): String

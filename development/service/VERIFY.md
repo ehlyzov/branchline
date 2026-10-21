@@ -16,6 +16,16 @@
 - Cross-runtime conformance JVM: `./gradlew :conformance-tests:jvmTest`.
 - Cross-runtime conformance JS: `./gradlew :conformance-tests:jsTest`.
 - CLI JVM/Node surface: `./gradlew :cli:jvmTest :cli:jsNodeTest`.
+- Packaged platform matrix: build `:cli:blShadowJar :cli:packageJsCli`, then use
+  `development/evidence/one-zero-platform-2026-10-21/cli-matrix.py` with explicit
+  jar/tarball paths and runtime config. It extracts fresh installations, checks
+  independent JSON/errors and crossed/legacy artifacts. Record actual OS/CPU,
+  vendor/update and hashes; macOS results do not establish Linux or Windows.
+  The pinned Linux arm64 wrapper is `development/evidence/one-zero-platform-2026-10-21/linux-harness.py`;
+  its report records runtime preparation, isolated mounts and disk reserve.
+  Container results do not qualify a different pilot host/architecture.
+  Native Node file-error changes require unfiltered `:cli:jsNodeTest`, including
+  NodeFileIoJsTest, and actual packaged Node launchers returning I/O status 74.
 - Compiled CLI worker isolation: `./gradlew :cli:jvmTest --tests '*CompiledFanoutIsolationTest' --tests '*ParallelWorker*' :interpreter:jvmTest --tests '*RegexCacheConcurrencyTest'`.
 - Experimental JSON parser/planner/pipeline JVM checks: `./gradlew :interpreter:jvmTest --tests '*JsonInputSelectionTest' :cli:jvmTest --tests '*ExperimentalJsonPipelineTest'`. Node coverage: `./gradlew :interpreter:jsNodeTest :cli:jsNodeTest`; run Node suites unfiltered and inspect XML test counts, since JVM-style filters can select zero Node tests.
 - Playground assets: `./gradlew playgroundBuildAssets`.
@@ -35,6 +45,39 @@
 
 Choose the narrow path that matches the touched surface and report the exact command output status.
 
+## Bounded 1.0 contract checks
+
+- API/stdlib inventory changes require `:conformance-tests:jvmTest` and unfiltered
+  `:conformance-tests:jsNodeTest`. StableApiConsumerTest compiles real consumers;
+  StableApiInventoryJvmTest compares exact source signatures and CLI behavior;
+  StdlibSupportContractTest compares every registered name and documented row,
+  and executes independent candidate oracles through interpreter and strict VM.
+  Gradle tracks inventory documents and admitted API source files as test inputs.
+- Numeric bytecode changes require interpreter, VM, CLI and conformance JVM/Node
+  suites plus `:cli:blShadowJar`. Check BigInt kind/value, BigDec value/scale on JVM,
+  JS admission/rejection, nested values and actual suspended snapshots. Preserve
+  genuine old-writer fixtures; relabelling a current artifact is only a rejection
+  control. Test a retained old reader against an actual new-writer artifact.
+  Independent CLI probes and fixture/reader hashes for v3 are recorded in
+  `development/evidence/one-zero-surface-2026-10-18.md`.
+- Introductory programs are read from `docs/guides/getting-started.md`, including
+  marked inputs and expected outputs; independent test oracles also pin results.
+  Run `./gradlew :conformance-tests:jvmTest --tests '*GettingStartedExamplesTest'`
+  and unfiltered `./gradlew :conformance-tests:jsNodeTest`. Both interpreter and
+  ordinary strict VM are required. Wrong-program and stale-doc negative controls
+  must fail their internal gates; matching fallback output does not count as VM.
+- Numeric contract changes require interpreter/conformance JVM and Node tests,
+  exact boundary values, explicit platform divergences and actual strict VM mode.
+  The bounded common profile and exclusions are in `docs/language/numeric.md`.
+- Use the same CHROME_BIN setting as the local Yarn lock; inspect JUnit XML
+  failure/error counts even if Gradle exits zero. Tests may ignore failures for
+  CI summary generation.
+- Operational pilot admission and observation are separate from repository tests:
+  `docs/guides/pilot-plan.md` and
+  `development/planning/one-zero-pilot-run-record.md` define the unfilled record.
+  Do not infer representative traffic, independent adoption, resource ceilings or
+  rollback completion from the synthetic price/Ktor gates.
+
 ## Full Local Verification Path
 
 - Full clean build: `./gradlew clean build`.
@@ -46,6 +89,7 @@ Choose the narrow path that matches the touched surface and report the exact com
 - GitHub Actions in `.github/workflows/tests.yml` run CLI jar build plus interpreter, VM, conformance, and CLI jobs.
 - CI configures Java 23, Node 18, Chrome, Gradle cache, JUnit summary scripts, and status badges.
 - Release and publish workflows are under `.github/workflows/` and should be checked when artifact packaging or publishing changes.
+- RC publication: qualify the exact commit with Test Suite, checking run-tests step outcomes as well as JUnit summaries. Dispatch release-artifacts.yml with full_release=true and optional benchmarks disabled when unchanged; validate published five-package checksums/version/metadata and public Pages editor against deployed SHA. Local package hashes alone do not certify CI-built downloads.
 
 ## Risk-Triggered Extra Checks
 

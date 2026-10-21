@@ -2,6 +2,15 @@ package io.github.ehlyzov.branchline.vm
 
 import io.github.ehlyzov.branchline.*
 import io.github.ehlyzov.branchline.ir.*
+import io.github.ehlyzov.branchline.runtime.addNumeric
+import io.github.ehlyzov.branchline.runtime.idivNumeric
+import io.github.ehlyzov.branchline.runtime.mulNumeric
+import io.github.ehlyzov.branchline.runtime.isBigInt
+import io.github.ehlyzov.branchline.runtime.isBigDec
+import io.github.ehlyzov.branchline.runtime.remNumeric
+import io.github.ehlyzov.branchline.runtime.subNumeric
+import io.github.ehlyzov.branchline.runtime.NumericKind
+import io.github.ehlyzov.branchline.runtime.numericKindOf
 import io.github.ehlyzov.branchline.vm.Instruction.*
 import io.github.ehlyzov.branchline.vm.PathSegmentMeta
 import io.github.ehlyzov.branchline.vm.PathWriteMeta
@@ -649,35 +658,29 @@ class Compiler(
     }
 
     private fun compileBinaryExpr(expr: BinaryExpr) {
-        // Constant folding for numeric literals (preserve integer types when possible)
+        // Literal folding must use the same overflow/promotion rules as execution.
         run {
             val lnum = (expr.left as? NumberLiteral)?.let { unwrapNum(it.value) }
             val rnum = (expr.right as? NumberLiteral)?.let { unwrapNum(it.value) }
-            when {
-                lnum is Int && rnum is Int -> {
-                    val folded: Any? = when (expr.token.type) {
-                        TokenType.PLUS -> lnum + rnum
-                        TokenType.MINUS -> lnum - rnum
-                        TokenType.STAR -> lnum * rnum
-                        TokenType.SLASH_SLASH -> if (rnum == 0) null else lnum / rnum
-                        TokenType.PERCENT -> if (rnum == 0) null else lnum % rnum
-                        // avoid folding division due to int/float semantics
-                        else -> null
-                    }
-                    if (folded != null) { emit(PUSH(folded)); return }
+            if (((lnum is Int && rnum is Int) || (lnum is Long && rnum is Long)) &&
+                numericKindOf(lnum) == NumericKind.I && numericKindOf(rnum) == NumericKind.I) {
+                // Leave zero divisors to execution so unreachable branches still compile.
+                val zeroDivisor = (rnum as Number).toLong() == 0L
+                val folded: Any? = when (expr.token.type) {
+                    TokenType.PLUS -> addNumeric(lnum, rnum)
+                    TokenType.MINUS -> subNumeric(lnum, rnum)
+                    TokenType.STAR -> mulNumeric(lnum, rnum)
+                    TokenType.SLASH_SLASH -> if (zeroDivisor) null else idivNumeric(lnum, rnum)
+                    TokenType.PERCENT -> if (zeroDivisor) null else remNumeric(lnum, rnum)
+                    // Division retains its existing runtime float/decimal semantics.
+                    else -> null
                 }
-                lnum is Long && rnum is Long -> {
-                    val folded: Any? = when (expr.token.type) {
-                        TokenType.PLUS -> lnum + rnum
-                        TokenType.MINUS -> lnum - rnum
-                        TokenType.STAR -> lnum * rnum
-                        TokenType.SLASH_SLASH -> if (rnum == 0L) null else lnum / rnum
-                        TokenType.PERCENT -> if (rnum == 0L) null else lnum % rnum
-                        else -> null
-                    }
-                    if (folded != null) { emit(PUSH(folded)); return }
+                // Keep promoted results as runtime arithmetic to preserve the
+                // existing folding policy across platforms. Codec v3 can persist
+                // bignum constants; broader folding needs separate equivalence coverage.
+                if (folded != null && !isBigInt(folded) && !isBigDec(folded)) {
+                    emit(PUSH(folded)); return
                 }
-                else -> Unit
             }
         }
         // Fold constant string concatenations like "foo" + "bar" at compile time

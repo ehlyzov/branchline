@@ -48,22 +48,24 @@ Both runtimes accept `--input-format xml` for XML payloads.
 **Release artifacts**
 
 - CLI: `branchline-cli-js-<tag>.tgz` (Node), `branchline-cli-<tag>-all.jar` (JVM, fat jar).
-- Libraries: `branchline-interpreter-<tag>-jvm.jar`, `branchline-vm-<tag>-jvm.jar`, plus JS packages `branchline-interpreter-<tag>-js.tgz` and `branchline-vm-<tag>-js.tgz` for Node/JS runtimes.
+- Libraries: `branchline-interpreter-<tag>-jvm.jar`, `branchline-vm-<tag>-jvm.jar`, plus `branchline-interpreter-<tag>-js.tgz` for Node/JS runtimes.
 - Download from GitHub Releases (assets attached per tag).
 
 ## Project Status
 
-> **Alpha:** the language is evolving quickly and backwards compatibility is not guaranteed yet. Stability levels and the production readiness gate are documented in the [Release Readiness & Stability guide](docs/guides/release-readiness.md).
+> **Release candidate v1.0.0-rc.1:** the documented candidate surface is available for evaluation. Stable 1.0 adoption and production readiness remain open; the external operational pilot has not started. Stability boundaries and remaining gates are documented in the [Release Readiness & Stability guide](docs/guides/release-readiness.md).
 
 ## Release Readiness Gate
 
 Branchline uses a readiness gate before labeling a release **Production Ready**. The gate includes:
 
 - A fixed compatibility corpus that runs in the conformance test suite (JVM + JS).
-- Explicit stability levels (Stable/Beta/Experimental) for language features.
-- SLA-style targets for error rate and performance regression thresholds.
+- Explicit prerelease RC status and a bounded candidate 1.0 compatibility policy.
+- Numeric profiles and executable introductory examples on advertised runtimes.
+- Independent operational pilots with predeclared resource limits and rollback gates.
 
 See the [Release Readiness & Stability guide](docs/guides/release-readiness.md) for the full checklist, versioning policy, and deprecation plan.
+The [API/CLI allowlist](docs/guides/api-support.md) and [complete stdlib inventory](docs/language/stdlib-support.md) define the stable-candidate surface. The [operational pilot plan](docs/guides/pilot-plan.md) defines the remaining field evidence.
 
 ## Performance Testing
 
@@ -98,7 +100,7 @@ A key goal of the project is to offload as much coding as possible to AI agents 
 Branchline aims to provide several qualities that are often missing in industrial integration tooling:
 
 1. **End-to-end tracing.** Every program should be able to explain how outputs were produced, exposing that trace in a machine-readable form.
-2. **Multiplatform parity.** The lexer, parser, interpreter, compiler, and VM are implemented in Kotlin without external dependencies, ensuring the JVM and JS runtimes behave identically.
+2. **Multiplatform implementation.** The lexer, parser, interpreter, compiler, and VM share Kotlin code and conformance checks. JVM and JS have distinct numeric limits and platform integrations; the [numeric contract](docs/language/numeric.md) and [platform acceptance](docs/guides/platform-support.md) define the tested boundaries. Distributions include their declared dependencies, including ASM for the experimental JVM backend.
 3. **Static contracts (in research).** With reasonable limits on expressiveness (for example, forbidding glob queries) we should infer input/output contracts, determine program compatibility ahead of time, and highlight conflicts automatically.
 4. **Shared memory as a first-class concept.** The `SHARED` construct signals that a program uses shared state, enabling straightforward integrations such as database or HTTP access, or waiting for specific keys before resuming execution.
 5. **Serializable execution.** Programs can suspend via `SUSPEND`, park execution until an event occurs, and even export bytecode for step-by-step evaluation in other runtimes.

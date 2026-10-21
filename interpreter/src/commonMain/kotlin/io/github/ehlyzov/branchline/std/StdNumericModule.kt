@@ -63,12 +63,13 @@ private fun fnDEC(args: List<Any?>): Any? {
         is BLBigDec -> v
         is String -> parseDecString(v)
         is Long -> blBigIntOfLong(v)
-        is Int -> blBigIntOfLong(v.toLong())
-        is Short -> blBigIntOfLong(v.toLong())
-        is Byte -> blBigIntOfLong(v.toLong())
-        is Double -> blBigDecOfDouble(v)
-        is Float -> blBigDecOfDouble(v.toDouble())
-        is Number -> blBigDecOfDouble(v.toDouble())
+        // JS primitive numeric types share one representation. Classify the
+        // value before conversion so fractional numbers cannot enter a Long.
+        is Number -> if (isPlatformIntegerNumber(v)) {
+            blBigIntOfLong(v.toLong())
+        } else {
+            blBigDecOfDouble(v.toDouble())
+        }
         else -> error("DEC: unsupported type ${v::class.simpleName}")
     }
 }
@@ -108,15 +109,14 @@ private fun fnABS(args: List<Any?>): Any? {
 private fun fnFLOOR(args: List<Any?>): Any? {
     require(args.size == 1) { "FLOOR(number)" }
     val v = args[0] ?: return null
-    return when (v) {
-        is Int -> v
-        is Long -> v
-        is Float -> floor(v)
-        is Double -> floor(v)
-        is Short -> v
-        is Byte -> v
-        is BLBigInt -> v
-        is BLBigDec -> v.floor()
+    // Kotlin/JS primitive Int/Float/Double type checks overlap. Classify
+    // integrality before the primitive branches so fractions are rounded.
+    return when {
+        v is BLBigInt -> v
+        v is BLBigDec -> v.floor()
+        isPlatformIntegerNumber(v) -> v
+        v is Float -> floor(v)
+        v is Double -> floor(v)
         else -> error("FLOOR: arg must be numeric")
     }
 }
@@ -125,15 +125,14 @@ private fun fnFLOOR(args: List<Any?>): Any? {
 private fun fnCEIL(args: List<Any?>): Any? {
     require(args.size == 1) { "CEIL(number)" }
     val v = args[0] ?: return null
-    return when (v) {
-        is Int -> v
-        is Long -> v
-        is Float -> ceil(v)
-        is Double -> ceil(v)
-        is Short -> v
-        is Byte -> v
-        is BLBigInt -> v
-        is BLBigDec -> v.ceil()
+    // Kotlin/JS primitive Int/Float/Double type checks overlap. Classify
+    // integrality before the primitive branches so fractions are rounded.
+    return when {
+        v is BLBigInt -> v
+        v is BLBigDec -> v.ceil()
+        isPlatformIntegerNumber(v) -> v
+        v is Float -> ceil(v)
+        v is Double -> ceil(v)
         else -> error("CEIL: arg must be numeric")
     }
 }
@@ -161,18 +160,9 @@ private fun fnROUND(args: List<Any?>): Any? {
 
 /** Helper to parse the precision argument as an integer. */
 private fun parsePrecision(arg: Any?): Int {
+    // Precise wrappers must precede Number on JVM. Primitive numbers must all
+    // pass the same validation: Kotlin/JS `is Int` also matches fractions.
     return when (arg) {
-        is Int -> arg
-        is Long -> {
-            require(arg in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) {
-                "ROUND: precision out of bounds"
-            }
-            arg.toInt()
-        }
-        is Short -> arg.toInt()
-        is Byte -> arg.toInt()
-        is Float -> parsePrecisionDouble(arg.toDouble())
-        is Double -> parsePrecisionDouble(arg)
         is BLBigInt -> {
             require(arg.bitLength() <= 31) { "ROUND: precision out of bounds" }
             arg.toInt()
@@ -184,6 +174,12 @@ private fun parsePrecision(arg: Any?): Int {
             }
             require(asInt.bitLength() <= 31) { "ROUND: precision out of bounds" }
             asInt.toInt()
+        }
+        is Long -> {
+            require(arg in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) {
+                "ROUND: precision out of bounds"
+            }
+            arg.toInt()
         }
         is Number -> parsePrecisionDouble(arg.toDouble())
         else -> error("ROUND: precision must be integer")
@@ -243,7 +239,7 @@ private fun roundIntegralBigInt(value: BLBigInt, precision: Int): BLBigInt {
     if (precision >= 0) return value
     val scale = pow10BigInt(-precision)
     val rem = value % scale
-    if (rem == BL_BIG_INT_ZERO) return value
+    if (rem.compareTo(BL_BIG_INT_ZERO) == 0) return value
     val absRem = if (rem.signum() >= 0) rem else -rem
     val half = scale / BL_BIG_INT_TWO
     val truncated = value - rem
@@ -253,7 +249,7 @@ private fun roundIntegralBigInt(value: BLBigInt, precision: Int): BLBigInt {
         absRem > half -> if (sign >= 0) truncated + scale else truncated - scale
         else -> {
             val div = value / scale
-            val isEven = div % BL_BIG_INT_TWO == BL_BIG_INT_ZERO
+            val isEven = (div % BL_BIG_INT_TWO).compareTo(BL_BIG_INT_ZERO) == 0
             if (isEven) truncated else if (sign >= 0) truncated + scale else truncated - scale
         }
     }

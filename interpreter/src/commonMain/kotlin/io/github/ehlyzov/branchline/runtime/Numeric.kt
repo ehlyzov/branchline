@@ -327,6 +327,7 @@ private fun safeSubLong(a: Long, b: Long): Long? {
 
 private fun safeMulLong(a: Long, b: Long): Long? {
     if (a == 0L || b == 0L) return 0L
+    if ((a == Long.MIN_VALUE && b == -1L) || (a == -1L && b == Long.MIN_VALUE)) return null
     val result = a * b
     return if (result / a == b) result else null
 }

@@ -10,6 +10,11 @@ Install and verify Branchline from GitHub Releases.
 - Java 21+ (for JVM CLI; release jars target class-file version 65)
 - Node 18+ (for Node CLI)
 
+These are launch prerequisites. For a new candidate integration, use the Java
+21/25 or Node 22/24 targets and check the exact OS/CPU acceptance in
+[Platform Support](platform-support.md). Node 18 is a legacy compatibility check;
+the prerequisites do not promise support for every newer runtime or platform.
+
 ## JVM CLI (recommended for JVM users)
 1. Download `branchline-cli-<tag>-all.jar` from GitHub Releases.
 2. Run:

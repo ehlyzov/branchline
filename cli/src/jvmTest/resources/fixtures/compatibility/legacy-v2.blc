@@ -1,0 +1,99 @@
+{
+    "version": 2,
+    "transform": "Old",
+    "script": "TRANSFORM Old { OUTPUT { greeting: \"hello\", ordinary: 1.5, integer: 42 } }\n",
+    "bytecode": {
+        "instructions": [
+            {
+                "op": "PUSH",
+                "value": {
+                    "t": "str",
+                    "s": "integer"
+                }
+            },
+            {
+                "op": "PUSH",
+                "value": {
+                    "t": "i64",
+                    "s": "42"
+                }
+            },
+            {
+                "op": "PUSH",
+                "value": {
+                    "t": "str",
+                    "s": "ordinary"
+                }
+            },
+            {
+                "op": "PUSH",
+                "value": {
+                    "t": "f64",
+                    "s": "1.5"
+                }
+            },
+            {
+                "op": "PUSH",
+                "value": {
+                    "t": "str",
+                    "s": "greeting"
+                }
+            },
+            {
+                "op": "PUSH",
+                "value": {
+                    "t": "str",
+                    "s": "hello"
+                }
+            },
+            {
+                "op": "OUTPUT",
+                "n": 3
+            }
+        ]
+    },
+    "contract": {
+        "input": {
+            "root": {
+                "required": true,
+                "kind": "OBJECT"
+            },
+            "obligations": [],
+            "opaqueRegions": []
+        },
+        "output": {
+            "root": {
+                "required": true,
+                "kind": "OBJECT",
+                "children": {
+                    "greeting": {
+                        "required": true,
+                        "kind": "TEXT",
+                        "origin": "OUTPUT"
+                    },
+                    "ordinary": {
+                        "required": true,
+                        "kind": "NUMBER",
+                        "origin": "OUTPUT"
+                    },
+                    "integer": {
+                        "required": true,
+                        "kind": "NUMBER",
+                        "origin": "OUTPUT"
+                    }
+                },
+                "origin": "OUTPUT"
+            },
+            "obligations": [],
+            "mayEmitNull": false,
+            "opaqueRegions": []
+        },
+        "source": "INFERRED",
+        "metadata": {
+            "satisfiability": {
+                "checked": true
+            }
+        }
+    },
+    "format": "branchline-vm"
+}

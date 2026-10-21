@@ -10,7 +10,7 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JavaToolchainService
 
 // Canonical SemVer; release tags and displayed CLI versions add the v prefix.
-version = '0.11.0-alpha.1'
+version = '1.0.0-rc.1'
 
 def npmCommand = org.gradle.internal.os.OperatingSystem.current().isWindows() ? 'npm.cmd' : 'npm'
 

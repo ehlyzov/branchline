@@ -5,6 +5,13 @@ import kotlin.test.assertEquals
 
 class CompiledArtifactCompatibilityJvmTest {
     @Test
+    fun commonVersionTwoFixturePreservesExactOldWriterBytes() {
+        val original = requireNotNull(javaClass.getResource("/fixtures/compatibility/legacy-v2.blc"))
+            .readText(Charsets.UTF_8)
+        assertEquals(original, LegacyV2ArtifactFixture.JSON)
+    }
+
+    @Test
     fun commonFixturePreservesExactOldWriterBytes() {
         val original = requireNotNull(javaClass.getResource("/fixtures/compatibility/legacy-hello.blc"))
             .readText(Charsets.UTF_8)

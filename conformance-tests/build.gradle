@@ -2,6 +2,34 @@ plugins {
     id 'org.jetbrains.kotlin.multiplatform'
 }
 
+// Both targets read this checked-out guide at execution time, outside compiled
+// test sources. Its contents must invalidate cached/up-to-date test results.
+[
+    org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest,
+    org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest,
+].each { testType ->
+    tasks.withType(testType).configureEach {
+        inputs.file(rootProject.layout.projectDirectory.file('docs/guides/getting-started.md'))
+            .withPropertyName('gettingStartedGuide')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+        inputs.files(
+            rootProject.layout.projectDirectory.file('docs/language/stdlib-support.md'),
+            rootProject.layout.projectDirectory.file('docs/guides/api-support.md'),
+        ).withPropertyName('stableSurfaceInventories')
+            .withPathSensitivity(PathSensitivity.RELATIVE)
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest).configureEach {
+    inputs.files(
+        rootProject.file('interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/BranchlineFacade.kt'),
+        rootProject.file('interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/diagnostics/BranchlineDiagnostics.kt'),
+        rootProject.file('interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/playground/PlaygroundFacade.kt'),
+        rootProject.file('cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/BranchlineCli.kt'),
+        rootProject.file('cli/src/commonMain/kotlin/io/github/ehlyzov/branchline/cli/CliFormatting.kt'),
+    ).withPropertyName('stableApiSources').withPathSensitivity(PathSensitivity.RELATIVE)
+}
+
 kotlin {
     jvm {
         compilations.all { comp ->
@@ -33,6 +61,7 @@ kotlin {
                 implementation kotlin("test")
                 implementation project(":interpreter")
                 implementation project(":cli")
+                implementation project(":vm")
             }
         }
         jvmTest {

@@ -311,12 +311,10 @@ private fun parseDigits(text: String): BLBigInt? {
 private fun requireIntegral(value: Any?, fnName: String): BLBigInt = when (value) {
     is BLBigInt -> value
     is BLBigDec -> requireWhole(value, fnName)
-    is Int -> blBigIntOfLong(value.toLong())
     is Long -> blBigIntOfLong(value)
-    is Short -> blBigIntOfLong(value.toLong())
-    is Byte -> blBigIntOfLong(value.toLong())
-    is Double -> requireWhole(blBigDecOfDouble(value), fnName)
-    is Float -> requireWhole(blBigDecOfDouble(value.toDouble()), fnName)
+    // Kotlin/JS represents Int and Double with the same JS number type. Check
+    // integrality before converting, rather than matching an Int branch first.
+    is Number -> requireWhole(blBigDecOfDouble(value.toDouble()), fnName)
     is UInt -> blBigIntParse(value.toString())
     is ULong -> blBigIntParse(value.toString())
     is UShort -> blBigIntParse(value.toString())

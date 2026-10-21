@@ -91,21 +91,41 @@ Regenerate overlays with `bin/refresh_contour.sh` after topology, entrypoint, ve
 
 ## Review Triggers
 
+The bounded 1.0 preparation adds guide-backed JVM/Node conformance examples
+and explicit numeric profiles. The guide itself is a test input; generated docs
+alone cannot verify examples. Candidate compatibility policy is in
+`docs/guides/release-readiness.md`; the operational pilot and its host-owned
+resource/rollback boundaries are in `docs/guides/pilot-plan.md`.
+
 Update this file when repository topology, runtime entrypoints, integration boundaries, workflow shape, dangerous zones, or language-surface ownership changes.
 
 Update `development/service/VERIFY.md` when build, test, lint, local-run, CI, or required evidence expectations change.
 
 Selective JSON acceptance: explicit opt-in only. Sparse 16/64 MiB string fixtures and nested-record controls improve full-pipeline JVM time/allocation/RSS; dense 1 MiB regresses 44–56%, blocking default enablement. Exact measurements, fallback/trace/suspension rules and limits: `development/planning/vm-json-pipeline.md`.
 
-## Alpha release publication boundary
+## Prerelease publication boundary
 
 - Canonical package version lives in root `build.gradle`; `CliVersion` is generated
   for both targets. Tags and CLI display add `v`; npm/package metadata use SemVer.
 - Experimental VM APIs require `ExperimentalVMApi` opt-in for Kotlin consumers.
   Java consumers accept the documented unstable contract; ordinary execute stays
   default. Selective JSON APIs retain their explicitly named prototype contract.
-- Compiled CLI writers emit format 2 with a mandatory marker; readers accept the
-  tested legacy v1 subset and reject future/invalid formats before program loading.
+- Compiled CLI writers emit format 3 with a mandatory marker; readers accept the
+  tested legacy v1/v2 subsets and reject future/invalid formats before program loading.
+  Explicit BigInt/BigDec use distinct textual tags. JVM preserves exact value and
+  decimal scale; JS rejects integer overflow and decimal text that cannot roundtrip
+  through its Double representation. This is not arbitrary-precision JS parity.
+- The candidate Kotlin/CLI allowlist is `docs/guides/api-support.md`; the complete
+  default stdlib registry and per-function domains are `docs/language/stdlib-support.md`.
+  Conformance consumer/source-inventory tests and JVM/Node stdlib registry/oracle
+  tests guard these boundaries. Public visibility alone grants no compatibility.
+- Candidate platform policy and actual per-runtime/OS/browser results are in
+  `docs/guides/platform-support.md`. Packaged macOS acceptance is distinct from
+  the accepted Debian arm64/Linuxkit container cell and external pilot-host
+  qualification/operation. Node filesystem
+  system errors at supported CLI read/write boundaries are normalized to Kotlin
+  exceptions before common I/O helpers produce status 74/structured errors;
+  arbitrary native errors are not reclassified.
 - Node JS library copies use `interpreter/build/dist/js/nodeProductionLibrary`; browser runtime
   stays in `interpreter/build/dist/js/productionLibrary`. Playground asset inputs include that
   runtime and example/config files, so runtime edits invalidate stale bundles.

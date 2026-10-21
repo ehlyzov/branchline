@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0-rc.1",
+  "timestamp": "2026-10-21T10:04:00.024693+00:00",
+  "checks": {
+    "mac": {
+      "cases": 144,
+      "passed": 144,
+      "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+      "counts": {
+        "jvm-temurin-21": 35,
+        "jvm-liberica-25": 35,
+        "node-22.23.3": 36,
+        "node-24.22.0": 36,
+        "retained-v2-reader": 2
+      },
+      "jar_sha256": "84eaf83599b9c060f2b9f39543199d610e3359c0e28ecc6f511c836bfd25de67",
+      "node_tar_sha256": "c885e6f56f979556567b32174af24e57ec653efca58ea0b04f5e3728836a8c45",
+      "summary_sha256": "25a0bfed409a28840cc9752b6d5ba896779d384a0a4c6fa6de0edfb89a9bfec1",
+      "raw_results_sha256": "e3928ceb71633003de5b678795c6adfa5214b2be0f04cde68038e09cf89233e0"
+    },
+    "linux": {
+      "cases": 144,
+      "passed": 144,
+      "platform": "Linux-7.0.12-linuxkit-aarch64-with-glibc2.41",
+      "counts": {
+        "linux-jvm-jdk-21.0.12.1+1": 35,
+        "linux-jvm-jdk-25.0.4.1+1": 35,
+        "linux-node-node-v22.23.3-linux-arm64": 36,
+        "linux-node-node-v24.22.0-linux-arm64": 36,
+        "retained-v2-reader": 2
+      },
+      "jar_sha256": "84eaf83599b9c060f2b9f39543199d610e3359c0e28ecc6f511c836bfd25de67",
+      "node_tar_sha256": "c885e6f56f979556567b32174af24e57ec653efca58ea0b04f5e3728836a8c45",
+      "summary_sha256": "a963f6d4192f733b46aaf96c5675473857c46f7b4ce807a2d3b25a0f3d2e58be",
+      "raw_results_sha256": "3b3a04fb519ab8673d0f2e86448448b122b85338b53175bce47d9d18601cf7a1"
+    }
+  },
+  "independent_parent_exit_json_version_hash_check": true
+}

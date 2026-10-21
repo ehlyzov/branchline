@@ -236,12 +236,12 @@ public data class CompiledArtifact(
     val script: String,
     val bytecode: BytecodeIO.SerializedBytecode,
     val contract: TransformContract? = null,
-    // Required on the wire for v2: old strict readers did not enforce version.
+    // Required since v2: the original strict reader did not enforce version.
     @EncodeDefault val format: String = ArtifactCodec.FORMAT,
 )
 
 public object ArtifactCodec {
-    const val CURRENT_VERSION: Int = 2
+    const val CURRENT_VERSION: Int = 3
     const val FORMAT: String = "branchline-vm"
     private val prettyJson = Json { prettyPrint = true }
     private val compactJson = Json
@@ -277,10 +277,10 @@ public object ArtifactCodec {
             if (primitive == null || primitive.isString) unsupported("Invalid compiled artifact version")
             primitive.intOrNull ?: unsupported("Invalid compiled artifact version")
         }
-        if (version != 1 && version != CURRENT_VERSION) {
-            unsupported("Unsupported compiled artifact version $version; supported versions are 1 and $CURRENT_VERSION")
+        if (version !in 1..CURRENT_VERSION) {
+            unsupported("Unsupported compiled artifact version $version; supported versions are 1, 2 and $CURRENT_VERSION")
         }
-        if (version == CURRENT_VERSION && element["format"] != JsonPrimitive(FORMAT)) {
+        if (version >= 2 && element["format"] != JsonPrimitive(FORMAT)) {
             unsupported("Compiled artifact version $version requires format '$FORMAT'")
         }
         if (element["format"] != null && element["format"] != JsonPrimitive(FORMAT)) {
@@ -289,6 +289,16 @@ public object ArtifactCodec {
         val artifact = compactJson.decodeFromJsonElement(CompiledArtifact.serializer(), element).copy(version = version)
         if (version == 1 && artifact.bytecode.instructions.any { it.op.startsWith("PRIVATE_") }) {
             unsupported("Compiled artifact version 1 cannot contain PRIVATE_* instructions")
+        }
+        if (version < 3) {
+            fun checkLegacyValue(value: BytecodeIO.SerializedValue) {
+                if (value.t !in setOf("null", "bool", "str", "i64", "f64", "arr", "obj")) {
+                    unsupported("Compiled artifact version $version cannot contain value type '${value.t}'")
+                }
+                value.arr?.forEach { checkLegacyValue(it) }
+                value.obj?.values?.forEach { checkLegacyValue(it) }
+            }
+            artifact.bytecode.instructions.forEach { it.value?.let { value -> checkLegacyValue(value) } }
         }
         return artifact
     }

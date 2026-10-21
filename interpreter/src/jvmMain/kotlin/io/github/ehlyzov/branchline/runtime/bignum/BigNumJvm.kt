@@ -44,12 +44,8 @@ actual fun BLBigDec.toPlainString(): String = this.toPlainString()
 actual fun BLBigDec.toBLBigInt(): BLBigInt = this.toBigInteger()
 actual fun BLBigDec.toDouble(): Double = this.toDouble()
 actual fun BLBigDec.signum(): Int = this.signum()
-actual fun BLBigDec.floor(): BLBigInt = this.round(
-    MathContext(0, RoundingMode.FLOOR)
-).toBLBigInt()
-actual fun BLBigDec.ceil(): BLBigInt = this.round(
-    MathContext(0, RoundingMode.CEILING)
-).toBLBigInt()
+actual fun BLBigDec.floor(): BLBigInt = this.setScale(0, RoundingMode.FLOOR).toBLBigInt()
+actual fun BLBigDec.ceil(): BLBigInt = this.setScale(0, RoundingMode.CEILING).toBLBigInt()
 actual fun BLBigDec.roundHalfEven(scale: Int): BLBigDec = this.setScale(scale, RoundingMode.HALF_EVEN)
 
 actual fun BLBigInt.powNonNegative(exponent: Int): BLBigInt = this.pow(exponent)

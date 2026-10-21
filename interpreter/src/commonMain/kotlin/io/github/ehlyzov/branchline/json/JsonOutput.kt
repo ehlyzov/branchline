@@ -8,6 +8,7 @@ import io.github.ehlyzov.branchline.runtime.bignum.BLBigDec
 import io.github.ehlyzov.branchline.runtime.bignum.BLBigInt
 import io.github.ehlyzov.branchline.runtime.bignum.toPlainString
 import io.github.ehlyzov.branchline.runtime.base64Encode
+import io.github.ehlyzov.branchline.runtime.isPlatformIntegerNumber
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -47,13 +48,17 @@ public fun toJsonElement(
     is Dec -> jsonPrimitiveForBigDec(value.v, numberMode)
     is I32 -> jsonPrimitiveForLong(value.v.toLong(), numberMode)
     is I64 -> jsonPrimitiveForLong(value.v, numberMode)
-    is Byte -> jsonPrimitiveForLong(value.toLong(), numberMode)
-    is Short -> jsonPrimitiveForLong(value.toLong(), numberMode)
-    is Int -> jsonPrimitiveForLong(value.toLong(), numberMode)
     is Long -> jsonPrimitiveForLong(value, numberMode)
-    is Float -> jsonPrimitiveForDouble(value.toDouble())
-    is Double -> jsonPrimitiveForDouble(value)
-    is Number -> jsonPrimitiveForDouble(value.toDouble())
+    // JS Byte/Short/Int/Float/Double type checks all match primitive numbers.
+    // Classify the value before converting so fractions never pass through Long.
+    is Number -> {
+        val number = value.toDouble()
+        if (isPlatformIntegerNumber(value) && number in -9_007_199_254_740_991.0..9_007_199_254_740_991.0) {
+            jsonPrimitiveForLong(value.toLong(), numberMode)
+        } else {
+            jsonPrimitiveForDouble(number)
+        }
+    }
     is Set<*> -> JsonArray(sortSetItems(value, numberMode).map { toJsonElement(it, numberMode) })
     is Map<*, *> -> {
         val content = LinkedHashMap<String, JsonElement>(value.size)

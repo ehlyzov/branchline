@@ -11,14 +11,16 @@ private val pathModule: dynamic = js("require('path')")
 private fun newXmlParser(): dynamic = js("(function(){var parserModule=require('fast-xml-parser');return new parserModule.XMLParser({preserveOrder:true,ignoreAttributes:false,attributeNamePrefix:'@',textNodeName:'#text',trimValues:true,parseTagValue:false,parseAttributeValue:false,ignoreDeclaration:true});})()")
 
 public actual fun readTextFile(path: String): String =
-    fs.readFileSync(path, "utf8") as String
+    withNodeFileErrors { fs.readFileSync(path, "utf8") as String }
 
 public actual fun writeTextFile(path: String, contents: String) {
-    val dir = pathModule.dirname(path)
-    if (dir != null && dir as String != "") {
-        fs.mkdirSync(dir, json("recursive" to true))
+    withNodeFileErrors {
+        val dir = pathModule.dirname(path)
+        if (dir != null && dir as String != "") {
+            fs.mkdirSync(dir, json("recursive" to true))
+        }
+        fs.writeFileSync(path, contents, "utf8")
     }
-    fs.writeFileSync(path, contents, "utf8")
 }
 
 public actual fun appendTextFile(path: String, contents: String) {
@@ -26,7 +28,21 @@ public actual fun appendTextFile(path: String, contents: String) {
 }
 
 public actual fun readStdin(): String {
-    return fs.readFileSync(0, "utf8") as String
+    return withNodeFileErrors { fs.readFileSync(0, "utf8") as String }
+}
+
+// Native Node system errors are not Kotlin Exceptions. Normalize only their
+// documented system-error shape so the common I/O helpers can report status 74.
+internal fun <T> withNodeFileErrors(block: () -> T): T = try {
+    block()
+} catch (ex: dynamic) {
+    if (ex != null && jsTypeOf(ex) == "object" &&
+        jsTypeOf(ex.code) == "string" && jsTypeOf(ex.syscall) == "string" &&
+        jsTypeOf(ex.errno) == "number"
+    ) {
+        throw RuntimeException(ex.message as? String ?: ex.toString())
+    }
+    throw ex
 }
 
 public actual fun printError(message: String) {

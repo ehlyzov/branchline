@@ -4,8 +4,16 @@ depends_on: []
 blocks: []
 supersedes: ['planning/current-research-tasks']
 superseded_by: []
-last_updated: 2026-10-17
+last_updated: 2026-10-21
 changelog:
+  - date: 2026-10-21
+    change: "User cancelled pilot preparation; preparing public v1.0.0-rc.1 with qualified packages, release publication and public editor verification; see planning/one-zero-rc-pilot-2026-10-21.md, releases/1.0.0-rc.1.md and evidence/rc-1.0.0-2026-10-21/README.md."
+  - date: 2026-10-21
+    change: "Accepted macOS platform cells: 251 packaged CLI cases, 28 Chrome/WebKit checks, 99 CLI tests and 8 independent UTF-8/cross-artifact checks; repaired Node native I/O errors. Recovered Docker after host ENOSPC and accepted 144 additional packaged cases on Debian 13.7 arm64/Linuxkit with Java 21/25 and Node 22/24; bounded platform gate closed, actual pilot host and Firefox unqualified. See evidence/one-zero-platform-2026-10-21/README.md and planning/one-zero-platform-2026-10-21.md for the external pilot handoff."
+  - date: 2026-10-18
+    change: "Accepted complete candidate API/stdlib inventories (27 declarations, 68 names) and v3 exact-number persistence: 1280 passing JVM/Node tests, 31 CLI compatibility cases and 532 independent exact-number checks. See planning/one-zero-surface-codec-2026-10-18.md and evidence/one-zero-surface-2026-10-18.md; release platform/pilot gates remain open."
+  - date: 2026-10-18
+    change: "Accepted bounded 1.0 compatibility/numeric contracts, executable onboarding, numeric/bytecode corrections and pilot plan: 1221 passing test executions plus 24 independent CLI cases. See planning/one-zero-contracts-2026-10-18.md and evidence/one-zero-contracts-2026-10-18.md; external pilot and full stable-surface gates remain open."
   - date: 2026-10-17
     change: "Accepted playground UX fixes (drafts, stale results, Stop/recovery, XML validation and source diagnostics); 1.0 operational/compatibility gates remain open. See planning/playground-ux-2026-10-17.md and evidence/playground-ux-2026-10-17/."
   - date: 2026-10-17

@@ -31,12 +31,56 @@ class CompiledArtifactCompatibilityTest {
     }
 
     @Test
+    fun genuineVersionTwoFixtureExecutesItsStoredPrimitiveValues() {
+        val artifact = ArtifactCodec.decode(LegacyV2ArtifactFixture.JSON)
+        assertEquals(2, artifact.version)
+        val runtime = BranchlineProgram(artifact.script)
+        val transform = runtime.selectTransform(artifact.transform)
+        val exec = runtime.prepareVmExec(transform, BytecodeIO.deserializeBytecode(artifact.bytecode),
+            io.github.ehlyzov.branchline.vm.VMFallbackPolicy.NONE)
+        val output = exec.run(runtime.buildEnv(transform, emptyMap()), stringifyKeys = true)
+        assertEquals(mapOf("greeting" to "hello", "ordinary" to 1.5, "integer" to 42L), output)
+        assertEquals(io.github.ehlyzov.branchline.vm.VMExecutionPath.VM_BYTECODE, exec.lastExecution?.path)
+        val expectedJson = Json.parseToJsonElement("""{"greeting":"hello","ordinary":1.5,"integer":42}""")
+        for (pretty in listOf(true, false)) {
+            val rendered = io.github.ehlyzov.branchline.json.formatJsonValue(output, pretty = pretty)
+            assertEquals(expectedJson, Json.parseToJsonElement(rendered), "legacy v2 JSON, pretty=$pretty")
+        }
+        assertEquals(expectedJson, Json.parseToJsonElement(io.github.ehlyzov.branchline.json.formatCanonicalJson(output)))
+    }
+
+    @Test
+    fun versionTwoReaderRejectsVersionThreeBeforeReadingInstructions() {
+        // Freeze the v2 admission rule independently of the current decoder.
+        // An actual preserved v2 CLI binary is an additional acceptance probe.
+        val raw = ArtifactCodec.encode(currentArtifact())
+        val failure = assertFailsWith<IllegalArgumentException> {
+            val payload = Json.parseToJsonElement(raw).jsonObject
+            val version = payload["version"]?.jsonPrimitive?.content?.toInt() ?: 1
+            require(version == 1 || version == 2) { "Unsupported compiled artifact version $version" }
+            Json.decodeFromString(LegacyVersionTwoEnvelope.serializer(), raw)
+        }
+        assertTrue(failure.message.orEmpty().contains("version 3"))
+    }
+
+    @Test
+    fun legacyEnvelopesCannotSmuggleNewNumericTagsIncludingNestedValues() {
+        for (version in listOf(1, 2)) {
+            for (tag in listOf("bi", "bd")) {
+                val raw = """{"version":$version,"format":"branchline-vm","transform":null,"script":"invalid source", "bytecode":{"instructions":[{"op":"PUSH","value":{"t":"obj","obj":{"nested":{"t":"arr","arr":[{"t":"$tag","s":"1"}]}}}}]}}"""
+                val failure = assertFailsWith<CliException> { ArtifactCodec.decode(raw) }
+                assertTrue(failure.message.orEmpty().contains("cannot contain value type '$tag'"))
+            }
+        }
+    }
+
+    @Test
     fun currentWriterAlwaysEmitsVersionAndOldReaderRejectionMarker() {
         val artifact = currentArtifact()
         for (format in listOf(OutputFormat.JSON, OutputFormat.JSON_COMPACT, OutputFormat.JSON_CANONICAL)) {
             val raw = ArtifactCodec.encode(artifact, format)
             val payload = Json.parseToJsonElement(raw).jsonObject
-            assertEquals("2", payload.getValue("version").jsonPrimitive.content)
+            assertEquals("3", payload.getValue("version").jsonPrimitive.content)
             assertEquals(ArtifactCodec.FORMAT, payload.getValue("format").jsonPrimitive.content)
             assertEquals(artifact, ArtifactCodec.decode(raw))
             val failure = assertFailsWith<SerializationException> {
@@ -58,7 +102,7 @@ class CompiledArtifactCompatibilityTest {
             Bytecode.fromInstructions(listOf(Instruction.PRIVATE_SET_STATIC(io.github.ehlyzov.branchline.ObjKey.Name("x")), Instruction.PRIVATE_SET_DYNAMIC, Instruction.PRIVATE_ARRAY_APPEND)),
         ))
         assertEquals(artifact, ArtifactCodec.decode(ArtifactCodec.encode(artifact)))
-        val legacy = ArtifactCodec.encode(artifact).replace("\"version\": 2", "\"version\": 1")
+        val legacy = ArtifactCodec.encode(artifact).replace("\"version\": 3", "\"version\": 1")
         val failure = assertFailsWith<CliException> { ArtifactCodec.decode(legacy) }
         assertTrue(failure.message.orEmpty().contains("PRIVATE_*"))
         assertTrue(failure.message.orEmpty().contains("blc"))
@@ -72,7 +116,7 @@ class CompiledArtifactCompatibilityTest {
     fun unsupportedVersionsAndFormatsFailBeforeEmbeddedScriptParsing() {
         for (raw in listOf(
             """{"version":0,"script":"not Branchline"}""",
-            """{"version":3,"script":"not Branchline"}""",
+            """{"version":4,"script":"not Branchline"}""",
             """{"version":-1,"script":"not Branchline"}""",
             """{"version":"2","script":"not Branchline"}""",
             """{"version":2,"script":"not Branchline"}""",
@@ -87,7 +131,9 @@ class CompiledArtifactCompatibilityTest {
 
     @Test
     fun writerDoesNotOfferAnUnsafeLegacyDowngrade() {
-        assertFailsWith<CliException> { ArtifactCodec.encode(currentArtifact().copy(version = 1)) }
+        for (version in listOf(1, 2)) {
+            assertFailsWith<CliException> { ArtifactCodec.encode(currentArtifact().copy(version = version)) }
+        }
     }
 
     @Test
@@ -122,4 +168,14 @@ private data class LegacyCompiledArtifact(
     val script: String,
     val bytecode: BytecodeIO.SerializedBytecode,
     val contract: TransformContract? = null,
+)
+
+@Serializable
+private data class LegacyVersionTwoEnvelope(
+    val version: Int = 2,
+    val transform: String?,
+    val script: String,
+    val bytecode: BytecodeIO.SerializedBytecode,
+    val contract: TransformContract? = null,
+    val format: String = "branchline-vm",
 )

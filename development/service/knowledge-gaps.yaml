@@ -1,4 +1,36 @@
 gaps:
+  - id: one-zero-linux-platform-acceptance
+    status: resolved
+    recorded_on: 2026-10-21
+    scope: Bounded Linux container platform cell before 1.0; actual pilot-host admission remains separate
+    fact: "Docker recovered after confirmed host ENOSPC shutdown. Identical candidate artifacts pass 144/144 packaged checks on Debian 13.7 arm64, glibc 2.41, Linux 7.0.12-linuxkit, Temurin JRE 21/25 and Node 22/24. Parent verified raw oracles and identities. This resolves container execution availability, not native Linux/x86, Firefox/Safari or actual pilot-host qualification."
+    evidence:
+      - development/evidence/one-zero-platform-2026-10-21/README.md
+      - docs/guides/platform-support.md
+      - development/evidence/one-zero-platform-2026-10-21/linux.md
+      - development/evidence/one-zero-platform-2026-10-21/docker-recovery.md
+      - output/one-zero-platform-2026-10-21/parent-linux-audit.json
+    next_action: "Qualify each external pilot actual environment and frozen candidate before admission. Keep other OS/CPU/browser cells unqualified until independently tested; maintain adequate host disk headroom."
+  - id: compiled-artifact-large-integer-literals
+    status: resolved
+    recorded_on: 2026-10-18
+    resolved_on: 2026-10-18
+    scope: Explicit BigInt/BigDec persistence in the supported VM value domain
+    fact: "Artifact v3 uses bi/bd textual tags. JVM preserves exact kind/value/decimal scale, including nested values and suspended snapshots. New readers accept tested genuine v1/v2 artifacts with their historical numeric meaning; an actual saved v2 reader rejects new v3 artifacts. Node rejects integers outside signed Long and decimal text that loses decimal-rendering precision."
+    evidence:
+      - vm/src/commonMain/kotlin/io/github/ehlyzov/branchline/vm/BytecodeIO.kt
+      - development/evidence/one-zero-surface-2026-10-18.md
+    next_action: "Retain exact-number, actual old/new reader and malformed-payload gates. JS arbitrary precision, source-literal precision and closure snapshots remain separate limits; no lost information in existing artifacts can be reconstructed."
+  - id: experimental-stdlib-range-pad-boundaries
+    status: open
+    recorded_on: 2026-10-18
+    scope: RANGE zero/overflow semantics and PAD empty-padding progress
+    fact: "Inventory source review finds RANGE(0) enters descending 0..-1 construction; size and endpoint arithmetic is unchecked. PAD with an empty pad and a larger target has a loop that never grows its accumulator. These functions are explicitly experimental and excluded from the stable-candidate domain. The potentially nonterminating PAD path was not executed during acceptance."
+    evidence:
+      - interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/std/StdArraysModule.kt
+      - interpreter/src/commonMain/kotlin/io/github/ehlyzov/branchline/std/StdStringsModule.kt
+      - docs/language/stdlib-support.md
+    next_action: "Before promotion, specify count/step/overflow/allocation limits for RANGE and reject or define empty PAD; add bounded JVM/Node interpreter/VM regressions."
   - id: legacy-experimental-bignum-observers
     status: resolved
     resolved_on: 2026-10-17
@@ -38,7 +70,7 @@ gaps:
     evidence:
       - interpreter/src/jsMain/kotlin/io/github/ehlyzov/branchline/runtime/bignum/BigNumJs.kt
       - docs/language/numeric.md
-    next_action: "Choose a precise JS representation or retain an explicitly restricted numeric profile; require exact-value and overflow assertions before broad parity claims."
+    next_action: "The 2026-10-18 stage chooses an explicit common integer profile with bounded intermediates and documents JVM exact/JS limited domains in docs/language/numeric.md. Common and platform-specific NumericContract tests assert values and exclusions through interpreter and strict VM. Arbitrary-precision JS parity remains open; passing the bounded profile must not be reported as its resolution."
   - id: untrusted-program-execution-boundary
     status: open
     recorded_on: 2026-10-17
@@ -53,7 +85,7 @@ gaps:
     evidence:
       - development/planning/branchline-next-stage.md
       - docs/guides/release-readiness.md
-    next_action: "Complete the two-integrator operational pilot. The 30-task/270-session authoring experiment is complete and did not establish general superiority (development/experiments/authoring-2026-10-17/REPORT.md); any new blind productivity claim needs new held-out tasks rather than replaying now-public holdouts."
+    next_action: "Complete the two-integrator operational pilot using docs/guides/pilot-plan.md and development/planning/one-zero-pilot-run-record.md; real owners, datasets, predeclared limits, rollback and 14-day observation remain pending. The 30-task/270-session authoring experiment is complete and did not establish general superiority (development/experiments/authoring-2026-10-17/REPORT.md); any new blind productivity claim needs new held-out tasks rather than replaying now-public holdouts."
   - id: vm-snapshot-value-domain
     status: open
     recorded_on: 2026-10-17

@@ -1,0 +1,22 @@
+[
+  {
+    "id": "linux-jvm-jdk-21.0.12.1+1",
+    "kind": "jvm",
+    "executable": "/runtimes/jdk-21.0.12.1+1-jre/bin/java"
+  },
+  {
+    "id": "linux-jvm-jdk-25.0.4.1+1",
+    "kind": "jvm",
+    "executable": "/runtimes/jdk-25.0.4.1+1-jre/bin/java"
+  },
+  {
+    "id": "linux-node-node-v22.23.3-linux-arm64",
+    "kind": "node",
+    "executable": "/runtimes/node-v22.23.3-linux-arm64/bin/node"
+  },
+  {
+    "id": "linux-node-node-v24.22.0-linux-arm64",
+    "kind": "node",
+    "executable": "/runtimes/node-v24.22.0-linux-arm64/bin/node"
+  }
+]
