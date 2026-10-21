@@ -7,11 +7,14 @@
     "dev": "vite",
     "prebuild": "npm run test",
     "build": "vite build",
-    "test": "npm run test:worker-deps && npm run test:catalog && npm run test:xml-input && npm run test:wrapper-diagnostics",
+    "test": "npm run test:first-success && npm run test:worker-deps && npm run test:catalog && npm run test:xml-input && npm run test:wrapper-diagnostics && npm run test:journey",
     "test:worker-deps": "node scripts/check-worker-deps.mjs",
     "test:catalog": "node scripts/test-catalog-metadata.mjs",
     "test:xml-input": "node scripts/test-xml-input.mjs",
-    "test:wrapper-diagnostics": "node scripts/test-wrapper-diagnostics.mjs"
+    "test:wrapper-diagnostics": "node scripts/test-wrapper-diagnostics.mjs",
+    "sync:first-success": "node scripts/sync-first-success.mjs",
+    "test:first-success": "node scripts/sync-first-success.mjs --check && node scripts/test-first-success-runtime.mjs",
+    "test:journey": "node scripts/test-journey.mjs"
   },
   "dependencies": {
     "react": "^18.2.0",

@@ -1,0 +1,66 @@
+{
+  "local_url": "http://127.0.0.1:8771/",
+  "wide": [
+    1280,
+    720
+  ],
+  "narrow": [
+    390,
+    844
+  ],
+  "checks": [
+    {
+      "name": "home shows useful input/code/output and CTA",
+      "pass": true
+    },
+    {
+      "name": "home narrow has document width 390 without horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "CTA selects prepare-order, initial result BOOK",
+      "pass": true
+    },
+    {
+      "name": "input PEN qty 1 gives BOOK,PEN; stale marker before rerun",
+      "pass": true
+    },
+    {
+      "name": "actual downloaded current files give same edited result on published JVM and Node22",
+      "pass": true
+    },
+    {
+      "name": "invalid JSON disables downloads, visible run error, corrected input recovers",
+      "pass": true
+    },
+    {
+      "name": "syntax error visible outside collapsed Inspect; corrected filter >1 returns BOOK",
+      "pass": true
+    },
+    {
+      "name": "narrow Home/ArrowRight changes tabs and run focuses Output",
+      "pass": true
+    },
+    {
+      "name": "customer-profile still runs; starter edited program persists after switch back",
+      "pass": true
+    },
+    {
+      "name": "local-run guide and install navigation reachable with pinned assets/commands",
+      "pass": true
+    },
+    {
+      "name": "final narrow layout has visible result and no document horizontal overflow",
+      "pass": true
+    },
+    {
+      "name": "45 observed resource responses, no failed requests/HTTP errors; no console warnings/errors",
+      "pass": true
+    }
+  ],
+  "limits": [
+    "Not a full screen-reader or WCAG audit",
+    "No real-device mobile or participant usability study",
+    "Existing build warnings about bundle size and benchmark relative links remain"
+  ]
+}

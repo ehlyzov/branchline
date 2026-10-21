@@ -1,0 +1,162 @@
+{
+  "program_sha256": "22ece9f472b5b8a4b292e1a5cc2346110faa2cd5048518fa38964501f46fa6b1",
+  "input_sha256": "fbe67df2fefa70b8336ed9b5fdf70d6a37ba871184caa895c56b2ff6cb66a625",
+  "cases": [
+    {
+      "runtime": "jvm",
+      "case": "original",
+      "exit": 0,
+      "actual": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK"
+        ]
+      },
+      "expected": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK"
+        ]
+      },
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "runtime": "jvm",
+      "case": "edited",
+      "exit": 0,
+      "actual": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK",
+          "PEN"
+        ]
+      },
+      "expected": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK",
+          "PEN"
+        ]
+      },
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "runtime": "jvm",
+      "case": "empty",
+      "exit": 0,
+      "actual": {
+        "order_id": "A-104",
+        "city": "Not provided",
+        "skus": []
+      },
+      "expected": {
+        "order_id": "A-104",
+        "city": "Not provided",
+        "skus": []
+      },
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "runtime": "jvm",
+      "case": "null",
+      "exit": 0,
+      "actual": {
+        "order_id": "A-104",
+        "city": "Not provided",
+        "skus": []
+      },
+      "expected": {
+        "order_id": "A-104",
+        "city": "Not provided",
+        "skus": []
+      },
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "runtime": "node",
+      "case": "original",
+      "exit": 0,
+      "actual": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK"
+        ]
+      },
+      "expected": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK"
+        ]
+      },
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "runtime": "node",
+      "case": "edited",
+      "exit": 0,
+      "actual": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK",
+          "PEN"
+        ]
+      },
+      "expected": {
+        "order_id": "A-104",
+        "city": "London",
+        "skus": [
+          "BOOK",
+          "PEN"
+        ]
+      },
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "runtime": "node",
+      "case": "empty",
+      "exit": 0,
+      "actual": {
+        "order_id": "A-104",
+        "city": "Not provided",
+        "skus": []
+      },
+      "expected": {
+        "order_id": "A-104",
+        "city": "Not provided",
+        "skus": []
+      },
+      "ok": true,
+      "stderr": ""
+    },
+    {
+      "runtime": "node",
+      "case": "null",
+      "exit": 0,
+      "actual": {
+        "order_id": "A-104",
+        "city": "Not provided",
+        "skus": []
+      },
+      "expected": {
+        "order_id": "A-104",
+        "city": "Not provided",
+        "skus": []
+      },
+      "ok": true,
+      "stderr": ""
+    }
+  ]
+}

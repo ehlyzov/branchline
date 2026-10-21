@@ -2,6 +2,7 @@ import React from 'react';
 import './monaco-environment';
 import * as monaco from 'monaco-editor';
 import { BRANCHLINE_LANGUAGE_ID, ensureBranchlineLanguage } from './branchline-language';
+import { currentJourneyFiles, FIRST_SUCCESS_EXAMPLE_ID, journeyInstruction, type JourneyExercise } from './first-success';
 import {
   CATALOG_AI_SUBSET_OPTIONS,
   catalogAiSubsetLabel,
@@ -58,6 +59,7 @@ type RawExample = {
   tags?: string[];
   aiSubset?: string;
   description?: string;
+  exercise?: JourneyExercise;
   program: string | string[];
   input: unknown;
   inputFormat?: InputFormat;
@@ -78,6 +80,7 @@ type PlaygroundExample = {
   tags: string[];
   aiSubset: CatalogAiSubset;
   description?: string;
+  exercise?: JourneyExercise;
   program: string;
   input: string;
   inputFormat: InputFormat;
@@ -115,6 +118,7 @@ function normalizeExample(id: string, raw: RawExample): PlaygroundExample {
     tags: Array.isArray(raw.tags) ? raw.tags.filter((tag): tag is string => typeof tag === 'string') : [],
     aiSubset: catalogAiSubsetValue(raw.aiSubset),
     description: raw.description,
+    exercise: raw.exercise,
     program,
     input: input || DEFAULT_INPUT,
     inputFormat,
@@ -167,6 +171,12 @@ function originalDraft(example: PlaygroundExample): PlaygroundDraft {
 }
 
 type InspectTab = 'normalized' | 'diagnostics' | 'blockers';
+type WorkspacePanel = 'input' | 'program' | 'output';
+const WORKSPACE_PANELS: { id: WorkspacePanel; label: string }[] = [
+  { id: 'input', label: '1. Input' },
+  { id: 'program', label: '2. Program' },
+  { id: 'output', label: '3. Output' }
+];
 
 type InspectTabDefinition = {
   id: InspectTab;
@@ -200,7 +210,7 @@ function resolveDefaultExample(examples: PlaygroundExample[], preferred?: string
       return match.id;
     }
   }
-  return examples[0]?.id ?? '';
+  return examples.find((item) => item.id === FIRST_SUCCESS_EXAMPLE_ID)?.id ?? examples[0]?.id ?? '';
 }
 
 function buildHostedPlaygroundUrl(exampleId: string): string {
@@ -289,7 +299,17 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   const [revision, setRevision] = React.useState(0);
   const [resultRevision, setResultRevision] = React.useState<number | null>(null);
   const instanceId = React.useId();
+  const [activeWorkspacePanel, setActiveWorkspacePanel] = React.useState<WorkspacePanel>('input');
+  const [isCompact, setIsCompact] = React.useState(() => window.matchMedia('(max-width: 1099px)').matches);
+  const workspaceTabRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
   const inspectTabRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+  React.useEffect(() => {
+    const query = window.matchMedia('(max-width: 1099px)');
+    const update = () => setIsCompact(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
   const markEdited = React.useCallback(() => {
     revisionRef.current += 1;
     setRevision(revisionRef.current);
@@ -344,6 +364,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     () => examples.find((item) => item.id === selectedExampleId) ?? null,
     [examples, selectedExampleId]
   );
+  const exerciseInstruction = journeyInstruction(selectedExampleId, selectedExample?.exercise);
   const openInNewTabUrl = React.useMemo(
     () => buildHostedPlaygroundUrl(selectedExampleId),
     [selectedExampleId]
@@ -367,12 +388,29 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
     if (id === selectedExampleId) return;
     draftsRef.current.set(selectedExampleId, currentDraft());
     setSelectedExampleId(id);
+    setActiveWorkspacePanel('input');
+  };
+
+  const downloadCurrentFile = (name: string) => {
+    const draft = currentDraft();
+    const file = currentJourneyFiles(selectedExampleId, draft.program, draft.input, draft.inputFormat)?.find((item) => item.name === name);
+    if (!file) return;
+    const url = URL.createObjectURL(new Blob([file.content], { type: file.type }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   const run = React.useCallback(() => {
     if (runningRef.current) return;
     if (!workerRef.current) restartWorkerRef.current();
     if (!workerRef.current) return;
+    setActiveWorkspacePanel('output');
+    workspaceTabRefs.current[2]?.focus();
     setLifecycleMessage(null);
     submittedRevisionRef.current = revisionRef.current;
     const program = programEditorRef.current?.getValue() ?? '';
@@ -476,6 +514,9 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         automaticLayout: true,
         minimap: { enabled: false },
         fontSize: 14,
+        scrollBeyondLastLine: false,
+        wordWrap: 'on',
+        lineNumbersMinChars: 3,
         ariaLabel: 'Branchline program editor'
       });
       programEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => runRef.current());
@@ -489,6 +530,9 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         automaticLayout: true,
         minimap: { enabled: false },
         fontSize: 14,
+        scrollBeyondLastLine: false,
+        wordWrap: 'on',
+        lineNumbersMinChars: 3,
         ariaLabel: 'Input data editor'
       });
       inputEditorRef.current.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => runRef.current());
@@ -547,6 +591,8 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
             : '';
         const message = result.errorMessage ?? 'Unexpected error';
         const formatted = `${message}${location}`;
+        setActiveWorkspacePanel('output');
+        workspaceTabRefs.current[2]?.focus();
         setError(formatted);
         setOutput('');
         setTraceHuman(null);
@@ -565,6 +611,8 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
       setIsRunning(false);
       setLifecycleMessage(null);
       setError(message);
+      setActiveWorkspacePanel('output');
+      workspaceTabRefs.current[2]?.focus();
       setOutput('');
       setTraceHuman(null);
       setTraceJson(null);
@@ -646,6 +694,8 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
   }, [contractsMode]);
 
   const resultsAreStale = resultRevision !== null && resultRevision !== revision;
+  const draftForDownload = currentDraft();
+  const canDownloadJourney = currentJourneyFiles(selectedExampleId, draftForDownload.program, draftForDownload.input, inputFormat) !== null;
   const hasTrace = Boolean(traceHuman || traceJson);
   const inspectState = playgroundState.inspect;
   const inspectDiagnostics = diagnosticsForInspect(inspectState.result);
@@ -728,11 +778,10 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
           <button className="playground-button playground-button--ghost" onClick={resetExample}>
             Reset example
           </button>
-          <a className="playground-button playground-button--ghost" href={openInNewTabUrl} target="_blank" rel="noreferrer" title="Opens the original example; edits are kept only in this tab.">
-            Open original example ↗
-          </a>
+          <span className={`playground-overview-status${resultsAreStale ? ' playground-overview-status--stale' : ''}`} role="status" aria-live="polite">
+            {isRunning ? 'Running…' : lifecycleMessage ?? (resultsAreStale ? 'Results out of date — run again.' : resultRevision === null ? '⌘/Ctrl + Enter to run' : error ? 'Run failed.' : 'Run complete.')}
+          </span>
         </div>
-        <p className="playground-session-notice">Drafts stay in this tab until reload.</p>
         <details className="playground-advanced">
           <summary>Filters &amp; run settings</summary>
           <div className="playground-controls playground-controls--advanced">
@@ -817,10 +866,6 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
               </label>
             ) : null}
           </div>
-          <p className="playground-session-hint">Filters narrow the list without replacing your current draft. Clear filters to browse every example.</p>
-        </details>
-      </header>
-
       {visibleSelectedExample ? (
         <details className="example-description">
           <summary>Example details</summary>
@@ -846,25 +891,47 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
         </details>
       ) : null}
 
-      <div className="playground-note">
-        Read the incoming object with <code>input</code>. ⌘/Ctrl + Enter runs from either editor.
-      </div>
+          <p className="playground-session-hint">Filters keep your current draft. Drafts stay in this tab until reload. ⌘/Ctrl + Enter runs with your current settings.</p>
+          <a href={openInNewTabUrl} target="_blank" rel="noreferrer">Open original example in a new tab ↗</a>
+        </details>
+      </header>
+
+
+      {exerciseInstruction ? (
+        <div className="playground-exercise">
+          <p><strong>Try a change:</strong> {exerciseInstruction} Expect BOOK and PEN in Output.</p>
+        </div>
+      ) : null}
+
+      {error ? <div className="panel-error" role="alert">{resultsAreStale ? 'Previous run: ' : ''}{error} <span>Correct the program or input, then Run again.</span></div> : null}
+      {inspectState.error && inspectState.error !== error ? <div className="panel-error" role="alert">Inspect: {inspectState.error}</div> : null}
+
+      {isCompact ? <div className="workspace-tabs" role="tablist" aria-label="Transformation workspace">
+        {WORKSPACE_PANELS.map((panel, index) => (
+          <button key={panel.id} type="button" role="tab" id={`${instanceId}-workspace-tab-${panel.id}`}
+            aria-controls={`${instanceId}-workspace-${panel.id}`} aria-selected={activeWorkspacePanel === panel.id}
+            tabIndex={activeWorkspacePanel === panel.id ? 0 : -1}
+            ref={(element) => { workspaceTabRefs.current[index] = element; }}
+            onClick={() => setActiveWorkspacePanel(panel.id)}
+            onKeyDown={(event) => {
+              const next = event.key === 'ArrowRight' ? (index + 1) % WORKSPACE_PANELS.length
+                : event.key === 'ArrowLeft' ? (index + WORKSPACE_PANELS.length - 1) % WORKSPACE_PANELS.length
+                : event.key === 'Home' ? 0 : event.key === 'End' ? WORKSPACE_PANELS.length - 1 : null;
+              if (next === null) return;
+              event.preventDefault();
+              setActiveWorkspacePanel(WORKSPACE_PANELS[next].id);
+              workspaceTabRefs.current[next]?.focus();
+            }}>{panel.label}</button>
+        ))}
+      </div> : null}
 
       <main className="playground-main">
-        <section className="panel panel--editor playground-main__program">
+        <section className="panel panel--editor playground-main__input" id={`${instanceId}-workspace-input`}
+          role={isCompact ? 'tabpanel' : undefined} aria-labelledby={isCompact ? `${instanceId}-workspace-tab-input` : undefined}
+          hidden={isCompact && activeWorkspacePanel !== 'input'}>
           <header className="panel-header">
             <div>
-              <h3>Branchline Program</h3>
-              <p>A transform body or full TRANSFORM program.</p>
-            </div>
-          </header>
-          <div ref={programContainerRef} className="editor-surface" />
-        </section>
-
-        <section className="panel panel--editor playground-main__input">
-          <header className="panel-header">
-            <div>
-              <h3>Input {inputFormat === 'xml' ? 'XML' : 'JSON'}</h3>
+              <h3>1. Input {inputFormat === 'xml' ? 'XML' : 'JSON'}</h3>
               <p>
                 {inputFormat === 'xml' ? (
                   <>
@@ -881,21 +948,33 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
           <div ref={inputContainerRef} className="editor-surface" />
         </section>
 
-        <section className="panel playground-main__output" aria-busy={isRunning}>
+        <section className="panel panel--editor playground-main__program" id={`${instanceId}-workspace-program`}
+          role={isCompact ? 'tabpanel' : undefined} aria-labelledby={isCompact ? `${instanceId}-workspace-tab-program` : undefined}
+          hidden={isCompact && activeWorkspacePanel !== 'program'}>
           <header className="panel-header">
             <div>
-              <h3>Output &amp; Trace</h3>
+              <h3>2. Branchline program</h3>
+              <p>Read fields from <code>input</code>. ⌘/Ctrl + Enter to run.</p>
+            </div>
+          </header>
+          <div ref={programContainerRef} className="editor-surface" />
+        </section>
+
+        <section className="panel playground-main__output" aria-busy={isRunning} id={`${instanceId}-workspace-output`}
+          role={isCompact ? 'tabpanel' : undefined} aria-labelledby={isCompact ? `${instanceId}-workspace-tab-output` : undefined}
+          tabIndex={isCompact ? 0 : undefined} hidden={isCompact && activeWorkspacePanel !== 'output'}>
+          <header className="panel-header">
+            <div>
+              <h3>3. Output</h3>
               <p>The result of executing your Branchline program.</p>
             </div>
           </header>
-          <div className={`playground-run-status${resultsAreStale ? ' playground-run-status--stale' : ''}`} role="status" aria-live="polite">
+          <div className={`playground-run-status${resultsAreStale ? ' playground-run-status--stale' : ''}`}>
             {isRunning ? 'Running submitted program…' : lifecycleMessage ?? (resultsAreStale
               ? 'Results are out of date. Run again to update output and Inspect.'
               : resultRevision === null ? 'Ready to run.' : error ? 'Run failed.' : 'Run complete.')}
           </div>
-          {error ? (
-            <div className="panel-error" role="alert">{resultsAreStale ? 'Previous run: ' : ''}{error}</div>
-          ) : (
+          {!error ? (
             <>
               {contractWarnings ? (
                 <div className="panel-warning">
@@ -903,16 +982,15 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
                   <pre className="panel-output panel-output--warning">{contractWarnings}</pre>
                 </div>
               ) : null}
-              <div className={`results-grid${hasTrace ? ' results-grid--with-trace' : ''}`}>
+              <div className="results-grid">
                 <div className="results-pane">
-                  <div className="panel-subheader">Program output</div>
                   <pre className="panel-output">
                     {output || 'Run the playground to view output.'}
                   </pre>
                 </div>
                 {hasTrace ? (
-                  <div className="results-pane results-pane--trace">
-                    <div className="panel-subheader">Trace explanations</div>
+                  <details className="results-pane results-pane--trace playground-disclosure">
+                    <summary>Trace explanations</summary>
                     {traceHuman ? (
                       <pre className="panel-output panel-output--trace">{traceHuman}</pre>
                     ) : null}
@@ -922,11 +1000,12 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
                         <pre className="panel-output panel-output--trace">{traceJson}</pre>
                       </details>
                     ) : null}
-                  </div>
+                  </details>
                 ) : null}
               </div>
               {isContractsEnabled ? (
-                <div className="contracts-panel">
+                <details className="contracts-panel playground-disclosure">
+                  <summary>Input/output contracts</summary>
                   <div className="contracts-header">
                     <div className="panel-subheader">Input/output contracts</div>
                     <span className="contracts-source">
@@ -947,13 +1026,24 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
                       </pre>
                     </div>
                   </div>
-                </div>
+                </details>
               ) : null}
             </>
-          )}
+          ) : null}
         </section>
 
-        <section className="panel playground-main__inspect inspect-panel">
+      </main>
+
+      {selectedExampleId === FIRST_SUCCESS_EXAMPLE_ID ? <div className="playground-local">
+        <strong>Keep going locally</strong>
+        <button type="button" className="playground-file-button" onClick={() => downloadCurrentFile('program.bl')} disabled={!canDownloadJourney}>Download program.bl</button>
+        <button type="button" className="playground-file-button" onClick={() => downloadCurrentFile('input.json')} disabled={!canDownloadJourney}>Download input.json</button>
+        <a href="../guides/getting-started/#run-locally">Run these files locally →</a>
+        <small>{canDownloadJourney ? 'Downloads include your current edits. Drafts stay in this tab until reload.' : 'Select JSON input and fix any JSON syntax errors to download the current files.'}</small>
+      </div> : <p className="playground-session-notice">Drafts stay in this tab until reload. <a href="../guides/getting-started/#run-locally">Learn to run Branchline locally →</a></p>}
+
+        <details className="panel playground-main__inspect inspect-panel playground-disclosure">
+          <summary>Inspect source and diagnostics{inspectDiagnostics.length ? ` (${inspectDiagnostics.length})` : ''}</summary>
           <header className="panel-header inspect-panel__header">
             <div>
               <h3>Inspect</h3>
@@ -1071,8 +1161,7 @@ export function BranchlinePlayground({ defaultExampleId }: BranchlinePlaygroundP
               </div>
             )}
           </div>
-        </section>
-      </main>
+        </details>
     </div>
   );
 }

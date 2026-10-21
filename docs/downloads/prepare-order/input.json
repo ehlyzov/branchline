@@ -1,0 +1,16 @@
+{
+  "id": "A-104",
+  "shipping": {
+    "city": "London"
+  },
+  "items": [
+    {
+      "sku": "BOOK",
+      "qty": 2
+    },
+    {
+      "sku": "PEN",
+      "qty": 0
+    }
+  ]
+}

@@ -4,8 +4,59 @@ title: Getting Started
 
 # Getting Started
 
-Start with three complete JSON transformations. [Install the JVM or Node CLI](install.md)
-first, or use the [Playground](../playground.md?example=hello-transform){ target="_blank" }.
+Turn an order into a shipment payload, then change the input and see the result.
+Start in your browser; no installation is needed.
+
+## 1. Run an order transformation
+
+[Open Prepare an order payload in the Playground](../playground.md?example=prepare-order).
+Select **Run** (or press **Cmd/Ctrl + Enter**) to use this input and program:
+
+### Input
+
+--8<-- "includes/prepare-order/input.md"
+
+### Program
+
+--8<-- "includes/prepare-order/program.md"
+
+### Expected result
+
+--8<-- "includes/prepare-order/expected.md"
+
+The program uses `input` to read the incoming object. `OUTPUT` creates the result:
+
+- `input.id` becomes `order_id`.
+- `??` uses `"Not provided"` if the city is missing or `null`.
+- The comprehension keeps items where `qty > 0`, then takes their `sku` values.
+
+The example expects a `shipping` object and an `items` array containing objects
+with string `sku` and numeric `qty` fields. An empty array produces an empty `skus` array.
+
+## 2. Change the result
+
+In **Input JSON**, change PEN's `qty` from `0` to `1`, then run again.
+PEN now passes the filter, so the result is:
+
+--8<-- "includes/prepare-order/exercise-expected.md"
+
+## Run locally
+
+Use **Download program.bl** and **Download input.json** in the Playground to keep
+your current edits. Then follow [Install and run locally](install.md) for the pinned
+JVM or Node CLI, exact commands, and a version check.
+
+You can also download the original
+[program.bl](../downloads/prepare-order/program.bl),
+[input.json](../downloads/prepare-order/input.json), and
+[expected.json](../downloads/prepare-order/expected.json).
+JSON whitespace and object key order may differ between runtimes.
+
+## Continue learning
+
+These three short lessons explain fields, defaults, and arrays. Use the same
+Playground editors, or save each program and input to run locally. The commands
+below assume the CLI has been installed using the [local setup](install.md).
 
 ## Transform a JSON object
 
@@ -45,16 +96,16 @@ expects `name` to be a string.
 
 ### Validation commands
 
-For the JVM, replace `<tag>` with your downloaded release version:
+For the JVM:
 
 ```bash
-java -jar branchline-cli-<tag>-all.jar hello.bl --input sample.json
+java -jar branchline-cli-v1.0.0-rc.1-all.jar hello.bl --input sample.json
 ```
 
-For Node, run from the extracted CLI package directory, with your two files there:
+For Node, from the working directory created in the local setup:
 
 ```bash
-./bin/bl.cjs hello.bl --input sample.json
+node branchline-cli/bin/bl.cjs hello.bl --input sample.json
 ```
 
 In the Playground, paste the program and input into their editors, run, and compare
@@ -104,8 +155,8 @@ is `{"name":"Guest","nickname":null,"active":true,"attempts":3}`.
 Replace `sample.json` with the input above and run:
 
 ```bash
-java -jar branchline-cli-<tag>-all.jar defaults.bl --input sample.json
-./bin/bl.cjs defaults.bl --input sample.json
+java -jar branchline-cli-v1.0.0-rc.1-all.jar defaults.bl --input sample.json
+node branchline-cli/bin/bl.cjs defaults.bl --input sample.json
 ```
 
 The same program and input can be pasted into the Playground.
@@ -157,8 +208,8 @@ integers or decimal amounts.
 Replace `sample.json` with the input above and run:
 
 ```bash
-java -jar branchline-cli-<tag>-all.jar available-items.bl --input sample.json
-./bin/bl.cjs available-items.bl --input sample.json
+java -jar branchline-cli-v1.0.0-rc.1-all.jar available-items.bl --input sample.json
+node branchline-cli/bin/bl.cjs available-items.bl --input sample.json
 ```
 
 The same program and input can be pasted into the Playground.

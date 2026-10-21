@@ -1,0 +1,26 @@
+[
+  {
+    "runtime": "jvm",
+    "exit": 0,
+    "output": {
+      "order_id": "A-104",
+      "city": "London",
+      "skus": [
+        "BOOK",
+        "PEN"
+      ]
+    }
+  },
+  {
+    "runtime": "node",
+    "exit": 0,
+    "output": {
+      "order_id": "A-104",
+      "city": "London",
+      "skus": [
+        "BOOK",
+        "PEN"
+      ]
+    }
+  }
+]

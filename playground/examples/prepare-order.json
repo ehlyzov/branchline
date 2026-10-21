@@ -1,0 +1,39 @@
+{
+  "title": "Prepare an order payload",
+  "id": "prepare-order",
+  "category": "getting-started",
+  "tags": ["orders", "filter", "projection", "defaults", "ai-canonical"],
+  "aiSubset": "compatible",
+  "description": "Keep items with positive quantities and shape a small shipment payload.",
+  "program": [
+    "TRANSFORM Shipment {",
+    "    OUTPUT {",
+    "        order_id: input.id,",
+    "        city: input.shipping.city ?? \"Not provided\",",
+    "        skus: [item.sku FOR EACH item IN input.items WHERE item.qty > 0]",
+    "    }",
+    "}"
+  ],
+  "input": {
+    "id": "A-104",
+    "shipping": { "city": "London" },
+    "items": [
+      { "sku": "BOOK", "qty": 2 },
+      { "sku": "PEN", "qty": 0 }
+    ]
+  },
+  "expectedOutput": {
+    "order_id": "A-104",
+    "city": "London",
+    "skus": ["BOOK"]
+  },
+  "exercise": {
+    "instruction": "Change PEN qty from 0 to 1, then run again.",
+    "patch": { "path": ["items", 1, "qty"], "value": 1 },
+    "expectedOutput": {
+      "order_id": "A-104",
+      "city": "London",
+      "skus": ["BOOK", "PEN"]
+    }
+  }
+}

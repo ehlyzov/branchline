@@ -29,6 +29,16 @@
 - Compiled CLI worker isolation: `./gradlew :cli:jvmTest --tests '*CompiledFanoutIsolationTest' --tests '*ParallelWorker*' :interpreter:jvmTest --tests '*RegexCacheConcurrencyTest'`.
 - Experimental JSON parser/planner/pipeline JVM checks: `./gradlew :interpreter:jvmTest --tests '*JsonInputSelectionTest' :cli:jvmTest --tests '*ExperimentalJsonPipelineTest'`. Node coverage: `./gradlew :interpreter:jsNodeTest :cli:jsNodeTest`; run Node suites unfiltered and inspect XML test counts, since JVM-style filters can select zero Node tests.
 - Playground assets: `./gradlew playgroundBuildAssets`.
+- First-success docs/editor changes: `cd playground && npm test` includes canonical
+  `prepare-order` fixture/download/snippet drift checks, executable introductory
+  and tour programs through the actual JS facade, and current-edit export checks.
+  After changing the fixture run `npm run sync:first-success`; generated files
+  under `docs/downloads/prepare-order/` and `docs/includes/prepare-order/` are tracked.
+  Build Pages using `mkdocs build` with `requirements.txt` after playground assets;
+  root `docsBuild` targets Diplodoc and does not replace the Pages/MkDocs check.
+  Independently execute browser-downloaded edited files with published JVM/Node
+  CLI, then verify the public home -> example -> edit -> local-run journey against
+  deployed release-metadata.json SHA. See evidence/first-success-2026-10-21/.
 - Playground UX/input changes: `cd playground && npm test` checks worker dependencies,
   catalog metadata, XML input validation and actual-runtime wrapper diagnostics.
   The browser interpreter distribution is required by that last test. Run the asset build and actual browser

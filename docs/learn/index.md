@@ -4,10 +4,11 @@ title: Tour of Branchline
 
 # Tour of Branchline
 
-A short, example-first path that covers the core language.
+Continue after [Getting Started](../guides/getting-started.md) to explore paths,
+control flow, and explicit error handling.
 
 ## How to use this tour
-- Read in order if you are new.
+- Complete the order example in Getting Started first, then read these chapters in order.
 - Run each example in the Playground.
 - Keep the [Language Reference](../language/index.md) open for syntax details.
 

@@ -28,6 +28,11 @@ Branchline is an experimental Kotlin Multiplatform data transformation language 
 - `test-fixtures/`: shared fixtures used by tests.
 - `examples/`: example programs and fixtures.
 - `playground/`: Vite/React playground source, Monaco language registration, worker integration, and example catalog.
+- First-success fixture: `playground/examples/prepare-order.json` drives the editor,
+  tracked `docs/downloads/prepare-order/` files and `docs/includes/prepare-order/`
+  snippets through `playground/scripts/sync-first-success.mjs`. `npm test` rejects
+  drift; MkDocs excludes standalone snippet pages while rendering their includes.
+  Current-edit downloads are scoped to the JSON starter and preserve source/input.
 - `docs/`: Diplodoc source plus generated playground assets under `docs/assets/`.
 - `interpreter-benchmarks/`, `vm-benchmarks/`, `jsonata-benchmarks/`, `perf/`: benchmark tasks, scripts, data, and workflow notes.
 - `jsonata-benchmarks/src/jmh/resources/price-ingest/`: independent expected inputs/outputs and common specification for the functional Branchline JVM, Dashjoin JSONata and Kotlin comparison. This is a correctness gate, separate from JMH performance results.

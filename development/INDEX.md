@@ -7,6 +7,10 @@ superseded_by: []
 last_updated: 2026-10-21
 changelog:
   - date: 2026-10-21
+    change: "Started first-success journey implementation: home, executable order example, editing and local run, independent UX/correctness acceptance and Pages publication; see planning/first-success-journey-2026-10-21.md."
+  - date: 2026-10-21
+    change: "Completed published documentation/example UX audit: seven flow captures, 40-example inventory, confirmed First Steps root-access error, four representative RC example checks and three hero probes. Positioning, site architecture and usability protocol: planning/ux-docs-audit-2026-10-21.md and ../output/ux-docs-2026-10-21/report.html. Research only; redesign not implemented."
+  - date: 2026-10-21
     change: "Published v1.0.0-rc.1 from 98c7659: exact-commit CI, five public packages/checksums, 288 published-package matrix cases, eight parent cases and 14 public editor checks passed. Pilot preparation cancelled; see planning/one-zero-rc-pilot-2026-10-21.md, releases/1.0.0-rc.1.md and evidence/rc-1.0.0-2026-10-21/README.md."
   - date: 2026-10-21
     change: "Accepted macOS platform cells: 251 packaged CLI cases, 28 Chrome/WebKit checks, 99 CLI tests and 8 independent UTF-8/cross-artifact checks; repaired Node native I/O errors. Recovered Docker after host ENOSPC and accepted 144 additional packaged cases on Debian 13.7 arm64/Linuxkit with Java 21/25 and Node 22/24; bounded platform gate closed, actual pilot host and Firefox unqualified. See evidence/one-zero-platform-2026-10-21/README.md and planning/one-zero-platform-2026-10-21.md for the external pilot handoff."
